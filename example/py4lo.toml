@@ -1,0 +1,5 @@
+# py4lo.toml file
+
+source_file = "./py4lo-example.ods"
+
+# You can override values from default-py4lo.toml
