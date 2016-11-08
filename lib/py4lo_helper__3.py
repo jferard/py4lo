@@ -32,6 +32,7 @@ class Py4LO_helper():
 		mspf = self.sm.createInstanceWithContext("com.sun.star.script.provider.MasterScriptProviderFactory", self.ctxt)
 		self.msp = mspf.createScriptProvider("")
 		self.dsp = self.doc.getScriptProvider()
+		self.loader = self.sm.createInstance( "com.sun.star.frame.Desktop" )
 		self.__xray_script = None
 		
 	def use_xray(self):
@@ -64,5 +65,16 @@ class Py4LO_helper():
 		my_box = sv.createMessageBox(parent_win, msg_type, msg_buttons, msg_title, msg_text)
 		return my_box.execute()
 
+	def new_doc(self):
+		return self.loader.loadComponentFromURL(
+	                 "private:factory/scalc", "_blank", 0, () )
+					 
+	def get_last_used_row(self, oSheet):
+		oCell = oSheet.GetCellByPosition(0, 0)
+		oCursor = oSheet.createCursorByRange(oCell)
+		oCursor.GotoEndOfUsedArea(True)
+		aAddress = oCursor.RangeAddress
+		return aAddress.EndRow
+		
 def __export_Py4LO_helper():
 	return Py4LO_helper()
