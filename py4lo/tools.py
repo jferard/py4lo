@@ -37,10 +37,10 @@ def update_zip(zip_source_name,zip_dest_name, before_callbacks = [],
 			if not after_callback(zout):
 				break
 
-def update_ods(ods_source_name, suffix = "generated", readme = False, contact = "<add a contact in default-py4lo.toml file>", scripts_path="."):
+def update_ods(ods_source_name, suffix = "generated", readme = False, contact = "<add a contact in default-py4lo.toml file>", scripts_path=".", python_version="3"):
 	ods_dest_name = ods_source_name[0:-4]+"-"+suffix+ods_source_name[-4:]
 	script_fnames = set(os.path.join(scripts_path, f) for f in os.listdir(scripts_path) if f.endswith(".py"))
-	script_processor = ScriptProcessor(scripts_path)
+	script_processor = ScriptProcessor(scripts_path, python_version)
 	script_processor.process(script_fnames)
 
 	item_cbs = [ignore_scripts, rewrite_manifest(script_processor.get_scripts())]
@@ -50,16 +50,16 @@ def update_ods(ods_source_name, suffix = "generated", readme = False, contact = 
 	update_zip(ods_source_name, ods_dest_name, item_callbacks = item_cbs, after_callbacks = after_cbs)
 	return ods_dest_name
 
-def debug_scripts(debug_file, scripts_path="."):
+def debug_scripts(debug_file, scripts_path=".", python_version="3"):
 	ods_dest_name = debug_file
 	script_fnames = set(os.path.join(scripts_path, f) for f in os.listdir(scripts_path) if f.endswith(".py"))
-	script_processor = ScriptProcessor(scripts_path)
+	script_processor = ScriptProcessor(scripts_path, python_version)
 	script_processor.process(script_fnames)
 	
 	py4lo_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 
 	item_cbs = [ignore_scripts, rewrite_manifest(script_processor.get_scripts())]
-	after_cbs = [add_scripts(script_processor.get_scripts()), add_debug_content(script_processor.get_funcs_by_script_name())]
+	after_cbs = [add_scripts(script_processor.get_scripts()), add_debug_content(script_processor.get_func_names_by_script_name())]
 	update_zip(os.path.join(py4lo_path, "inc", "debug.ods"), ods_dest_name, item_callbacks = item_cbs, after_callbacks = after_cbs)
 	return ods_dest_name
 	

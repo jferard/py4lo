@@ -18,7 +18,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import os
 import shlex
-import sys
 import re
 
 class Script():
@@ -37,14 +36,15 @@ class Script():
 		return self.__data
 
 class ScriptProcessor():
-	def __init__(self, scripts_path):
+	def __init__(self, scripts_path, python_version):
 		self.__scripts_path = scripts_path
+		self.__python_version = python_version
 		self.__py4lo_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 		self.__bootstrap = None
 
 	def process(self, script_fnames):
 		self.__scripts = []
-		self.__funcs_by_script_name = {}
+		self.__func_names_by_script_name = {}
 		self.__cur_script_fnames = [(fname, os.path.split(fname)[1]) for fname in script_fnames]
 		visited = set()
 		while len(self.__cur_script_fnames):
@@ -58,7 +58,7 @@ class ScriptProcessor():
 		return self.__scripts
 
 	def __parse_script(self, script_fname, script_name):
-		funcs = []
+		func_names = []
 
 		s = "# parsed by py4lo\n"
 		bootstrapped = False
@@ -66,7 +66,9 @@ class ScriptProcessor():
 			for line in f:
 				m = re.match("^def\s+(.*?)\(.*\):\s*$", line)
 				if m:
-					funcs.append(m.group(1))
+					func_name = m.group(1)
+					if func_name[0] != "_":
+						func_names.append(func_name)
 					s += line
 				elif line[0] == '#':
 					try:
@@ -93,7 +95,8 @@ class ScriptProcessor():
 				else:
 					s += line
 
-		self.__funcs_by_script_name[script_name] = funcs
+		s += "\n\ng_exportedScripts = ("+", ".join(func_names)+")\n"
+		self.__func_names_by_script_name[script_name] = func_names
 
 		script = Script(script_fname, script_name, s.encode("utf-8"))
 		self.__scripts.append(script)
@@ -103,7 +106,7 @@ class ScriptProcessor():
 		(lib_ref, object_name) = object_ref.split("::")
 		script_fname_wo_extension = os.path.join(self.__py4lo_path, "lib", lib_ref)
 
-		script_fname = script_fname_wo_extension + "__" + str(sys.version_info.major) + ".py"
+		script_fname = script_fname_wo_extension + "__" + self.__python_version + ".py"
 		if not os.path.isfile(script_fname):
 			script_fname = script_fname_wo_extension + ".py"
 			if not os.path.isfile(script_fname):
@@ -155,5 +158,5 @@ class ScriptProcessor():
 	def get_scripts(self):
 		return self.__scripts
 		
-	def get_funcs_by_script_name(self):
-		return self.__funcs_by_script_name
+	def get_func_names_by_script_name(self):
+		return self.__func_names_by_script_name

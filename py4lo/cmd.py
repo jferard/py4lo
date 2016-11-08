@@ -18,6 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import toml
 import os
+import sys
 from tools import update_ods, open_with_calc, debug_scripts
 
 def load_toml(fname = "py4lo.toml"):
@@ -33,15 +34,18 @@ def load_toml(fname = "py4lo.toml"):
 	else:
 		data.update(temp)
 	
+	if not "python_version" in data:
+		data["python_version"] = str(sys.version_info.major)
+
 	return data
   
 def debug():
 	tdata = load_toml()
-	return debug_scripts(tdata["debug_file"])
+	return debug_scripts(tdata["debug_file"], ".", tdata["python_version"])
 
 def init():
 	tdata = load_toml()
-	return debug_scripts(tdata["init_file"])
+	return debug_scripts(tdata["init_file"], ".", tdata["python_version"])
 	
 def test():
 	tdata = load_toml()
@@ -50,4 +54,4 @@ def test():
 
 def update():
 	tdata = load_toml()
-	return update_ods(tdata["source_file"], tdata["default_suffix"], tdata["add_readme"], tdata["readme_contact"])
+	return update_ods(tdata["source_file"], tdata["default_suffix"], tdata["add_readme"], tdata["readme_contact"], ".", tdata["python_version"])
