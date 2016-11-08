@@ -18,16 +18,16 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import os
 import uno
+import io
 from com.sun.star.uno import RuntimeException
 from com.sun.star.awt.MessageBoxButtons import BUTTONS_OK
-from com.sun.star.awt.MessageBoxType import MESSAGEBOX
 
 class Py4LO_helper():
 	def __init__(self):
 		self.doc = XSCRIPTCONTEXT.getDocument()
 		self.ctxt = uno.getComponentContext()
-
-		self.ctrl = self.doc.CurrentController					
+		
+		self.ctrl = self.doc.CurrentController
 		self.frame = self.ctrl.Frame
 		self.parent_win = self.frame.ContainerWindow
 		self.sm = self.ctxt.getServiceManager()
@@ -35,11 +35,11 @@ class Py4LO_helper():
 		
 		mspf = self.uno_service_ctxt("com.sun.star.script.provider.MasterScriptProviderFactory")
 		self.msp = mspf.createScriptProvider("")
-
+		
 		self.loader = self.uno_service( "com.sun.star.frame.Desktop" )
 		self.reflect = self.uno_service( "com.sun.star.reflection.CoreReflection" )
 		self.__xray_script = None
-		
+
 	def use_xray(self):
 		try:
 			self.__xray_script = self.msp.getScript("vnd.sun.star.script:XrayTool._Main.Xray?language=Basic&location=application")
@@ -65,7 +65,7 @@ class Py4LO_helper():
 		return tuple(l)
 
 	# from https://forum.openoffice.org/fr/forum/viewtopic.php?f=15&t=47603# (thanks Bernard !)
-	def message_box(self, parent_win, msg_text, msg_title, msg_type=MESSAGEBOX, msg_buttons=BUTTONS_OK):
+	def message_box(self, parent_win, msg_text, msg_title, msg_type=0, msg_buttons=BUTTONS_OK):
 		sv = self.uno_service_ctxt("com.sun.star.awt.Toolkit")
 		my_box = sv.createMessageBox(parent_win, msg_type, msg_buttons, msg_title, msg_text)
 		return my_box.execute()
@@ -84,7 +84,7 @@ class Py4LO_helper():
 				return self.sm.createInstanceWithContext(sname, ctxt)
 			else:
 				return self.sm.createInstanceWithArgumentsAndContext(sname, args, ctxt)
-
+		
 	def new_doc(self):
 		return self.loader.loadComponentFromURL(
 	                 "private:factory/scalc", "_blank", 0, () )
@@ -97,17 +97,17 @@ class Py4LO_helper():
 		return aAddress.EndRow
 		
 	def to_iter(self, o):
-		for i in range(0, oXIndexAccess.getCount()):
-			yield(oXIndexAccess.getByIndex(i))
-
+		for i in range(0, o.getCount()):
+			yield(o.getByIndex(i))
+		
 	def to_dict(self, o):
 		d = {}
 		for name in o.getElementNames():
 			d[name] = o.getByName(name)
 		return d
-			
+
 	def open_pmlog(self, fpath):
-		self.__log_out = open(fpath, "w", encoding="utf-8")
+		self.__log_out = io.open(fpath, "w", encoding="utf-8")
 			
 	def pmlog(self, text):
 		self.__log_out.write(text+"\n")
@@ -116,12 +116,11 @@ class Py4LO_helper():
 	def __del__(self):
 		if self.__log_out is not None:
 			self.__log_out.close()
-		
+			
 	def cur_dir(self):
 		url = self.doc.getURL()
 		path = uno.fileUrlToSystemPath( url )
 		return os.path.dirname( path )
-		
 		
 p = Py4LO_helper()		
 def __export_Py4LO_helper():
