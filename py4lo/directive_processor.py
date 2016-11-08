@@ -26,6 +26,7 @@ class DirectiveProcessor():
 		self.__cur_script_fnames = cur_script_fnames
 		self.__py4lo_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 		self.__bootstrap = self.__get_bootstrap()
+		self.__parsing = []
 		
 	def new_script(self):
 		self.__bootstrapped = False
@@ -46,6 +47,21 @@ class DirectiveProcessor():
 						s += self.__use_lib(args[1:])
 					else:
 						s += self.__use_object(args)
+				# conditions : we can't branch directly
+				elif directive == 'if':
+					self.__parsing.append(self.__is_true(args))
+				elif directive == 'elif':
+					if self.__parsing[-1]:
+						self.__parsing[-1] = False
+					elif self.__is_true(args):
+						self.__parsing[-1] = True
+					# else : self.__parsing stays False
+				elif directive == 'else':
+					self.__parsing[-1] = not self.__parsing[-1]
+				elif directive == 'endif':
+					self.__parsing.pop()
+				else:
+					print("Wrong directive "+directive+" (line ="+line) 
 			else:
 				s += line
 		except ValueError:
@@ -105,3 +121,24 @@ class DirectiveProcessor():
 					if l.endswith("\"\"\""):
 						state = 0
 		return bootstrap + "\n"
+
+	def __is_true(self, args):
+		assert args[0] == "python_version"
+		return is_true(self.python_version, args[1], args[2])
+		
+	def ignore_lines(self):
+		for b in self.__parsing():
+			if not b:
+				return True
+				
+		return False
+		
+def is_true(str1, comparator, str2):
+	if str1 < str2:
+		cmp = -1
+	elif str1 == str2:
+		cmp = 0
+	else:
+		cmp = 1
+
+	return cmp == -1 and comparator in ["<", "<="] or cmp == 0 and comparator in ["<=", "==", ">="] or cmp == 1 and comparator in [">", ">="]
