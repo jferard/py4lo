@@ -1,3 +1,9 @@
 # dirs
 mydir/*
 py4lo/__pycache__/*
+
+# generated files
+example/py4lo-debug.ods
+example/new-project.ods
+example/py4lo-example-updated.ods
+example/*.ods#
