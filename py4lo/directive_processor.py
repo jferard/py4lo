@@ -21,12 +21,15 @@ import os
 
 class DirectiveProcessor():
 	def __init__(self, python_version, scripts_path, cur_script_fnames):
-		self.__python_version = python_version
 		self.__scripts_path = scripts_path
 		self.__cur_script_fnames = cur_script_fnames
 		self.__py4lo_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 		self.__bootstrap = self.__get_bootstrap()
-		self.__parsing = []
+		def is_true(self, args):
+			assert args[0] == "python_version"
+			return is_true(python_version, args[1], args[2])
+		
+		self.__branch_processor = BranchProcessor(is_true)
 		
 	def new_script(self):
 		self.__bootstrapped = False
@@ -47,20 +50,7 @@ class DirectiveProcessor():
 						s += self.__use_lib(args[1:])
 					else:
 						s += self.__use_object(args)
-				# conditions : we can't branch directly
-				elif directive == 'if':
-					self.__parsing.append(self.__is_true(args))
-				elif directive == 'elif':
-					if self.__parsing[-1]:
-						self.__parsing[-1] = False
-					elif self.__is_true(args):
-						self.__parsing[-1] = True
-					# else : self.__parsing stays False
-				elif directive == 'else':
-					self.__parsing[-1] = not self.__parsing[-1]
-				elif directive == 'endif':
-					self.__parsing.pop()
-				else:
+				elif not self.__branch_processor.handle_directive(directive, args):
 					print("Wrong directive "+directive+" (line ="+line) 
 			else:
 				s += line
@@ -122,12 +112,34 @@ class DirectiveProcessor():
 						state = 0
 		return bootstrap + "\n"
 
-	def __is_true(self, args):
-		assert args[0] == "python_version"
-		return is_true(self.python_version, args[1], args[2])
-		
 	def ignore_lines(self):
-		for b in self.__parsing():
+		return self.__branch_processor.skip();
+		
+class BranchHandler():
+	def __init__(self, tester):
+		self.__tester = tester
+		self.__dont_skips = []
+
+	def handle_directive(self, directive, args):
+		if directive == 'if':
+			self.__dont_skips.append(self.__tester(args))
+		elif directive == 'elif':
+			if self.__dont_skips[-1]:
+				self.__dont_skips[-1] = False
+			elif self.__tester(args):
+				self.__dont_skips[-1] = True
+			# else : self.__dont_skips stays False
+		elif directive == 'else':
+			self.__dont_skips[-1] = not self.__dont_skips[-1]
+		elif directive == 'endif':
+			self.__dont_skips.pop()
+		else:
+			return False
+		
+		return True
+			
+	def skip(self):
+		for b in self.__dont_skips:
 			if not b:
 				return True
 				
