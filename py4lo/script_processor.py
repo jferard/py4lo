@@ -63,16 +63,19 @@ class ScriptProcessor():
 		self.__directive_processor.new_script()
 		with open(script_fname, 'r', encoding="utf-8") as f:
 			for line in f:
-				m = re.match("^def\s+(.*?)\(.*\):\s*$", line)
-				if m:
-					func_name = m.group(1)
-					if func_name[0] != "_":
-						func_names.append(func_name)
-					s += line
-				elif line[0] == '#':
+				if line[0] == '#':
 					s += self.__directive_processor.process_line(line)
 				else:
-					s += line
+					m = re.match("^def\s+(.*?)\(.*\):\s*$", line)
+					if m:
+						func_name = m.group(1)
+						if func_name[0] != "_":
+							func_names.append(func_name)
+							
+					if self.__directive_processor.ignore_lines():
+						s += "### " + line
+					else:
+						s += line
 
 		s += "\n\ng_exportedScripts = ("+", ".join(func_names)+")\n"
 		self.__func_names_by_script_name[script_name] = func_names

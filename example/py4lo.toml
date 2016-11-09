@@ -1,5 +1,6 @@
 # py4lo.toml file
 
 source_file = "./py4lo-example.ods"
+python_version = "3.0"
 
 # You can override values from default-py4lo.toml

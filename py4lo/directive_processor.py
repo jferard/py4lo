@@ -25,14 +25,15 @@ class DirectiveProcessor():
 		self.__cur_script_fnames = cur_script_fnames
 		self.__py4lo_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 		self.__bootstrap = self.__get_bootstrap()
-		def is_true(self, args):
+		def local_is_true(args):
 			assert args[0] == "python_version"
 			return is_true(python_version, args[1], args[2])
 		
-		self.__branch_processor = BranchProcessor(is_true)
+		self.__branch_processor = BranchProcessor(local_is_true)
 		
 	def new_script(self):
 		self.__bootstrapped = False
+		self.__branch_processor.new_script()
 
 	def process_line(self, line):
 		s = ""
@@ -41,22 +42,31 @@ class DirectiveProcessor():
 			if len(ls) >= 2 and ls[0] == '#' and ls[1] == 'py4lo:':
 				directive = ls[2]
 				args = ls[3:]
-				if directive == 'use':
-					if not self.__bootstrapped:
-						s += self.__bootstrap
-						self.__bootstrapped = True
+				branch = self.__branch_processor.handle_directive(directive, args)
+				if not branch:
+					if self.__branch_processor.skip():
+						s += "### "+line
+					elif directive == 'use':
+						if not self.__bootstrapped:
+							s += self.__bootstrap
+							self.__bootstrapped = True
 
-					if args[0] == 'lib':
-						s += self.__use_lib(args[1:])
+						if args[0] == 'lib':
+							s += self.__use_lib(args[1:])
+						else:
+							s += self.__use_object(args)
 					else:
-						s += self.__use_object(args)
-				elif not self.__branch_processor.handle_directive(directive, args):
-					print("Wrong directive "+directive+" (line ="+line) 
+						print("Wrong directive "+directive+" (line ="+line) 
+			else:
+				if self.__branch_processor.skip():
+					s += "### "+line
+				else:
+					s += line
+		except ValueError:
+			if self.__branch_processor.skip():
+				s += "### "+line
 			else:
 				s += line
-		except ValueError:
-			print ("non parsable line " + line)
-			s += line
 		
 		return s
 
@@ -115,9 +125,15 @@ class DirectiveProcessor():
 	def ignore_lines(self):
 		return self.__branch_processor.skip();
 		
-class BranchHandler():
+class BranchProcessor():
 	def __init__(self, tester):
 		self.__tester = tester
+		self.__dont_skips = []
+		
+	def new_script(self):
+		if len(self.__dont_skips):
+			print ("Branch condition not closed!")
+			
 		self.__dont_skips = []
 
 	def handle_directive(self, directive, args):

@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import unittest
-from directive_processor import is_true, BranchHandler
+from directive_processor import is_true, BranchProcessor
 
 class TestIsTrue(unittest.TestCase):
 
@@ -41,31 +41,31 @@ class TestIsTrue(unittest.TestCase):
 		self.assertEqual(True, is_true("2.1", ">", "2.0"))
 
 	def test_false_branch(self):
-		branch_handler = BranchHandler(lambda args:args[0])
-		self.assertFalse(branch_handler.handle_directive("foo", [True]))
+		branch_processor = BranchProcessor(lambda args:args[0])
+		self.assertFalse(branch_processor.handle_directive("foo", [True]))
 		
 	def test_branch(self):
-		branch_handler = BranchHandler(lambda args:args[0])
+		branch_processor = BranchProcessor(lambda args:args[0])
 		# before everything
-		self.assertFalse(branch_handler.skip())
-		self.assertTrue(branch_handler.handle_directive("if", [True]))
+		self.assertFalse(branch_processor.skip())
+		self.assertTrue(branch_processor.handle_directive("if", [True]))
 		# in first if
-		self.assertFalse(branch_handler.skip())
-		self.assertTrue(branch_handler.handle_directive("if", [False]))
+		self.assertFalse(branch_processor.skip())
+		self.assertTrue(branch_processor.handle_directive("if", [False]))
 		# in first if, but not in second if
-		self.assertTrue(branch_handler.skip())
-		self.assertTrue(branch_handler.handle_directive("elif", [True]))
+		self.assertTrue(branch_processor.skip())
+		self.assertTrue(branch_processor.handle_directive("elif", [True]))
 		# in first if, in second elif
-		self.assertFalse(branch_handler.skip())
-		self.assertTrue(branch_handler.handle_directive("endif", [])) # not tested
+		self.assertFalse(branch_processor.skip())
+		self.assertTrue(branch_processor.handle_directive("endif", [])) # not tested
 		# in first if
-		self.assertFalse(branch_handler.skip())
-		self.assertTrue(branch_handler.handle_directive("elif", [])) # not tested
+		self.assertFalse(branch_processor.skip())
+		self.assertTrue(branch_processor.handle_directive("elif", [])) # not tested
 		# out of first if : even if condition is true, "el" means "else"
-		self.assertTrue(branch_handler.skip())
-		self.assertTrue(branch_handler.handle_directive("endif", [])) # not tested
+		self.assertTrue(branch_processor.skip())
+		self.assertTrue(branch_processor.handle_directive("endif", [])) # not tested
 		# after everything
-		self.assertFalse(branch_handler.skip())
+		self.assertFalse(branch_processor.skip())
 		
 if __name__ == '__main__':
 	unittest.main()

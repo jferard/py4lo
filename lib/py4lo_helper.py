@@ -18,9 +18,18 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import os
 import uno
+# py4lo: if python_version >= 2.6
+# py4lo: if python_version <= 3.0
+import io
+# py4lo: endif
+# py4lo: endif
 from com.sun.star.uno import RuntimeException
 from com.sun.star.awt.MessageBoxButtons import BUTTONS_OK
+# py4lo: if python_version >= 3.0
 from com.sun.star.awt.MessageBoxType import MESSAGEBOX
+# py4lo: else
+MESSAGEBOX = 0
+# py4lo: endif
 
 class Py4LO_helper():
 	def __init__(self):
@@ -106,8 +115,13 @@ class Py4LO_helper():
 			d[name] = o.getByName(name)
 		return d
 			
+# py4lo: if python_version >= 2.6
 	def open_pmlog(self, fpath):
+# py4lo: if python_version < 3.0
+		self.__log_out = io.open(fpath, "w", encoding="utf-8")
+# py4lo: else
 		self.__log_out = open(fpath, "w", encoding="utf-8")
+# py4lo: endif
 			
 	def pmlog(self, text):
 		self.__log_out.write(text+"\n")
@@ -116,13 +130,13 @@ class Py4LO_helper():
 	def __del__(self):
 		if self.__log_out is not None:
 			self.__log_out.close()
+# py4lo: endif
 		
 	def cur_dir(self):
 		url = self.doc.getURL()
 		path = uno.fileUrlToSystemPath( url )
 		return os.path.dirname( path )
-		
-		
+				
 p = Py4LO_helper()		
 def __export_Py4LO_helper():
 	return p
