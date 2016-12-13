@@ -58,7 +58,7 @@ def add_scripts(scripts):
 		
 	return callback
 		
-def add_readme(contact):
+def add_readme_cb(contact):
 	def callback(zout):
 		py4lo_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 		zout.write(os.path.join(py4lo_path, "inc", "script-lc.xml"), "Basic/script-lc.xml")

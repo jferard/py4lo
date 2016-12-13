@@ -19,6 +19,8 @@
 import toml
 import os
 import sys
+import subprocess
+import logging
 from tools import update_ods, open_with_calc, debug_scripts
 
 def load_toml(fname = "py4lo.toml"):
@@ -34,18 +36,33 @@ def load_toml(fname = "py4lo.toml"):
 	else:
 		data.update(temp)
 	
+	if "python_exe" in data:
+		status, version = subprocess.getstatusoutput("\""+data["python_exe"]+"\" -V")
+		if status == 0:
+			data["python_version"] = ((version.split())[1].split("."))[0]
+			
 	if not "python_version" in data:
-		data["python_version"] = str(sys.version_info.major)
-
+		data["python_exe"] = sys.executable
+		data["python_version"] = sys.version_info.major
+		
+#	for d in "src_dir", "test_dir", "target_dir":
+#		data[d] = __relative_unix_path_to_relative_local_path(data[d])
+		
+	data["py4lo_path"] = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
+	if "log_level" not in data or data["log_level"] not in ["CRITICAL", "DEBUG", "ERROR", "FATAL", "INFO", "NOTSET", "WARN", "WARNING"]:
+		data["log_level"] = "INFO"
 	return data
-  
+
+def __relative_unix_path_to_relative_local_path(path):
+	return os.path.sep.join(path.split("/"))
+	
 def debug():
 	tdata = load_toml()
-	return debug_scripts(tdata["debug_file"], ".", tdata["python_version"])
+	return debug_scripts(tdata, "debug_file")
 
 def init():
 	tdata = load_toml()
-	return debug_scripts(tdata["init_file"], ".", tdata["python_version"])
+	return debug_scripts(tdata, "init_file")
 	
 def test():
 	tdata = load_toml()
@@ -54,4 +71,4 @@ def test():
 
 def update():
 	tdata = load_toml()
-	return update_ods(tdata["source_file"], tdata["default_suffix"], tdata["add_readme"], tdata["readme_contact"], ".", tdata["python_version"])
+	return update_ods(tdata)

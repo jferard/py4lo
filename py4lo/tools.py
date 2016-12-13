@@ -18,6 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import os
 import zipfile
+import logging
 from callbacks import *
 from script_processor import ScriptProcessor
 
@@ -37,30 +38,58 @@ def update_zip(zip_source_name,zip_dest_name, before_callbacks = [],
 			if not after_callback(zout):
 				break
 
-def update_ods(ods_source_name, suffix = "generated", readme = False, contact = "<add a contact in default-py4lo.toml file>", scripts_path=".", python_version="3"):
+def update_ods(tdata):
+	ods_source_name = tdata["source_file"]
+	suffix = tdata["default_suffix"]
+	add_readme = tdata["add_readme"]
+	readme_contact = tdata["readme_contact"]
+	src_dir = tdata["src_dir"]
+	target_dir = tdata["target_dir"]
+	python_version = tdata["python_version"]
+
+	logger = logging.getLogger("py4lo")
+	logging.info("")
+	logger.setLevel(tdata["log_level"])
 	ods_dest_name = ods_source_name[0:-4]+"-"+suffix+ods_source_name[-4:]
-	script_fnames = set(os.path.join(scripts_path, f) for f in os.listdir(scripts_path) if f.endswith(".py"))
-	script_processor = ScriptProcessor(scripts_path, python_version)
+
+	logger.warn("Debug or init. Generating %s for Python %s", ods_dest_name, python_version)
+	logger.setLevel(tdata["log_level"])
+	logger.setLevel("DEBUG")
+	logger.critical("Debug or init. Generating %s for Python %s", ods_dest_name, python_version)
+	logger.info("Debug or init. Generating %s for Python %s", ods_dest_name, python_version)
+	
+	script_fnames = set(os.path.join(src_dir, fname) for fname in os.listdir(src_dir) if fname.endswith(".py"))
+	script_processor = ScriptProcessor(logger, src_dir, python_version, target_dir)
 	script_processor.process(script_fnames)
 
 	item_cbs = [ignore_scripts, rewrite_manifest(script_processor.get_scripts())]
 	after_cbs = [add_scripts(script_processor.get_scripts())]
-	if readme:
-		after_cbs.append(add_readme(contact))
+	if add_readme:
+		after_cbs.append(add_readme_cb(readme_contact))
+		
 	update_zip(ods_source_name, ods_dest_name, item_callbacks = item_cbs, after_callbacks = after_cbs)
 	return ods_dest_name
 
-def debug_scripts(debug_file, scripts_path=".", python_version="3"):
-	ods_dest_name = debug_file
-	script_fnames = set(os.path.join(scripts_path, f) for f in os.listdir(scripts_path) if f.endswith(".py"))
-	script_processor = ScriptProcessor(scripts_path, python_version)
+def debug_scripts(tdata, file_key):
+	# retrieve infos from data
+	target_dir = tdata["target_dir"]
+	debug_path = os.path.join(target_dir, tdata[file_key])
+	src_dir = tdata["src_dir"]
+	python_version = tdata["python_version"]
+	ods_dest_name = tdata[file_key]
+	
+	logger = logging.getLogger("py4lo")
+	logging.info("")
+	logger.setLevel(tdata["log_level"])
+	logger.info("Debug or init. Generating %s for Python %s", debug_path, python_version)
+	
+	script_fnames = set(os.path.join(src_dir, fname) for fname in os.listdir(src_dir) if fname.endswith(".py"))
+	script_processor = ScriptProcessor(logger, src_dir, python_version, target_dir)
 	script_processor.process(script_fnames)
 	
-	py4lo_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
-
 	item_cbs = [ignore_scripts, rewrite_manifest(script_processor.get_scripts())]
-	after_cbs = [add_scripts(script_processor.get_scripts()), add_debug_content(script_processor.get_func_names_by_script_name())]
-	update_zip(os.path.join(py4lo_path, "inc", "debug.ods"), ods_dest_name, item_callbacks = item_cbs, after_callbacks = after_cbs)
+	after_cbs = [add_scripts(script_processor.get_scripts()), add_debug_content(script_processor.get_exported_func_names_by_script_name())]
+	update_zip(os.path.join(tdata["py4lo_path"], "inc", "debug.ods"), ods_dest_name, item_callbacks = item_cbs, after_callbacks = after_cbs)
 	return ods_dest_name
 	
 def open_with_calc(ods_name, calc_exe):

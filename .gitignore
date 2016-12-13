@@ -7,3 +7,5 @@ example/py4lo-debug.ods
 example/new-project.ods
 example/py4lo-example-updated.ods
 example/*.ods#
+example/target
+example/target/*

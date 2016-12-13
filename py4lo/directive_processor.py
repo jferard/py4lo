@@ -39,7 +39,7 @@ class DirectiveProcessor():
 		s = ""
 		try:
 			ls = shlex.split(line)
-			if len(ls) >= 2 and ls[0] == '#' and ls[1] == 'py4lo:':
+			if len(ls) >= 2 and ls[0] == '#' and ls[1] == 'py4lo:': # thats a directive
 				directive = ls[2]
 				args = ls[3:]
 				branch = self.__branch_processor.handle_directive(directive, args)
@@ -57,7 +57,7 @@ class DirectiveProcessor():
 							s += self.__use_object(args)
 					else:
 						print("Wrong directive "+directive+" (line ="+line) 
-			else:
+			else: # thats a simple comment
 				if self.__branch_processor.skip():
 					s += "### "+line
 				else:
