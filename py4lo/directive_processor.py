@@ -55,6 +55,13 @@ class DirectiveProcessor():
 							s += self.__use_lib(args[1:])
 						else:
 							s += self.__use_object(args)
+					elif directive == 'include':
+						filename = os.path.join(self.__scripts_path, "inc", args[0]+".py")
+						s += "# begin py4lo include: "+filename+"\n"
+						with open(filename, 'r', encoding='utf-8') as f:
+							for line in f:
+								s += line
+						s += "\n# end py4lo include\n"
 					else:
 						print("Wrong directive "+directive+" (line ="+line) 
 			else: # thats a simple comment
