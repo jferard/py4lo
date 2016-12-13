@@ -97,6 +97,10 @@ class Py4LO_helper():
 	def new_doc(self):
 		return self.loader.loadComponentFromURL(
 	                 "private:factory/scalc", "_blank", 0, () )
+
+    def open_in_calc(self, filename):
+        self.loader.loadComponentFromURL(
+            uno.systemPathToFileUrl(filename), "_blank", 0, ())
 					 
 	def get_last_used_row(self, oSheet):
 		oCell = oSheet.GetCellByPosition(0, 0)
@@ -115,27 +119,48 @@ class Py4LO_helper():
 			d[name] = o.getByName(name)
 		return d
 			
-# py4lo: if python_version >= 2.6
-	def open_pmlog(self, fpath):
-# py4lo: if python_version < 3.0
-		self.__log_out = io.open(fpath, "w", encoding="utf-8")
-# py4lo: else
-		self.__log_out = open(fpath, "w", encoding="utf-8")
-# py4lo: endif
-			
-	def pmlog(self, text):
-		self.__log_out.write(text+"\n")
-		self.__log_out.flush()
+    def read_options_from_sheet_name(self, sheet_name):
+        oSheet = self.doc.Sheets.getByName(sheet_name)
+        oCell = oSheet.getCellByPosition(0, 0)
+        oCursor = oSheet.createCursorByRange(oCell)
+        oCursor.gotoEndOfUsedArea(True)
+        aAddress = oCursor.RangeAddress
+        return self.read_options(oSheet, aAddress)
 
-	def __del__(self):
-		if self.__log_out is not None:
-			self.__log_out.close()
-# py4lo: endif
+    def read_options(self, oSheet, aAddress):
+        options = {}
+        for r in range(aAddress.StartRow, aAddress.EndRow+1):
+            k = oSheet.getCellByPosition(aAddress.StartColumn, r).String.strip()
+            v = oSheet.getCellByPosition(aAddress.StartColumn+1, r).String.strip()
+            if k and v:
+                options[self.sanitize(k)] = self.sanitize(v)
+        return options
+
+    def get_named_cells(self, name):
+        return self.doc.NamedRanges.getByName(name).ReferredCells
+        
+    def get_named_cell(self, name):
+        return self.get_named_cells(name).getCellByPosition(0,0)
 		
-	def cur_dir(self):
-		url = self.doc.getURL()
-		path = uno.fileUrlToSystemPath( url )
-		return os.path.dirname( path )
+    def set_validation_list_by_name(self, cell_name, fields, default_string=None, allow_blank=False):
+        oCell = self.get_named_cell(cell_name)
+		self.set_validation_list_by_cell(self, oCell, fields, default_string=None, allow_blank=False):
+		
+    def set_validation_list_by_cell(self, oCell, fields, default_string=None, allow_blank=False):
+        oValidation = oCell.Validation
+        oValidation.Type = uno.getConstantByName(
+                            "com.sun.star.sheet.ValidationType.LIST")
+        oValidation.ShowErrorMessage = True                    #Anomalies bloquantes
+        oValidation.ShowList = uno.getConstantByName(        #Liste déroulante
+                            "com.sun.star.sheet.TableValidationVisibility.UNSORTED")
+        formula = ";".join('"'+a+'"' for a in fields) #Les valeurs autorisées, entre guillemets et ;
+        oValidation.setFormula1(formula)
+        oValidation.IgnoreBlankCells = allow_blank            #Saisie obligatoire ?
+        cell.Validation = oValidation                        #Affecter validation
+        
+        if default_string is not None:
+            cell.String = default_string 
+			
 				
 p = Py4LO_helper()		
 def __export_Py4LO_helper():
