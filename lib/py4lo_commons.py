@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Py4LO - Python Toolkit For LibreOffice Calc
-	  Copyright (C) 2016 J. Férard <https://github.com/jferard>
+      Copyright (C) 2016 J. Férard <https://github.com/jferard>
   
    This file is part of Py4LO.
   
@@ -17,6 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import unicodedata
+import logging
    
 class Bus:
     """A minimal bus minimal to communicate with front end"""
@@ -33,46 +34,52 @@ class Bus:
                 m = getattr(s, m_name)
                 m(event_data)
 
-# py4lo: if python_version >= 2.6
-Class PMLogger:
-	def __init__(self, fpath):
-# py4lo: if python_version < 3.0
-		import io
-		self.__log_out = io.open(fpath, "w", encoding="utf-8")
-# py4lo: else
-		self.__log_out = open(fpath, "w", encoding="utf-8")
-# py4lo: endif
-			
-	def pmlog(self, text):
-		self.__log_out.write(text+"\n")
-		self.__log_out.flush()
-
-	def __del__(self):
-		if self.__log_out is not None:
-			self.__log_out.close()
-# py4lo: endif
-				
 class Commons:
+    def __init__(self):
+        self.__logger = None
+
+    def __del__(self):
+        if self.__logger is not None:
+            for h in self.__logger.handlers:
+                h.flush()
+                h.close()
+        
     def create_bus(self):
         return Bus()
         
-	def cur_dir(self):
-		url = self.doc.getURL()
-		path = uno.fileUrlToSystemPath( url )
-		return os.path.dirname( path )
+    def cur_dir(self):
+        url = self.doc.getURL()
+        path = uno.fileUrlToSystemPath( url )
+        return os.path.dirname( path )
             
     def sanitize(self, s):
-		import unicodedata
+        import unicodedata
         try:
             s = unicodedata.normalize('NFKD', s).encode('ascii','ignore')
         except Exception as e:
             pass
         return s
 
-	def logger(self):
-		return PMLogger()
+    def init_logger(self, path="py4lo.log", mode="a", level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
+        self.__logger = self.get_logger(path, mode, level)
+        
+    def get_logger(self, path="py4lo.log", mode="a", level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
+        fh = logging.FileHandler(path, mode)
+        formatter = logging.Formatter(format)
+        fh.setFormatter(formatter)        
+        fh.setLevel(level)
+
+        logger = logging.getLogger()
+        logger.addHandler(fh)
+        logger.setLevel(level)
+        return logger
+        
+    def logger(self):
+        if self.__logger is None:
+            self.__logger = self.get_logger()
+        return self.__logger
         
 # export        
-c = Commons()
+cc = Commons()
 def __export_commons():
-    return c
+    return cc
