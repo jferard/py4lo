@@ -74,9 +74,11 @@ def run():
     tdata = load_toml()
     status, dest_name = test()
     if status == 0:
+        print ("All tests ok")
         open_with_calc(dest_name, tdata["calc_exe"])
     else:
         print ("Error: some tests failed")
+		
 def update():
     tdata = load_toml()
     return update_ods(tdata)

@@ -93,6 +93,7 @@ def debug_scripts(tdata, file_key):
     
 def open_with_calc(ods_name, calc_exe):
     r = subprocess.call([calc_exe, ods_name])
+	
 def test_all(tdata):
     final_status = 0
     for dirpath, dirnames, filenames in os.walk(tdata["test_dir"]):
