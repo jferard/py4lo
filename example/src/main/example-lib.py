@@ -21,12 +21,12 @@
 # py4lo: include license
 
 class O():
-	def lib_example(self):
-		from com.sun.star.awt.MessageBoxType import MESSAGEBOX
-		from com.sun.star.awt.MessageBoxButtons import BUTTONS_OK
-		_.message_box(_.parent_win, "A message from imported lib example-lib.py", "py4lo", MESSAGEBOX, BUTTONS_OK)
+    def lib_example(self):
+        from com.sun.star.awt.MessageBoxType import MESSAGEBOX
+        from com.sun.star.awt.MessageBoxButtons import BUTTONS_OK
+        _.message_box(_.parent_win, "A message from imported lib example-lib.py", "py4lo", MESSAGEBOX, BUTTONS_OK)
 
 def __export_o():
-	return O()
+    return O()
 
    

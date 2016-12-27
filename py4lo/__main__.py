@@ -18,38 +18,42 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import sys
 import argparse
-from cmd import test, debug, update, init
+from cmd import run, test, debug, update, init
 
 sys.argv.pop(0) # remove the 
 command = sys.argv[0]
 
 if command == '-h' or command == '--help':
-	print ("""usage: py4lo.py -h|--help|command [args]
+    print ("""usage: py4lo.py -h|--help|command [args]
 
 Python for LibreOffice.
 
 -h, --help  show this help message and exit
 command     a command = debug|help|init|test|update
             debug:  creates a debug.ods file with button for each function
-			help:   more specific help
-			init:   create a standard file
-			test:   update + open the created file
-			update: updates the file with all scripts""")
-elif command == 'test':
-	parser = argparse.ArgumentParser(description='Python for LibreOffice : test')
-	args = parser.parse_args()
-	test()
+            help:   more specific help
+            init:   create a standard file
+            test:   update + open the created file
+            update: updates the file with all scripts""")
 elif command == 'debug':
-	parser = argparse.ArgumentParser(description='Python for LibreOffice : debug')
-	args = parser.parse_args()
-	debug()
+    parser = argparse.ArgumentParser(description='Python for LibreOffice : debug')
+    args = parser.parse_args()
+    debug()
 elif command == 'init':
-	parser = argparse.ArgumentParser(description='Python for LibreOffice : debug')
-	args = parser.parse_args()
-	init()
+    parser = argparse.ArgumentParser(description='Python for LibreOffice : debug')
+    args = parser.parse_args()
+    init()
 elif command == 'update':
-	parser = argparse.ArgumentParser(description='Python for LibreOffice : update')
-	args = parser.parse_args()
-	update()
+    parser = argparse.ArgumentParser(description='Python for LibreOffice : update')
+    args = parser.parse_args()
+    update()
+elif command == 'test':
+    parser = argparse.ArgumentParser(description='Python for LibreOffice : test')
+    args = parser.parse_args()
+    test()
+elif command == 'run':
+    parser = argparse.ArgumentParser(description='Python for LibreOffice : run')
+    args = parser.parse_args()
+    run()
 elif command == 'help':
-	print("""TODO. See https://github.com/jferard/py4lo/README.md""")
+    print("""TODO. See https://github.com/jferard/py4lo/README.md""")

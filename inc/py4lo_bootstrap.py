@@ -18,9 +18,9 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 
 def use_local(object_ref):
-	doc = XSCRIPTCONTEXT.getDocument()						#Document
-	dsp = doc.getScriptProvider()
-	
-	(fname_wo_py, oname) = object_ref.split("::")
-	import_script = dsp.getScript("vnd.sun.star.script:"+fname_wo_py+".py$__export_"+oname+"?language=Python&location=document")
-	return import_script.invoke((), (), ())[0]
+    doc = XSCRIPTCONTEXT.getDocument()                        #Document
+    dsp = doc.getScriptProvider()
+    
+    (fname_wo_py, oname) = object_ref.split("::")
+    import_script = dsp.getScript("vnd.sun.star.script:"+fname_wo_py+".py$__export_"+oname+"?language=Python&location=document")
+    return import_script.invoke((), (), ())[0]

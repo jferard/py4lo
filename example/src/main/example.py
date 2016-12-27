@@ -21,12 +21,12 @@ import uno
 # py4lo: use lib "py4lo_helper::Py4LO_helper" as _
    
 def message_example(*args):
-	from com.sun.star.awt.MessageBoxType import MESSAGEBOX
-	from com.sun.star.awt.MessageBoxButtons import BUTTONS_OK
-	_.message_box(_.parent_win, "A message from main script example.py", "py4lo", MESSAGEBOX, BUTTONS_OK)
-	
+    from com.sun.star.awt.MessageBoxType import MESSAGEBOX
+    from com.sun.star.awt.MessageBoxButtons import BUTTONS_OK
+    _.message_box(_.parent_win, "A message from main script example.py", "py4lo", MESSAGEBOX, BUTTONS_OK)
+    
 def xray_example(*args):
-	_.xray(_.doc)
-	
+    _.xray(_.doc)
+    
 def example_from_lib(*args):
-	o.lib_example()
+    o.lib_example()
