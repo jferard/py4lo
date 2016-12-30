@@ -9,3 +9,4 @@ example/py4lo-example-updated.ods
 example/*.ods#
 example/target
 example/target/*
+**/*.pyc

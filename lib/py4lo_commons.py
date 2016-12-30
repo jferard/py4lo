@@ -62,6 +62,7 @@ class Commons:
 
     def init_logger(self, path="py4lo.log", mode="a", level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
         self.__logger = self.get_logger(path, mode, level)
+        return self.__logger
         
     def get_logger(self, path="py4lo.log", mode="a", level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
         fh = logging.FileHandler(path, mode)

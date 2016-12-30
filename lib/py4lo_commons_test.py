@@ -16,13 +16,35 @@
   
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
-def use_local(object_ref):
-    try:
-        doc = XSCRIPTCONTEXT.getDocument()
-        dsp = doc.getScriptProvider()
-        
-        (fname_wo_py, oname) = object_ref.split("::")
-        import_script = dsp.getScript("vnd.sun.star.script:"+fname_wo_py+".py$__export_"+oname+"?language=Python&location=document")
-        return import_script.invoke((), (), ())[0]
-    except:
-        return None
+import unittest
+import sys, os
+from unittest.mock import Mock   
+
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), "."))
+from py4lo_commons import *
+
+class TestBus(unittest.TestCase):
+    def setUp(self):
+        self.b = Bus()
+        self.s = Mock()
+
+    def test(self):
+        self.b.subscribe(self.s)
+        self.b.post("b", "a")
+        self.b.post("a", "b")
+
+        # verify
+        self.s._handle_b.assert_called_with("a")
+        self.s._handle_a.assert_called_with("b")
+
+    def test2(self):
+        self.b.subscribe(self)
+        self.b.post("x", "a")
+        self.b.post("y", "a")
+        self.assertEqual("oka", self.v)
+
+    def _handle_y(self, data):
+        self.v = "ok" + data
+
+if __name__ == '__main__':
+    unittest.main()        
