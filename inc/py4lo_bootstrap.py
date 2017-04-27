@@ -17,22 +17,9 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 def use_local(object_ref):
-#    doc = XSCRIPTCONTEXT.getDocument()
-#    dsp = doc.getScriptProvider()
-#    (fname_wo_py, oname) = object_ref.split("::")
-#    uri = "vnd.sun.star.script:"+fname_wo_py+".py$__export_"+oname+"?language=Python&location=document"
-#    import_script = dsp.getScript(uri)
-#    return import_script.invoke((), (), ())[0]
-    return None
-        
-def prepare_import():
-    import unohelper
-    import sys
-
     doc = XSCRIPTCONTEXT.getDocument()
-    print (doc)
-    url = unohelper.fileUrlToSystemPath(doc.URL+'/Scripts/python')
-    print (url)
-    print (sys.path)
-    if url not in sys.path:
-        sys.path.insert(0, url)
+    dsp = doc.getScriptProvider()
+    (fname_wo_py, oname) = object_ref.split("::")
+    uri = "vnd.sun.star.script:"+fname_wo_py+".py$__export_"+oname+"?language=Python&location=document"
+    import_script = dsp.getScript(uri)
+    return import_script.invoke((), (), ())[0]

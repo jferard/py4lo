@@ -16,21 +16,16 @@
   
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
-import uno
-import sys
-import unohelper
+def prepare_import():
+    import unohelper
+    import sys
 
-# py4lo: import py4lo_helper
-_ = py4lo_helper.Py4LO_helper(XSCRIPTCONTEXT)
+    doc = XSCRIPTCONTEXT.getDocument()
+    print (doc)
+    url = unohelper.fileUrlToSystemPath(doc.URL+'/Scripts/python')
+    print (url)
+    print (sys.path)
+    if url not in sys.path:
+        sys.path.insert(0, url)
 
-def message_example(*args):
-    from com.sun.star.awt.MessageBoxType import MESSAGEBOX
-    from com.sun.star.awt.MessageBoxButtons import BUTTONS_OK
-    print (dir(_))
-    _.message_box(_.parent_win, "A message from main script example.py", "py4lo", MESSAGEBOX, BUTTONS_OK)
-    
-def xray_example(*args):
-    _.xray(_.doc)
-    
-def example_from_lib(*args):
-    o.lib_example()
+prepare_import()
