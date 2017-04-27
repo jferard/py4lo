@@ -16,11 +16,13 @@
   
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
-# py4lo: use lib "py4lo_helper::Py4LO_helper" as _
+## py4lo: use lib "py4lo_helper::Py4LO_helper" as _
 
 # py4lo: include license
+import sys
+import unohelper
 
-class O():
+class O(unohelper.Base):
     def lib_example(self):
         from com.sun.star.awt.MessageBoxType import MESSAGEBOX
         from com.sun.star.awt.MessageBoxButtons import BUTTONS_OK

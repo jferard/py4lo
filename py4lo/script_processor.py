@@ -99,7 +99,13 @@ class ScriptProcessor():
         
     def __write_script(self, script): 
         script_name = script.get_name()
+        self.__ensure_target_dir_exists()
         target_filename = os.path.join(self.__target_dir, script_name)
         self.__logger.log(logging.DEBUG, "Writing script: %s (%s)", script_name, target_filename)
         with open(target_filename, 'wb') as f:
             f.write(script.get_data())
+
+    def __ensure_target_dir_exists(self):
+        if not os.path.exists(self.__target_dir):
+            os.mkdir(self.__target_dir)
+            

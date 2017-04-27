@@ -18,6 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import os
 import uno
+import unohelper
 # py4lo: if python_version >= 2.6
 # py4lo: if python_version <= 3.0
 import io
@@ -31,8 +32,8 @@ from com.sun.star.awt.MessageBoxType import MESSAGEBOX
 MESSAGEBOX = 0
 # py4lo: endif
 
-class Py4LO_helper():
-    def __init__(self):
+class Py4LO_helper(unohelper.Base):
+    def __init__(self, XSCRIPTCONTEXT):
         self.doc = XSCRIPTCONTEXT.getDocument()
         self.ctxt = uno.getComponentContext()
 
@@ -162,6 +163,6 @@ class Py4LO_helper():
             cell.String = default_string 
             
                 
-p = Py4LO_helper()        
-def __export_Py4LO_helper():
-    return p
+#p = Py4LO_helper(None)        
+#def __export_Py4LO_helper():
+#    return p

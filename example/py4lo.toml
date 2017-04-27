@@ -4,3 +4,7 @@ source_file = "./py4lo-example.ods"
 python_version = "3.0"
 
 # You can override values from default-py4lo.toml
+# For Linux-Ubuntu
+calc_exe = "/usr/lib/libreoffice/program/scalc"
+python_exe = "/usr/bin/python3"
+

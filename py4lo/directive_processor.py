@@ -131,6 +131,14 @@ class DirectiveProcessor():
 
     def ignore_lines(self):
         return self.__branch_processor.skip();
+
+class Directive():
+    def execute(self, directive, args):
+        raise NotImplementedError("interface")
+
+class UseLib(Directive):
+    pass
+
         
 class BranchProcessor():
     def __init__(self, tester):
@@ -167,7 +175,7 @@ class BranchProcessor():
                 return True
                 
         return False
-        
+
 def is_true(str1, comparator, str2):
     if str1 < str2:
         cmp = -1
