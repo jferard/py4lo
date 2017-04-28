@@ -1,6 +1,7 @@
 # dirs
 mydir/*
 py4lo/__pycache__/*
+.cache
 
 # generated files
 example/py4lo-debug.ods
@@ -10,3 +11,4 @@ example/*.ods#
 example/target
 example/target/*
 **/*.pyc
+.coverage

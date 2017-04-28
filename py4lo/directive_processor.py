@@ -20,15 +20,17 @@ import shlex
 import os
 
 from directive import UseLib, UseObject, Include, Import, Fail
+from branch_processor import BranchProcessor
+from comparator import Comparator
 
 class DirectiveProcessor():
     def __init__(self, python_version, scripts_path, cur_script_fnames):
         self.__scripts_path = scripts_path
         self.__cur_script_fnames = cur_script_fnames
         self.__py4lo_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
+        comparator = Comparator({'python_version', python_version}) 
         def local_is_true(args):
-            assert args[0] == "python_version"
-            return is_true(python_version, args[1], args[2])
+            return comparator.is_true(args[0], args[1], args[2])
         
         self.__branch_processor = BranchProcessor(local_is_true)
         self.__directives = [UseLib(self.__py4lo_path), UseObject(self.__scripts_path), Include(self.__scripts_path), Import(self.__py4lo_path), Fail()]
@@ -114,49 +116,3 @@ class DirectiveProcessor():
 
     def ignore_lines(self):
         return self.__branch_processor.skip();
-
-class BranchProcessor():
-    def __init__(self, tester):
-        self.__tester = tester
-        self.__dont_skips = []
-        
-    def new_script(self):
-        if len(self.__dont_skips):
-            print ("Branch condition not closed!")
-            
-        self.__dont_skips = []
-
-    def handle_directive(self, directive, args):
-        if directive == 'if':
-            self.__dont_skips.append(self.__tester(args))
-        elif directive == 'elif':
-            if self.__dont_skips[-1]:
-                self.__dont_skips[-1] = False
-            elif self.__tester(args):
-                self.__dont_skips[-1] = True
-            # else : self.__dont_skips stays False
-        elif directive == 'else':
-            self.__dont_skips[-1] = not self.__dont_skips[-1]
-        elif directive == 'endif':
-            self.__dont_skips.pop()
-        else:
-            return False
-        
-        return True
-            
-    def skip(self):
-        for b in self.__dont_skips:
-            if not b:
-                return True
-                
-        return False
-
-def is_true(str1, comparator, str2):
-    if str1 < str2:
-        cmp = -1
-    elif str1 == str2:
-        cmp = 0
-    else:
-        cmp = 1
-
-    return cmp == -1 and comparator in ["<", "<="] or cmp == 0 and comparator in ["<=", "==", ">="] or cmp == 1 and comparator in [">", ">="]

@@ -6,12 +6,16 @@ python:
 
 # command to run tests and install dependencies
 install:
+  # for coverage
   - pip install codecov
+  - pip install pytest-cov
+
+  # dependencies
   - pip install -r requirements.txt
 
 # script
 script:
-  - py.test
+  - py.test --cov=./ test
 
 after_success:
   - codecov

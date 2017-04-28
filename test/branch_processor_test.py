@@ -17,29 +17,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import unittest
-from directive_processor import is_true, BranchProcessor
+import env
+from branch_processor import BranchProcessor
 
-class TestIsTrue(unittest.TestCase):
-
-    def test_is_true(self):
-        self.assertEqual(False, is_true("2.0", "<", "2.0"))
-        self.assertEqual(True, is_true("2.0", "<=", "2.0"))
-        self.assertEqual(True, is_true("2.0", "==", "2.0"))
-        self.assertEqual(True, is_true("2.0", ">=", "2.0"))
-        self.assertEqual(False, is_true("2.0", ">", "2.0"))
-
-        self.assertEqual(True, is_true("2.0", "<", "2.1"))
-        self.assertEqual(True, is_true("2.0", "<=", "2.1"))
-        self.assertEqual(False, is_true("2.0", "==", "2.1"))
-        self.assertEqual(False, is_true("2.0", ">=", "2.1"))
-        self.assertEqual(False, is_true("2.0", ">", "2.1"))
-
-        self.assertEqual(False, is_true("2.1", "<", "2.0"))
-        self.assertEqual(False, is_true("2.1", "<=", "2.0"))
-        self.assertEqual(False, is_true("2.1", "==", "2.0"))
-        self.assertEqual(True, is_true("2.1", ">=", "2.0"))
-        self.assertEqual(True, is_true("2.1", ">", "2.0"))
-
+class TestBranchProcessor(unittest.TestCase):
     def test_false_branch(self):
         branch_processor = BranchProcessor(lambda args:args[0])
         self.assertFalse(branch_processor.handle_directive("foo", [True]))
