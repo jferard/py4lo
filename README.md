@@ -18,6 +18,10 @@ Then install requirements (you may need to be in adminstrator mode):
 > pip install -r requirements.txt
 ```
 
+For Ubuntu:
+```
+> sudo apt-get install libreoffice-script-provider-python
+```
 
 ## Quick start
 Create a new dir:
