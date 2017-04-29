@@ -21,32 +21,44 @@ import env
 from branch_processor import BranchProcessor
 
 class TestBranchProcessor(unittest.TestCase):
+    def setUp(self):
+        self.bp = BranchProcessor(lambda args:args[0])
+
     def test_false_branch(self):
-        branch_processor = BranchProcessor(lambda args:args[0])
-        self.assertFalse(branch_processor.handle_directive("foo", [True]))
-        
+        self.assertFalse(self.bp.handle_directive("foo", [True]))
+
     def test_branch(self):
-        branch_processor = BranchProcessor(lambda args:args[0])
         # before everything
-        self.assertFalse(branch_processor.skip())
-        self.assertTrue(branch_processor.handle_directive("if", [True]))
+        self.assertFalse(self.bp.skip())
+        self.assertTrue(self.bp.handle_directive("if", [True]))
         # in first if
-        self.assertFalse(branch_processor.skip())
-        self.assertTrue(branch_processor.handle_directive("if", [False]))
+        self.assertFalse(self.bp.skip())
+        self.assertTrue(self.bp.handle_directive("if", [False]))
         # in first if, but not in second if
-        self.assertTrue(branch_processor.skip())
-        self.assertTrue(branch_processor.handle_directive("elif", [True]))
+        self.assertTrue(self.bp.skip())
+        self.assertTrue(self.bp.handle_directive("elif", [True]))
         # in first if, in second elif
-        self.assertFalse(branch_processor.skip())
-        self.assertTrue(branch_processor.handle_directive("endif", [])) # not tested
+        self.assertFalse(self.bp.skip())
+        self.assertTrue(self.bp.handle_directive("endif", [])) # not tested
         # in first if
-        self.assertFalse(branch_processor.skip())
-        self.assertTrue(branch_processor.handle_directive("elif", [])) # not tested
+        self.assertFalse(self.bp.skip())
+        self.assertTrue(self.bp.handle_directive("elif", [])) # not tested
         # out of first if : even if condition is true, "el" means "else"
-        self.assertTrue(branch_processor.skip())
-        self.assertTrue(branch_processor.handle_directive("endif", [])) # not tested
+        self.assertTrue(self.bp.skip())
+        self.assertTrue(self.bp.handle_directive("endif", [])) # not tested
         # after everything
-        self.assertFalse(branch_processor.skip())
-        
+        self.assertFalse(self.bp.skip())
+
+    def test_not_closed(self):
+        self.assertTrue(self.bp.handle_directive("if", [True]))
+        with self.assertRaises(ValueError):
+            self.bp.new_script()
+
+    def test_closed(self):
+        self.assertTrue(self.bp.handle_directive("if", [True]))
+        self.assertTrue(self.bp.handle_directive("else", []))
+        self.assertTrue(self.bp.handle_directive("endif", []))
+        self.bp.new_script()
+
 if __name__ == '__main__':
     unittest.main()

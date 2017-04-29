@@ -20,39 +20,54 @@ import logging
 
 class BranchProcessor():
     def __init__(self, tester):
-        self.__tester = tester
+        self.__assertion_is_true = tester
         self.__dont_skips = []
-        
+
     def new_script(self):
         if len(self.__dont_skips):
             logging.error("Branch condition not closed!")
-            
+            raise ValueError("Branch condition not closed!")
+
         self.__dont_skips = []
 
     def handle_directive(self, directive, args):
         if directive == 'if':
-            self.__dont_skips.append(self.__tester(args))
+            self.__begin_block_and_skip_if_not(self.__assertion_is_true(args))
         elif directive == 'elif':
-            if self.__dont_skips[-1]:
-                self.__dont_skips[-1] = False
-            elif self.__tester(args):
-                self.__dont_skips[-1] = True
-            # else : self.__dont_skips stays False
+            if self.__was_not_skipping():
+                self.__start_skipping()
+            elif self.__assertion_is_true(args):
+                self.__stop_skipping()
+            # else : continue to skip
         elif directive == 'else':
-            self.__dont_skips[-1] = not self.__dont_skips[-1]
+            self.__flip_skipping()
         elif directive == 'endif':
-            self.__dont_skips.pop()
+            self.__end_block()
         else:
             return False
-        
+
         return True
-            
+
+    def __was_not_skipping(self):
+        return self.__dont_skips[-1]
+
+    def __start_skipping(self):
+        self.__dont_skips[-1] = False
+
+    def __stop_skipping(self):
+        self.__dont_skips[-1] = True
+
+    def __flip_skipping(self):
+        self.__dont_skips[-1] = not self.__dont_skips[-1]
+
+    def __begin_block_and_skip_if_not(self, b):
+        self.__dont_skips.append(b)
+
+    def __end_block(self):
+        self.__dont_skips.pop()
+
     def skip(self):
-        for b in self.__dont_skips:
-            if not b:
-                return True
-                
-        return False
+        return False in self.__dont_skips
 
 def is_true(str1, comparator, str2):
     if str1 < str2:
