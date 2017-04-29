@@ -16,21 +16,15 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
-import sys
-import argparse
-from cmd import load_toml
-from commands import commands
 
-sys.argv.pop(0) # remove the command
-command_name = sys.argv.pop(0)
-tdata = load_toml()
+from tools import update_ods, test_all
 
-if command_name == '-h' or command_name == '--help':
-    command = help_command
-elif command_name in commands:
-    command = commands[command_name]
-else:
-    print ("Unkwnon command:"+command_name)
-    command = help_command
+class TestCommand():
+    def execute(self, args, tdata):
+        status = test_all(tdata)
+        return status
 
-command.execute(sys.argv, tdata)
+    def get_help(self):
+        return "Do the test"
+
+test_command = TestCommand()

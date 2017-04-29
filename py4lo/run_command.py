@@ -16,21 +16,20 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
-import sys
-import argparse
-from cmd import load_toml
-from commands import commands
 
-sys.argv.pop(0) # remove the command
-command_name = sys.argv.pop(0)
-tdata = load_toml()
+from tools import test_all, update_ods
 
-if command_name == '-h' or command_name == '--help':
-    command = help_command
-elif command_name in commands:
-    command = commands[command_name]
-else:
-    print ("Unkwnon command:"+command_name)
-    command = help_command
+class RunCommand():
+    def execute(self, args, tdata):
+        status = test_all(tdata)
+        dest_name = update_ods(tdata)
+        if status == 0:
+            print ("All tests ok")
+            open_with_calc(dest_name, tdata["calc_exe"])
+        else:
+            print ("Error: some tests failed")
 
-command.execute(sys.argv, tdata)
+    def get_help(self):
+        return "Update + open the created file"
+
+run_command = RunCommand()

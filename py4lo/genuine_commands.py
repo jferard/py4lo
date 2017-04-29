@@ -16,21 +16,17 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
-import sys
-import argparse
-from cmd import load_toml
-from commands import commands
 
-sys.argv.pop(0) # remove the command
-command_name = sys.argv.pop(0)
-tdata = load_toml()
+from debug_command import debug_command
+from init_command import init_command
+from test_command import test_command
+from run_command import run_command
+from update_command import update_command
 
-if command_name == '-h' or command_name == '--help':
-    command = help_command
-elif command_name in commands:
-    command = commands[command_name]
-else:
-    print ("Unkwnon command:"+command_name)
-    command = help_command
-
-command.execute(sys.argv, tdata)
+genuine_commands = {
+    'debug' : debug_command,
+    'init' : init_command,
+    'test' : test_command,
+    'run' : run_command,
+    'update' : update_command,
+}

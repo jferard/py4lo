@@ -16,21 +16,14 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
-import sys
-import argparse
-from cmd import load_toml
-from commands import commands
 
-sys.argv.pop(0) # remove the command
-command_name = sys.argv.pop(0)
-tdata = load_toml()
+from tools import debug_scripts
 
-if command_name == '-h' or command_name == '--help':
-    command = help_command
-elif command_name in commands:
-    command = commands[command_name]
-else:
-    print ("Unkwnon command:"+command_name)
-    command = help_command
+class DebugCommand():
+    def execute(self, args, tdata):
+        debug_scripts(tdata, "debug_file")
 
-command.execute(sys.argv, tdata)
+    def get_help(self):
+        return "Creates a debug.ods file with button for each function"
+
+debug_command = DebugCommand()
