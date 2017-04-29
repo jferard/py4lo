@@ -18,9 +18,11 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 
 from tools import debug_scripts
+from test_command import test_command
 
 class InitCommand():
     def execute(self, args, tdata):
+        status = test_command.execute(args, tdata)
         debug_scripts(tdata, "init_file")
 
     def get_help(self):

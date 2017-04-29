@@ -18,7 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import sys
 import argparse
-from cmd import load_toml
+from toml_helper import load_toml
 from commands import commands
 
 sys.argv.pop(0) # remove the command

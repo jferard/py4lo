@@ -21,7 +21,6 @@ import os
 import sys
 import subprocess
 import logging
-from tools import update_ods, open_with_calc, debug_scripts, test_all
 
 def load_toml(local_py4lo_toml = "py4lo.toml"):
     py4lo_path = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))

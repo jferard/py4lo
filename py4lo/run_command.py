@@ -17,12 +17,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 
-from tools import test_all, update_ods
+from update_command import update_command
+from tools import open_with_calc
 
 class RunCommand():
     def execute(self, args, tdata):
-        status = test_all(tdata)
-        dest_name = update_ods(tdata)
+        status, dest_name = update_command.execute(args, tdata)
         if status == 0:
             print ("All tests ok")
             open_with_calc(dest_name, tdata["calc_exe"])
