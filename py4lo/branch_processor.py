@@ -68,13 +68,3 @@ class BranchProcessor():
 
     def skip(self):
         return False in self.__dont_skips
-
-def is_true(str1, comparator, str2):
-    if str1 < str2:
-        cmp = -1
-    elif str1 == str2:
-        cmp = 0
-    else:
-        cmp = 1
-
-    return cmp == -1 and comparator in ["<", "<="] or cmp == 0 and comparator in ["<=", "==", ">="] or cmp == 1 and comparator in [">", ">="]

@@ -19,7 +19,7 @@
 import shlex
 import os
 
-from directive import UseLib, UseObject, Include, Import, Fail
+from directive import UseLib, UseObject, Include, ImportLib, Import, Fail
 from branch_processor import BranchProcessor
 from comparator import Comparator
 
@@ -28,13 +28,13 @@ class DirectiveProcessor():
         self.__scripts_path = scripts_path
         self.__cur_script_fnames = cur_script_fnames
         self.__py4lo_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
-        comparator = Comparator({'python_version', python_version}) 
+        comparator = Comparator({'python_version':python_version})
         def local_is_true(args):
-            return comparator.is_true(args[0], args[1], args[2])
-        
+            return comparator.check(args[0], args[1], args[2])
+
         self.__branch_processor = BranchProcessor(local_is_true)
-        self.__directives = [UseLib(self.__py4lo_path), UseObject(self.__scripts_path), Include(self.__scripts_path), Import(self.__py4lo_path), Fail()]
-        
+        self.__directives = [UseLib(self.__py4lo_path), UseObject(self.__scripts_path), Include(self.__scripts_path), ImportLib(self.__py4lo_path), Import(scripts_path), Fail()]
+
     def new_script(self):
         self.__bootstrapped = False
         self.__imported = False
@@ -66,7 +66,7 @@ class DirectiveProcessor():
                 self.__s += "### "+line
             else:
                 self.__s += line
-        
+
         return self.__s
 
     def bootstrap(self):

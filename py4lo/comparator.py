@@ -25,19 +25,18 @@ class Comparator():
         arg1 = self.__parse_expr(arg1)
         arg2 = self.__parse_expr(arg2)
         cmp_result = self.__cmp(arg1, arg2)
-        return (   cmp_result == -1 and comparator in ["<", "<="] 
-                or cmp_result ==  0 and comparator in ["<=", "==", ">="] 
+        return (   cmp_result == -1 and comparator in ["<", "<="]
+                or cmp_result ==  0 and comparator in ["<=", "==", ">="]
                 or cmp_result ==  1 and comparator in [">", ">="])
 
     def __parse_expr(self, expr):
         if expr[0] == '$':
             name = expr[1:]
-            return eval(name, {'__builtin__':None}, self.__accepted_locals)
-        else:
-            try:
-                return float(expr)
-            except ValueError:
-                return expr
+            expr = eval(name, {'__builtin__':None}, self.__accepted_locals)
+        try:
+            return float(expr)
+        except ValueError:
+            return expr
 
     def __cmp(self, arg1, arg2):
         if arg1 < arg2:
@@ -46,6 +45,3 @@ class Comparator():
             return 0
         else:
             return 1
-        
-
- 

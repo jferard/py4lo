@@ -32,7 +32,7 @@ class UseLib():
         processor.bootstrap()
         processor.append(self.__use_lib(ret, object_ref))
         return True
-        
+
     def __process_args(self, processor, args):
         object_ref = args[0]
         (lib_ref, object_name) = object_ref.split("::")
@@ -65,7 +65,7 @@ class UseObject():
         processor.bootstrap()
         processor.append(self.__use_object(processor, args))
         return True
-        
+
     def __use_object(self, processor, args):
         object_ref = args[0]
         (script_ref, object_name) = object_ref.split("::")
@@ -90,7 +90,7 @@ class Include():
             return False
 
         filename = os.path.join(self.__scripts_path, "inc", args[0]+".py")
-        
+
         s = "# begin py4lo include: "+filename+"\n"
         with open(filename, 'r', encoding='utf-8') as f:
             for line in f:
@@ -100,21 +100,40 @@ class Include():
         processor.append(s)
         return True
 
-class Import():
+class ImportLib():
     def __init__(self, py4lo_path):
         self.__py4lo_path = py4lo_path
 
     def execute(self, processor, directiveName, args):
-        if directiveName != "import":
+        if directiveName != "import" or args[0] != "lib":
+            return False
+
+        processor.import2()
+        script_ref = args[1]
+        script_fname = os.path.join(self.__py4lo_path, "lib", script_ref+".py")
+        print (script_fname)
+        processor.appendScript(script_fname, script_ref+".py")
+        processor.append("import "+script_ref+"\n")
+        processor.append("try:\n")
+        processor.append("    "+script_ref+".init(XSCRIPTCONTEXT)\n")
+        processor.append("except NameError:\n")
+        processor.append("    pass\n")
+        return True
+
+class Import():
+    def __init__(self, scripts_path):
+        self.__scripts_path = scripts_path
+
+    def execute(self, processor, directiveName, args):
+        if directiveName != "import" or args[0] == "lib":
             return False
 
         processor.import2()
         script_ref = args[0]
-        script_fname = os.path.join(self.__py4lo_path, "lib", script_ref+".py")
+        script_fname = os.path.join(self.__scripts_path, script_ref+".py")
         processor.appendScript(script_fname, script_ref+".py")
         processor.append("import "+script_ref+"\n")
         return True
-
 
 class Fail():
     def execute(self, processor, directiveName, args):
