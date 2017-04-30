@@ -43,7 +43,7 @@ class TestCommandTest(unittest.TestCase):
             call('output:', 'not ok')
         ])
         subprocess_gso_mock.assert_has_calls([call('"py" /a/c_test.py'), call('"py" /a/b/d_test.py')])
-        self.assertEqual(1, status)
+        self.assertEqual((1,), status)
 
 if __name__ == '__main__':
     unittest.main()
