@@ -22,6 +22,7 @@ from debug import *
 ARC_SCRIPTS_PATH = "Scripts/python"
 
 def ignore_scripts(zin, zout, item):
+    """Ignore all existing scripts in source file"""
     return not item.filename.startswith(ARC_SCRIPTS_PATH)
 
 def rewrite_manifest(scripts):
@@ -46,7 +47,7 @@ def rewrite_manifest(scripts):
         else:
             zout.writestr(item.filename, zin.read(item.filename))
         return True
-        
+
     return callback
 
 def add_scripts(scripts):
@@ -55,9 +56,9 @@ def add_scripts(scripts):
         for script in scripts:
             zout.writestr(ARC_SCRIPTS_PATH+"/"+script.get_name(), script.get_data())
         return True
-        
+
     return callback
-        
+
 def add_readme_cb(contact):
     def callback(zout):
         py4lo_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
@@ -68,10 +69,10 @@ def add_readme_cb(contact):
             xml = tpl.format(contact = contact)
             zout.writestr("Basic/Standard/py4lo.xml", xml)
         return True
-    
+
     return callback
 
-    
+
 def add_debug_content(funcs_by_script):
     def callback(zout):
         forms = begin_forms
@@ -90,5 +91,5 @@ def add_debug_content(funcs_by_script):
         s = before + forms + draw + after
         zout.writestr("content.xml", s)
         return True
-        
+
     return callback

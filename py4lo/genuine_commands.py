@@ -17,16 +17,16 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 
-from debug_command import debug_command
-from init_command import init_command
-from test_command import test_command
-from run_command import run_command
-from update_command import update_command
+from debug_command import DebugCommand
+from init_command import InitCommand
+from test_command import TestCommand
+from run_command import RunCommand
+from update_command import UpdateCommand
 
 genuine_commands = {
-    'debug' : debug_command,
-    'init' : init_command,
-    'test' : test_command,
-    'run' : run_command,
-    'update' : update_command,
+    'debug' : DebugCommand,
+    'init' : InitCommand,
+    'test' : TestCommand,
+    'run' : RunCommand,
+    'update' : UpdateCommand,
 }

@@ -16,21 +16,19 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
-import sys
-import argparse
-from toml_helper import load_toml
-from commands import commands
+import logging
 
-sys.argv.pop(0) # remove the command
-command_name = sys.argv.pop(0)
-tdata = load_toml()
+class CommandExecutor():
+    def __init__(self, command, previous_executor = None):
+        self.__command = command
+        self.__previous_executor = previous_executor
 
-if command_name == '-h' or command_name == '--help':
-    command = help_command
-elif command_name in commands:
-    command = commands[command_name]
-else:
-    print ("Unkwnon command:"+command_name)
-    command = help_command
+    def execute(self, *args):
+        if self.__previous_executor is None:
+            cur_args = []
+        else:
+            cur_args = self.__previous_executor.execute(*args)
 
-command.create(sys.argv, tdata).execute()
+        ret = self.__command.execute(*cur_args)
+        logging.warning(str(self.__command)+", args="+str(cur_args)+" ret="+str(ret))
+        return ret

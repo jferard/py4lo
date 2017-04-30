@@ -34,17 +34,27 @@ command     a command = debug|help|init|test|update
         update:         updates the file with all scripts"""
 
 class HelpCommand():
-    def execute(self, args, tdata):
-        msg = DEFAULT_MSG
+    @staticmethod
+    def create(args, tdata):
         if len(args) == 1:
+            command_name = args[0]
+        else:
+            command_name = None
+        return HelpCommand(genuine_commands, command_name)
+
+    def __init__(self, genuine_commands, command_name = None):
+        self.__genuine_commands = genuine_commands
+        self.__command_name = command_name
+
+    def execute(self):
+        msg = DEFAULT_MSG
+        if self.__command_name:
             try:
-                msg = genuine_commands[args[0]].get_help()
+                msg = self.__genuine_commands[self.__command_name].create().get_help()
             except KeyError:
-                if args[0] == 'help':
+                if self.__command_name == 'help':
                     msg = self.get_help()
         print (msg)
 
     def get_help(self):
         return "You must be kitting!"
-
-help_command = HelpCommand()

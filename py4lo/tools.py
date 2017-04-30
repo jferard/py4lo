@@ -17,26 +17,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import os
-import zipfile
+from zip_updater import ZipUpdater
 import logging
 from callbacks import *
 from script_processor import ScriptProcessor
-
-def update_zip(zip_source_name,zip_dest_name, before_callbacks = [],
-    item_callbacks = [], after_callbacks = [] ):
-    with zipfile.ZipFile(zip_dest_name, 'w') as zout:
-        for before_callback in before_callbacks:
-            if not before_callback(zout):
-                break
-        with zipfile.ZipFile(zip_source_name, 'r') as zin:
-            zout.comment = zin.comment # preserve the comment
-            for item in zin.infolist():
-                for item_callback in item_callbacks:
-                    if not item_callback(zin, zout, item):
-                        break
-        for after_callback in after_callbacks:
-            if not after_callback(zout):
-                break
+import subprocess 
 
 def update_ods(tdata):
     ods_source_name = tdata["source_file"]
@@ -60,34 +45,19 @@ def update_ods(tdata):
     script_processor = ScriptProcessor(logger, src_dir, python_version, target_dir)
     script_processor.process(script_fnames)
 
-    item_cbs = [ignore_scripts, rewrite_manifest(script_processor.get_scripts())]
-    after_cbs = [add_scripts(script_processor.get_scripts())]
+    scripts = script_processor.get_scripts()
+
+    zip_updater = ZipUpdater()
+    (
+        zip_updater
+            .item(ignore_scripts)
+            .item(rewrite_manifest(scripts))
+            .after(add_scripts(scripts))
+    )
     if add_readme:
-        after_cbs.append(add_readme_cb(readme_contact))
+        zip_updater.after(add_readme_cb(readme_contact))
 
-    update_zip(ods_source_name, ods_dest_name, item_callbacks = item_cbs, after_callbacks = after_cbs)
-    return ods_dest_name
-
-def debug_scripts(tdata, file_key):
-    # retrieve infos from data
-    target_dir = tdata["target_dir"]
-    debug_path = os.path.join(target_dir, tdata[file_key])
-    src_dir = tdata["src_dir"]
-    python_version = tdata["python_version"]
-    ods_dest_name = tdata[file_key]
-
-    logger = logging.getLogger("py4lo")
-    logging.info("")
-    logger.setLevel(tdata["log_level"])
-    logger.info("Debug or init. Generating %s for Python %s", debug_path, python_version)
-
-    script_fnames = set(os.path.join(src_dir, fname) for fname in os.listdir(src_dir) if fname.endswith(".py"))
-    script_processor = ScriptProcessor(logger, src_dir, python_version, target_dir)
-    script_processor.process(script_fnames)
-
-    item_cbs = [ignore_scripts, rewrite_manifest(script_processor.get_scripts())]
-    after_cbs = [add_scripts(script_processor.get_scripts()), add_debug_content(script_processor.get_exported_func_names_by_script_name())]
-    update_zip(os.path.join(tdata["py4lo_path"], "inc", "debug.ods"), ods_dest_name, item_callbacks = item_cbs, after_callbacks = after_cbs)
+    zip_updater.update(ods_source_name, ods_dest_name)
     return ods_dest_name
 
 def open_with_calc(ods_name, calc_exe):

@@ -18,21 +18,20 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 
 from tools import update_ods
+from command_executor import CommandExecutor
 import os
 import subprocess
-import pytest
 
-@pytest.mark.skip(reason="not a test class")
 class TestCommand():
     @staticmethod
-    def execute(args, tdata):
-        TestCommand(tdata["python_exe"], tdata["test_dir"]).instance_execute()
+    def create(args, tdata):
+        return CommandExecutor(TestCommand(tdata["python_exe"], tdata["test_dir"]))
 
     def __init__(self, python_exe, test_dir):
         self.__python_exe = python_exe
         self.__test_dir = test_dir
 
-    def instance_execute(self):
+    def execute(self):
         final_status = 0
         for path in self.__test_paths():
             cmd = "\""+self.__python_exe+"\" "+path
@@ -42,7 +41,7 @@ class TestCommand():
             if status != 0:
                 final_status = 1
 
-        return final_status
+        return (final_status, )
 
     def __test_paths(self):
         for dirpath, dirnames, filenames in os.walk(self.__test_dir):
@@ -52,5 +51,3 @@ class TestCommand():
 
     def get_help(self):
         return "Do the test"
-
-test_command = TestCommand

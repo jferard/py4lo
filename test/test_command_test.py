@@ -34,7 +34,7 @@ class TestCommandTest(unittest.TestCase):
         os_walk_mock.return_value = [ ("/a", ("b",), ("c_test.py",)), ("/a/b", (), ("d_test.py",)) ]
         subprocess_gso_mock.side_effect = [(0, "ok"), (1, "not ok")]
         tc = TestCommand("py", "a_dir")
-        status = tc.instance_execute()
+        status = tc.execute()
 
         print_mock.assert_has_calls([
             call('execute:', '"py" /a/c_test.py'),

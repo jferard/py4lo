@@ -18,15 +18,22 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 
 from tools import update_ods
-from test_command import test_command
+from command_executor import CommandExecutor
+from test_command import TestCommand
 
 class UpdateCommand():
-    def execute(self, args, tdata):
-        status = test_command.execute(args, tdata)
-        dest_name = update_ods(tdata)
+    @staticmethod
+    def create(args, tdata):
+        test_executor = TestCommand.create(args, tdata)
+        update_command = UpdateCommand(tdata)
+        return CommandExecutor(update_command, test_executor)
+
+    def __init__(self, tdata):
+        self.__tdata = tdata
+
+    def execute(self, status):
+        dest_name = update_ods(self.__tdata)
         return status, dest_name
 
     def get_help(self):
         return "Updates the file with all scripts"
-
-update_command = UpdateCommand()

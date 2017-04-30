@@ -17,19 +17,26 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 
-from update_command import update_command
+from update_command import UpdateCommand
+from command_executor import CommandExecutor
 from tools import open_with_calc
 
 class RunCommand():
-    def execute(self, args, tdata):
-        status, dest_name = update_command.execute(args, tdata)
+    @staticmethod
+    def create(args, tdata):
+        update_executor = UpdateCommand.create(args, tdata)
+        run_command = RunCommand(tdata["calc_exe"])
+        return CommandExecutor(run_command, update_executor)
+
+    def __init__(self, calc_exe):
+        self.__calc_exe = calc_exe
+
+    def execute(self, status, dest_name):
         if status == 0:
             print ("All tests ok")
-            open_with_calc(dest_name, tdata["calc_exe"])
+            open_with_calc(dest_name, self.__calc_exe)
         else:
             print ("Error: some tests failed")
 
     def get_help(self):
         return "Update + open the created file"
-
-run_command = RunCommand()
