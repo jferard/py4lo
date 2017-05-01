@@ -21,7 +21,7 @@ import os
 from test_command import TestCommand
 from command_executor import CommandExecutor
 import logging
-from script_processor import ScriptProcessor
+from scripts_processor import ScriptsProcessor
 from callbacks import *
 from zip_updater import ZipUpdater
 
@@ -47,8 +47,8 @@ class DebugCommand():
         self.__logger.info("Debug or init. Generating %s for Python %s", self.__debug_path, self.__python_version)
 
         script_fnames = set(os.path.join(self.__src_dir, fname) for fname in os.listdir(self.__src_dir) if fname.endswith(".py"))
-        script_processor = ScriptProcessor(self.__logger, self.__src_dir, self.__python_version, self.__target_dir)
-        script_processor.process(script_fnames)
+        scripts_processor = ScriptsProcessor(self.__logger, self.__src_dir, self.__python_version, self.__target_dir)
+        scripts_processor.process(script_fnames)
         scripts = script_processor.get_scripts()
         zip_updater = ZipUpdater()
         (

@@ -20,7 +20,7 @@ import os
 from zip_updater import ZipUpdater
 import logging
 from callbacks import *
-from script_processor import ScriptProcessor
+from scripts_processor import ScriptsProcessor
 import subprocess
 
 def update_ods(tdata):
@@ -58,10 +58,10 @@ class OdsUpdater():
         self.__logger.info("Debug or init. Generating %s for Python %s", ods_dest_name, self.__python_version)
 
         script_fnames = set(os.path.join(self.__src_dir, fname) for fname in os.listdir(self.__src_dir) if fname.endswith(".py"))
-        script_processor = ScriptProcessor(self.__logger, self.__src_dir, self.__python_version, self.__target_dir)
-        script_processor.process(script_fnames)
+        scripts_processor = ScriptsProcessor(self.__logger, self.__src_dir, self.__python_version, self.__target_dir)
+        scripts_processor.process(script_fnames)
 
-        scripts = script_processor.get_scripts()
+        scripts = scripts_processor.get_scripts()
 
         zip_updater = self.__create_updater(scripts)
         zip_updater.update(ods_source_name, ods_dest_name)

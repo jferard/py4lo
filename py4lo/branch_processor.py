@@ -23,12 +23,10 @@ class BranchProcessor():
         self.__assertion_is_true = tester
         self.__dont_skips = []
 
-    def new_script(self):
+    def end(self):
         if len(self.__dont_skips):
             logging.error("Branch condition not closed!")
             raise ValueError("Branch condition not closed!")
-
-        self.__dont_skips = []
 
     def handle_directive(self, directive, args):
         if directive == 'if':

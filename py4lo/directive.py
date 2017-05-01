@@ -47,7 +47,7 @@ class UseLib():
         else:
             ret = object_name
 
-        processor.appendScript(script_fname, lib_ref+".py")
+        processor.append_script(script_fname)
 
         return (ret, object_ref)
 
@@ -78,7 +78,7 @@ class UseObject():
         else:
             ret = object_name
 
-        processor.appendScript((script_fname, script_ref+".py"))
+        processor.append_script(script_fname)
         return ret + " = use_local(\""+object_ref+"\")\n"
 
 class Include():
@@ -112,7 +112,7 @@ class ImportLib():
         script_ref = args[1]
         script_fname = os.path.join(self.__py4lo_path, "lib", script_ref+".py")
         print (script_fname)
-        processor.appendScript(script_fname, script_ref+".py")
+        processor.append_script(script_fname)
         processor.append("import "+script_ref+"\n")
         processor.append("try:\n")
         processor.append("    "+script_ref+".init(XSCRIPTCONTEXT)\n")
@@ -131,7 +131,7 @@ class Import():
         processor.import2()
         script_ref = args[0]
         script_fname = os.path.join(self.__scripts_path, script_ref+".py")
-        processor.appendScript(script_fname, script_ref+".py")
+        processor.append_script(script_fname)
         processor.append("import "+script_ref+"\n")
         return True
 

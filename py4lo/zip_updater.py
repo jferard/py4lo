@@ -18,9 +18,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import os
 import zipfile
-import logging
-from callbacks import *
-from script_processor import ScriptProcessor
 
 class ZipUpdater():
     def __init__(self):

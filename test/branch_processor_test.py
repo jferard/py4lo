@@ -48,17 +48,18 @@ class TestBranchProcessor(unittest.TestCase):
         self.assertTrue(self.bp.handle_directive("endif", [])) # not tested
         # after everything
         self.assertFalse(self.bp.skip())
+        end.self.bp()
 
     def test_not_closed(self):
         self.assertTrue(self.bp.handle_directive("if", [True]))
         with self.assertRaises(ValueError):
-            self.bp.new_script()
+            self.bp.end()
 
     def test_closed(self):
         self.assertTrue(self.bp.handle_directive("if", [True]))
         self.assertTrue(self.bp.handle_directive("else", []))
         self.assertTrue(self.bp.handle_directive("endif", []))
-        self.bp.new_script()
+        self.bp.end()
 
 if __name__ == '__main__':
     unittest.main()

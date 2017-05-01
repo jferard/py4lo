@@ -24,21 +24,23 @@ from branch_processor import BranchProcessor
 from comparator import Comparator
 
 class DirectiveProcessor():
-    def __init__(self, python_version, scripts_path, cur_script_fnames):
+    def __init__(self, scripts_processor, python_version, scripts_path):
+        self.__scripts_processor = scripts_processor
         self.__scripts_path = scripts_path
-        self.__cur_script_fnames = cur_script_fnames
         self.__py4lo_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
         comparator = Comparator({'python_version':python_version})
         def local_is_true(args):
             return comparator.check(args[0], args[1], args[2])
 
-        self.__branch_processor = BranchProcessor(local_is_true)
+        self.__local_is_true = local_is_true
         self.__directives = [UseLib(self.__py4lo_path), UseObject(self.__scripts_path), Include(self.__scripts_path), ImportLib(self.__py4lo_path), Import(scripts_path), Fail()]
 
-    def new_script(self):
         self.__bootstrapped = False
         self.__imported = False
-        self.__branch_processor.new_script()
+        self.__branch_processor = BranchProcessor(local_is_true)
+
+    def end(self):
+        self.__branch_processor.end()
 
     def process_line(self, line):
         """Process a line that starts with #"""
@@ -48,8 +50,8 @@ class DirectiveProcessor():
             if self.__is_directive(ls):
                 directiveName = ls[2]
                 args = ls[3:]
-                isBranchDirective = self.__branch_processor.handle_directive(directiveName, args)
-                if not isBranchDirective:
+                is_branch_directive = self.__branch_processor.handle_directive(directiveName, args)
+                if not is_branch_directive:
                     if self.__branch_processor.skip():
                         self.__s += "### "+line
                     else:
@@ -82,8 +84,8 @@ class DirectiveProcessor():
     def append(self, s2):
         self.__s += s2
 
-    def appendScript(self, script_fname, lib_ref_py):
-        self.__cur_script_fnames.append((script_fname, lib_ref_py))
+    def append_script(self, script_fname):
+        self.__scripts_processor.append_script(script_fname)
 
     def __is_directive(self, ls):
         return len(ls) >= 2 and ls[0] == '#' and ls[1] == 'py4lo:'
