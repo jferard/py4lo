@@ -17,8 +17,51 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import unittest
+from unittest.mock import *
 import env
 from zip_updater import *
 
 class TestZipUpdater(unittest.TestCase):
-    pass
+    @patch('zipfile.ZipFile', autospec=True)
+    def test(self, zf):
+        zu = ZipUpdater()
+        cbs = []
+
+        b1 = Mock()
+        b2 = Mock()
+        i1 = Mock()
+        i2 = Mock()
+        a1 = Mock()
+        a2 = Mock()
+
+        zout = Mock()
+        p = PropertyMock()
+        type(zout).comment = p
+        zin = Mock(comment="a")
+        zin.infolist.return_value = [1,2]
+
+        rout = MagicMock()
+        rout.__enter__.return_value = zout
+        rout.__exit__.return_value = False
+        rin = MagicMock()
+        rin.__enter__.return_value = zin
+        rin.__exit__.return_value = False
+
+        zf.side_effect = [rout, rin]
+
+        b1.side_effect = lambda x:True
+        b2.side_effect = lambda x:False
+        i1.side_effect = (lambda x,y,z:True, lambda x,y,z:True)
+        i2.side_effect = (lambda x,y,z:False, lambda x,y,z:False)
+
+        zu.before(b1).before(b2).item(i1).item(i2).after(a1).after(a2)
+        zu.update("source", "dest")
+
+
+        p.assert_called_once_with("a")
+        b1.assert_called_once_with(zout)
+        b2.assert_called_once_with(zout)
+        self.assertEquals([call(zin, zout, 1), call(zin, zout, 2)], i1.mock_calls)
+        self.assertEquals([call(zin, zout, 1), call(zin, zout, 2)], i2.mock_calls)
+        a1.assert_called_once_with(zout)
+        a2.assert_called_once_with(zout)
