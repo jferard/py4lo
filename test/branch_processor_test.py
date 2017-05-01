@@ -48,7 +48,7 @@ class TestBranchProcessor(unittest.TestCase):
         self.assertTrue(self.bp.handle_directive("endif", [])) # not tested
         # after everything
         self.assertFalse(self.bp.skip())
-        end.self.bp()
+        self.bp.end()
 
     def test_not_closed(self):
         self.assertTrue(self.bp.handle_directive("if", [True]))

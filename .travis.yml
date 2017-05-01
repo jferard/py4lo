@@ -15,7 +15,7 @@ install:
 
 # script
 script:
-  - py.test test --cov=./
+  - py.test --cov
 
 after_success:
   - codecov

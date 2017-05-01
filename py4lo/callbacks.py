@@ -52,7 +52,6 @@ def rewrite_manifest(scripts):
 
 def add_scripts(scripts):
     def callback(zout):
-        py4lo_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
         for script in scripts:
             zout.writestr(ARC_SCRIPTS_PATH+"/"+script.get_name(), script.get_data())
         return True
