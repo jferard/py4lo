@@ -21,44 +21,64 @@ from zip_updater import ZipUpdater
 import logging
 from callbacks import *
 from script_processor import ScriptProcessor
-import subprocess 
+import subprocess
 
 def update_ods(tdata):
     ods_source_name = tdata["source_file"]
     suffix = tdata["default_suffix"]
-    add_readme = tdata["add_readme"]
-    readme_contact = tdata["readme_contact"]
-    src_dir = tdata["src_dir"]
-    target_dir = tdata["target_dir"]
-    python_version = tdata["python_version"]
-
-    logger = logging.getLogger("py4lo")
-    logging.info("")
-    logger.setLevel(tdata["log_level"])
     ods_dest_name = ods_source_name[0:-4]+"-"+suffix+ods_source_name[-4:]
+    return OdsUpdater.create(tdata).update(ods_source_name, ods_dest_name)
 
-    logger.setLevel(tdata["log_level"])
-    logger.setLevel("DEBUG")
-    logger.info("Debug or init. Generating %s for Python %s", ods_dest_name, python_version)
+class OdsUpdater():
+    @staticmethod
+    def create(tdata):
+        logger = logging.getLogger("py4lo")
+        logger.setLevel(tdata["log_level"])
+        add_readme = tdata["add_readme"]
+        if add_readme:
+            readme_contact = tdata["readme_contact"]
+            add_readme_callback = add_readme_with(readme_contact)
+        else:
+            add_readme_callback = None
 
-    script_fnames = set(os.path.join(src_dir, fname) for fname in os.listdir(src_dir) if fname.endswith(".py"))
-    script_processor = ScriptProcessor(logger, src_dir, python_version, target_dir)
-    script_processor.process(script_fnames)
+        src_dir = tdata["src_dir"]
+        target_dir = tdata["target_dir"]
+        python_version = tdata["python_version"]
 
-    scripts = script_processor.get_scripts()
+        return OdsUpdater(logger, src_dir, target_dir, python_version, add_readme_callback)
 
-    zip_updater = ZipUpdater()
-    (
-        zip_updater
-            .item(ignore_scripts)
-            .item(rewrite_manifest(scripts))
-            .after(add_scripts(scripts))
-    )
-    if add_readme:
-        zip_updater.after(add_readme_cb(readme_contact))
+    def __init__(self, logger, src_dir, target_dir, python_version, add_readme_callback):
+        self.__logger = logger
+        self.__src_dir = src_dir
+        self.__target_dir = target_dir
+        self.__python_version = python_version
+        self.__add_readme_callback = add_readme_callback
 
-    zip_updater.update(ods_source_name, ods_dest_name)
-    return ods_dest_name
+    def update(self, ods_source_name, ods_dest_name):
+        self.__logger.info("Debug or init. Generating %s for Python %s", ods_dest_name, self.__python_version)
+
+        script_fnames = set(os.path.join(self.__src_dir, fname) for fname in os.listdir(self.__src_dir) if fname.endswith(".py"))
+        script_processor = ScriptProcessor(self.__logger, self.__src_dir, self.__python_version, self.__target_dir)
+        script_processor.process(script_fnames)
+
+        scripts = script_processor.get_scripts()
+
+        zip_updater = self.__create_updater(scripts)
+        zip_updater.update(ods_source_name, ods_dest_name)
+        return ods_dest_name
+
+    def __create_updater(self, scripts):
+        zip_updater = ZipUpdater()
+        (
+            zip_updater
+                .item(ignore_scripts)
+                .item(rewrite_manifest(scripts))
+                .after(add_scripts(scripts))
+        )
+        if self.__add_readme_callback is not None:
+            zip_updater.after(self.__add_readme_callback)
+
+        return zip_updater
 
 def open_with_calc(ods_name, calc_exe):
     r = subprocess.call([calc_exe, ods_name])

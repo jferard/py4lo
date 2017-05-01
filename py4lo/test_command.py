@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 
-from tools import update_ods
 from command_executor import CommandExecutor
 import os
 import subprocess
