@@ -48,8 +48,7 @@ class DebugCommand():
 
         script_fnames = set(os.path.join(self.__src_dir, fname) for fname in os.listdir(self.__src_dir) if fname.endswith(".py"))
         scripts_processor = ScriptsProcessor(self.__logger, self.__src_dir, self.__python_version, self.__target_dir)
-        scripts_processor.process(script_fnames)
-        scripts = script_processor.get_scripts()
+        scripts = scripts_processor.process(script_fnames)
         zip_updater = ZipUpdater()
         (
             zip_updater

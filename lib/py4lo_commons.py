@@ -19,6 +19,9 @@
 import unicodedata
 import logging
 
+def init(XSCRIPTCONTEXT):
+    pass
+
 class Bus:
     """A minimal bus minimal to communicate with front end"""
     def __init__(self):
@@ -79,8 +82,3 @@ class Commons:
         if self.__logger is None:
             self.__logger = self.get_logger()
         return self.__logger
-
-# export
-cc = Commons()
-def __export_commons():
-    return cc

@@ -51,8 +51,10 @@ class TestZipUpdater(unittest.TestCase):
 
         b1.side_effect = lambda x:True
         b2.side_effect = lambda x:False
-        i1.side_effect = (lambda x,y,z:True, lambda x,y,z:True)
-        i2.side_effect = (lambda x,y,z:False, lambda x,y,z:False)
+        i1.side_effect = [lambda x,y,z:True, lambda x,y,z:True]
+        i2.side_effect = [lambda x,y,z:False, lambda x,y,z:False]
+        a1.side_effect = lambda x:True
+        a2.side_effect = lambda x:False
 
         zu.before(b1).before(b2).item(i1).item(i2).after(a1).after(a2)
         zu.update("source", "dest")

@@ -24,7 +24,6 @@ from directive_processor import DirectiveProcessor
 class Script():
     @staticmethod
     def to_name(fname):
-        print (fname)
         return os.path.split(fname)[1]
 
     def __init__(self, script_fname, script_data, exported_func_names):
@@ -63,6 +62,9 @@ class ScriptsProcessor():
 
         return self.__scripts
 
+    def append_script(self, script_fname):
+        self.__cur_script_fnames.append(script_fname)
+
     def __has_more_scripts(self):
         return len(self.__cur_script_fnames)
 
@@ -78,16 +80,11 @@ class ScriptsProcessor():
         directive_processor = DirectiveProcessor(self, self.__python_version, self.__src_dir)
         script_processor = ScriptProcessor(self.__logger, directive_processor, script_fname)
         script = script_processor.parse_script()
-        self.__scripts.append(script)
+        self.__add_script(script)
 
-    def append_script(self, script_fname):
-        self.__cur_script_fnames.append(script_fname)
-
-    def add_script(self, script):
+    def __add_script(self, script):
         self.__write_script(script)
-
-    def get_scripts(self):
-        return self.__scripts
+        self.__scripts.append(script)
 
     def get_exported_func_names_by_script_name(self):
         exported_func_names_by_script_name = {}

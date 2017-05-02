@@ -32,8 +32,8 @@ from com.sun.star.awt.MessageBoxType import MESSAGEBOX
 MESSAGEBOX = 0
 # py4lo: endif
 
-def init(XSCRIPTCONTEXT):
-    Py4LO_helper.xsc = XSCRIPTCONTEXT
+def init(xsc):
+    Py4LO_helper.xsc = xsc
 
 class Py4LO_helper(unohelper.Base):
     def __init__(self):

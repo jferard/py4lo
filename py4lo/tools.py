@@ -59,9 +59,7 @@ class OdsUpdater():
 
         script_fnames = set(os.path.join(self.__src_dir, fname) for fname in os.listdir(self.__src_dir) if fname.endswith(".py"))
         scripts_processor = ScriptsProcessor(self.__logger, self.__src_dir, self.__python_version, self.__target_dir)
-        scripts_processor.process(script_fnames)
-
-        scripts = scripts_processor.get_scripts()
+        scripts = scripts_processor.process(script_fnames)
 
         zip_updater = self.__create_updater(scripts)
         zip_updater.update(ods_source_name, ods_dest_name)

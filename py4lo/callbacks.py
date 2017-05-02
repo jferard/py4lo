@@ -71,7 +71,6 @@ def add_readme_with(contact):
 
     return callback
 
-
 def add_debug_content(funcs_by_script):
     def callback(zout):
         forms = begin_forms

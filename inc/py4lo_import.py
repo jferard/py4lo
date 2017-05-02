@@ -19,14 +19,13 @@
 def prepare_import():
     import unohelper
     import sys
+    import logging
 
     doc = XSCRIPTCONTEXT.getDocument()
-    print (doc)
     url = unohelper.fileUrlToSystemPath(doc.URL+'/Scripts/python')
-    print (url)
-    print (sys.path)
     if url not in sys.path:
         sys.path.insert(0, url)
+    logging.debug("sys.path="+str(sys.path))
 
 try:
     prepare_import()
