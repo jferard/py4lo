@@ -48,5 +48,6 @@ class TestCommand():
                 if filename.endswith("_test.py"):
                     yield os.path.join(dirpath, filename)
 
-    def get_help(self):
-        return "Do the test"
+    @staticmethod
+    def get_help():
+        return "Do the test of the scripts to add to the spreadsheet"

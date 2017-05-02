@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 
-from commands.genuine_commands import genuine_commands
+from commands.real_command_factory_by_name import real_command_factory_by_name
 
 DEFAULT_MSG = """usage: py4lo.py -h|--help|command [args]
 
@@ -40,21 +40,23 @@ class HelpCommand():
             command_name = args[0]
         else:
             command_name = None
-        return HelpCommand(genuine_commands, command_name)
+        return HelpCommand(real_command_factory_by_name, command_name)
 
-    def __init__(self, genuine_commands, command_name = None):
-        self.__genuine_commands = genuine_commands
+    def __init__(self, command_factory_by_name, command_name = None):
+        self.__command_factory_by_name = command_factory_by_name
         self.__command_name = command_name
 
     def execute(self):
         msg = DEFAULT_MSG
         if self.__command_name:
             try:
-                msg = self.__genuine_commands[self.__command_name].create().get_help()
-            except KeyError:
+                msg = self.__command_factory_by_name[self.__command_name].get_help()
+            except KeyError as e:
+                print (e)
                 if self.__command_name == 'help':
                     msg = self.get_help()
         print (msg)
 
-    def get_help(self):
+    @staticmethod
+    def get_help():
         return "You must be kitting!"

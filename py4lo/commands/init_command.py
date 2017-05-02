@@ -36,3 +36,7 @@ class InitCommand():
             "Creates a standard file"
         )
         return CommandExecutor(init_command, test_executor)
+
+    @staticmethod
+    def get_help():
+        return "Create a new document from script"

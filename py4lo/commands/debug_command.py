@@ -62,4 +62,4 @@ class DebugCommand():
 
     @staticmethod
     def get_help():
-        return "Creates a debug.ods file with button for each function"
+        return "Create a debug.ods file with button for each function"

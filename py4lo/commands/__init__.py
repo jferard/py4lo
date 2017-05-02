@@ -17,18 +17,22 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 
-from commands.debug_command import DebugCommand
+from commands.real_command_factory_by_name import real_command_factory_by_name
 from commands.help_command import HelpCommand
-from commands.init_command import InitCommand
-from commands.test_command import TestCommand
-from commands.run_command import RunCommand
-from commands.update_command import UpdateCommand
 
-commands = {
-    'debug' : DebugCommand,
-    'help' : HelpCommand,
-    'init' : InitCommand,
-    'test' : TestCommand,
-    'run' : RunCommand,
-    'update' : UpdateCommand,
-}
+class Commands():
+    def __init__(self, command_factory_by_name):
+        assert "help" in command_factory_by_name
+        self.__command_factory_by_name = command_factory_by_name
+
+    def get(self, command_name, args, tdata):
+        try:
+            return self.__command_factory_by_name[command_name].create(args, tdata)
+        except KeyError:
+            return self.__command_factory_by_name["help"].create(args, tdata)
+
+command_factory_by_name = real_command_factory_by_name.copy()
+# add help now
+command_factory_by_name['help'] = HelpCommand
+
+commands = Commands(command_factory_by_name)

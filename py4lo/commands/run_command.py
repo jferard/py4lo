@@ -38,5 +38,6 @@ class RunCommand():
         else:
             print ("Error: some tests failed")
 
-    def get_help(self):
+    @staticmethod
+    def get_help():
         return "Update + open the created file"

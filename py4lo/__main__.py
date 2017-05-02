@@ -26,11 +26,7 @@ command_name = sys.argv.pop(0)
 tdata = load_toml()
 
 if command_name == '-h' or command_name == '--help':
-    command = help_command
-elif command_name in commands:
-    command = commands[command_name]
-else:
-    print ("Unkwnon command:"+command_name)
-    command = help_command
+    command_name = "help"
 
-command.create(sys.argv, tdata).execute()
+command = commands.get(command_name, sys.argv, tdata)
+command.execute()

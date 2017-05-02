@@ -35,5 +35,6 @@ class UpdateCommand():
         dest_name = update_ods(self.__tdata)
         return status, dest_name
 
-    def get_help(self):
-        return "Updates the file with all scripts"
+    @staticmethod
+    def get_help():
+        return "Update the file with all scripts"
