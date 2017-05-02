@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 
-from genuine_commands import genuine_commands
+from commands.genuine_commands import genuine_commands
 
 DEFAULT_MSG = """usage: py4lo.py -h|--help|command [args]
 

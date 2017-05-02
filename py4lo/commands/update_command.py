@@ -18,8 +18,8 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 
 from tools import update_ods
-from command_executor import CommandExecutor
-from test_command import TestCommand
+from commands.test_command import TestCommand
+from commands.command_executor import CommandExecutor
 
 class UpdateCommand():
     @staticmethod

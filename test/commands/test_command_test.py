@@ -21,7 +21,7 @@ import unittest
 from unittest.mock import *
 import env
 
-from test_command import TestCommand
+from commands.test_command import TestCommand
 import os
 import subprocess
 

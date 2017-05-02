@@ -16,22 +16,9 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
+import unittest
+import env
+from commands.help_command import *
 
-from test_command import TestCommand
-from debug_command import DebugCommand
-
-class InitCommand():
-    @staticmethod
-    def create(args, tdata):
-        test_executor = TestCommand.create(args, tdata)
-        logger = logging.getLogger("py4lo")
-        logger.setLevel(tdata["log_level"])
-        init_command = DebugCommand(
-            logger,
-            tdata["src_dir"],
-            tdata["target_dir"],
-            tdata["python_version"],
-            tdata["init_file"],
-            "Creates a standard file"
-        )
-        return CommandExecutor(init_command, test_executor)
+class TestHelpCommand(unittest.TestCase):
+    pass

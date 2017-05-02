@@ -18,7 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import unittest
 import env
-from command_executor import CommandExecutor
+from commands.init_command import *
 
-class TestCommandExecutor(unittest.TestCase):
+class TestInitCommand(unittest.TestCase):
     pass

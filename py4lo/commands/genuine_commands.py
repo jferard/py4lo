@@ -16,9 +16,17 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
-import unittest
-import env
-from init_command import *
 
-class TestInitCommand(unittest.TestCase):
-    pass
+from commands.debug_command import DebugCommand
+from commands.init_command import InitCommand
+from commands.test_command import TestCommand
+from commands.run_command import RunCommand
+from commands.update_command import UpdateCommand
+
+genuine_commands = {
+    'debug' : DebugCommand,
+    'init' : InitCommand,
+    'test' : TestCommand,
+    'run' : RunCommand,
+    'update' : UpdateCommand,
+}

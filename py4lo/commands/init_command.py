@@ -17,18 +17,22 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 
-from debug_command import DebugCommand
-from help_command import HelpCommand
-from init_command import InitCommand
-from test_command import TestCommand
-from run_command import RunCommand
-from update_command import UpdateCommand
+from commands.test_command import TestCommand
+from commands.debug_command import DebugCommand
+from commands.command_executor import CommandExecutor
 
-commands = {
-    'debug' : DebugCommand,
-    'help' : HelpCommand,
-    'init' : InitCommand,
-    'test' : TestCommand,
-    'run' : RunCommand,
-    'update' : UpdateCommand,
-}
+class InitCommand():
+    @staticmethod
+    def create(args, tdata):
+        test_executor = TestCommand.create(args, tdata)
+        logger = logging.getLogger("py4lo")
+        logger.setLevel(tdata["log_level"])
+        init_command = DebugCommand(
+            logger,
+            tdata["src_dir"],
+            tdata["target_dir"],
+            tdata["python_version"],
+            tdata["init_file"],
+            "Creates a standard file"
+        )
+        return CommandExecutor(init_command, test_executor)

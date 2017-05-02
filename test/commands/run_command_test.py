@@ -18,7 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import unittest
 import env
-from update_command import *
+from commands.run_command import *
 
-class TestUpdateCommand(unittest.TestCase):
+class TestRunCommand(unittest.TestCase):
     pass

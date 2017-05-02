@@ -18,8 +18,8 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 
 import os
-from test_command import TestCommand
-from command_executor import CommandExecutor
+from commands.test_command import TestCommand
+from commands.command_executor import CommandExecutor
 import logging
 from scripts_processor import ScriptsProcessor
 from callbacks import *
