@@ -27,6 +27,7 @@ class UseLib():
         if directiveName != "use" or args[0] != "lib":
             return False
 
+        raise DeprecationWarning("Use 'import lib'")
         (ret, object_ref) = self.__process_args(processor, args[1:])
 
         processor.bootstrap()
@@ -62,6 +63,7 @@ class UseObject():
         if directiveName != "use" or args[0] == "lib":
             return False
 
+        raise DeprecationWarning("Use 'import lib'")
         processor.bootstrap()
         processor.append(self.__use_object(processor, args))
         return True

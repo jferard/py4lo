@@ -116,20 +116,24 @@ class ScriptProcessor():
 
         s = "# parsed by py4lo\n"
         with open(self.__script_fname, 'r', encoding="utf-8") as f:
-            for line in f:
-                if line[0] == '#':
-                    s += self.__directive_processor.process_line(line)
-                else:
-                    m = re.match("^def\s+(.*?)\(.*\):\s*$", line)
-                    if m:
-                        func_name = m.group(1)
-                        if func_name[0] != "_":
-                            exported_func_names.append(func_name)
-
-                    if self.__directive_processor.ignore_lines():
-                        s += "### py4lo ignore:" + line
+            try:
+                for line in f:
+                    if line[0] == '#':
+                        s += self.__directive_processor.process_line(line)
                     else:
-                        s += line
+                        m = re.match("^def\s+(.*?)\(.*\):\s*$", line)
+                        if m:
+                            func_name = m.group(1)
+                            if func_name[0] != "_":
+                                exported_func_names.append(func_name)
+
+                        if self.__directive_processor.ignore_lines():
+                            s += "### py4lo ignore:" + line
+                        else:
+                            s += line
+            except Exception as e:
+                self.__logger.critical(self.__script_fname+", line="+line)
+                raise e
 
         s += "\n\ng_exportedScripts = ("+", ".join(exported_func_names)+")\n"
         script = Script(self.__script_fname, s.encode("utf-8"), exported_func_names)

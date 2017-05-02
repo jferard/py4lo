@@ -19,7 +19,7 @@
 import shlex
 import os
 
-from directive import UseLib, UseObject, Include, ImportLib, Import, Fail
+from directives import UseLib, UseObject, Include, ImportLib, Import, Fail
 from branch_processor import BranchProcessor
 from comparator import Comparator
 

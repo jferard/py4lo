@@ -17,36 +17,22 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import os
-from debug import *
+from callbacks.debug import *
+from callbacks.ignore_scripts import IgnoreScripts
+from callbacks.rewrite_manifest import RewriteManifest
 
 ARC_SCRIPTS_PATH = "Scripts/python"
+py4lo_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+
+ignore_scripts_cb = IgnoreScripts(ARC_SCRIPTS_PATH)
 
 def ignore_scripts(zin, zout, item):
-    """Ignore all existing scripts in source file"""
-    return not item.filename.startswith(ARC_SCRIPTS_PATH)
+    return ignore_scripts_cb.call(zin, zout, item)
 
 def rewrite_manifest(scripts):
+    rewrite_manifest_cb = RewriteManifest(scripts)
     def callback(zin, zout, item):
-        path, fname = os.path.split(item.filename)
-        if item.filename == "META-INF/manifest.xml":
-            temp = zin.read(item.filename)
-            s = ""
-            for line in temp.decode("utf-8").splitlines():
-                if line.strip() == "</manifest:manifest>": # end of manifest
-                    s += """<manifest:file-entry manifest:full-path="Basic/Standard/py4lo.xml" manifest:media-type="text/xml"/>
-    <manifest:file-entry manifest:full-path="Basic/Standard/script-lb.xml" manifest:media-type="text/xml"/>
-    <manifest:file-entry manifest:full-path="Basic/script-lc.xml" manifest:media-type="text/xml"/>
-    <manifest:file-entry manifest:full-path="Scripts" manifest:media-type="application/binary"/>
-    <manifest:file-entry manifest:full-path="Scripts/python" manifest:media-type="application/binary"/>
-    """
-                    for script in scripts:
-                        s += " <manifest:file-entry manifest:full-path=\"Scripts/python/"+script.get_name()+"\" manifest:media-type=\"\"/>\n"
-
-                s += line + "\n"
-            zout.writestr(item, s.encode("utf-8"))
-        else:
-            zout.writestr(item.filename, zin.read(item.filename))
-        return True
+        rewrite_manifest_cb.call(zin, zout, item)
 
     return callback
 
@@ -60,7 +46,6 @@ def add_scripts(scripts):
 
 def add_readme_with(contact):
     def callback(zout):
-        py4lo_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
         zout.write(os.path.join(py4lo_path, "inc", "script-lc.xml"), "Basic/script-lc.xml")
         zout.write(os.path.join(py4lo_path, "inc", "script-lb.xml"), "Basic/Standard/script-lb.xml")
         with open(os.path.join(py4lo_path, "inc", "py4lo.xml.tpl"), 'r', encoding='utf-8') as f:

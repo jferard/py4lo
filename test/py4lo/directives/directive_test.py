@@ -18,7 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import unittest
 import env
-from directive import *
+from directives import *
 
 class TestDirective(unittest.TestCase):
     pass
