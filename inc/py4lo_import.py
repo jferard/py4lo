@@ -26,6 +26,8 @@ def prepare_import():
         import sys
         import logging
 
+        logging.basicConfig(level=logging.DEBUG)
+
         doc = XSCRIPTCONTEXT.getDocument()
         url = unohelper.fileUrlToSystemPath(doc.URL+'/Scripts/python')
         if url not in sys.path:
