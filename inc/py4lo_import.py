@@ -17,17 +17,19 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 def prepare_import():
-    import unohelper
-    import sys
-    import logging
+    try:
+        XSCRIPTCONTEXT
+    except:
+        pass
+    else:
+        import unohelper
+        import sys
+        import logging
 
-    doc = XSCRIPTCONTEXT.getDocument()
-    url = unohelper.fileUrlToSystemPath(doc.URL+'/Scripts/python')
-    if url not in sys.path:
-        sys.path.insert(0, url)
-    logging.debug("sys.path="+str(sys.path))
+        doc = XSCRIPTCONTEXT.getDocument()
+        url = unohelper.fileUrlToSystemPath(doc.URL+'/Scripts/python')
+        if url not in sys.path:
+            sys.path.insert(0, url)
+        logging.debug("sys.path="+str(sys.path))
 
-try:
-    prepare_import()
-except:
-    pass
+prepare_import()
