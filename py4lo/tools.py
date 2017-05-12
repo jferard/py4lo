@@ -23,6 +23,8 @@ from callbacks import *
 from scripts_processor import ScriptsProcessor
 import subprocess
 
+py4lo_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+
 def update_ods(tdata):
     ods_source_name = tdata["source_file"]
     suffix = tdata["default_suffix"]
@@ -37,7 +39,7 @@ class OdsUpdater():
         add_readme = tdata["add_readme"]
         if add_readme:
             readme_contact = tdata["readme_contact"]
-            add_readme_callback = add_readme_with(readme_contact)
+            add_readme_callback = AddReadmeWith(os.path.join(py4lo_path, "inc"), readme_contact)
         else:
             add_readme_callback = None
 
@@ -69,9 +71,9 @@ class OdsUpdater():
         zip_updater = ZipUpdater()
         (
             zip_updater
-                .item(ignore_scripts)
-                .item(rewrite_manifest(scripts))
-                .after(add_scripts(scripts))
+                .item(IgnoreScripts(ARC_SCRIPTS_PATH))
+                .item(RewriteManifest(scripts))
+                .after(AddScripts(scripts))
         )
         if self.__add_readme_callback is not None:
             zip_updater.after(self.__add_readme_callback)

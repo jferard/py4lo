@@ -49,21 +49,21 @@ class TestZipUpdater(unittest.TestCase):
 
         zf.side_effect = [rout, rin]
 
-        b1.side_effect = lambda x:True
-        b2.side_effect = lambda x:False
-        i1.side_effect = [lambda x,y,z:True, lambda x,y,z:True]
-        i2.side_effect = [lambda x,y,z:False, lambda x,y,z:False]
-        a1.side_effect = lambda x:True
-        a2.side_effect = lambda x:False
+        b1.call.return_value = True
+        b2.call.return_value = False
+        i1.call.return_value = [True, True]
+        i2.call.return_value = [False, False]
+        a1.call.return_value = True
+        a2.call.return_value = False
 
         zu.before(b1).before(b2).item(i1).item(i2).after(a1).after(a2)
         zu.update("source", "dest")
 
 
         p.assert_called_once_with("a")
-        b1.assert_called_once_with(zout)
-        b2.assert_called_once_with(zout)
-        self.assertEquals([call(zin, zout, 1), call(zin, zout, 2)], i1.mock_calls)
-        self.assertEquals([call(zin, zout, 1), call(zin, zout, 2)], i2.mock_calls)
-        a1.assert_called_once_with(zout)
-        a2.assert_called_once_with(zout)
+        b1.call.assert_called_once_with(zout)
+        b2.call.assert_called_once_with(zout)
+        self.assertEquals([call(zin, zout, 1), call(zin, zout, 2)], i1.call.mock_calls)
+        self.assertEquals([call(zin, zout, 1), call(zin, zout, 2)], i2.call.mock_calls)
+        a1.call.assert_called_once_with(zout)
+        a2.call.assert_called_once_with(zout)

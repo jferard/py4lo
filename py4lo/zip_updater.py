@@ -49,7 +49,7 @@ class ZipUpdater():
 
     def __do_before(self, zout):
         for before_callback in self.__before_callbacks:
-            if not before_callback(zout):
+            if not before_callback.call(zout):
                 break
 
     def __do_items(self, zin, zout):
@@ -58,10 +58,10 @@ class ZipUpdater():
 
     def __do_item(self, zin, zout, item):
         for item_callback in self.__item_callbacks:
-            if not item_callback(zin, zout, item):
+            if not item_callback.call(zin, zout, item):
                 break
 
     def __do_after(self, zout):
         for after_callback in self.__after_callbacks:
-            if not after_callback(zout):
+            if not after_callback.call(zout):
                 break
