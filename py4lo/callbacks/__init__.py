@@ -17,11 +17,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import os
-from callbacks.debug import *
+from callbacks.add_debug_content import AddDebugContent
+from callbacks.add_readme_with import AddReadmeWith
 from callbacks.ignore_scripts import IgnoreScripts
 from callbacks.rewrite_manifest import RewriteManifest
+from callbacks.add_scripts import AddScripts, ARC_SCRIPTS_PATH
 
-ARC_SCRIPTS_PATH = "Scripts/python"
 py4lo_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 ignore_scripts_cb = IgnoreScripts(ARC_SCRIPTS_PATH)
@@ -37,42 +38,22 @@ def rewrite_manifest(scripts):
     return callback
 
 def add_scripts(scripts):
+    add_scripts_cb = AddScripts(scripts)
     def callback(zout):
-        for script in scripts:
-            zout.writestr(ARC_SCRIPTS_PATH+"/"+script.get_name(), script.get_data())
-        return True
+        return add_scripts_cb.call(zout)
 
     return callback
 
 def add_readme_with(contact):
+    add_readme_with_cb = AddReadmeWith(os.path.join(py4lo_path, "inc"), contact)
     def callback(zout):
-        zout.write(os.path.join(py4lo_path, "inc", "script-lc.xml"), "Basic/script-lc.xml")
-        zout.write(os.path.join(py4lo_path, "inc", "script-lb.xml"), "Basic/Standard/script-lb.xml")
-        with open(os.path.join(py4lo_path, "inc", "py4lo.xml.tpl"), 'r', encoding='utf-8') as f:
-            tpl = f.read()
-            xml = tpl.format(contact = contact)
-            zout.writestr("Basic/Standard/py4lo.xml", xml)
-        return True
+        return add_readme_with_cb.call(zout)
 
     return callback
 
 def add_debug_content(funcs_by_script):
+    add_debug_content_cb = AddDebugContent(funcs_by_script)
     def callback(zout):
-        forms = begin_forms
-        draw = begin_shapes
-
-        i = 0
-        for script in funcs_by_script:
-            for func in funcs_by_script[script]:
-                forms += form_tpl.format(name=func, id=i, file=script, func=func)
-                draw += draw_control_tpl.format(x=10, y=15*i+10, id=i)
-                i += 1
-
-        forms += end_forms
-        draw += end_shapes
-
-        s = before + forms + draw + after
-        zout.writestr("content.xml", s)
-        return True
+        return add_debug_content_cb.call(zout)
 
     return callback
