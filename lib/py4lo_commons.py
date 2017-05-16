@@ -19,8 +19,8 @@
 import unicodedata
 import logging
 
-def init(XSCRIPTCONTEXT):
-    pass
+def init(xsc):
+    Commons.xsc = xsc
 
 class Bus:
     """A minimal bus minimal to communicate with front end"""
@@ -39,6 +39,7 @@ class Bus:
 
 class Commons:
     def __init__(self):
+        self.doc = Commons.xsc.getDocument()
         self.__logger = None
 
     def __del__(self):
