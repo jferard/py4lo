@@ -33,10 +33,17 @@ class Comparator():
         if expr[0] == '$':
             name = expr[1:]
             expr = eval(name, {'__builtin__':None}, self.__accepted_locals)
-        try:
-            return float(expr)
-        except ValueError:
+        if not isinstance(expr, str):
             return expr
+        try:
+            if expr[-1] == 'f':
+                return float(expr[0:-1])
+            elif expr[-1] == 'i':
+                return float(expr[0:-1])
+        except ValueError:
+            pass
+
+        return expr
 
     def __cmp(self, arg1, arg2):
         if arg1 < arg2:

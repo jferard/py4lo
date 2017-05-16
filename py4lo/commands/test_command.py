@@ -24,9 +24,12 @@ from commands.command_executor import CommandExecutor
 class TestCommand():
     @staticmethod
     def create(args, tdata):
-        return CommandExecutor(TestCommand(tdata["python_exe"], tdata["test_dir"]))
+        logger = logging.getLogger("py4lo")
+        logger.setLevel(tdata["log_level"])
+        return CommandExecutor(TestCommand(logger, tdata["python_exe"], tdata["test_dir"]))
 
-    def __init__(self, python_exe, test_dir):
+    def __init__(self, logger, python_exe, test_dir):
+        self.__logger = logger
         self.__python_exe = python_exe
         self.__test_dir = test_dir
 
@@ -34,9 +37,9 @@ class TestCommand():
         final_status = 0
         for path in self.__test_paths():
             cmd = "\""+self.__python_exe+"\" "+path
-            print ("execute:", cmd)
+            self.__logger.info("execute: {0}".format(cmd))
             status, output = subprocess.getstatusoutput(cmd)
-            print ("output:", output)
+            self.__logger.info("output: {0}".format(output))
             if status != 0:
                 final_status = 1
 

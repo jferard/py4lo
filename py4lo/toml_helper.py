@@ -61,7 +61,7 @@ class TomlLoader():
 
         if not "python_version" in self.__data:
             self.__data["python_exe"] = sys.executable
-            self.__data["python_version"] = sys.version_info.major
+            self.__data["python_version"] = str(sys.version_info.major)+"."+str(sys.version_info.minor)
 
     def __check_level(self):
         if "log_level" not in self.__data or self.__data["log_level"] not in ["CRITICAL", "DEBUG", "ERROR", "FATAL", "INFO", "NOTSET", "WARN", "WARNING"]:

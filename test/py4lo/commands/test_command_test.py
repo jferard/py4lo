@@ -28,19 +28,18 @@ import subprocess
 class TestCommandTest(unittest.TestCase):
     @patch('subprocess.getstatusoutput', spec=subprocess.getstatusoutput)
     @patch('os.walk', spec=os.walk)
-    @patch('builtins.print', spec=print)
-    def test(self, print_mock, os_walk_mock, subprocess_gso_mock):
-        print (print_mock)
+    def test(self, os_walk_mock, subprocess_gso_mock):
         os_walk_mock.return_value = [ ("/a", ("b",), ("c_test.py",)), ("/a/b", (), ("d_test.py",)) ]
         subprocess_gso_mock.side_effect = [(0, "ok"), (1, "not ok")]
-        tc = TestCommand("py", "a_dir")
+        logger = MagicMock()
+        tc = TestCommand(logger, "py", "a_dir")
         status = tc.execute()
 
-        print_mock.assert_has_calls([
-            call('execute:', '"py" /a/c_test.py'),
-            call('output:', 'ok'),
-            call('execute:', '"py" /a/b/d_test.py'),
-            call('output:', 'not ok')
+        logger.assert_has_calls([
+            call.info('execute: "py" /a/c_test.py'),
+            call.info('output: ok'),
+            call.info('execute: "py" /a/b/d_test.py'),
+            call.info('output: not ok')
         ])
         subprocess_gso_mock.assert_has_calls([call('"py" /a/c_test.py'), call('"py" /a/b/d_test.py')])
         self.assertEqual((1,), status)
