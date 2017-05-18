@@ -51,6 +51,7 @@ class Py4LO_helper(unohelper.Base):
 
         self.loader = self.uno_service( "com.sun.star.frame.Desktop" )
         self.reflect = self.uno_service( "com.sun.star.reflection.CoreReflection" )
+        self.dispatcher = self.uno_service( "com.sun.star.frame.DispatchHelper" )
         self.__xray_script = None
 
     def use_xray(self):
@@ -113,14 +114,14 @@ class Py4LO_helper(unohelper.Base):
         aAddress = oCursor.RangeAddress
         return aAddress.EndRow
 
-    def to_iter(self, o):
+    def to_iter(self, oXIndexAccess):
         for i in range(0, oXIndexAccess.getCount()):
             yield(oXIndexAccess.getByIndex(i))
 
-    def to_dict(self, o):
+    def to_dict(self, oXNameAccess):
         d = {}
-        for name in o.getElementNames():
-            d[name] = o.getByName(name)
+        for name in oXNameAccess.getElementNames():
+            d[name] = oXNameAccess.getByName(name)
         return d
 
     def read_options_from_sheet_name(self, sheet_name, l=lambda s: s):
@@ -166,6 +167,34 @@ class Py4LO_helper(unohelper.Base):
             cell.String = default_string
 
 
-#p = Py4LO_helper(None)
-#def __export_Py4LO_helper():
-#    return p
+    def add_filter(self, oDoc, oSheet, range_name):
+        oController = oDoc.CurrentController
+        oAll = oSheet.getCellRangeByName(range_name)
+        oController.select(oAll)
+
+        oFrame = oController.Frame
+        self.dispatcher.executeDispatch(oFrame, ".uno:DataFilterAutoFilter", "", 0, ())
+
+    def clear_conditional_format(self, oSheet, range_name):
+        oColoredColumns = oSheet.getCellRangeByName(range_name)
+        oConditionalFormat = oColoredColumns.ConditionalFormat
+        oConditionalFormat.clear()
+
+    def conditional_format_on_formulas(self, oSheet, range_name, style_by_formula, source_position=(0,0)):
+        oColoredColumns = oSheet.getCellRangeByName(range_name)
+        oConditionalFormat = oColoredColumns.ConditionalFormat
+        oSrc = oColoredColumns.getCellByPosition(*source_position).CellAddress
+
+        for formula, style in style_by_formula.items():
+            oConditionalEntry = self.get_formula_conditional_entry(formula, style, oSrc)
+            oConditionalFormat.addNew(oConditionalEntry)
+
+        oColoredColumns.ConditionalFormat = oConditionalFormat
+
+    def get_formula_conditional_entry(self, formula, style_name, oSrc):
+        return self.get_conditional_entry(formula, "", FORMULA, style_name, oSrc)
+
+    def get_conditional_entry(self, formula1, formula2, operator, style_name, oSrc):
+        return (
+            self.make_pvs({"Formula1":formula1, "Formula2":formula2, "Operator":operator, "StyleName":style_name, "SourcePosition":oSrc})
+        )

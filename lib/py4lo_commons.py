@@ -16,13 +16,16 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
+import unohelper
+import uno
+import os
 import unicodedata
 import logging
 
 def init(xsc):
     Commons.xsc = xsc
 
-class Bus:
+class Bus(unohelper.Base):
     """A minimal bus minimal to communicate with front end"""
     def __init__(self):
         self.__subscribers = []
@@ -37,7 +40,7 @@ class Bus:
                 m = getattr(s, m_name)
                 m(event_data)
 
-class Commons:
+class Commons(unohelper.Base):
     def __init__(self):
         self.doc = Commons.xsc.getDocument()
         self.__logger = None
