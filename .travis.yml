@@ -12,6 +12,7 @@ install:
   # for coverage
   - pip install codecov
   - pip install pytest-cov
+  - pip install unotools
 
   # dependencies
   - pip install -r requirements.txt
