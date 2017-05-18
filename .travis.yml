@@ -4,6 +4,8 @@ language: python
 python:
   - "3.4"
 
+cache: pip
+
 before_install:
   - sudo aptitude install -y libreoffice libreoffice-script-provider-python uno-libs3 python3-uno python3
 
@@ -16,6 +18,7 @@ install:
 
   # dependencies
   - pip install -r requirements.txt
+  - pip list
 
 # script
 script:
