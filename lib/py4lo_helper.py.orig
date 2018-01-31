@@ -32,8 +32,6 @@ from com.sun.star.awt.MessageBoxType import MESSAGEBOX
 MESSAGEBOX = 0
 # py4lo: endif
 
-from com.sun.star.lang import Locale
-
 def init(xsc):
     Py4LO_helper.xsc = xsc
 
@@ -110,10 +108,10 @@ class Py4LO_helper(unohelper.Base):
             uno.systemPathToFileUrl(filename), "_blank", 0, ())
 
     def get_last_used_row(self, oSheet):
-        oCell = oSheet.getCellByPosition(0, 0)
+        oCell = oSheet.GetCellByPosition(0, 0)
         oCursor = oSheet.createCursorByRange(oCell)
-        oCursor.gotoEndOfUsedArea(True)
-        aAddress = oCursor.getRangeAddress()
+        oCursor.GotoEndOfUsedArea(True)
+        aAddress = oCursor.RangeAddress
         return aAddress.EndRow
 
     def to_iter(self, oXIndexAccess):
@@ -173,6 +171,11 @@ class Py4LO_helper(unohelper.Base):
         oController = oDoc.CurrentController
         oAll = oSheet.getCellRangeByName(range_name)
         oController.select(oAll)
+<<<<<<< HEAD
+        
+=======
+
+>>>>>>> 7280a69c4dc1611f14c1e18ef1fcbba80a0f4e4e
         oFrame = oController.Frame
         self.dispatcher.executeDispatch(oFrame, ".uno:DataFilterAutoFilter", "", 0, ())
 
@@ -187,11 +190,29 @@ class Py4LO_helper(unohelper.Base):
         oSrc = oColoredColumns.getCellByPosition(*source_position).CellAddress
 
         for formula, style in style_by_formula.items():
+<<<<<<< HEAD
+            oConditionalEntry = self.getFormulaConditionalEntry(formula, style, oSrc)
+=======
             oConditionalEntry = self.get_formula_conditional_entry(formula, style, oSrc)
+>>>>>>> 7280a69c4dc1611f14c1e18ef1fcbba80a0f4e4e
             oConditionalFormat.addNew(oConditionalEntry)
 
         oColoredColumns.ConditionalFormat = oConditionalFormat
 
+<<<<<<< HEAD
+    def getFormulaConditionalEntry(self, formula, style_name, oSrc):
+        return self.getConditionalEntry(formula, "", FORMULA, style_name, oSrc)
+
+    def getConditionalEntry(self, formula1, formula2, operator, style_name, oSrc):
+        return (
+            self.make_pvs({"Formula1":formula1, "Formula2":formula2, "Operator":operator, "StyleName":style_name, "SourcePosition":oSrc})
+        )
+        
+            
+#p = Py4LO_helper(None)
+#def __export_Py4LO_helper():
+#    return p
+=======
     def get_formula_conditional_entry(self, formula, style_name, oSrc):
         return self.get_conditional_entry(formula, "", FORMULA, style_name, oSrc)
 
@@ -199,13 +220,4 @@ class Py4LO_helper(unohelper.Base):
         return (
             self.make_pvs({"Formula1":formula1, "Formula2":formula2, "Operator":operator, "StyleName":style_name, "SourcePosition":oSrc})
         )
-
-    # from Andrew Pitonyak 5.14 www.openoffice.org/documentation/HOW_TO/various_topics/AndrewMacro.odt
-    def find_or_create_number_format_style(self, oDoc, format):
-        oFormats = oDoc.getNumberFormats()
-        oLocale = Locale()
-        formatNum = oFormats.queryKey(format, oLocale, True)
-        if formatNum == -1:
-            formatNum = oFormats.addNew(format, oLocale)
-
-        return formatNum
+>>>>>>> 7280a69c4dc1611f14c1e18ef1fcbba80a0f4e4e

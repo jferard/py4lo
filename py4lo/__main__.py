@@ -22,11 +22,16 @@ from toml_helper import load_toml
 from commands import commands
 
 sys.argv.pop(0) # remove the command
-command_name = sys.argv.pop(0)
-tdata = load_toml()
+try:
+	command_name = sys.argv.pop(0)
+	tdata = load_toml()
 
-if command_name == '-h' or command_name == '--help':
-    command_name = "help"
+	if command_name == '-h' or command_name == '--help':
+		command_name = "help"
+except IndexError as e:
+	print ("IndexError: " + str(e))
+	command_name = "help"
+	tdata = []
 
 command = commands.get(command_name, sys.argv, tdata)
 command.execute()

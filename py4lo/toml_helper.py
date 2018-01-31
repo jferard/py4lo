@@ -48,8 +48,8 @@ class TomlLoader():
             with open(self.__local_py4lo_toml, 'r', encoding="utf-8") as s:
                 content = s.read()
                 local_data = toml.loads(content)
-        except OSError as ose:
-            pass
+        except Exception as e:
+            print ("Error when loading local toml file: "+str(e))
         else:
             self.__data.update(local_data)
 
