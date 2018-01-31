@@ -55,6 +55,7 @@ class Commons(unohelper.Base):
         return Bus()
 
     def cur_dir(self):
+        """return the directory of the current document"""
         url = self.doc.getURL()
         path = uno.fileUrlToSystemPath( url )
         return os.path.dirname( path )
