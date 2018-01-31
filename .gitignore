@@ -1,6 +1,8 @@
 # dirs
 mydir/*
 py4lo/__pycache__/*
+.pytest_cache/*
+**/.pytest_cache
 .cache
 
 # generated files

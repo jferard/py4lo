@@ -1,8 +1,14 @@
 # Py4LO (Python For LibreOffice)
+(C) J. Férard 2016-2018
+
 Py4LO is a simple toolkit to help you write Python scripts for LibreOffice.
+
+Under GPL v.3
 
 ## Overview
 Py4LO helps you to pack your Python scripts in a LibreOffice Calc document, with a debug option. It also provides a mechanism to import objects from another script, and a small library to ease the use of LibreOffice services.
+
+NB. The library is still very limited.
 
 ## Installation
 Needs Python 3.
@@ -35,7 +41,7 @@ Create a simple Python script ```myscript.py``` :
 ```python
 # -*- coding: utf-8 -*-
 # py4lo: use lib "py4lo_helper::Py4LO_helper" as _
-   
+
 def test(*args):
 	from com.sun.star.awt.MessageBoxType import MESSAGEBOX
 	from com.sun.star.awt.MessageBoxButtons import BUTTONS_OK
@@ -48,7 +54,7 @@ Generate a debug document:
 > python <py4lo dir>/py4lo init
 ```
 
-Where ```<py4lo dir>``` points to the cloned document. It will create a ```new-project.ods``` document with the Python ```test``` function attached to a button. 
+Where ```<py4lo dir>``` points to the cloned document. It will create a ```new-project.ods``` document with the Python ```test``` function attached to a button.
 
 ### Step 3
 Rename ```new-project.ods``` to ```mydoc.ods``` and edit the document if you want.
@@ -64,7 +70,7 @@ Edit the Python script ```myscript.py```:
 ```python
 # -*- coding: utf-8 -*-
 # py4lo: use lib "py4lo_helper::Py4LO_helper" as _
-   
+
 def test(*args):
 	from com.sun.star.awt.MessageBoxType import MESSAGEBOX
 	from com.sun.star.awt.MessageBoxButtons import BUTTONS_OK
@@ -99,4 +105,7 @@ In ```scriptA.py```:
 # py4lo: use lib "py4lo_helper::Py4LO_helper" as _
 ```
 
-NB. The library is still very limited.
+## Test
+From the py4lo directory:
+
+    python -m pytest test
