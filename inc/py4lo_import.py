@@ -16,22 +16,16 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
-def prepare_import():
-    try:
-        XSCRIPTCONTEXT
-    except:
-        pass
-    else:
-        import unohelper
-        import sys
-        import logging
-
-        logging.basicConfig(level=logging.DEBUG)
-
-        doc = XSCRIPTCONTEXT.getDocument()
-        url = unohelper.fileUrlToSystemPath(doc.URL+'/Scripts/python')
-        if url not in sys.path:
-            sys.path.insert(0, url)
-        logging.debug("sys.path="+str(sys.path))
-
-prepare_import()
+try:
+    XSCRIPTCONTEXT
+except:
+    pass
+else:
+    import unohelper
+    import sys
+    # add path/to/doc.os/Scripts/python to sys.path, to import Python
+    # modules (*.py, *.py[co]) and packages from a ZIP-format archive.
+    doc = XSCRIPTCONTEXT.getDocument()
+    spath = unohelper.fileUrlToSystemPath(doc.URL+'/Scripts/python')
+    if spath not in sys.path:
+        sys.path.insert(0, spath)
