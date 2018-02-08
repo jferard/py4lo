@@ -106,11 +106,13 @@ class Py4LO_helper(unohelper.Base):
             uno.systemPathToFileUrl(filename), "_blank", 0, ())
 
     def get_last_used_row(self, oSheet):
+        return self.get_used_range(oSheet).EndRow
+
+    def get_used_range(self, oSheet):
         oCell = oSheet.getCellByPosition(0, 0)
         oCursor = oSheet.createCursorByRange(oCell)
         oCursor.gotoEndOfUsedArea(True)
-        aAddress = oCursor.getRangeAddress()
-        return aAddress.EndRow
+        return oCursor.RangeAddress
 
     def to_iter(self, oXIndexAccess):
         for i in range(0, oXIndexAccess.getCount()):
@@ -129,19 +131,23 @@ class Py4LO_helper(unohelper.Base):
     def doc_builder(self, t="calc"):
         return DocBuilder(t)
 
+    # l is deprecated
     def read_options_from_sheet_name(self, sheet_name, l=lambda s: s):
         oSheet = self.doc.Sheets.getByName(sheet_name)
-        oCell = oSheet.getCellByPosition(0, 0)
-        oCursor = oSheet.createCursorByRange(oCell)
-        oCursor.gotoEndOfUsedArea(True)
-        aAddress = oCursor.RangeAddress
-        return self.read_options(oSheet, aAddress, l)
+        aAddress = self.get_used_range(oSheet)
+        return self.read_options(oSheet, aAddress, l, width)
 
+    # l is deprecated
     def read_options(self, oSheet, aAddress, l=lambda s: s):
         options = {}
+        width = aAddress.EndColumn - aAddress.StartColumn
         for r in range(aAddress.StartRow, aAddress.EndRow+1):
             k = oSheet.getCellByPosition(aAddress.StartColumn, r).String.strip()
-            v = oSheet.getCellByPosition(aAddress.StartColumn+1, r).String.strip()
+            if width <= 1:
+                v = oSheet.getCellByPosition(aAddress.StartColumn+1, r).String.strip()
+            else:
+                # from aAddress.StartColumn+1 to aAddress.EndColumn
+                v = [oSheet.getCellByPosition(aAddress.StartColumn+1+c, r).String.strip() for c in range(width)]
             if k and v:
                 options[l(k)] = l(v)
         return options
@@ -160,13 +166,13 @@ class Py4LO_helper(unohelper.Base):
         oValidation = oCell.Validation
         oValidation.Type = uno.getConstantByName(
                             "com.sun.star.sheet.ValidationType.LIST")
-        oValidation.ShowErrorMessage = True                    #Anomalies bloquantes
-        oValidation.ShowList = uno.getConstantByName(        #Liste déroulante
+        oValidation.ShowErrorMessage = True
+        oValidation.ShowList = uno.getConstantByName(
                             "com.sun.star.sheet.TableValidationVisibility.UNSORTED")
-        formula = ";".join('"'+a+'"' for a in fields) #Les valeurs autorisées, entre guillemets et ;
+        formula = ";".join('"'+a+'"' for a in fields)
         oValidation.setFormula1(formula)
-        oValidation.IgnoreBlankCells = allow_blank            #Saisie obligatoire ?
-        cell.Validation = oValidation                        #Affecter validation
+        oValidation.IgnoreBlankCells = allow_blank
+        cell.Validation = oValidation
 
         if default_string is not None:
             cell.String = default_string
@@ -273,7 +279,6 @@ class DocBuilder():
             oSheets.copyByName(oBaseSheet.Name, sheet_name, s)
 
         return self
-
 
     def make_base_sheet(self, func):
         oSheets = self.__oDoc.Sheets
