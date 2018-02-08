@@ -52,10 +52,10 @@ class DebugCommand():
         zip_updater = ZipUpdater()
         (
             zip_updater
-                .item(ignore_scripts)
-                .item(rewrite_manifest(scripts))
-                .after(add_scripts(scripts))
-                .after(add_debug_content(script_processor.get_exported_func_names_by_script_name()))
+                .item(IgnoreScripts("Scripts"))
+                .item(RewriteManifest(scripts))
+                .after(AddScripts(scripts))
+                .after(AddDebugContent(scripts_processor.get_exported_func_names_by_script_name()))
         )
         zip_updater.update(os.path.join(self.__py4lo_path, "inc", "debug.ods"), self.__ods_dest_name)
         return (self.__ods_dest_name,)
