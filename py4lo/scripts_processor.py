@@ -19,6 +19,7 @@
 import os
 import re
 import logging
+import py_compile
 from directive_processor import DirectiveProcessor
 
 class Script():
@@ -26,10 +27,11 @@ class Script():
     def to_name(fname):
         return os.path.split(fname)[1]
 
-    def __init__(self, script_fname, script_data, exported_func_names):
+    def __init__(self, script_fname, script_data, exported_func_names, exception):
         self.__fname = script_fname
         self.__data = script_data
         self.__exported_func_names = exported_func_names
+        self.__exception = exception
 
     def get_fname(self):
         return self.__fname
@@ -42,6 +44,9 @@ class Script():
 
     def get_exported_func_names(self):
         return self.__exported_func_names
+
+    def get_exception(self):
+        return self.__exception
 
 class ScriptsProcessor():
     def __init__(self, logger, src_dir, python_version, target_dir):
@@ -59,6 +64,12 @@ class ScriptsProcessor():
 
         while self.__has_more_scripts():
             self.__process_next_script_if_not_visited()
+
+        es = [script.get_exception() for script in self.__scripts if script.get_exception()]
+        if es:
+            for e in es:
+                self.__logger.log(logging.ERROR, str(e))
+            raise Exception("Compilation errors: see above")
 
         return self.__scripts
 
@@ -88,9 +99,10 @@ class ScriptsProcessor():
         self.__scripts.append(script)
 
     def get_exported_func_names_by_script_name(self):
+        """Return a dict: script name -> exported functions"""
         exported_func_names_by_script_name = {}
         for script in self.__scripts:
-            exported_func_names_by_script_name[script.get_name(), script.get_exported_func_names()]
+            exported_func_names_by_script_name[script.get_name()] = script.get_exported_func_names()
         return exported_func_names_by_script_name
 
     def __write_script(self, script):
@@ -116,6 +128,12 @@ class ScriptProcessor():
         self.__logger.log(logging.DEBUG, "Parsing script: %s (%s)", Script.to_name(self.__script_fname), self.__script_fname)
         exported_func_names = []
 
+        exception = None
+        try:
+            py_compile.compile(self.__script_fname, doraise=True)
+        except Exception as e:
+            exception = e
+
         s = "# parsed by py4lo\n"
         with open(self.__script_fname, 'r', encoding="utf-8") as f:
             try:
@@ -139,6 +157,6 @@ class ScriptProcessor():
                 raise e
 
         s += "\n\ng_exportedScripts = ("+", ".join(exported_func_names)+")\n"
-        script = Script(self.__script_fname, s.encode("utf-8"), exported_func_names)
+        script = Script(self.__script_fname, s.encode("utf-8"), exported_func_names, exception)
         self.__directive_processor.end()
         return script
