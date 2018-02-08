@@ -24,6 +24,8 @@ class UseLib():
         self.__py4lo_path = py4lo_path
 
     def execute(self, processor, directiveName, args):
+        """Take a directive processor, a directive name, and args
+        The name is used to take or leave this directive. Each directive is responsible for this decision"""
         if directiveName != "use" or args[0] != "lib":
             return False
 

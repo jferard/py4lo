@@ -85,6 +85,7 @@ class DirectiveProcessor():
         self.__s += s2
 
     def append_script(self, script_fname):
+        """Append a script to the script processor"""
         self.__scripts_processor.append_script(script_fname)
 
     def __is_directive(self, ls):

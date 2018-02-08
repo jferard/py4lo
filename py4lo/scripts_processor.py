@@ -63,6 +63,7 @@ class ScriptsProcessor():
         return self.__scripts
 
     def append_script(self, script_fname):
+        """Append a new script. The directive UseLib will call this method"""
         self.__cur_script_fnames.append(script_fname)
 
     def __has_more_scripts(self):
@@ -105,6 +106,7 @@ class ScriptsProcessor():
             os.mkdir(self.__target_dir)
 
 class ScriptProcessor():
+    """A script processor"""
     def __init__(self, logger, directive_processor, script_fname):
         self.__logger = logger
         self.__directive_processor = directive_processor
@@ -121,6 +123,7 @@ class ScriptProcessor():
                     if line[0] == '#':
                         s += self.__directive_processor.process_line(line)
                     else:
+                        # TODO: def without _ -> exported
                         m = re.match("^def\s+(.*?)\(.*\):\s*$", line)
                         if m:
                             func_name = m.group(1)
