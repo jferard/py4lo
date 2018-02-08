@@ -101,10 +101,6 @@ class Py4LO_helper(unohelper.Base):
             else:
                 return self.sm.createInstanceWithArgumentsAndContext(sname, args, ctxt)
 
-    def new_doc(self):
-        return self.loader.loadComponentFromURL(
-                     "private:factory/scalc", "_blank", 0, () )
-
     def open_in_calc(self, filename):
         self.loader.loadComponentFromURL(
             uno.systemPathToFileUrl(filename), "_blank", 0, ())
@@ -125,6 +121,13 @@ class Py4LO_helper(unohelper.Base):
         for name in oXNameAccess.getElementNames():
             d[name] = oXNameAccess.getByName(name)
         return d
+
+    def new_doc(self, t="calc" ):
+        """Create a blank new doc"""
+        return DocBuilder(t).build()
+
+    def doc_builder(self, t="calc"):
+        return DocBuilder(t)
 
     def read_options_from_sheet_name(self, sheet_name, l=lambda s: s):
         oSheet = self.doc.Sheets.getByName(sheet_name)
@@ -209,3 +212,87 @@ class Py4LO_helper(unohelper.Base):
             formatNum = oFormats.addNew(format, oLocale)
 
         return formatNum
+
+class DocBuilder():
+    def __init__(self, t):
+        """Create a blank new doc"""
+        self.__oDoc = self.loader.loadComponentFromURL(
+                     "private:factory/s"+t, "_blank", 0, () )
+        self.__oDoc.lockControllers()
+        return self
+
+    def build(self):
+        self.__oDoc.unlockControllers()
+        return self.__oDoc
+
+    def sheet_names(self, sheet_names, expand_if_necessary=True, trunc_if_necessary=True):
+        oSheets = self.__oDoc.Sheets
+        it = iter(sheet_names)
+        s = 0
+
+        try:
+            # rename
+            while s < oSheets.getCount():
+                oSheet = oSheets.getByIndex(s)
+                oSheet.setName(next(it)) # may raise a StopIteration
+                s += 1
+
+            assert s == oSheets.getCount()
+
+            if expand_if_necessary:
+                # add
+                for sheet_name in it:
+                    oSheets.insertNewByName(sheet_name, s)
+                    s += 1
+        except StopIteration: # it
+            assert s < oSheets.getCount()
+            assert s == len(list(sheet_names))
+            if trunc_if_necessary:
+                self.trunc_to_count(oNewDoc, s)
+
+        return self
+
+    def apply_func_to_sheets(self, func):
+        oSheets = self.__oDoc.Sheets
+        for oSheet in oSheets:
+            func(oSheet)
+        return self
+
+    def apply_func_list_to_sheets(self, funcs):
+        oSheets = self.__oDoc.Sheets
+        for func, oSheet in zip(funcs, oSheets):
+            func(oSheet)
+        return self
+
+    def duplicate_base_sheet(self, func, sheet_names, trunc=True):
+        """Create a base sheet and duplicate it n-1 times"""
+        oSheets = self.__oDoc.Sheets
+        oBaseSheet = oSheets[0]
+        func(oBaseSheet)
+        for s, sheet_name in enumerate(sheet_names, 1):
+            oSheets.copyByName(oBaseSheet.Name, sheet_name, s)
+
+        return self
+
+
+    def make_base_sheet(self, func):
+        oSheets = self.__oDoc.Sheets
+        oBaseSheet = oSheets[0]
+        func(oBaseSheet)
+        return self
+
+    def duplicate_to(self, n):
+        oSheets = self.__oDoc.Sheets
+        oBaseSheet = oSheets[0]
+        for s in range(n+1):
+            oSheets.copyByName(oBaseSheet.Name, oBaseSheet.Name+str(s), s)
+
+        return self
+
+    def trunc_to_count(final_sheet_count):
+        oSheets = self.__oDoc.Sheets
+        while final_sheet_count < oSheets.getCount():
+            oSheet = oSheets.getByIndex(final_sheet_count)
+            oSheets.removeByName(oSheet.getName())
+
+        return self
