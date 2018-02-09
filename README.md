@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/jferard/py4lo.svg?branch=master)](https://travis-ci.org/jferard/py4lo)
+[![Code Coverage](https://img.shields.io/codecov/c/github/jferard/py4lo/master.svg)](https://codecov.io/github/jferard/py4lo?branch=master)
+
 # Py4LO (Python For LibreOffice)
 (C) J. Férard 2016-2018
 
