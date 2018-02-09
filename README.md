@@ -92,7 +92,8 @@ In ```scriptA.py```:
 ### Import in script A a library
 In ```scriptA.py```:
 
-    # py4lo: import lib py4lo_helper as _
+    # py4lo: import lib py4lo_helper
+    _ = py4lo_helper.Py4LO_helper()
 
 *Warning*
 The special object `XSCRIPTCONTEXT` of type [`com.sun.star.script.provider.XScriptContext](  https://api.libreoffice.org/docs/idl/ref/interfacecom_1_1sun_1_1star_1_1script_1_1provider_1_1XScriptContext.html) is passed to the scripts called from LibreOffice, but not to the imported modules. It's up to the script to pass this object to the modules that need it.
