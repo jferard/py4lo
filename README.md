@@ -18,95 +18,84 @@ Needs Python 3.
 
 Just ```git clone``` the repo:
 
-```
-> git clone https://github.com/jferard/py4lo.git
-```
+    > git clone https://github.com/jferard/py4lo.git
 
 Then install requirements (you may need to be in adminstrator mode):
-```
-> pip install -r requirements.txt
-```
+
+    > pip install -r requirements.txt
 
 For Ubuntu:
-```
-> sudo apt-get install libreoffice-script-provider-python
-```
+
+    > sudo apt-get install libreoffice-script-provider-python
 
 ## Quick start
 Create a new dir:
 
-```
-> mkdir mydir
-```
+    > mkdir mydir
 
 ### Step 1
 Create a simple Python script ```myscript.py``` :
-```python
-# -*- coding: utf-8 -*-
-# py4lo: use lib "py4lo_helper::Py4LO_helper" as _
 
-def test(*args):
-	from com.sun.star.awt.MessageBoxType import MESSAGEBOX
-	from com.sun.star.awt.MessageBoxButtons import BUTTONS_OK
-	_.message_box(_.parent_win, "A message", "py4lo", MESSAGEBOX, BUTTONS_OK)
-```
+    # -*- coding: utf-8 -*-
+    # py4lo: import lib py4lo_helper
+    _ = py4lo_helper.Py4LO_helper()
+
+    def test(*args):
+    	from com.sun.star.awt.MessageBoxType import MESSAGEBOX
+    	from com.sun.star.awt.MessageBoxButtons import BUTTONS_OK
+    	_.message_box(_.parent_win, "A message", "py4lo", MESSAGEBOX, BUTTONS_OK)
 
 ### Step 2
 Generate a debug document:
-```
-> python <py4lo dir>/py4lo init
-```
 
-Where ```<py4lo dir>``` points to the cloned document. It will create a ```new-project.ods``` document with the Python ```test``` function attached to a button.
+    > python <py4lo dir>/py4lo init
+
+Where ```<py4lo dir>``` points to the cloned repo. It will create a ```new-project.ods``` document with the Python ```test``` function attached to a button.
 
 ### Step 3
 Rename ```new-project.ods``` to ```mydoc.ods``` and edit the document if you want.
 
 ### Step 4
 Create the ```py4lo.toml```:
-```toml
-source_file = "./mydoc.ods"
-```
+
+    source_file = "./mydoc.ods"
 
 ### Step 5
 Edit the Python script ```myscript.py```:
-```python
-# -*- coding: utf-8 -*-
-# py4lo: use lib "py4lo_helper::Py4LO_helper" as _
 
-def test(*args):
-	from com.sun.star.awt.MessageBoxType import MESSAGEBOX
-	from com.sun.star.awt.MessageBoxButtons import BUTTONS_OK
-	_.message_box(_.parent_win, "Another message", "py4lo", MESSAGEBOX, BUTTONS_OK)
-```
+    # -*- coding: utf-8 -*-
+    # py4lo: import lib py4lo_helper
+    _ = py4lo_helper.Py4LO_helper()
+
+    def test(*args):
+    	from com.sun.star.awt.MessageBoxType import MESSAGEBOX
+    	from com.sun.star.awt.MessageBoxButtons import BUTTONS_OK
+    	_.message_box(_.parent_win, "Another message", "py4lo", MESSAGEBOX, BUTTONS_OK)
 
 ### Step 6
 Update and test the new script:
-```
-> python <py4lo dir>/py4lo test
-```
+
+    > python <py4lo dir>/py4lo test
 
 ## How to
 ### Import in script A an object from script B
 In ```scriptB.py```:
-```python
-class O():
-	...
 
-def __export_o():
-	return O()
-```
+    class O():
+    	...
 
 In ```scriptA.py```:
-```python
-# py4lo: use "scriptB::o"
-```
 
-### Import in script A an object from a library
+    # py4lo: import scriptB
+    o = O()
+
+### Import in script A a library
 In ```scriptA.py```:
-```python
-# py4lo: use lib "py4lo_helper::Py4LO_helper" as _
-```
+
+    # py4lo: import lib py4lo_helper as _
+
+*Warning*
+The special object `XSCRIPTCONTEXT` of type [`com.sun.star.script.provider.XScriptContext](  https://api.libreoffice.org/docs/idl/ref/interfacecom_1_1sun_1_1star_1_1script_1_1provider_1_1XScriptContext.html) is passed to the scripts called from LibreOffice, but not to the imported modules. It's up to the script to pass this object to the modules that need it.
 
 ## Test
 From the py4lo directory:
