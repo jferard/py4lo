@@ -55,8 +55,53 @@ class TestHelper(unittest.TestCase):
         d.build()
         self.p.loader.loadComponentFromURL.assert_called_once_with(
              "private:factory/scalc", "_blank", 0, ())
-        self.p.loader.loadComponentFromURL.return_value.lockControllers.assert_called_once()
-        self.p.loader.loadComponentFromURL.return_value.unlockControllers.assert_called_once()
+        oDoc = self.p.loader.loadComponentFromURL.return_value
+        oDoc.lockControllers.assert_called_once()
+        oDoc.unlockControllers.assert_called_once()
+
+    def testDocBuilderSheetNames(self):
+        oDoc = self.p.loader.loadComponentFromURL.return_value
+        oDoc.Sheets.getCount.side_effect = [3,3,3,3,3]
+        s1, s2, s3 = MagicMock(), MagicMock(), MagicMock()
+        oDoc.Sheets.getByIndex.side_effect = [s1, s2, s3]
+
+        d = DocBuilder(self.p, "calc")
+        d.sheet_names("abcdef", expand_if_necessary=True)
+        d.build()
+        self.p.loader.loadComponentFromURL.assert_called_once_with(
+             "private:factory/scalc", "_blank", 0, ())
+        oDoc.lockControllers.assert_called_once()
+        oDoc.Sheets.getCount.assert_called()
+
+        oDoc.Sheets.getByIndex.assert_has_calls([call(0),call(1),call(2)])
+        s1.setName.assert_called_once_with("a")
+        s2.setName.assert_called_once_with("b")
+        s3.setName.assert_called_once_with("c")
+        oDoc.Sheets.insertNewByName.assert_has_calls([call("d", 3),call("e", 4),call("f", 5)])
+
+        oDoc.unlockControllers.assert_called_once()
+
+    def testDocBuilderSheetNames2(self):
+        oDoc = self.p.loader.loadComponentFromURL.return_value
+        oDoc.Sheets.getCount.side_effect = [3,3,3,3,3,2]
+        s1, s2, s3 = MagicMock(), MagicMock(), MagicMock()
+        oDoc.Sheets.getByIndex.side_effect = [s1, s2, s3, s3]
+
+        d = DocBuilder(self.p, "calc")
+        d.sheet_names("ab", trunc_if_necessary=True)
+        d.build()
+        self.p.loader.loadComponentFromURL.assert_called_once_with(
+             "private:factory/scalc", "_blank", 0, ())
+        oDoc.lockControllers.assert_called_once()
+        oDoc.Sheets.getCount.assert_called()
+
+        oDoc.Sheets.getByIndex.assert_has_calls([call(0),call(1),call(2)])
+        s1.setName.assert_called_once_with("a")
+        s2.setName.assert_called_once_with("b")
+        s3.getName.assert_called_once()
+        oDoc.Sheets.removeByName.assert_called_once_with(s3.getName.return_value)
+
+        oDoc.unlockControllers.assert_called_once()
 
 if __name__ == '__main__':
     unittest.main()
