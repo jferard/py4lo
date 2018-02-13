@@ -35,25 +35,40 @@ MESSAGEBOX = 0
 from com.sun.star.lang import Locale
 
 def init(xsc):
-    Py4LO_helper.xsc = xsc
+    Py4LO_helper.instance = Py4LO_helper.create(xsc)
 
 class Py4LO_helper(unohelper.Base):
-    def __init__(self):
-        self.doc = Py4LO_helper.xsc.getDocument()
-        self.ctxt = uno.getComponentContext()
+    def create(xsc):
+        doc = xsc.getDocument()
+        ctxt = uno.getComponentContext()
 
-        self.ctrl = self.doc.CurrentController
-        self.frame = self.ctrl.Frame
-        self.parent_win = self.frame.ContainerWindow
-        self.sm = self.ctxt.getServiceManager()
-        self.dsp = self.doc.getScriptProvider()
+        ctrl = doc.CurrentController
+        frame = ctrl.Frame
+        parent_win = frame.ContainerWindow
+        sm = ctxt.getServiceManager()
+        dsp = doc.getScriptProvider()
 
-        mspf = self.uno_service_ctxt("com.sun.star.script.provider.MasterScriptProviderFactory")
-        self.msp = mspf.createScriptProvider("")
+        mspf = sm.createInstanceWithContext("com.sun.star.script.provider.MasterScriptProviderFactory", ctxt)
+        msp = mspf.createScriptProvider("")
 
-        self.loader = self.uno_service( "com.sun.star.frame.Desktop" )
-        self.reflect = self.uno_service( "com.sun.star.reflection.CoreReflection" )
-        self.dispatcher = self.uno_service( "com.sun.star.frame.DispatchHelper" )
+        reflect = sm.createInstance( "com.sun.star.reflection.CoreReflection" )
+        dispatcher = sm.createInstance( "com.sun.star.frame.DispatchHelper" )
+        loader = sm.createInstance( "com.sun.star.frame.Desktop" )
+        return Py4LO_helper(doc, ctxt, ctrl, frame, parent_win, sm, dsp, mspf, msp, reflect, dispatcher, loader)
+
+    def __init__(self, doc, ctxt, ctrl, frame, parent_win, sm, dsp, mspf, msp, reflect, dispatcher, loader):
+        self.doc = doc
+        self.ctxt = ctxt
+        self.ctrl = ctrl
+        self.frame = frame
+        self.parent_win = parent_win
+        self.sm = sm
+        self.dsp = dsp
+        self.mspf = mspf
+        self.msp = msp
+        self.reflect = reflect
+        self.dispatcher = dispatcher
+        self.loader = loader
         self.__xray_script = None
 
     def use_xray(self):
@@ -228,7 +243,7 @@ class Py4LO_helper(unohelper.Base):
 
 
 class DocBuilder():
-    def __init__(self, helper t):
+    def __init__(self, helper, t):
         """Create a blank new doc"""
         self.__helper = helper
         self.__oDoc = self.__helper.loader.loadComponentFromURL(
