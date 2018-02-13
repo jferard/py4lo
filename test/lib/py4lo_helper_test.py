@@ -41,16 +41,22 @@ class TestHelper(unittest.TestCase):
         self.p = Py4LO_helper(self.doc, self.ctxt, self.ctrl, self.frame, self.parent_win, self.sm, self.dsp, self.mspf, self.msp, self.reflect, self.dispatcher, self.loader)
 
     def testXray(self):
-        import uno
         self.p.use_xray()
         self.msp.getScript.assert_called_once_with('vnd.sun.star.script:XrayTool._Main.Xray?language=Basic&location=application')
 
     def testXray2(self):
-        import uno
         self.p.xray(1)
         self.p.xray(2)
         self.msp.getScript.assert_called_once_with('vnd.sun.star.script:XrayTool._Main.Xray?language=Basic&location=application')
         self.msp.getScript.return_value.invoke.assert_has_calls([call((1,), (), ()), call((2,), (), ())])
+
+    def testDocBuilder(self):
+        d = DocBuilder(self.p, "calc")
+        d.build()
+        self.p.loader.loadComponentFromURL.assert_called_once_with(
+             "private:factory/scalc", "_blank", 0, ())
+        self.p.loader.loadComponentFromURL.return_value.lockControllers.assert_called_once()
+        self.p.loader.loadComponentFromURL.return_value.unlockControllers.assert_called_once()
 
 if __name__ == '__main__':
     unittest.main()
