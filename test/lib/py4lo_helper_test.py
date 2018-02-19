@@ -20,24 +20,25 @@ import unittest
 from unittest.mock import *
 import env
 import sys, os
+import uno
 
 from py4lo_helper import *
 
 class TestHelper(unittest.TestCase):
     def setUp(self):
-        self.xsc = MagicMock()
-        self.doc = MagicMock()
-        self.ctxt = MagicMock()
-        self.ctrl = MagicMock()
-        self.frame = MagicMock()
-        self.parent_win = MagicMock()
-        self.sm = MagicMock()
-        self.dsp = MagicMock()
-        self.mspf = MagicMock()
-        self.msp = MagicMock()
-        self.reflect = MagicMock()
-        self.dispatcher = MagicMock()
-        self.loader = MagicMock()
+        self.xsc = Mock()
+        self.doc = Mock()
+        self.ctxt = Mock()
+        self.ctrl = Mock()
+        self.frame = Mock()
+        self.parent_win = Mock()
+        self.sm = Mock()
+        self.dsp = Mock()
+        self.mspf = Mock()
+        self.msp = Mock()
+        self.reflect = Mock()
+        self.dispatcher = Mock()
+        self.loader = Mock()
         self.p = Py4LO_helper(self.doc, self.ctxt, self.ctrl, self.frame, self.parent_win, self.sm, self.dsp, self.mspf, self.msp, self.reflect, self.dispatcher, self.loader)
 
     def testXray(self):
@@ -49,6 +50,54 @@ class TestHelper(unittest.TestCase):
         self.p.xray(2)
         self.msp.getScript.assert_called_once_with('vnd.sun.star.script:XrayTool._Main.Xray?language=Basic&location=application')
         self.msp.getScript.return_value.invoke.assert_has_calls([call((1,), (), ()), call((2,), (), ())])
+
+    def testPv(self):
+        pv = self.p.make_pv("name", "value")
+        self.assertTrue("uno.com.sun.star.beans.PropertyValue" in str(type(pv)))
+        self.assertEqual("name", pv.Name)
+        self.assertEqual("value", pv.Value)
+
+    def testPvs(self):
+        pvs = self.p.make_pvs({"name1": "value1", "name2": "value2"})
+        pvs = sorted(pvs, key=lambda pv: pv.Name)
+        self.assertEqual("name1", pvs[0].Name)
+        self.assertEqual("value1", pvs[0].Value)
+        self.assertEqual("name2", pvs[1].Name)
+        self.assertEqual("value2", pvs[1].Value)
+
+    def testMessageBox(self):
+        self.p.message_box(None, "text", "title")
+        self.sm.createInstanceWithContext.assert_called_once_with("com.sun.star.awt.Toolkit", self.ctxt)
+        sv = self.sm.createInstanceWithContext.return_value
+        sv.createMessageBox.assert_called_once()
+        mb = sv.createMessageBox.return_value
+        mb.execute.assert_called_once()
+
+    def testUnoService(self):
+        self.p.uno_service_ctxt("x")
+        self.sm.createInstanceWithContext.assert_called_once_with("x", self.ctxt)
+
+        self.p.uno_service_ctxt("y", [1,2,3])
+        self.sm.createInstanceWithArgumentsAndContext.assert_called_once_with("y", [1,2,3], self.ctxt)
+
+        self.p.uno_service("z")
+        self.sm.createInstance.assert_called_once_with("z")
+
+    def test_read_options(self):
+        oSheet = Mock()
+        aAdress = Mock()
+        aAdress.EndColumn = 10
+        aAdress.StartColumn = 0
+        aAdress.EndRow = 10
+        aAdress.StartRow = 0
+        self.p.read_options(oSheet, aAdress)
+
+    def test_set_validation_list(self):
+        oCell = Mock()
+        try:
+            self.p.set_validation_list_by_cell(oCell, ["a", "b", "c"])
+        except Exception as e:
+            pass
 
     def testDocBuilder(self):
         d = DocBuilder(self.p, "calc")

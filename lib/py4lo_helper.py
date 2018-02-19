@@ -93,21 +93,18 @@ class Py4LO_helper(unohelper.Base):
 
     def make_pvs(self, d={}):
         l = []
-        for k in d:
-            l.append(self.make_pv(k, d[k]))
+        for n, v in d.items():
+            l.append(self.make_pv(n, v))
         return tuple(l)
 
     # from https://forum.openoffice.org/fr/forum/viewtopic.php?f=15&t=47603# (thanks Bernard !)
     def message_box(self, parent_win, msg_text, msg_title, msg_type=MESSAGEBOX, msg_buttons=BUTTONS_OK):
         sv = self.uno_service_ctxt("com.sun.star.awt.Toolkit")
-        my_box = sv.createMessageBox(parent_win, msg_type, msg_buttons, msg_title, msg_text)
-        return my_box.execute()
+        mb = sv.createMessageBox(parent_win, msg_type, msg_buttons, msg_title, msg_text)
+        return mb.execute()
 
     def uno_service_ctxt(self, sname, args=None):
-        if args is None:
-            return self.sm.createInstanceWithContext(sname, self.ctxt)
-        else:
-            return self.sm.createInstanceWithArgumentsAndContext(sname, args, self.ctxt)
+        return self.uno_service(sname, args, self.ctxt)
 
     def uno_service(self, sname, args=None, ctxt=None):
         if ctxt is None:
