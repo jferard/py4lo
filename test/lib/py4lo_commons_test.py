@@ -46,5 +46,33 @@ class TestBus(unittest.TestCase):
     def _handle_y(self, data):
         self.v = "ok" + data
 
+class TestCommons(unittest.TestCase):
+    def setUp(self):
+        self.xsc = Mock()
+        init(self.xsc)
+        self.c = Commons(self.xsc)
+
+    def testInit(self):
+        self.assertEqual(self.xsc, Commons.xsc)
+
+    def testCurDir(self):
+        self.xsc.getDocument.return_value.getURL.return_value = "file:///temp/"
+        self.assertTrue(self.c.cur_dir().endswith("temp"))
+
+    def testSanitize(self):
+        self.assertEquals("e", self.c.sanitize("é"))
+
+    def testLogger(self):
+        import tempfile, os, subprocess
+        t = tempfile.NamedTemporaryFile(delete=False, mode='w')
+        self.c.init_logger(t, format='%(levelname)s - %(message)s')
+        print(self.c.logger().handlers)
+        self.c.logger().debug("é")
+        t.flush()
+        t.close()
+        res = subprocess.getoutput("cat {}".format(t.name))
+        self.assertEquals("DEBUG - é", res)
+        os.unlink(t.name)
+
 if __name__ == '__main__':
     unittest.main()

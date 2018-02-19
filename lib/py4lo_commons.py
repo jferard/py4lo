@@ -43,8 +43,10 @@ class Bus(unohelper.Base):
                 m(event_data)
 
 class Commons(unohelper.Base):
-    def __init__(self):
-        self.doc = Commons.xsc.getDocument()
+    def __init__(self, xsc=None):
+        if xsc == None:
+            xsc = Commons.xsc
+        self.doc = xsc.getDocument()
         self.__logger = None
 
     def __del__(self):
@@ -65,27 +67,36 @@ class Commons(unohelper.Base):
     def sanitize(self, s):
         import unicodedata
         try:
-            s = unicodedata.normalize('NFKD', s).encode('ascii','ignore')
+            s = unicodedata.normalize('NFKD', s).encode('ascii','ignore').decode('ascii')
         except Exception as e:
             pass
         return s
 
-    def init_logger(self, path="py4lo.log", mode="a", level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
-        self.__logger = self.get_logger(path, mode, level)
-        return self.__logger
+    def init_logger(self, file="py4lo.log", mode="a", level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
+        if self.__logger is not None:
+            raise Exception("use init_logger ONCE")
 
-    def get_logger(self, path="py4lo.log", mode="a", level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
-        fh = logging.FileHandler(path, mode)
-        formatter = logging.Formatter(format)
-        fh.setFormatter(formatter)
-        fh.setLevel(level)
+        self.__logger = self.get_logger(file, mode, level, format)
+
+    def get_logger(self, file="py4lo.log", mode="a", level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
+        fh = self.__get_handler(file, mode, level, format)
 
         logger = logging.getLogger()
         logger.addHandler(fh)
         logger.setLevel(level)
         return logger
 
+    def __get_handler(self, file, mode, level, format):
+        if type(file) == str:
+            fh = logging.FileHandler(file, mode)
+        else:
+            fh = logging.StreamHandler(file)
+        formatter = logging.Formatter(format)
+        fh.setFormatter(formatter)
+        fh.setLevel(level)
+        return fh
+
     def logger(self):
         if self.__logger is None:
-            self.__logger = self.get_logger()
+            raise Exception("use init_logger")
         return self.__logger
