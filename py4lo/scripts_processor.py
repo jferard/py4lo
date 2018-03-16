@@ -115,7 +115,7 @@ class ScriptsProcessor():
 
     def __ensure_target_dir_exists(self):
         if not os.path.exists(self.__target_dir):
-            os.mkdir(self.__target_dir)
+            os.makedirs(self.__target_dir)
 
 class ScriptProcessor():
     """A script processor"""
