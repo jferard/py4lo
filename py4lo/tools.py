@@ -27,9 +27,24 @@ py4lo_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
 def update_ods(tdata):
     ods_source_name = tdata["source_file"]
-    suffix = tdata["default_suffix"]
-    ods_dest_name = ods_source_name[0:-4]+"-"+suffix+ods_source_name[-4:]
+    ods_dest_name = _get_dest_name(tdata)
     return OdsUpdater.create(tdata).update(ods_source_name, ods_dest_name)
+
+def _get_logger(tdata):
+    logger = logging.getLogger("py4lo")
+    logger.setLevel(tdata["log_level"])
+    return logger
+
+def _get_dest_name(tdata):
+    if "dest_name" in tdata:
+        if "suffix" in tdata:
+            _get_logger(tdata).debug("Property dest_name set to {}; ignore suffix {}".format(tdata["dest_name"], tdata["suffix"]))
+        ods_dest_name = tdata["dest_name"]
+    else:
+        suffix = tdata["default_suffix"]
+        ods_dest_name = ods_source_name[0:-4]+"-"+suffix+ods_source_name[-4:]
+    return ods_dest_name
+
 
 class OdsUpdater():
     @staticmethod

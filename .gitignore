@@ -6,9 +6,8 @@ py4lo/__pycache__/*
 .cache
 
 # generated files
-example/py4lo-debug.ods
-example/new-project.ods
-example/py4lo-example-updated.ods
+example/*.ods
+!example/py4lo-example.ods
 example/*.ods#
 example/target
 example/target/*
