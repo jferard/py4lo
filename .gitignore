@@ -14,3 +14,10 @@ example/target
 example/target/*
 **/*.pyc
 .coverage
+
+# pypi
+build
+dist
+
+py4lo.egg-info
+py4lo.egg-info/*

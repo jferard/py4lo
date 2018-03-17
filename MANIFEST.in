@@ -1,0 +1,15 @@
+# Include the license file
+
+include LICENSE.txt
+global-include *.toml
+
+# Include examples
+include example py4lo-example.ods  py4lo.toml README.rst
+recursive-include . *.py
+
+# clean
+global-exclude *.py[co]
+global-exclude .*
+global-exclude *.log
+global-exclude __pycache__
+recursive-exclude ./example/target *

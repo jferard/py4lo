@@ -5,9 +5,7 @@ Py4LO (Python For LibreOffice)
 
 Copyright (C) J. Férard 2016-2018
 
-Py4LO is a simple toolkit to help you write Python scripts for
-LibreOffice.
-
+Py4LO is a simple toolkit to help you write and include Python scripts in LibreOffice Calc spreadsheets.
 Under GPL v.3
 
 Overview
