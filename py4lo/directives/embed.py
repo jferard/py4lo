@@ -27,7 +27,7 @@ class Embed():
         pass
 
     def execute(self, processor, args):
-        processor.import2()
+        processor.include("py4lo_import.py")
         fname = args[0]
         processor.append_script(fname)
         return True

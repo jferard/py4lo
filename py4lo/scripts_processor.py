@@ -89,7 +89,7 @@ class ScriptsProcessor():
         self.__visited.add(next_script_fname)
 
     def __process_script(self, script_fname):
-        directive_processor = DirectiveProcessor(self, self.__python_version, self.__src_dir)
+        directive_processor = DirectiveProcessor.create(self.__src_dir, self, self.__python_version)
         script_processor = ScriptProcessor(self.__logger, directive_processor, script_fname)
         script = script_processor.parse_script()
         self.__add_script(script)

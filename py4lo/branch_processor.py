@@ -19,18 +19,23 @@
 import logging
 
 class BranchProcessor():
+    """The branch processor handles directives like 'if', 'elif', 'else', 'end'
+    and acts as a preprocessor. Skipped block wont be included in the LO document"""
+
     def __init__(self, tester):
+        """The tester will evaluate the arguments of 'if' or 'elif'"""
         self.__assertion_is_true = tester
         self.__dont_skips = []
 
     def end(self):
+        """To call before the end, to verify if there are no unclosed if block"""
         if len(self.__dont_skips):
             logging.error("Branch condition not closed!")
             raise ValueError("Branch condition not closed!")
 
     def handle_directive(self, directive, args):
         """Return True if the next block should be read, False otherwise"""
-        
+
         if directive == 'if':
             self.__begin_block_and_skip_if_not(self.__assertion_is_true(args))
         elif directive == 'elif':
@@ -67,4 +72,5 @@ class BranchProcessor():
         self.__dont_skips.pop()
 
     def skip(self):
+        """Return True if the current block is skipped"""
         return False in self.__dont_skips

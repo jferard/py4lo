@@ -25,7 +25,7 @@ class Import():
         self.__scripts_path = scripts_path
 
     def execute(self, processor, args):
-        processor.import2()
+        processor.include("py4lo_import.py")
         script_ref = args[0]
         script_fname = os.path.join(self.__scripts_path, script_ref+".py")
         processor.append_script(script_fname)

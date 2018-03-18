@@ -24,100 +24,147 @@ from branch_processor import BranchProcessor
 from comparator import Comparator
 
 class DirectiveProcessor():
-    def __init__(self, scripts_processor, python_version, scripts_path):
-        self.__scripts_processor = scripts_processor
-        self.__scripts_path = scripts_path
-        self.__py4lo_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
+    """A DirectiveProcessor processes directives, ie line that begins with #,
+    in scripts. When a directive is parsed, the processor is passed to the
+    directive, which may use some helpers: import2, ..."""
+
+    @staticmethod
+    def create(scripts_path, scripts_processor, python_version):
         comparator = Comparator({'python_version':python_version})
         def local_is_true(args):
             return comparator.check(args[0], args[1], args[2])
 
-        self.__local_is_true = local_is_true
-        self.__directive_provider = DirectiveProvider.create(self.__py4lo_path, self.__scripts_path)
+        branch_processor = BranchProcessor(local_is_true)
 
-        self.__bootstrapped = False
-        self.__imported = False
-        self.__branch_processor = BranchProcessor(local_is_true)
+        py4lo_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
+        directive_provider = DirectiveProvider.create(py4lo_path, scripts_path)
 
-    def end(self):
-        self.__branch_processor.end()
+        return DirectiveProcessor(scripts_path, scripts_processor, branch_processor, directive_provider)
 
-    def process_line(self, line):
-        """Process a line that starts with #"""
-        self.__s = ""
-        try:
-            ls = shlex.split(line)
-            if self.__is_directive(ls):
-                args = ls[2:]
-                is_branch_directive = self.__branch_processor.handle_directive(args)
-                if not is_branch_directive:
-                    if self.__branch_processor.skip():
-                        self.__s += "### "+line
-                    else:
-                        try:
-                            directive, args = self.__directive_provider.get(args)
-                            directive.execute(self, args)
-                        except KeyError as e:
-                            print("Wrong directive ({})".format(line.strip()))
-
-            else: # thats maybe a simple comment
-                if self.__branch_processor.skip():
-                    self.__s += "### "+line
-                else:
-                    self.__s += line
-        except ValueError:
-            if self.__branch_processor.skip():
-                self.__s += "### "+line
-            else:
-                self.__s += line
-
-        return self.__s
-
-    def bootstrap(self):
-        if not self.__bootstrapped:
-            self.__s += self.__get_bootstrap()
-            self.__bootstrapped = True
-
-    def import2(self):
-        if not self.__imported:
-            self.__s += self.__get_import()
-            self.__imported = True
-
-    def append(self, s2):
-        self.__s += s2
+    def __init__(self, scripts_path, scripts_processor, branch_processor, directive_provider):
+        """Create ascripts_path is the path to the scripts directory"""
+        self.__scripts_processor = scripts_processor
+        self.__scripts_path = scripts_path
+        self.__branch_processor = branch_processor
+        self.__directive_provider = directive_provider
+        self.__includes = set()
 
     def append_script(self, script_fname):
         """Append a script to the script processor"""
         self.__scripts_processor.append_script(script_fname)
 
-    def __is_directive(self, ls):
-        return len(ls) >= 2 and ls[0] == '#' and ls[1] == 'py4lo:'
+    def process_line(self, line):
+        """Process a line that starts with #"""
+        return _DirectiveProcessorWorker(self, self.__branch_processor, self.__directive_provider, line).process_line()
 
-    def __get_bootstrap(self):
-        return self.__get_inc_file("py4lo_bootstrap.py")
+    def include(self, fname):
+        s = ""
+        if fname not in self.__includes:
+            s = _IncludeProcessor(fname).process()
+            self.__includes.add(fname)
 
-    def __get_import(self):
-        return self.__get_inc_file("py4lo_import.py")
+        return s
 
-    def __get_inc_file(self, fname):
-        path = os.path.dirname(os.path.realpath(__file__))
-
-        inc = ""
-        state = 0
-        with open(os.path.join(path, "..", "inc", fname), 'r', encoding="utf-8") as b:
-            for line in b.readlines():
-                l = line.strip()
-                if state == 0:
-                    if l.startswith('#'):
-                        pass
-                    elif l.startswith("\"\"\""):
-                        state = 1
-                    else:
-                        inc += line
-                elif state == 1:
-                    if l.endswith("\"\"\""):
-                        state = 0
-        return inc + "\n"
+    def end(self):
+        """Verify the end of the scripts"""
+        self.__branch_processor.end()
 
     def ignore_lines(self):
         return self.__branch_processor.skip();
+
+class _DirectiveProcessorWorker():
+    """A worker that processes the line"""
+
+    def __init__(self, directive_processor, branch_processor, directive_provider, line):
+        self.__directive_processor = directive_processor
+        self.__branch_processor = branch_processor
+        self.__directive_provider = directive_provider
+        self.__line = line
+        self.__target_line = ""
+
+    def process_line(self):
+        if self.__target_line != "":
+            return self.__target_line
+
+        try:
+            ls = shlex.split(self.__line)
+            if self.__is_directive(ls):
+                self.__process_directive(ls[2:])
+            else: # thats maybe a simple comment
+                self.__comment_or_write()
+        except ValueError:
+            self.__comment_or_write()
+
+        return self.__target_line
+
+    def __is_directive(self, ls):
+        return len(ls) >= 2 and ls[0] == '#' and ls[1] == 'py4lo:'
+
+    def __process_directive(self, args):
+        is_branch_directive = self.__branch_processor.handle_directive(args[0], args[1:])
+        if is_branch_directive:
+            return
+
+        if self.__branch_processor.skip():
+            self.append("### "+line)
+        else:
+            try:
+                directive, args = self.__directive_provider.get(args)
+                directive.execute(self, args)
+            except KeyError as e:
+                print("Wrong directive ({})".format(line.strip()))
+
+    def __comment_or_write(self):
+        if self.__branch_processor.skip():
+            self.append("### "+self.__line)
+        else:
+            self.append(self.__line)
+
+    def include(self, fname):
+        self.append(self.__directive_processor.include(fname))
+
+    def append(self, s2):
+        self.__target_line += s2
+
+    def append_script(self, script_fname):
+        """Append a script to the script processor"""
+        self.__directive_processor.append_script(script_fname)
+
+
+class _IncludeProcessor():
+    DOC_STRING_OPEN = "\"\"\""
+    DOC_STRING_CLOSE = "\"\"\""
+    NORMAL = 0
+    IN_DOC_STRING = 1
+    END = -1
+
+    def __init__(self, fname):
+        self.__fname = fname
+        self.__inc = []
+        self.__state = _IncludeProcessor.NORMAL
+
+    def process(self):
+        if self.__state != _IncludeProcessor.NORMAL:
+            raise Exception("Create a new IncludeProcessor")
+
+        path = os.path.dirname(os.path.realpath(__file__))
+        fpath = os.path.join(path, "..", "inc", self.__fname)
+        with open(fpath, 'r', encoding="utf-8") as b:
+            for line in b.readlines():
+                self.__process_line(line)
+
+        self.__state = _IncludeProcessor.END
+        return "\n".join(self.__inc) + "\n"
+
+    def __process_line(self, line):
+        l = line.strip()
+        if self.__state == _IncludeProcessor.NORMAL:
+            if l.startswith('#'):
+                pass
+            elif l.startswith(_IncludeProcessor.DOC_STRING_OPEN):
+                self.__state = _IncludeProcessor.IN_DOC_STRING
+            else:
+                self.__inc.append(line)
+        elif self.__state == _IncludeProcessor.IN_DOC_STRING:
+            if l.endswith(_IncludeProcessor.DOC_STRING_CLOSE):
+                self.__state = _IncludeProcessor.NORMAL

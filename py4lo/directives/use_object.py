@@ -26,7 +26,7 @@ class UseObject():
 
     def execute(self, processor, args):
         raise DeprecationWarning("Use 'import lib'")
-        processor.bootstrap()
+        processor.include("py4lo_bootstrap.py")
         processor.append(self.__use_object(processor, args))
         return True
 

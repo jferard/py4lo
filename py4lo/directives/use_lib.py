@@ -30,7 +30,7 @@ class UseLib():
         raise DeprecationWarning("Use 'import lib'")
         (ret, object_ref) = self.__process_args(processor, args)
 
-        processor.bootstrap()
+        processor.include("py4lo_bootstrap.py")
         processor.append(self.__use_lib(ret, object_ref))
         return True
 
