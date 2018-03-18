@@ -16,16 +16,23 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
-# py4lo: include license
+import os
 
-import sys
-import unohelper
+class ImportLib():
+    sig = "import lib"
 
-class O(unohelper.Base):
-    def __init__(self, xsc):
-        self.__xsc = xsc
+    def __init__(self, py4lo_path, scripts_path):
+        self.__py4lo_path = py4lo_path
 
-    def lib_example(self):
-        from com.sun.star.awt.MessageBoxType import MESSAGEBOX
-        from com.sun.star.awt.MessageBoxButtons import BUTTONS_OK
-        self.__xsc.message_box(_.parent_win, "A message from imported lib example-lib.py", "py4lo", MESSAGEBOX, BUTTONS_OK)
+    def execute(self, processor, args):
+        processor.import2()
+        script_ref = args[0]
+        script_fname = os.path.join(self.__py4lo_path, "lib", script_ref+".py")
+        print (script_fname)
+        processor.append_script(script_fname)
+        processor.append("import "+script_ref+"\n")
+        processor.append("try:\n")
+        processor.append("    "+script_ref+".init(XSCRIPTCONTEXT)\n")
+        processor.append("except NameError:\n")
+        processor.append("    pass\n")
+        return True

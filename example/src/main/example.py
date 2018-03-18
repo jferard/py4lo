@@ -23,9 +23,9 @@ import unohelper
 # py4lo: import lib py4lo_helper
 # py4lo: import lib py4lo_commons
 # py4lo: import example_lib
-_ = py4lo_helper.Py4LO_helper()
-c = py4lo_commons.Commons()
-o = example_lib.O()
+_ = py4lo_helper.Py4LO_helper.create(XSCRIPTCONTEXT)
+c = py4lo_commons.Commons(XSCRIPTCONTEXT)
+o = example_lib.O(XSCRIPTCONTEXT)
 
 def message_example(*args):
     from com.sun.star.awt.MessageBoxType import MESSAGEBOX

@@ -17,128 +17,57 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import shlex
-import os
 
-class UseLib():
-    def __init__(self, py4lo_path):
-        self.__py4lo_path = py4lo_path
+from directives.use_lib import UseLib
+from directives.use_object import UseObject
+from directives.include import Include
+from directives.import_lib import ImportLib
+from directives.d_import import Import
 
-    def execute(self, processor, directiveName, args):
-        """Take a directive processor, a directive name, and args
-        The name is used to take or leave this directive. Each directive is responsible for this decision"""
-        if directiveName != "use" or args[0] != "lib":
-            return False
+class _DirectiveProviderFactory():
+    def __init__(self, directive_classes):
+        self.__directive_classes = directive_classes
 
-        raise DeprecationWarning("Use 'import lib'")
-        (ret, object_ref) = self.__process_args(processor, args[1:])
+    def create(self, py4lo_path, scripts_path):
+        self.__directives_tree = {}
+        for d in self.__directive_classes:
+            sig_elements = d.sig.split(" ")
+            assert len(sig_elements)
 
-        processor.bootstrap()
-        processor.append(self.__use_lib(ret, object_ref))
-        return True
+            directive = d(py4lo_path, scripts_path)
 
-    def __process_args(self, processor, args):
-        object_ref = args[0]
-        (lib_ref, object_name) = object_ref.split("::")
-        script_fname_wo_extension = os.path.join(self.__py4lo_path, "lib", lib_ref)
+            self.__put_directive_class(sig_elements, directive)
 
-        script_fname = script_fname_wo_extension + ".py"
-        if not os.path.isfile(script_fname):
-            raise BaseException(script_fname + " is not a py4lo lib")
+        return DirectiveProvider(self.__directives_tree)
 
-        if len(args) == 3 and args[1] == 'as':
-            ret = args[2]
-        else:
-            ret = object_name
+    def __put_directive_class(self, sig_elements, directive):
+            cur_directives_tree = self.__directives_tree
+            for fst in sig_elements:
+                if fst not in cur_directives_tree:
+                    cur_directives_tree[fst] = {}
+                cur_directives_tree = cur_directives_tree[fst]
 
-        processor.append_script(script_fname)
+            cur_directives_tree.update({"@": directive })
 
-        return (ret, object_ref)
+class DirectiveProvider():
+    @staticmethod
+    def create(py4lo_path, scripts_path):
+        return _DirectiveProviderFactory([UseLib, UseObject, Include, ImportLib, Import]).create(py4lo_path, scripts_path)
 
-    def __use_lib(self, ret, object_ref):
-        return ret + " = use_local(\""+object_ref+"\")\n"
+    def __init__(self, directives_tree):
+        self.__directives_tree = directives_tree
 
-class UseObject():
-    def __init__(self, scripts_path):
-        self.__scripts_path = scripts_path
+    def get(self, args):
+        """args are the shlex result"""
+        cur_directives_tree = self.__directives_tree
 
-    def execute(self, processor, directiveName, args):
-        if directiveName != "use" or args[0] == "lib":
-            return False
+        for i in range(len(args)):
+            arg = args[i]
+            if arg in cur_directives_tree:
+                cur_directives_tree = cur_directives_tree[arg]
+            elif "@" in cur_directives_tree:
+                return cur_directives_tree["@"], args[i:]
+            else:
+                raise KeyError(args)
 
-        raise DeprecationWarning("Use 'import lib'")
-        processor.bootstrap()
-        processor.append(self.__use_object(processor, args))
-        return True
-
-    def __use_object(self, processor, args):
-        object_ref = args[0]
-        (script_ref, object_name) = object_ref.split("::")
-        script_fname = os.path.join(self.__scripts_path, "", script_ref+".py")
-        if not os.path.isfile(script_fname):
-            raise BaseException(script_fname + " is not a script")
-
-        if len(args) == 3 and args[1] == 'as':
-            ret = args[2]
-        else:
-            ret = object_name
-
-        processor.append_script(script_fname)
-        return ret + " = use_local(\""+object_ref+"\")\n"
-
-class Include():
-    def __init__(self, scripts_path):
-        self.__scripts_path = scripts_path
-
-    def execute(self, processor, directiveName, args):
-        if directiveName != "include":
-            return False
-
-        filename = os.path.join(self.__scripts_path, "inc", args[0]+".py")
-
-        s = "# begin py4lo include: "+filename+"\n"
-        with open(filename, 'r', encoding='utf-8') as f:
-            for line in f:
-                s += line
-        s += "\n# end py4lo include\n"
-
-        processor.append(s)
-        return True
-
-class ImportLib():
-    def __init__(self, py4lo_path):
-        self.__py4lo_path = py4lo_path
-
-    def execute(self, processor, directiveName, args):
-        if directiveName != "import" or args[0] != "lib":
-            return False
-
-        processor.import2()
-        script_ref = args[1]
-        script_fname = os.path.join(self.__py4lo_path, "lib", script_ref+".py")
-        print (script_fname)
-        processor.append_script(script_fname)
-        processor.append("import "+script_ref+"\n")
-        processor.append("try:\n")
-        processor.append("    "+script_ref+".init(XSCRIPTCONTEXT)\n")
-        processor.append("except NameError:\n")
-        processor.append("    pass\n")
-        return True
-
-class Import():
-    def __init__(self, scripts_path):
-        self.__scripts_path = scripts_path
-
-    def execute(self, processor, directiveName, args):
-        if directiveName != "import" or args[0] == "lib":
-            return False
-
-        processor.import2()
-        script_ref = args[0]
-        script_fname = os.path.join(self.__scripts_path, script_ref+".py")
-        processor.append_script(script_fname)
-        processor.append("import "+script_ref+"\n")
-        return True
-
-class Fail():
-    def execute(self, processor, directiveName, args):
-        print("Wrong directive "+directive+" (line ="+line)
+        assert False, "no args"

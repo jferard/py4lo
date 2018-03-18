@@ -19,7 +19,7 @@
 import shlex
 import os
 
-from directives import UseLib, UseObject, Include, ImportLib, Import, Fail
+from directives import DirectiveProvider
 from branch_processor import BranchProcessor
 from comparator import Comparator
 
@@ -33,7 +33,7 @@ class DirectiveProcessor():
             return comparator.check(args[0], args[1], args[2])
 
         self.__local_is_true = local_is_true
-        self.__directives = [UseLib(self.__py4lo_path), UseObject(self.__scripts_path), Include(self.__scripts_path), ImportLib(self.__py4lo_path), Import(scripts_path), Fail()]
+        self.__directive_provider = DirectiveProvider.create(self.__py4lo_path, self.__scripts_path)
 
         self.__bootstrapped = False
         self.__imported = False
@@ -48,16 +48,18 @@ class DirectiveProcessor():
         try:
             ls = shlex.split(line)
             if self.__is_directive(ls):
-                directiveName = ls[2]
-                args = ls[3:]
-                is_branch_directive = self.__branch_processor.handle_directive(directiveName, args)
+                args = ls[2:]
+                is_branch_directive = self.__branch_processor.handle_directive(args)
                 if not is_branch_directive:
                     if self.__branch_processor.skip():
                         self.__s += "### "+line
                     else:
-                        for directive in self.__directives:
-                            if directive.execute(self, directiveName, args):
-                                break
+                        try:
+                            directive, args = self.__directive_provider.get(args)
+                            directive.execute(self, args)
+                        except KeyError as e:
+                            print("Wrong directive ({})".format(line.strip()))
+
             else: # thats maybe a simple comment
                 if self.__branch_processor.skip():
                     self.__s += "### "+line
