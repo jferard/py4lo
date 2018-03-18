@@ -28,11 +28,6 @@ class ImportLib():
         processor.import2()
         script_ref = args[0]
         script_fname = os.path.join(self.__py4lo_path, "lib", script_ref+".py")
-        print (script_fname)
         processor.append_script(script_fname)
         processor.append("import "+script_ref+"\n")
-        processor.append("try:\n")
-        processor.append("    "+script_ref+".init(XSCRIPTCONTEXT)\n")
-        processor.append("except NameError:\n")
-        processor.append("    pass\n")
         return True

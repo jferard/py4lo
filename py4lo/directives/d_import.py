@@ -25,8 +25,8 @@ class Import():
         self.__scripts_path = scripts_path
 
     def execute(self, processor, args):
-        script_ref = args[0]
         processor.import2()
+        script_ref = args[0]
         script_fname = os.path.join(self.__scripts_path, script_ref+".py")
         processor.append_script(script_fname)
         processor.append("import "+script_ref+"\n")

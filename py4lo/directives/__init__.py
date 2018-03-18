@@ -23,6 +23,7 @@ from directives.use_object import UseObject
 from directives.include import Include
 from directives.import_lib import ImportLib
 from directives.d_import import Import
+from directives.embed import Embed
 
 class _DirectiveProviderFactory():
     def __init__(self, directive_classes):
@@ -52,7 +53,7 @@ class _DirectiveProviderFactory():
 class DirectiveProvider():
     @staticmethod
     def create(py4lo_path, scripts_path):
-        return _DirectiveProviderFactory([UseLib, UseObject, Include, ImportLib, Import]).create(py4lo_path, scripts_path)
+        return _DirectiveProviderFactory([Include, ImportLib, Import, Embed]).create(py4lo_path, scripts_path)
 
     def __init__(self, directives_tree):
         self.__directives_tree = directives_tree

@@ -19,6 +19,8 @@
 import os
 
 class Include():
+    """Include the content of a file inside the script. The file should be in a inc directory"""
+
     sig = "include"
 
     def __init__(self, py4lo_path, scripts_path):

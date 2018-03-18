@@ -16,25 +16,18 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
-import uno
-import sys
-import unohelper
 import os
 
-# py4lo: import lib py4lo_helper
-# py4lo: import lib py4lo_commons
-# py4lo: import example_lib
-_ = py4lo_helper.Py4LO_helper.create(XSCRIPTCONTEXT)
-c = py4lo_commons.Commons(XSCRIPTCONTEXT)
-o = example_lib.O(XSCRIPTCONTEXT)
+class Embed():
+    """Embed a file. It's up to the user to import it if it is a module"""
 
-def message_example(*args):
-    from com.sun.star.awt.MessageBoxType import MESSAGEBOX
-    from com.sun.star.awt.MessageBoxButtons import BUTTONS_OK
-    _.message_box(_.parent_win, "A message from main script example.py. Current dir is: "+os.path.abspath("."), "py4lo", MESSAGEBOX, BUTTONS_OK)
+    sig = "embed"
 
-def xray_example(*args):
-    _.xray(_.doc)
+    def __init__(self, py4lo_path, scripts_path):
+        pass
 
-def example_from_lib(*args):
-    o.lib_example()
+    def execute(self, processor, args):
+        processor.import2()
+        fname = args[0]
+        processor.append_script(fname)
+        return True
