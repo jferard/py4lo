@@ -28,9 +28,9 @@ class BranchProcessor():
             logging.error("Branch condition not closed!")
             raise ValueError("Branch condition not closed!")
 
-    def handle_directive(self, args):
-        directive = args[0]
-        args = args[1:]
+    def handle_directive(self, directive, args):
+        """Return True if the next block should be read, False otherwise"""
+        
         if directive == 'if':
             self.__begin_block_and_skip_if_not(self.__assertion_is_true(args))
         elif directive == 'elif':
