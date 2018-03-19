@@ -20,8 +20,7 @@ import os
 import xml.dom.minidom
 
 MANIFEST_CLOSE_TAG = "</manifest:manifest>"
-BASIC_AND_PYTHON_ENTRIES = """
-    <manifest:file-entry manifest:full-path="Basic/Standard/py4lo.xml" manifest:media-type="text/xml"/>
+BASIC_AND_PYTHON_ENTRIES = """<manifest:file-entry manifest:full-path="Basic/Standard/py4lo.xml" manifest:media-type="text/xml"/>
     <manifest:file-entry manifest:full-path="Basic/Standard/script-lb.xml" manifest:media-type="text/xml"/>
     <manifest:file-entry manifest:full-path="Basic/script-lc.xml" manifest:media-type="text/xml"/>
     <manifest:file-entry manifest:full-path="Scripts" manifest:media-type="application/binary"/>
