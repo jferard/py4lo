@@ -18,8 +18,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import shlex
 
-from directives.use_lib import UseLib
-from directives.use_object import UseObject
 from directives.include import Include
 from directives.import_lib import ImportLib
 from directives.d_import import Import
