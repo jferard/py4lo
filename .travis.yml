@@ -23,7 +23,7 @@ install:
 
 # script
 script:
-  - py.test --cov
+  - py.test --cov=py4lo test
 
 after_success:
   - codecov

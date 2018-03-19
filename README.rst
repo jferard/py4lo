@@ -162,7 +162,7 @@ From the py4lo directory:
 
 .. code-block:: bash
 
-    python -m pytest test
+    py.test --cov=py4lo test
 
 .. |Build Status| image:: https://travis-ci.org/jferard/py4lo.svg?branch=master
    :target: https://travis-ci.org/jferard/py4lo
