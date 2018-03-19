@@ -27,38 +27,39 @@ def load_toml(local_py4lo_toml = "py4lo.toml"):
     return TomlLoader(py4lo_path, local_py4lo_toml).load()
 
 class TomlLoader():
+    """Load a toml file and merge values with the default toml file"""
     def __init__(self, py4lo_path, local_py4lo_toml):
         self.__default_py4lo_toml = os.path.join(py4lo_path, "default-py4lo.toml")
         self.__local_py4lo_toml = local_py4lo_toml
         self.__data = { "py4lo_path" : py4lo_path }
 
     def load(self):
-        self.__load_toml()
-        self.__check_python_version()
+        self.__load_toml(self.__default_py4lo_toml)
+        self.__load_toml(self.__local_py4lo_toml)
+        self.__check_python_target_version()
         self.__check_level()
         return self.__data
 
-    def __load_toml(self):
-        with open(self.__default_py4lo_toml, 'r', encoding="utf-8") as s:
-            content = s.read()
-            default_data = toml.loads(content)
-            self.__data.update(default_data)
-
+    def __load_toml(self, fname):
         try:
-            with open(self.__local_py4lo_toml, 'r', encoding="utf-8") as s:
+            with open(fname, 'r', encoding="utf-8") as s:
                 content = s.read()
-                local_data = toml.loads(content)
+                data = toml.loads(content)
         except Exception as e:
-            print ("Error when loading local toml file: "+str(e))
+            print ("Error when loading toml file {}: {}".format(fname, e))
         else:
-            self.__data.update(local_data)
+            self.__data.update(data)
 
-    def __check_python_version(self):
+    def __check_python_target_version(self):
+        # get version from target executable
         if "python_exe" in self.__data:
             status, version = subprocess.getstatusoutput("\""+self.__data["python_exe"]+"\" -V")
             if status == 0:
                 self.__data["python_version"] = ((version.split())[1].split("."))[0]
+                return
 
+        # if python_exe was not set, or did not return the expected result,
+        # get from sys. It's the local python.
         if not "python_version" in self.__data:
             self.__data["python_exe"] = sys.executable
             self.__data["python_version"] = str(sys.version_info.major)+"."+str(sys.version_info.minor)
@@ -66,6 +67,3 @@ class TomlLoader():
     def __check_level(self):
         if "log_level" not in self.__data or self.__data["log_level"] not in ["CRITICAL", "DEBUG", "ERROR", "FATAL", "INFO", "NOTSET", "WARN", "WARNING"]:
             self.__data["log_level"] = "INFO"
-
-def __relative_unix_path_to_relative_local_path(path):
-    return os.path.sep.join(path.split("/"))
