@@ -96,4 +96,5 @@ class OdsUpdater():
         return zip_updater
 
 def open_with_calc(ods_name, calc_exe):
+    """Open a file with calc"""
     r = subprocess.call([calc_exe, ods_name])
