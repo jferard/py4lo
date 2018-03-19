@@ -30,7 +30,8 @@ draw_control_tpl = """<draw:control draw:z-index="0" draw:text-style-name="P1" s
 end_shapes = """</table:shapes>"""
 
 class AddDebugContent():
-    """After callback. Add a readme in destination file"""
+    """After callback. Add a debug content in destination file. The debug content
+    is one button per function."""
     def __init__(self, funcs_by_script):
         self.__funcs_by_script = funcs_by_script
 
