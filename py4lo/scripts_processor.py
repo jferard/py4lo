@@ -22,14 +22,17 @@ import logging
 import py_compile
 from directive_processor import DirectiveProcessor
 
-class Script():
+class TargetScript():
+    """A target script has a file name, a content (the file was processed),
+    some exported functions and the exceptions encountered by the interpreter"""
+
     @staticmethod
     def to_name(fname):
         return os.path.split(fname)[1]
 
-    def __init__(self, script_fname, script_data, exported_func_names, exception):
+    def __init__(self, script_fname, script_content, exported_func_names, exception):
         self.__fname = script_fname
-        self.__data = script_data
+        self.__content = script_content
         self.__exported_func_names = exported_func_names
         self.__exception = exception
 
@@ -37,10 +40,10 @@ class Script():
         return self.__fname
 
     def get_name(self):
-        return Script.to_name(self.__fname)
+        return TargetScript.to_name(self.__fname)
 
-    def get_data(self):
-        return self.__data
+    def get_content(self):
+        return self.__content
 
     def get_exported_func_names(self):
         return self.__exported_func_names
@@ -49,29 +52,37 @@ class Script():
         return self.__exception
 
 class ScriptsProcessor():
-    def __init__(self, logger, src_dir, python_version, target_dir):
+    """A script processor processes some file from a source dir and writes
+    the target scripts to a target dir"""
+    def __init__(self, logger, src_dir, target_dir, python_version):
         self.__logger = logger
         self.__src_dir = src_dir
-        self.__python_version = python_version
         self.__target_dir = target_dir
+        self.__python_version = python_version
 
     def process(self, script_fnames):
+        """Explore the scripts. Since a script may import another script, we
+        have a tree structure. We traverse the tree with classical DFS"""
         self.__logger.log(logging.DEBUG, "Scripts to process: %s", script_fnames)
 
         self.__scripts = []
-        self.__cur_script_fnames = list(script_fnames)
-        self.__visited = set()
+        self.__cur_script_fnames = list(script_fnames) # our stack.
+        self.__visited = set() # avoid cycles
 
         while self.__has_more_scripts():
             self.__process_next_script_if_not_visited()
 
-        es = [script.get_exception() for script in self.__scripts if script.get_exception()]
-        if es:
-            for e in es:
-                self.__logger.log(logging.ERROR, str(e))
-            raise Exception("Compilation errors: see above")
-
+        self.__raise_exceptions()
         return self.__scripts
+
+    def __raise_exceptions(self):
+        es = [script.get_exception() for script in self.__scripts if script.get_exception()]
+        if not es:
+            return
+
+        for e in es:
+            self.__logger.log(logging.ERROR, str(e))
+        raise Exception("Compilation errors: see above")
 
     def append_script(self, script_fname):
         """Append a new script. The directive UseLib will call this method"""
@@ -100,10 +111,7 @@ class ScriptsProcessor():
 
     def get_exported_func_names_by_script_name(self):
         """Return a dict: script name -> exported functions"""
-        exported_func_names_by_script_name = {}
-        for script in self.__scripts:
-            exported_func_names_by_script_name[script.get_name()] = script.get_exported_func_names()
-        return exported_func_names_by_script_name
+        return {script.get_name():script.get_exported_func_names() for script in self.__scripts}
 
     def __write_script(self, script):
         script_name = script.get_name()
@@ -111,7 +119,7 @@ class ScriptsProcessor():
         target_filename = os.path.join(self.__target_dir, script_name)
         self.__logger.log(logging.DEBUG, "Writing script: %s (%s)", script_name, target_filename)
         with open(target_filename, 'wb') as f:
-            f.write(script.get_data())
+            f.write(script.get_content())
 
     def __ensure_target_dir_exists(self):
         if not os.path.exists(self.__target_dir):
@@ -119,44 +127,82 @@ class ScriptsProcessor():
 
 class ScriptProcessor():
     """A script processor"""
+
     def __init__(self, logger, directive_processor, script_fname):
         self.__logger = logger
         self.__directive_processor = directive_processor
         self.__script_fname = script_fname
 
     def parse_script(self):
-        self.__logger.log(logging.DEBUG, "Parsing script: %s (%s)", Script.to_name(self.__script_fname), self.__script_fname)
-        exported_func_names = []
+        self.__logger.log(logging.DEBUG, "Parsing script: %s (%s)", TargetScript.to_name(self.__script_fname), self.__script_fname)
+        exception = self.__get_exception()
+        content, exported_func_names = _ScriptParser(self.__logger, self.__directive_processor, self.__script_fname).parse()
+        return TargetScript(self.__script_fname, content.encode("utf-8"), exported_func_names, exception)
 
-        exception = None
+    def __get_exception(self):
         try:
             py_compile.compile(self.__script_fname, doraise=True)
         except Exception as e:
-            exception = e
+            return e
+        else:
+            return None
 
-        s = "# parsed by py4lo\n"
+
+class _ScriptParser():
+    """A script parser"""
+
+    __PATTERN = re.compile("^def\s+([^_].*?)\(.*\):\s*$")
+
+    def __init__(self, logger, directive_processor, script_fname):
+        self.__logger = logger
+        self.__directive_processor = directive_processor
+        self.__script_fname = script_fname
+        self.__script = None
+
+    def parse(self):
+        if self.__script:
+            return self.__script
+
+        self.__exported_func_names = []
+        self.__lines = ["# parsed by py4lo (https://github.com/jferard/py4lo)"]
         with open(self.__script_fname, 'r', encoding="utf-8") as f:
-            try:
-                for line in f:
-                    if line[0] == '#':
-                        s += self.__directive_processor.process_line(line)
-                    else:
-                        # TODO: def without _ -> exported
-                        m = re.match("^def\s+(.*?)\(.*\):\s*$", line)
-                        if m:
-                            func_name = m.group(1)
-                            if func_name[0] != "_":
-                                exported_func_names.append(func_name)
+            self.__process_lines(f)
 
-                        if self.__directive_processor.ignore_lines():
-                            s += "### py4lo ignore:" + line
-                        else:
-                            s += line
-            except Exception as e:
-                self.__logger.critical(self.__script_fname+", line="+line)
-                raise e
-
-        s += "\n\ng_exportedScripts = ("+", ".join(exported_func_names)+")\n"
-        script = Script(self.__script_fname, s.encode("utf-8"), exported_func_names, exception)
         self.__directive_processor.end()
-        return script
+        self.__add_exported_func_names()
+        return "\n".join(self.__lines), self.__exported_func_names
+
+    def __process_lines(self, f):
+        try:
+            for line in f:
+                self.__process_line(line)
+        except Exception as e:
+            self.__logger.critical(self.__script_fname+", line="+line)
+            raise e
+
+    def __process_line(self, line):
+        if line[0] == '#':
+            self.__lines.extend(self.__directive_processor.process_line(line))
+        else:
+            self.__append_to_lines(line)
+
+    def __append_to_lines(self, line):
+        if self.__directive_processor.ignore_lines():
+            self.__lines.append("### py4lo ignore:" + line)
+        else:
+            self.__update_exported(line)
+            self.__lines.append(line)
+
+    def __update_exported(self, line):
+        m = _ScriptParser.__PATTERN.match(line)
+        if m:
+            func_name = m.group(1)
+            self.__exported_func_names.append(func_name)
+
+    def __add_exported_func_names(self):
+        if self.__exported_func_names:
+            self.__lines.extend([
+                "",
+                "",
+                "g_exportedScripts = ({})".format(", ".join(self.__exported_func_names))
+            ])

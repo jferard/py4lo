@@ -80,11 +80,12 @@ class _DirectiveProcessorWorker():
         self.__branch_processor = branch_processor
         self.__directive_provider = directive_provider
         self.__line = line
-        self.__target_line = ""
+        self.__target_lines = []
 
     def process_line(self):
-        if self.__target_line != "":
-            return self.__target_line
+        """Return a list of lines"""
+        if self.__target_lines:
+            return self.__target_lines
 
         try:
             ls = shlex.split(self.__line)
@@ -95,7 +96,7 @@ class _DirectiveProcessorWorker():
         except ValueError:
             self.__comment_or_write()
 
-        return self.__target_line
+        return self.__target_lines
 
     def __is_directive(self, ls):
         return len(ls) >= 2 and ls[0] == '#' and ls[1] == 'py4lo:'
@@ -121,10 +122,12 @@ class _DirectiveProcessorWorker():
             self.append(self.__line)
 
     def include(self, fname):
-        self.append(self.__directive_processor.include(fname))
+        """Called by directives"""
+        self.__target_lines.extend(self.__directive_processor.include(fname))
 
-    def append(self, s2):
-        self.__target_line += s2
+    def append(self, line):
+        """Called by directives"""
+        self.__target_lines.append(line)
 
     def append_script(self, script_fname):
         """Append a script to the script processor"""
@@ -132,6 +135,8 @@ class _DirectiveProcessorWorker():
 
 
 class _IncludeProcessor():
+    """ A simple include stripper: remove docstrings and comments"""
+
     DOC_STRING_OPEN = "\"\"\""
     DOC_STRING_CLOSE = "\"\"\""
     NORMAL = 0
@@ -140,10 +145,11 @@ class _IncludeProcessor():
 
     def __init__(self, fname):
         self.__fname = fname
-        self.__inc = []
+        self.__inc_lines = []
         self.__state = _IncludeProcessor.NORMAL
 
     def process(self):
+        """Return a list of lines"""
         if self.__state != _IncludeProcessor.NORMAL:
             raise Exception("Create a new IncludeProcessor")
 
@@ -154,7 +160,7 @@ class _IncludeProcessor():
                 self.__process_line(line)
 
         self.__state = _IncludeProcessor.END
-        return "\n".join(self.__inc) + "\n"
+        return self.__inc_lines
 
     def __process_line(self, line):
         l = line.strip()
@@ -164,7 +170,7 @@ class _IncludeProcessor():
             elif l.startswith(_IncludeProcessor.DOC_STRING_OPEN):
                 self.__state = _IncludeProcessor.IN_DOC_STRING
             else:
-                self.__inc.append(line)
+                self.__inc_lines.append(line)
         elif self.__state == _IncludeProcessor.IN_DOC_STRING:
             if l.endswith(_IncludeProcessor.DOC_STRING_CLOSE):
                 self.__state = _IncludeProcessor.NORMAL

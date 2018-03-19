@@ -47,7 +47,7 @@ class DebugCommand():
         self.__logger.info("Debug or init. Generating %s for Python %s", self.__debug_path, self.__python_version)
 
         script_fnames = set(os.path.join(self.__src_dir, fname) for fname in os.listdir(self.__src_dir) if fname.endswith(".py"))
-        scripts_processor = ScriptsProcessor(self.__logger, self.__src_dir, self.__python_version, self.__target_dir)
+        scripts_processor = ScriptsProcessor(self.__logger, self.__src_dir, self.__target_dir, self.__python_version)
         scripts = scripts_processor.process(script_fnames)
         zip_updater = ZipUpdater()
         (

@@ -27,5 +27,5 @@ class AddScripts():
 
     def call(self, zout):
         for script in self.__scripts:
-            zout.writestr(ARC_SCRIPTS_PATH+"/"+script.get_name(), script.get_data())
+            zout.writestr(ARC_SCRIPTS_PATH+"/"+script.get_name(), script.get_content())
         return True
