@@ -42,7 +42,7 @@ class DirectiveProcessor():
         return DirectiveProcessor(scripts_path, scripts_processor, branch_processor, directive_provider)
 
     def __init__(self, scripts_path, scripts_processor, branch_processor, directive_provider):
-        """Create ascripts_path is the path to the scripts directory"""
+        """Create a Directive processor. Scripts_path is the path to the scripts directory"""
         self.__scripts_processor = scripts_processor
         self.__scripts_path = scripts_path
         self.__branch_processor = branch_processor
