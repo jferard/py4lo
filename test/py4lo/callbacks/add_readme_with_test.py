@@ -23,13 +23,38 @@ import io
 import zipfile
 
 class TestAddReadmeWith(unittest.TestCase):
+    def setUp(self):
+        self.maxDiff = None
+
     def test_add_readme_with(self):
         out = io.BytesIO()
         zout = zipfile.ZipFile(out, 'w')
         AddReadmeWith(env.inc_dir, "contact").call(zout)
-        self.assertEquals(b'<?xml version="1.0" encoding="UTF-8"?>\r\n<!DOCTYPE library:libraries PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "libraries.dtd">\r\n<library:libraries xmlns:library="http://openoffice.org/2000/library" xmlns:xlink="http://www.w3.org/1999/xlink">\r\n    <library:library library:name="Standard" library:link="false"/>\r\n</library:libraries>\r\n', zout.read("Basic/script-lc.xml"))
-        self.assertEquals(b'<?xml version="1.0" encoding="UTF-8"?>\r\n<!DOCTYPE library:library PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "library.dtd">\r\n<library:library xmlns:library="http://openoffice.org/2000/library" library:name="Standard" library:readonly="false" library:passwordprotected="false">\r\n    <library:element library:name="py4lo"/>\r\n</library:library>\r\n', zout.read("Basic/Standard/script-lb.xml"))
-        self.assertEquals(b'<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">\n<script:module xmlns:script="http://openoffice.org/2000/script" script:name="Module1" script:language="StarBasic">REM  *****  BASIC  *****\nREM The scripts are written in Python with an external text editor, and included in this file with py4lo.\nREM Py4LO - Python Toolkit For LibreOffice Calc\nREM Copyright (C) 2016-2018 Julien F\xc3\xa9rard &lt;https://github.com/jferard&gt;\nREM See https://github.com/jferard/py4lo/README.md\n\nSub Readme\n\tMsgBox &quot;The scripts are written in Python with an external text editor, and included in this file with py4lo.&quot; &amp; chr(13) _\n\t&amp; &quot;Py4LO - Python Toolkit For LibreOffice Calc&quot; &amp; chr(13) _\n\t&amp; &quot;Copyright (C) 2016-2018 Julien F\xc3\xa9rard &lt;https://github.com/jferard&gt;&quot; &amp; chr(13) _\n\t&amp; &quot;See https://github.com/jferard/py4lo/README.md&quot; &amp; chr(13) _\n\t&amp; &quot;Contact : contact&quot;, IDOK, &quot;py4lo&quot;\nEnd Sub\n</script:module>\n', zout.read("Basic/Standard/py4lo.xml"))
+        self.assertEquals("""<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE library:libraries PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "libraries.dtd">
+<library:libraries xmlns:library="http://openoffice.org/2000/library" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <library:library library:name="Standard" library:link="false"/>
+</library:libraries>
+""", zout.read("Basic/script-lc.xml").decode("utf-8"))
+        self.assertEquals("""<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE library:library PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "library.dtd">
+<library:library xmlns:library="http://openoffice.org/2000/library" library:name="Standard" library:readonly="false" library:passwordprotected="false">
+    <library:element library:name="py4lo"/>
+</library:library>
+""", zout.read("Basic/Standard/script-lb.xml").decode("utf-8"))
+        self.assertEquals("""<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
+<script:module xmlns:script="http://openoffice.org/2000/script" script:name="Module1" script:language="StarBasic">REM  *****  BASIC  *****
+REM The scripts are written in Python with an external text editor, and included in this file with py4lo.\nREM Py4LO - Python Toolkit For LibreOffice Calc
+REM Copyright (C) 2016-2018 Julien Férard &lt;https://github.com/jferard&gt;\nREM See https://github.com/jferard/py4lo/README.md
+
+Sub Readme
+    MsgBox &quot;The scripts are written in Python with an external text editor, and included in this file with py4lo.&quot; &amp; chr(13) _
+    &amp; &quot;Py4LO - Python Toolkit For LibreOffice Calc&quot; &amp; chr(13) _
+    &amp; &quot;Copyright (C) 2016-2018 Julien Férard &lt;https://github.com/jferard&gt;&quot; &amp; chr(13) _
+    &amp; &quot;See https://github.com/jferard/py4lo/README.md&quot; &amp; chr(13) _
+    &amp; &quot;Contact : contact&quot;, IDOK, &quot;py4lo&quot;\nEnd Sub\n</script:module>
+""", zout.read("Basic/Standard/py4lo.xml").decode("utf-8"))
 
 if __name__ == '__main__':
     unittest.main()
