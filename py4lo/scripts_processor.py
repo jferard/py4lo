@@ -188,7 +188,7 @@ class _ScriptParser():
 
     def __append_to_lines(self, line):
         if self.__directive_processor.ignore_lines():
-            self.__lines.append("### py4lo ignore:" + line)
+            self.__lines.append("### py4lo ignore: " + line)
         else:
             self.__update_exported(line)
             self.__lines.append(line)

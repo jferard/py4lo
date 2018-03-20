@@ -17,8 +17,71 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import unittest
+from unittest.mock import *
 import env
 from scripts_processor import *
+import scripts_processor
 
 class TestScriptsProcessor(unittest.TestCase):
-    pass
+    def setUp(self):
+        self.maxDiff = None
+
+    def test_target_script(self):
+        e = Exception("d")
+        t = TargetScript("a/z", "b", ["c"], e)
+        self.assertEqual("a/z", t.get_fname())
+        self.assertEqual("z", t.get_name())
+        self.assertEqual("b", t.get_content())
+        self.assertEqual(["c"], t.get_exported_func_names())
+        self.assertEqual(e, t.get_exception())
+
+    @patch("builtins.open")
+    def test_script_parser_normal_line_dont_ignore(self, mock_open):
+        logger = Mock()
+        dp = Mock()
+        dp.ignore_lines.return_value = False
+        bound = MagicMock()
+        mock_open.return_value = bound
+        bound.__enter__.return_value = ["some line"]
+
+        sp = scripts_processor._ScriptParser(logger, dp, "script_fname")
+        self.assertEqual(('# parsed by py4lo (https://github.com/jferard/py4lo)\nsome line', []), sp.parse())
+
+        self.assertEqual([], logger.mock_calls)
+        self.assertEqual([call.ignore_lines(), call.end()], dp.mock_calls)
+        self.assertEqual([call.__enter__(), call.__exit__(None, None, None)], bound.mock_calls)
+        self.assertEqual([call('script_fname', 'r', encoding='utf-8'), call().__enter__(), call().__exit__(None, None, None)], mock_open.mock_calls)
+
+    @patch("builtins.open")
+    def test_script_parser_normal_line_ignore(self, mock_open):
+        logger = Mock()
+        dp = Mock()
+        dp.ignore_lines.return_value = True
+        bound = MagicMock()
+        mock_open.return_value = bound
+        bound.__enter__.return_value = ["some line"]
+
+        sp = scripts_processor._ScriptParser(logger, dp, "script_fname")
+        self.assertEqual(('# parsed by py4lo (https://github.com/jferard/py4lo)\n### py4lo ignore: some line', []), sp.parse())
+
+        self.assertEqual([], logger.mock_calls)
+        self.assertEqual([call.ignore_lines(), call.end()], dp.mock_calls)
+        self.assertEqual([call.__enter__(), call.__exit__(None, None, None)], bound.mock_calls)
+        self.assertEqual([call('script_fname', 'r', encoding='utf-8'), call().__enter__(), call().__exit__(None, None, None)], mock_open.mock_calls)
+
+    @patch("builtins.open")
+    def test_script_parser_directve_line(self, mock_open):
+        logger = Mock()
+        dp = Mock()
+        dp.process_line.return_value = ["line1", "line2"]
+        bound = MagicMock()
+        mock_open.return_value = bound
+        bound.__enter__.return_value = ["#some line"]
+
+        sp = scripts_processor._ScriptParser(logger, dp, "script_fname")
+        self.assertEqual(('# parsed by py4lo (https://github.com/jferard/py4lo)\nline1\nline2', []), sp.parse())
+
+        self.assertEqual([], logger.mock_calls)
+        self.assertEqual([call.process_line('#some line'), call.end()], dp.mock_calls)
+        self.assertEqual([call.__enter__(), call.__exit__(None, None, None)], bound.mock_calls)
+        self.assertEqual([call('script_fname', 'r', encoding='utf-8'), call().__enter__(), call().__exit__(None, None, None)], mock_open.mock_calls)
