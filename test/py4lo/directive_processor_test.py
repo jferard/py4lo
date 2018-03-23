@@ -21,12 +21,6 @@ from unittest.mock import *
 import env
 from directive_processor import *
 
-def Any():
-    class Any():
-        def __eq__(self, other):
-            return True
-    return Any()
-
 class TestDirectiveProcessor(unittest.TestCase):
     def setUp(self):
         self.__scripts_path = Mock()
@@ -90,6 +84,8 @@ class TestDirectiveProcessor(unittest.TestCase):
         self.assertEqual([], self.__directive_provider.mock_calls)
 
     def test_process_line_standard_directive(self):
+        print (dir(env), env.__file__)
+
         self.__branch_processor.skip.return_value = False
         self.__branch_processor.handle_directive.return_value = False
         directive = Mock()
@@ -102,4 +98,4 @@ class TestDirectiveProcessor(unittest.TestCase):
         self.assertEqual([], self.__scripts_processor.mock_calls)
         self.assertEqual([call.handle_directive('ok', []), call.skip()], self.__branch_processor.mock_calls)
         self.assertEqual([call.get(["ok"])], self.__directive_provider.mock_calls)
-        self.assertEqual([call.execute(Any(), "")], directive.mock_calls)
+        self.assertEqual([call.execute(env.any_object(), "")], directive.mock_calls)

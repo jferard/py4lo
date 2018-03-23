@@ -16,9 +16,34 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
-import unittest
 import env
+import unittest
+from unittest.mock import Mock, patch, call
+
+from callbacks import *
 from commands.debug_command import *
 
+from py4lo.commands.debug_command import DebugCommand
+
+
 class TestDebugCommand(unittest.TestCase):
-    pass
+    @patch('zip_updater.ZipUpdater', autospec=True)
+    @patch('os.listdir')
+    def test(self, listdir, Zupdater):
+        logger = Mock()
+        py4lo_path = ""
+        src_dir = ""
+        target_dir = ""
+        python_version = ""
+        ods_dest_name = ""
+
+        listdir.return_value = []
+
+        d = DebugCommand(logger, py4lo_path, src_dir, target_dir, python_version, ods_dest_name)
+        d.execute([])
+
+        self.assertEqual([call.info("Debug or init. Generating %s for Python %s", '', ''),
+                          call.log(10, 'Scripts to process: %s', set())], logger.mock_calls)
+        self.assertEqual([call('')], listdir.mock_calls)
+        self.assertEqual(call(), Zupdater.mock_calls[0])
+        self.assertEqual(call().update('inc/debug.ods', ''), Zupdater.mock_calls[-1])

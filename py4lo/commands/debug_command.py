@@ -23,7 +23,7 @@ from commands.command_executor import CommandExecutor
 import logging
 from scripts_processor import ScriptsProcessor
 from callbacks import *
-from zip_updater import ZipUpdater
+import zip_updater
 
 class DebugCommand():
     @staticmethod
@@ -49,15 +49,15 @@ class DebugCommand():
         script_fnames = set(os.path.join(self.__src_dir, fname) for fname in os.listdir(self.__src_dir) if fname.endswith(".py"))
         scripts_processor = ScriptsProcessor(self.__logger, self.__src_dir, self.__target_dir, self.__python_version)
         scripts = scripts_processor.process(script_fnames)
-        zip_updater = ZipUpdater()
+        zupdater = zip_updater.ZipUpdater()
         (
-            zip_updater
-                .item(IgnoreScripts("Scripts"))
-                .item(RewriteManifest(scripts))
-                .after(AddScripts(scripts))
-                .after(AddDebugContent(scripts_processor.get_exported_func_names_by_script_name()))
+            zupdater
+            .item(IgnoreScripts("Scripts"))
+            .item(RewriteManifest(scripts))
+            .after(AddScripts(scripts))
+            .after(AddDebugContent(scripts_processor.get_exported_func_names_by_script_name()))
         )
-        zip_updater.update(os.path.join(self.__py4lo_path, "inc", "debug.ods"), self.__ods_dest_name)
+        zupdater.update(os.path.join(self.__py4lo_path, "inc", "debug.ods"), self.__ods_dest_name)
         return (self.__ods_dest_name,)
 
     @staticmethod

@@ -4,6 +4,7 @@ py4lo/__pycache__/*
 .pytest_cache/*
 **/.pytest_cache
 .cache
+.idea
 
 # generated files
 example/*.ods
