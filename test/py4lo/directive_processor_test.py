@@ -18,8 +18,10 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import unittest
 from unittest.mock import *
+
 import env
 from directive_processor import *
+
 
 class TestDirectiveProcessor(unittest.TestCase):
     def setUp(self):
@@ -27,8 +29,11 @@ class TestDirectiveProcessor(unittest.TestCase):
         self.__scripts_processor = Mock()
         self.__branch_processor = Mock()
         self.__directive_provider = Mock()
-        self.__dp = DirectiveProcessor(self.__scripts_path, self.__scripts_processor, self.__branch_processor, self.__directive_provider)
+        self.__dp = DirectiveProcessor(self.__scripts_path, self.__scripts_processor, self.__branch_processor,
+                                       self.__directive_provider)
 
+    def test_create(self):
+        dp = DirectiveProcessor.create("", "", "3.6")
 
     def test_append_script(self):
         self.__dp.append_script("ok")
@@ -84,8 +89,6 @@ class TestDirectiveProcessor(unittest.TestCase):
         self.assertEqual([], self.__directive_provider.mock_calls)
 
     def test_process_line_standard_directive(self):
-        print (dir(env), env.__file__)
-
         self.__branch_processor.skip.return_value = False
         self.__branch_processor.handle_directive.return_value = False
         directive = Mock()
@@ -99,3 +102,22 @@ class TestDirectiveProcessor(unittest.TestCase):
         self.assertEqual([call.handle_directive('ok', []), call.skip()], self.__branch_processor.mock_calls)
         self.assertEqual([call.get(["ok"])], self.__directive_provider.mock_calls)
         self.assertEqual([call.execute(env.any_object(), "")], directive.mock_calls)
+
+    def test_include(self):
+        lines = self.__dp.include("py4lo_import.py")
+        self.assertEqual(['try:\n',
+                          '    XSCRIPTCONTEXT\n',
+                          'except:\n',
+                          '    pass\n',
+                          'else:\n',
+                          '    import unohelper\n',
+                          '    import sys\n',
+                          '    doc = XSCRIPTCONTEXT.getDocument()\n',
+                          "    spath = unohelper.fileUrlToSystemPath(doc.URL+'/Scripts/python')\n",
+                          '    if spath not in sys.path:\n',
+                          '        sys.path.insert(0, spath)\n'], lines)
+
+        self.assertEqual([], self.__scripts_path.mock_calls)
+        self.assertEqual([], self.__scripts_processor.mock_calls)
+        self.assertEqual([], self.__branch_processor.mock_calls)
+        self.assertEqual([], self.__directive_provider.mock_calls)
