@@ -40,7 +40,7 @@ class AddDebugContent():
         draw = begin_shapes
 
         i = 0
-        for script in self.__funcs_by_script:
+        for script in sorted(self.__funcs_by_script):
             for func in self.__funcs_by_script[script]:
                 forms += form_tpl.format(name=func, id=i, file=script, func=func)
                 draw += draw_control_tpl.format(x=10, y=15*i+10, id=i)
