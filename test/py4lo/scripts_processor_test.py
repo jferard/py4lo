@@ -35,53 +35,36 @@ class TestScriptsProcessor(unittest.TestCase):
         self.assertEqual(["c"], t.get_exported_func_names())
         self.assertEqual(e, t.get_exception())
 
+    @patch("py_compile.compile")
     @patch("builtins.open")
-    def test_script_parser_normal_line_dont_ignore(self, mock_open):
+    def test_scripts_processor(self, mock_open, mock_compile):
         logger = Mock()
-        dp = Mock()
-        dp.ignore_lines.return_value = False
-        bound = MagicMock()
-        mock_open.return_value = bound
-        bound.__enter__.return_value = ["some line"]
 
-        sp = scripts_processor._ScriptParser(logger, dp, "script_fname")
-        self.assertEqual(('# parsed by py4lo (https://github.com/jferard/py4lo)\nsome line', []), sp.parse())
+        src = MagicMock()
+        target = MagicMock()
+        dest = MagicMock()
+        mock_open.side_effect = [src, target]
 
-        self.assertEqual([], logger.mock_calls)
-        self.assertEqual([call.ignore_lines(), call.end()], dp.mock_calls)
-        self.assertEqual([call.__enter__(), call.__exit__(None, None, None)], bound.mock_calls)
-        self.assertEqual([call('script_fname', 'r', encoding='utf-8'), call().__enter__(), call().__exit__(None, None, None)], mock_open.mock_calls)
+        src.__enter__.return_value = ["some line"]
+        target.__enter__.return_value = dest
 
-    @patch("builtins.open")
-    def test_script_parser_normal_line_ignore(self, mock_open):
-        logger = Mock()
-        dp = Mock()
-        dp.ignore_lines.return_value = True
-        bound = MagicMock()
-        mock_open.return_value = bound
-        bound.__enter__.return_value = ["some line"]
+        try:
+            sp = scripts_processor.ScriptsProcessor(logger, "src", "target", "3.6")
+            sp.process(["script_fname"])
+        except Exception as e:
+            pass
 
-        sp = scripts_processor._ScriptParser(logger, dp, "script_fname")
-        self.assertEqual(('# parsed by py4lo (https://github.com/jferard/py4lo)\n### py4lo ignore: some line', []), sp.parse())
+        self.assertEqual([
+            call('script_fname', 'r', encoding='utf-8'),
+            call('target/script_fname', 'wb'),
+        ], mock_open.mock_calls)
+        self.assertEqual([call('script_fname', doraise=True)], mock_compile.mock_calls)
+        self.assertEqual([call.write(b'# parsed by py4lo (https://github.com/jferard/py4lo)\nsome line')],
+            dest.mock_calls)
+        self.assertEqual([
+            call.log(10, 'Scripts to process: %s', ['script_fname']),
+            call.log(10, 'Parsing script: %s (%s)', 'script_fname', 'script_fname'),
+            call.log(10, 'Writing script: %s (%s)', 'script_fname', 'target/script_fname'),
+        ], logger.mock_calls)
 
-        self.assertEqual([], logger.mock_calls)
-        self.assertEqual([call.ignore_lines(), call.end()], dp.mock_calls)
-        self.assertEqual([call.__enter__(), call.__exit__(None, None, None)], bound.mock_calls)
-        self.assertEqual([call('script_fname', 'r', encoding='utf-8'), call().__enter__(), call().__exit__(None, None, None)], mock_open.mock_calls)
 
-    @patch("builtins.open")
-    def test_script_parser_directve_line(self, mock_open):
-        logger = Mock()
-        dp = Mock()
-        dp.process_line.return_value = ["line1", "line2"]
-        bound = MagicMock()
-        mock_open.return_value = bound
-        bound.__enter__.return_value = ["#some line"]
-
-        sp = scripts_processor._ScriptParser(logger, dp, "script_fname")
-        self.assertEqual(('# parsed by py4lo (https://github.com/jferard/py4lo)\nline1\nline2', []), sp.parse())
-
-        self.assertEqual([], logger.mock_calls)
-        self.assertEqual([call.process_line('#some line'), call.end()], dp.mock_calls)
-        self.assertEqual([call.__enter__(), call.__exit__(None, None, None)], bound.mock_calls)
-        self.assertEqual([call('script_fname', 'r', encoding='utf-8'), call().__enter__(), call().__exit__(None, None, None)], mock_open.mock_calls)
