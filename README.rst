@@ -155,6 +155,8 @@ is passed to the scripts called from LibreOffice, but not to the
 imported modules. It's up to the script to pass this object to the
 modules that need it.
 
+**CAVEAT** If you have the LibreOffice quickstarter, new imports may not be recognized. You might have to kill manually the `soffice` process.
+
 Test
 ----
 
