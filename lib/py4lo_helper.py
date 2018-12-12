@@ -92,10 +92,7 @@ class Py4LO_helper(unohelper.Base):
         return pv
 
     def make_pvs(self, d={}):
-        l = []
-        for n, v in d.items():
-            l.append(self.make_pv(n, v))
-        return tuple(l)
+        return tuple(self.make_pv(n, v) for n, v in d.items())
 
     # from https://forum.openoffice.org/fr/forum/viewtopic.php?f=15&t=47603# (thanks Bernard !)
     def message_box(self, parent_win, msg_text, msg_title, msg_type=MESSAGEBOX, msg_buttons=BUTTONS_OK):
