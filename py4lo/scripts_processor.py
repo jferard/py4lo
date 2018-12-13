@@ -175,13 +175,13 @@ class _ScriptParser():
     def __process_lines(self, f):
         try:
             for line in f:
-                self.__process_line(line)
+                self.__process_line(line.rstrip())
         except Exception as e:
             self.__logger.critical(self.__script_fname+", line="+line)
             raise e
 
     def __process_line(self, line):
-        if line[0] == '#':
+        if line and line[0] == '#':
             self.__lines.extend(self.__directive_processor.process_line(line))
         else:
             self.__append_to_lines(line)

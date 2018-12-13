@@ -20,6 +20,7 @@
 from commands.test_command import TestCommand
 from commands.debug_command import DebugCommand
 from commands.command_executor import CommandExecutor
+import logging
 
 class InitCommand():
     @staticmethod
@@ -29,11 +30,11 @@ class InitCommand():
         logger.setLevel(tdata["log_level"])
         init_command = DebugCommand(
             logger,
+            tdata["py4lo_path"],
             tdata["src_dir"],
             tdata["target_dir"],
             tdata["python_version"],
-            tdata["init_file"],
-            "Creates a standard file"
+            tdata["init_file"]
         )
         return CommandExecutor(init_command, test_executor)
 

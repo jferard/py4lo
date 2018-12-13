@@ -16,6 +16,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
+import zipfile
+import xml.etree.ElementTree as ET
 
 OFFICE_NS = {
     "office":"urn:oasis:names:tc:opendocument:xmlns:office:1.0",
@@ -33,11 +35,11 @@ class OdsTables():
                 root = ET.fromstring(data)
                 return OdsTablesLister(root, ns)
 
-    def __init__(self, table, ns=OFFICE_NS):
+    def __init__(self, root, ns=OFFICE_NS):
         self.__root = root
         self.__ns = ns
 
-    def __iter__():
+    def __iter__(self):
         tables = self.__root.findall("./office:body/office:spreadsheet/table:table", self.__ns)
         for table in tables:
             yield table
@@ -45,7 +47,7 @@ class OdsTables():
 class OdsRows():
     """An iterator over rows in a table.
     The table must be simple (no spanned rows or repeated rows)"""
-    
+
     def __init__(self, table, ns=OFFICE_NS):
         self.__table = table
         self.__ns = ns
