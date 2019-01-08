@@ -61,7 +61,6 @@ class TestCommand():
             env = dict(os.environ)
             env["PYTHONPATH"] = ";".join(sys.path+[self.__src_dir])
             self.__env = env
-
         return self.__env
 
     def __test_paths(self):

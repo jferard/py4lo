@@ -117,13 +117,20 @@ class Py4LO_helper(unohelper.Base):
             uno.systemPathToFileUrl(filename), "_blank", 0, ())
 
     def get_last_used_row(self, oSheet):
-        return self.get_used_range(oSheet).EndRow
+        return self.get_used_range_address(oSheet).EndRow
 
-    def get_used_range(self, oSheet):
+    def get_used_range_address(self, oSheet):
         oCell = oSheet.getCellByPosition(0, 0)
         oCursor = oSheet.createCursorByRange(oCell)
         oCursor.gotoEndOfUsedArea(True)
         return oCursor.RangeAddress
+
+    def get_used_range(self, oSheet):
+        oRangeAddress = self.get_used_range_address(oSheet)
+        return oSheet.getCellRangeByPosition(oRangeAddress.StartColumn, oRangeAddress.StartRow, oRangeAddress.EndColumn, oRangeAddress.EndRow)
+
+    def data_array(self, oSheet):
+        return self.get_used_range(oSheet).DataArray
 
     def to_iter(self, oXIndexAccess):
         for i in range(0, oXIndexAccess.getCount()):
@@ -145,8 +152,8 @@ class Py4LO_helper(unohelper.Base):
     # l is deprecated
     def read_options_from_sheet_name(self, sheet_name, l=lambda s: s):
         oSheet = self.doc.Sheets.getByName(sheet_name)
-        aAddress = self.get_used_range(oSheet)
-        return self.read_options(oSheet, aAddress, l)
+        oRangeAddress = self.get_used_range_address(oSheet)
+        return self.read_options(oSheet, oRangeAddress, l)
 
     # l is deprecated
     def read_options(self, oSheet, aAddress, l=lambda s: s):

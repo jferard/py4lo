@@ -29,6 +29,7 @@ class CommandExecutor():
         else:
             cur_args = self.__previous_executor.execute(*args)
 
+        logging.warning(str(self.__command)+", args="+str(cur_args))
         ret = self.__command.execute(*cur_args)
         logging.warning(str(self.__command)+", args="+str(cur_args)+" ret="+str(ret))
         return ret

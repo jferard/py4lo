@@ -72,13 +72,16 @@ class Commons(unohelper.Base):
             pass
         return s
 
-    def init_logger(self, file="py4lo.log", mode="a", level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
+    def init_logger(self, file=None, mode="a", level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
         if self.__logger is not None:
             raise Exception("use init_logger ONCE")
 
         self.__logger = self.get_logger(file, mode, level, format)
 
-    def get_logger(self, file="py4lo.log", mode="a", level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
+    def get_logger(self, file=None, mode="a", level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
+        if file is None:
+            file = self.join_current_dir("py4lo.log")
+
         fh = self.__get_handler(file, mode, level, format)
 
         logger = logging.getLogger()
@@ -100,3 +103,15 @@ class Commons(unohelper.Base):
         if self.__logger is None:
             raise Exception("use init_logger")
         return self.__logger
+
+    def join_current_dir(self, filename):
+        return os.path.join(unohelper.fileUrlToSystemPath(self.doc.URL), "..", filename)
+
+    def read_config(self, filename, args={}, apply=lambda config: None, encoding='utf-8'):
+        """Read a config. See https://docs.python.org/3.7/library/configparser.html
+        Example: `config = commons.read_config(commons.join_current_dir("pcrp.ini"))`"""
+        import configparser
+        config = configparser.ConfigParser(**args)
+        apply(config)
+        config.read(filename, encoding)
+        return config

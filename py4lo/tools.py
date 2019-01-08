@@ -36,6 +36,7 @@ def _get_logger(tdata):
     return logger
 
 def _get_dest_name(tdata):
+    ods_source_name = tdata["source_file"]
     if "dest_name" in tdata:
         if "suffix" in tdata:
             _get_logger(tdata).debug("Property dest_name set to {}; ignore suffix {}".format(tdata["dest_name"], tdata["suffix"]))

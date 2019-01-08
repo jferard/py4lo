@@ -33,7 +33,7 @@ class OdsTables():
             with list_ods.open('content.xml') as content:
                 data = content.read().decode("utf-8")
                 root = ET.fromstring(data)
-                return OdsTablesLister(root, ns)
+                return OdsTables(root, ns)
 
     def __init__(self, root, ns=OFFICE_NS):
         self.__root = root

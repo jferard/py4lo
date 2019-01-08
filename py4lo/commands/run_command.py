@@ -20,6 +20,7 @@
 from commands.update_command import UpdateCommand
 from commands.command_executor import CommandExecutor
 from tools import open_with_calc
+import logging
 
 class RunCommand():
     @staticmethod
@@ -34,6 +35,7 @@ class RunCommand():
     def execute(self, status, dest_name):
         if status == 0:
             print ("All tests ok")
+            logging.warning(str(self.__calc_exe)+" "+str(dest_name))
             open_with_calc(dest_name, self.__calc_exe)
         else:
             print ("Error: some tests failed")
