@@ -25,7 +25,7 @@ from scripts_processor import ScriptsProcessor
 from callbacks import *
 import zip_updater
 
-class DebugCommand():
+class DebugCommand:
     @staticmethod
     def create(args, tdata):
         test_executor = TestCommand.create(args, tdata)
@@ -43,7 +43,7 @@ class DebugCommand():
         self.__ods_dest_name = ods_dest_name
         self.__debug_path = os.path.join(target_dir, ods_dest_name)
 
-    def execute(self, *args):
+    def execute(self, *_args):
         self.__logger.info("Debug or init. Generating '%s' for Python '%s'", self.__debug_path, self.__python_version)
 
         script_fnames = set(os.path.join(self.__src_dir, fname) for fname in os.listdir(self.__src_dir) if fname.endswith(".py"))
@@ -58,7 +58,7 @@ class DebugCommand():
             .after(AddDebugContent(scripts_processor.get_exported_func_names_by_script_name()))
         )
         zupdater.update(os.path.join(self.__py4lo_path, "inc", "debug.ods"), self.__ods_dest_name)
-        return (self.__ods_dest_name,)
+        return self.__ods_dest_name,
 
     @staticmethod
     def get_help():

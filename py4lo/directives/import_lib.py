@@ -18,10 +18,10 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import os
 
-class ImportLib():
+class ImportLib:
     sig = "import lib"
 
-    def __init__(self, py4lo_path, scripts_path):
+    def __init__(self, py4lo_path, _scripts_path):
         self.__py4lo_path = py4lo_path
 
     def execute(self, processor, args):

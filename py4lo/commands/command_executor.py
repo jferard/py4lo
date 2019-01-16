@@ -18,7 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import logging
 
-class CommandExecutor():
+class CommandExecutor:
     def __init__(self, command, previous_executor = None):
         self.__command = command
         self.__previous_executor = previous_executor

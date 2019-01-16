@@ -28,13 +28,13 @@ _ = py4lo_helper.Py4LO_helper.create(XSCRIPTCONTEXT)
 c = py4lo_commons.Commons(XSCRIPTCONTEXT)
 o = example_lib.O(XSCRIPTCONTEXT)
 
-def message_example(*args):
+def message_example(*_args):
     from com.sun.star.awt.MessageBoxType import MESSAGEBOX
     from com.sun.star.awt.MessageBoxButtons import BUTTONS_OK
     _.message_box(_.parent_win, "A message from main script example.py. Current dir is: "+os.path.abspath("."), "py4lo", MESSAGEBOX, BUTTONS_OK)
 
-def xray_example(*args):
+def xray_example(*_args):
     _.xray(_.doc)
 
-def example_from_lib(*args):
+def example_from_lib(*_args):
     o.lib_example()

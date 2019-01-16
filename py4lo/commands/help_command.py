@@ -33,9 +33,9 @@ command     a command = debug|help|init|test|update
         run:            update + open the created file
         update:         updates the file with all scripts"""
 
-class HelpCommand():
+class HelpCommand:
     @staticmethod
-    def create(args, tdata):
+    def create(args, _tdata):
         if len(args) == 1:
             command_name = args[0]
         else:

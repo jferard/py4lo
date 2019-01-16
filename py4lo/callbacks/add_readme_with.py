@@ -18,7 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import os
 
-class AddReadmeWith():
+class AddReadmeWith:
     """After callback. Add a readme in destination file"""
     def __init__(self, inc_path, contact):
         self.__inc_path = inc_path

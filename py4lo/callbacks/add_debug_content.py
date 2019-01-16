@@ -29,7 +29,7 @@ begin_shapes = """<table:shapes>"""
 draw_control_tpl = """<draw:control draw:z-index="0" draw:text-style-name="P1" svg:width="80mm" svg:height="10mm" svg:x="{x}mm" svg:y="{y}mm" draw:control="control{id}"/>"""
 end_shapes = """</table:shapes>"""
 
-class AddDebugContent():
+class AddDebugContent:
     """After callback. Add a debug content in destination file. The debug content
     is one button per function."""
     def __init__(self, funcs_by_script):

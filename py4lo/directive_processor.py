@@ -23,7 +23,7 @@ from directives import DirectiveProvider
 from branch_processor import BranchProcessor
 from comparator import Comparator
 
-class DirectiveProcessor():
+class DirectiveProcessor:
     """A DirectiveProcessor processes directives, ie line that begins with #,
     in scripts. When a directive is parsed, the processor is passed to the
     directive, which may use some helpers: import2, ..."""
@@ -70,9 +70,9 @@ class DirectiveProcessor():
         self.__branch_processor.end()
 
     def ignore_lines(self):
-        return self.__branch_processor.skip();
+        return self.__branch_processor.skip()
 
-class _DirectiveProcessorWorker():
+class _DirectiveProcessorWorker:
     """A worker that processes the line"""
 
     def __init__(self, directive_processor, branch_processor, directive_provider, line):
@@ -98,7 +98,8 @@ class _DirectiveProcessorWorker():
 
         return self.__target_lines
 
-    def __is_directive(self, ls):
+    @staticmethod
+    def __is_directive(ls):
         return len(ls) >= 2 and ls[0] == '#' and ls[1] == 'py4lo:'
 
     def __process_directive(self, args):
@@ -112,7 +113,7 @@ class _DirectiveProcessorWorker():
             try:
                 directive, args = self.__directive_provider.get(args)
                 directive.execute(self, args)
-            except KeyError as e:
+            except KeyError:
                 print("Wrong directive ({})".format(line.strip()))
 
     def __comment_or_write(self):
@@ -134,7 +135,7 @@ class _DirectiveProcessorWorker():
         self.__directive_processor.append_script(script_fname)
 
 
-class _IncludeProcessor():
+class _IncludeProcessor:
     """ A simple include stripper: remove docstrings and comments"""
 
     DOC_STRING_OPEN = "\"\"\""

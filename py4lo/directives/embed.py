@@ -18,12 +18,12 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import os
 
-class Embed():
+class Embed:
     """Embed a file. It's up to the user to import it if it is a module"""
 
     sig = "embed"
 
-    def __init__(self, py4lo_path, scripts_path):
+    def __init__(self, _py4lo_path, _scripts_path):
         pass
 
     def execute(self, processor, args):

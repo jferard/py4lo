@@ -23,7 +23,7 @@ from directives.import_lib import ImportLib
 from directives.d_import import Import
 from directives.embed import Embed
 
-class _DirectiveProviderFactory():
+class _DirectiveProviderFactory:
     def __init__(self, directive_classes):
         self.__directive_classes = directive_classes
 
@@ -48,7 +48,7 @@ class _DirectiveProviderFactory():
 
             cur_directives_tree.update({"@": directive })
 
-class DirectiveProvider():
+class DirectiveProvider:
     @staticmethod
     def create(py4lo_path, scripts_path):
         return _DirectiveProviderFactory([Include, ImportLib, Import, Embed]).create(py4lo_path, scripts_path)

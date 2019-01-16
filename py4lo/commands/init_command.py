@@ -22,7 +22,7 @@ from commands.debug_command import DebugCommand
 from commands.command_executor import CommandExecutor
 import logging
 
-class InitCommand():
+class InitCommand:
     @staticmethod
     def create(args, tdata):
         test_executor = TestCommand.create(args, tdata)

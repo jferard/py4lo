@@ -26,7 +26,7 @@ def load_toml(local_py4lo_toml = "py4lo.toml"):
     py4lo_path = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
     return TomlLoader(py4lo_path, local_py4lo_toml).load()
 
-class TomlLoader():
+class TomlLoader:
     """Load a toml file and merge values with the default toml file"""
     def __init__(self, py4lo_path, local_py4lo_toml):
         self.__default_py4lo_toml = os.path.join(py4lo_path, "default-py4lo.toml")

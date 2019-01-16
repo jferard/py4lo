@@ -19,7 +19,7 @@
 import os
 import zipfile
 
-class ZipUpdater():
+class ZipUpdater:
     """A zip file updater. Applies callbacks before, after and to each item."""
     def __init__(self):
         self.__before_callbacks = []

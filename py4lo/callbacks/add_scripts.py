@@ -20,7 +20,7 @@ import os
 
 ARC_SCRIPTS_PATH = "Scripts/python"
 
-class AddScripts():
+class AddScripts:
     """After callback. Add some scripts in destination file"""
     def __init__(self, scripts):
         self.__scripts = scripts

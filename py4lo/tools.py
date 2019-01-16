@@ -47,7 +47,7 @@ def _get_dest_name(tdata):
     return ods_dest_name
 
 
-class OdsUpdater():
+class OdsUpdater:
     @staticmethod
     def create(tdata):
         logger = logging.getLogger("py4lo")
@@ -98,4 +98,4 @@ class OdsUpdater():
 
 def open_with_calc(ods_name, calc_exe):
     """Open a file with calc"""
-    r = subprocess.call([calc_exe, ods_name])
+    _r = subprocess.call([calc_exe, ods_name])

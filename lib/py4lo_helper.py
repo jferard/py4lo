@@ -72,16 +72,35 @@ class Py4LO_helper(unohelper.Base):
         self.dispatcher = dispatcher
         self.loader = loader
         self.__xray_script = None
+        self._ignore_xray = False
 
-    def use_xray(self):
+    def use_xray(self, fail_on_error=False):
+        """
+        Try to load Xray lib.
+        :param fail_on_error: Should this function fail on error
+        :raises RuntimeException: if Xray is not avaliable and `fail_on_error` is True.
+        """
         try:
             self.__xray_script = self.msp.getScript("vnd.sun.star.script:XrayTool._Main.Xray?language=Basic&location=application")
         except:
-            raise RuntimeException("\nBasic library Xray is not installed", self.ctxt)
+            if fail_on_error:
+                raise RuntimeException("\nBasic library Xray is not installed", self.ctxt)
+            else:
+                self._ignore_xray = True
 
-    def xray(self, object):
+    def xray(self, object, fail_on_error=False):
+        """
+        Xray an object. Loads dynamically the lib if possible.
+        :param fail_on_error: Should this function fail on error
+        :raises RuntimeException: if Xray is not avaliable and `fail_on_error` is True.
+        """
+        if self._ignore_xray:
+            return
+
         if self.__xray_script is None:
-            self.use_xray()
+            self.use_xray(fail_on_error)
+            if self._ignore_xray:
+                return
 
         self.__xray_script.invoke((object,), (), ())
 

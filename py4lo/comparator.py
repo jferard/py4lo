@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 
-class Comparator():
+class Comparator:
     """A comparator will be used to evaluate expressions. Used by the branch
     processor"""
 
@@ -30,7 +30,7 @@ class Comparator():
         a member of accepted_locals, a number 123456i, 123.456f, an expression or a litteral."""
         arg1 = self.__parse_expr(arg1)
         arg2 = self.__parse_expr(arg2)
-        cmp_result = self.__cmp(arg1, arg2)
+        cmp_result = self._cmp(arg1, arg2)
         return (   cmp_result == -1 and comparator in ["<", "<="]
                 or cmp_result ==  0 and comparator in ["<=", "==", ">="]
                 or cmp_result ==  1 and comparator in [">", ">="])
@@ -51,7 +51,8 @@ class Comparator():
 
         return expr
 
-    def __cmp(self, arg1, arg2):
+    @staticmethod
+    def _cmp(arg1, arg2):
         if arg1 < arg2:
             return -1
         elif arg1 == arg2:

@@ -29,7 +29,7 @@ BASIC_AND_PYTHON_ENTRIES = """<manifest:file-entry manifest:full-path="Basic/Sta
 FILE_ENTRY_TPL = """    <manifest:file-entry manifest:full-path="Scripts/python/{0}" manifest:media-type=""/>
 """
 
-class RewriteManifest():
+class RewriteManifest:
     def __init__(self, scripts):
         self.__scripts = scripts
 
@@ -48,12 +48,14 @@ class RewriteManifest():
         s = self.__add_script_lines(s)
         return s.encode("utf-8")
 
-    def __prettyfy_xml(self, zin, fname):
+    @staticmethod
+    def __prettyfy_xml(zin, fname):
         data = zin.read(fname)
         xml_str = xml.dom.minidom.parseString(data.decode("utf-8"))
         return xml_str.toprettyxml(indent="   ", newl='')
 
-    def __strip_close(self, pretty_manifest):
+    @staticmethod
+    def __strip_close(pretty_manifest):
         s = ""
         for line in pretty_manifest.splitlines():
             if line.strip() == MANIFEST_CLOSE_TAG: # end of manifest

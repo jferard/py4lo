@@ -22,7 +22,7 @@ from commands.command_executor import CommandExecutor
 from tools import open_with_calc
 import logging
 
-class RunCommand():
+class RunCommand:
     @staticmethod
     def create(args, tdata):
         update_executor = UpdateCommand.create(args, tdata)

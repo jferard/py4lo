@@ -3,7 +3,7 @@ import sys
 import os
 
 def any_object():
-    class AnyObject():
+    class AnyObject:
         def __eq__(self, other):
             return True
     return AnyObject()

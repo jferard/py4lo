@@ -21,7 +21,7 @@ from tools import update_ods
 from commands.test_command import TestCommand
 from commands.command_executor import CommandExecutor
 
-class UpdateCommand():
+class UpdateCommand:
     @staticmethod
     def create(args, tdata):
         test_executor = TestCommand.create(args, tdata)

@@ -23,9 +23,9 @@ import logging
 import subprocess
 from commands.command_executor import CommandExecutor
 
-class TestCommand():
+class TestCommand:
     @staticmethod
-    def create(args, tdata):
+    def create(_args, tdata):
         logger = logging.getLogger("py4lo")
         logger.setLevel(tdata["log_level"])
         return CommandExecutor(TestCommand(logger, tdata["python_exe"], tdata["test_dir"], tdata["src_dir"]))
@@ -49,7 +49,7 @@ class TestCommand():
                     self.__logger.error("error: {0}".format(completed_process.stderr.decode('ascii')))
                 final_status = 1
 
-        return (final_status, )
+        return final_status,
 
     def __execute(self, path):
         cmd = "\""+self.__python_exe+"\" "+path

@@ -44,7 +44,7 @@ class Bus(unohelper.Base):
 
 class Commons(unohelper.Base):
     def __init__(self, xsc=None):
-        if xsc == None:
+        if xsc is None:
             xsc = Commons.xsc
         self.doc = xsc.getDocument()
         self.__logger = None
@@ -68,7 +68,7 @@ class Commons(unohelper.Base):
         import unicodedata
         try:
             s = unicodedata.normalize('NFKD', s).encode('ascii','ignore').decode('ascii')
-        except Exception as e:
+        except Exception:
             pass
         return s
 

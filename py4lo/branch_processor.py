@@ -18,7 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import logging
 
-class BranchProcessor():
+class BranchProcessor:
     """The branch processor handles directives like 'if', 'elif', 'else', 'end'
     and acts as a preprocessor. Skipped block wont be included in the LO document"""
 

@@ -20,7 +20,7 @@
 from commands.real_command_factory_by_name import real_command_factory_by_name
 from commands.help_command import HelpCommand
 
-class Commands():
+class Commands:
     def __init__(self, command_factory_by_name):
         assert "help" in command_factory_by_name
         self.__command_factory_by_name = command_factory_by_name
