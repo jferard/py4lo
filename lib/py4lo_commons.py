@@ -109,9 +109,31 @@ class Commons(unohelper.Base):
 
     def read_config(self, filename, args={}, apply=lambda config: None, encoding='utf-8'):
         """Read a config. See https://docs.python.org/3.7/library/configparser.html
+
+        :param args: arguments to be passed to the ConfigParser
+        :param apply: function to modifiy the config
+        :param encoding: the encoding of the file
+
         Example: `config = commons.read_config(commons.join_current_dir("pcrp.ini"))`"""
         import configparser
         config = configparser.ConfigParser(**args)
         apply(config)
         config.read(filename, encoding)
+        return config
+
+    def read_internal_config(self, filename, args={}, apply=lambda config: None, encoding='utf-8', assets_dir="Assets"):
+        """Read an internal config, in the assets directory of the document.
+        See https://docs.python.org/3.7/library/configparser.html
+
+        :param args: arguments to be passed to the ConfigParser
+        :param apply: function to modifiy the config
+        :param encoding: the encoding of the file
+
+        Example: `config = commons.read_config("pcrp.ini")`"""
+        import configparser, zipfile, codecs
+        config = configparser.ConfigParser(**args)
+        apply(config)
+        with zipfile.ZipFile(unohelper.fileUrlToSystemPath(self.doc.URL), 'r') as z:
+            file = z.open(assets_dir + "/" + filename)
+            config.read_file(codecs.getreader("utf-8")(file))
         return config

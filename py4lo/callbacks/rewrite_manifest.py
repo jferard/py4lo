@@ -19,19 +19,25 @@
 import os
 import xml.dom.minidom
 
-MANIFEST_CLOSE_TAG = "</manifest:manifest>"
-BASIC_AND_PYTHON_ENTRIES = """<manifest:file-entry manifest:full-path="Basic/Standard/py4lo.xml" manifest:media-type="text/xml"/>
+BASIC_ENTRIES = """    <manifest:file-entry manifest:full-path="Basic/Standard/py4lo.xml" manifest:media-type="text/xml"/>
     <manifest:file-entry manifest:full-path="Basic/Standard/script-lb.xml" manifest:media-type="text/xml"/>
     <manifest:file-entry manifest:full-path="Basic/script-lc.xml" manifest:media-type="text/xml"/>
-    <manifest:file-entry manifest:full-path="Scripts" manifest:media-type="application/binary"/>
+"""
+PYTHON_DIRS = """    <manifest:file-entry manifest:full-path="Scripts" manifest:media-type="application/binary"/>
     <manifest:file-entry manifest:full-path="Scripts/python" manifest:media-type="application/binary"/>
 """
-FILE_ENTRY_TPL = """    <manifest:file-entry manifest:full-path="Scripts/python/{0}" manifest:media-type=""/>
+PYTHON_ENTRY_TPL = """    <manifest:file-entry manifest:full-path="Scripts/python/{0}" manifest:media-type=""/>
 """
+ASSET_DIR_TPL = """    <manifest:file-entry manifest:full-path="{0}" manifest:media-type="application/binary"/>
+"""
+ASSET_ENTRY_TPL = """    <manifest:file-entry manifest:full-path="{0}" manifest:media-type="application/octet-stream"/>
+"""
+MANIFEST_CLOSE_TAG = """</manifest:manifest>"""
 
-class RewriteManifest:
-    def __init__(self, scripts):
+class RewriteManifest():
+    def __init__(self, scripts, assets):
         self.__scripts = scripts
+        self.__assets = assets
 
     def call(self, zin, zout, item):
         if item.filename == "META-INF/manifest.xml":
@@ -48,14 +54,12 @@ class RewriteManifest:
         s = self.__add_script_lines(s)
         return s.encode("utf-8")
 
-    @staticmethod
-    def __prettyfy_xml(zin, fname):
+    def __prettyfy_xml(self, zin, fname):
         data = zin.read(fname)
         xml_str = xml.dom.minidom.parseString(data.decode("utf-8"))
         return xml_str.toprettyxml(indent="   ", newl='')
 
-    @staticmethod
-    def __strip_close(pretty_manifest):
+    def __strip_close(self, pretty_manifest):
         s = ""
         for line in pretty_manifest.splitlines():
             if line.strip() == MANIFEST_CLOSE_TAG: # end of manifest
@@ -65,8 +69,19 @@ class RewriteManifest:
         raise Exception("no manifest closing tag in "+pretty_manifest)
 
     def __add_script_lines(self, s):
-        s += BASIC_AND_PYTHON_ENTRIES
+        s += BASIC_ENTRIES
+        s += PYTHON_DIRS
         for script in self.__scripts:
-            s += FILE_ENTRY_TPL.format(script.get_name())
+            s += PYTHON_ENTRY_TPL.format(script.get_name())
+        assets_dirs = set()
+        for asset in self.__assets:
+            path_chunks = os.path.split(asset.get_fname())
+            assets_dirs.update("/".join(path_chunks[:i]) for i in range(1,len(path_chunks)))
+
+        for asset_dir in assets_dirs:
+            s += ASSET_DIR_TPL.format(asset_dir)
+        for asset in self.__assets:
+            s += ASSET_ENTRY_TPL.format(asset.get_fname())
+
         s += MANIFEST_CLOSE_TAG
         return s

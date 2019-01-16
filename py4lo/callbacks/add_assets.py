@@ -17,9 +17,14 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import os
-from callbacks.add_debug_content import AddDebugContent
-from callbacks.add_readme_with import AddReadmeWith
-from callbacks.ignore_scripts import IgnoreScripts
-from callbacks.rewrite_manifest import RewriteManifest
-from callbacks.add_scripts import AddScripts, ARC_SCRIPTS_PATH
-from callbacks.add_assets import AddAssets
+
+class AddAssets:
+    """After callback. Add assets in destination file"""
+    def __init__(self, assets):
+        self.__assets = assets
+
+    def call(self, zout):
+        for asset in self.__assets:
+            print (asset.get_fname())
+            zout.writestr(asset.get_fname(), asset.get_content())
+        return True
