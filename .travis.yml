@@ -2,7 +2,7 @@
 language: python
 
 python:
-  - "3.4"
+  - "3.6"
 
 cache: pip
 
@@ -23,7 +23,7 @@ install:
 
 # script
 script:
-  - py.test --cov=py4lo test
+  - python3.6 -m pytest --cov=py4lo test
 
 after_success:
   - codecov
