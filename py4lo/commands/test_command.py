@@ -54,7 +54,7 @@ class TestCommand:
     def __execute(self, path):
         cmd = "\""+self.__python_exe+"\" "+path
         self.__logger.info("execute: {0}".format(cmd))
-        return subprocess.run(cmd, capture_output=True, env=self.__get_env())
+        return subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=self.__get_env())
 
     def __get_env(self):
         if self.__env is None:

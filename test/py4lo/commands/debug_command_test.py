@@ -33,16 +33,18 @@ class TestDebugCommand(unittest.TestCase):
         logger = Mock()
         py4lo_path = ""
         src_dir = ""
+        assets_dir = ""
         target_dir = ""
+        assets_dest_dir = ""
         python_version = ""
         ods_dest_name = ""
 
         listdir.return_value = []
 
-        d = DebugCommand(logger, py4lo_path, src_dir, target_dir, python_version, ods_dest_name)
+        d = DebugCommand(logger, py4lo_path, src_dir, assets_dir, target_dir, assets_dest_dir, python_version, ods_dest_name)
         d.execute([])
 
-        self.assertEqual([call.info("Debug or init. Generating %s for Python %s", '', ''),
+        self.assertEqual([call.info("Debug or init. Generating '%s' for Python '%s'", '', ''),
                           call.log(10, 'Scripts to process: %s', set())], logger.mock_calls)
         self.assertEqual([call('')], listdir.mock_calls)
         self.assertEqual(call(), Zupdater.mock_calls[0])

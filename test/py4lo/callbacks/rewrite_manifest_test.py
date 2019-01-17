@@ -39,11 +39,11 @@ class TestRewriteManifest(unittest.TestCase):
         out = io.BytesIO()
         zout = zipfile.ZipFile(out, 'w')
 
-        RewriteManifest([]).call(zin, zout, zin.getinfo("x"))
+        RewriteManifest([], []).call(zin, zout, zin.getinfo("x"))
         self.assertEquals(b"y", zout.read("x"))
-        RewriteManifest([]).call(zin, zout, zin.getinfo("META-INF/manifest.xml"))
+        RewriteManifest([], []).call(zin, zout, zin.getinfo("META-INF/manifest.xml"))
         self.assertEquals("""<?xml version="1.0" ?><manifest:manifest manifest:version="1.2" xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0">
-<manifest:file-entry manifest:full-path="Basic/Standard/py4lo.xml" manifest:media-type="text/xml"/>
+    <manifest:file-entry manifest:full-path="Basic/Standard/py4lo.xml" manifest:media-type="text/xml"/>
     <manifest:file-entry manifest:full-path="Basic/Standard/script-lb.xml" manifest:media-type="text/xml"/>
     <manifest:file-entry manifest:full-path="Basic/script-lc.xml" manifest:media-type="text/xml"/>
     <manifest:file-entry manifest:full-path="Scripts" manifest:media-type="application/binary"/>
@@ -55,10 +55,10 @@ class TestRewriteManifest(unittest.TestCase):
         out = io.BytesIO()
         zout = zipfile.ZipFile(out, 'w')
 
-        RewriteManifest([TargetScript("script", None, None, None)]).call(zin, zout, zin.getinfo("META-INF/manifest.xml"))
+        RewriteManifest([TargetScript("script", None, None, None)], []).call(zin, zout, zin.getinfo("META-INF/manifest.xml"))
         print (zout.read("META-INF/manifest.xml").decode("utf-8"))
         self.assertEquals("""<?xml version="1.0" ?><manifest:manifest manifest:version="1.2" xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0">
-<manifest:file-entry manifest:full-path="Basic/Standard/py4lo.xml" manifest:media-type="text/xml"/>
+    <manifest:file-entry manifest:full-path="Basic/Standard/py4lo.xml" manifest:media-type="text/xml"/>
     <manifest:file-entry manifest:full-path="Basic/Standard/script-lb.xml" manifest:media-type="text/xml"/>
     <manifest:file-entry manifest:full-path="Basic/script-lc.xml" manifest:media-type="text/xml"/>
     <manifest:file-entry manifest:full-path="Scripts" manifest:media-type="application/binary"/>

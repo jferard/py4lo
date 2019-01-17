@@ -5,6 +5,7 @@ py4lo/__pycache__/*
 **/.pytest_cache
 .cache
 .idea
+venv
 
 # generated files
 example/*.ods

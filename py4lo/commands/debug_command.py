@@ -22,6 +22,7 @@ from commands.test_command import TestCommand
 from commands.command_executor import CommandExecutor
 import logging
 from scripts_processor import ScriptsProcessor
+import scripts_processor
 from callbacks import *
 import zip_updater
 
@@ -31,14 +32,16 @@ class DebugCommand:
         test_executor = TestCommand.create(args, tdata)
         logger = logging.getLogger("py4lo")
         logger.setLevel(tdata["log_level"])
-        debug_command = DebugCommand(logger, tdata["py4lo_path"], tdata["src_dir"], tdata["target_dir"], tdata["python_version"], tdata["debug_file"])
+        debug_command = DebugCommand(logger, tdata["py4lo_path"], tdata["src_dir"], tdata["assets_dir"], tdata["target_dir"], tdata["assets_dest_dir"], tdata["python_version"], tdata["debug_file"])
         return CommandExecutor(debug_command, test_executor)
 
-    def __init__(self, logger, py4lo_path, src_dir, target_dir, python_version, ods_dest_name):
+    def __init__(self, logger, py4lo_path, src_dir, assets_dir, target_dir, assets_dest_dir, python_version, ods_dest_name):
         self.__logger = logger
         self.__py4lo_path = py4lo_path
         self.__src_dir = src_dir
+        self.__assets_dir = assets_dir
         self.__target_dir = target_dir
+        self.__assets_dest_dir = assets_dest_dir
         self.__python_version = python_version
         self.__ods_dest_name = ods_dest_name
         self.__debug_path = os.path.join(target_dir, ods_dest_name)
@@ -46,7 +49,8 @@ class DebugCommand:
     def execute(self, *_args):
         self.__logger.info("Debug or init. Generating '%s' for Python '%s'", self.__debug_path, self.__python_version)
 
-        scripts = self._get_scripts()
+        scripts_processor = ScriptsProcessor(self.__logger, self.__src_dir, self.__target_dir, self.__python_version)
+        scripts = self._get_scripts(scripts_processor)
         assets = self._get_assets()
 
         zupdater = zip_updater.ZipUpdater()
@@ -61,10 +65,9 @@ class DebugCommand:
         zupdater.update(os.path.join(self.__py4lo_path, "inc", "debug.ods"), self.__ods_dest_name)
         return self.__ods_dest_name,
 
-    def _get_scripts(self):
+    def _get_scripts(self, scripts_processor):
         script_fnames = set(
             os.path.join(self.__src_dir, fname) for fname in os.listdir(self.__src_dir) if fname.endswith(".py"))
-        scripts_processor = ScriptsProcessor(self.__logger, self.__src_dir, self.__target_dir, self.__python_version)
         return scripts_processor.process(script_fnames)
 
     def _get_assets(self):

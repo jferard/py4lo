@@ -34,7 +34,7 @@ ASSET_ENTRY_TPL = """    <manifest:file-entry manifest:full-path="{0}" manifest:
 """
 MANIFEST_CLOSE_TAG = """</manifest:manifest>"""
 
-class RewriteManifest():
+class RewriteManifest:
     def __init__(self, scripts, assets):
         self.__scripts = scripts
         self.__assets = assets
