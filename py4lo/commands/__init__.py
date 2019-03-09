@@ -20,19 +20,21 @@
 from commands.real_command_factory_by_name import real_command_factory_by_name
 from commands.help_command import HelpCommand
 
+
 class Commands:
     def __init__(self, command_factory_by_name):
         assert "help" in command_factory_by_name
-        self.__command_factory_by_name = command_factory_by_name
+        self._command_factory_by_name = command_factory_by_name
 
     def get(self, command_name, args, tdata):
         try:
-            return self.__command_factory_by_name[command_name].create(args, tdata)
+            return self._command_factory_by_name[command_name].create(args, tdata)
         except KeyError:
-            return self.__command_factory_by_name["help"].create(args, tdata)
+            return self._command_factory_by_name["help"].create(args, tdata)
 
-command_factory_by_name = real_command_factory_by_name.copy()
+
+cf_by_name = real_command_factory_by_name.copy()
 # add help now
-command_factory_by_name['help'] = HelpCommand
+cf_by_name['help'] = HelpCommand
 
-commands = Commands(command_factory_by_name)
+commands = Commands(cf_by_name)

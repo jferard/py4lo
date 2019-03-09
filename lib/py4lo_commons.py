@@ -30,13 +30,13 @@ def init(xsc):
 class Bus(unohelper.Base):
     """A minimal bus minimal to communicate with front end"""
     def __init__(self):
-        self.__subscribers = []
+        self._subscribers = []
 
     def subscribe(self, s):
-        self.__subscribers.append(s)
+        self._subscribers.append(s)
 
     def post(self, event_type, event_data):
-        for s in self.__subscribers:
+        for s in self._subscribers:
             m_name = "_handle_"+event_type.lower()
             if hasattr(s, m_name):
                 m = getattr(s, m_name)
@@ -47,11 +47,11 @@ class Commons(unohelper.Base):
         if xsc is None:
             xsc = Commons.xsc
         self.doc = xsc.getDocument()
-        self.__logger = None
+        self._logger = None
 
     def __del__(self):
-        if self.__logger is not None:
-            for h in self.__logger.handlers:
+        if self._logger is not None:
+            for h in self._logger.handlers:
                 h.flush()
                 h.close()
 
@@ -73,23 +73,23 @@ class Commons(unohelper.Base):
         return s
 
     def init_logger(self, file=None, mode="a", level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
-        if self.__logger is not None:
+        if self._logger is not None:
             raise Exception("use init_logger ONCE")
 
-        self.__logger = self.get_logger(file, mode, level, format)
+        self._logger = self.get_logger(file, mode, level, format)
 
     def get_logger(self, file=None, mode="a", level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
         if file is None:
             file = self.join_current_dir("py4lo.log")
 
-        fh = self.__get_handler(file, mode, level, format)
+        fh = self._get_handler(file, mode, level, format)
 
         logger = logging.getLogger()
         logger.addHandler(fh)
         logger.setLevel(level)
         return logger
 
-    def __get_handler(self, file, mode, level, format):
+    def _get_handler(self, file, mode, level, format):
         if type(file) == str:
             fh = logging.FileHandler(file, mode)
         else:
@@ -100,9 +100,9 @@ class Commons(unohelper.Base):
         return fh
 
     def logger(self):
-        if self.__logger is None:
+        if self._logger is None:
             raise Exception("use init_logger")
-        return self.__logger
+        return self._logger
 
     def join_current_dir(self, filename):
         return os.path.join(unohelper.fileUrlToSystemPath(self.doc.URL), "..", filename)

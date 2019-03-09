@@ -17,21 +17,20 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import sys
-import argparse
 from toml_helper import load_toml
 from commands import commands
 
-sys.argv.pop(0) # remove the command
+sys.argv.pop(0)  # remove the command
 try:
-	command_name = sys.argv.pop(0)
-	tdata = load_toml()
+    command_name = sys.argv.pop(0)
+    tdata = load_toml()
 
-	if command_name == '-h' or command_name == '--help':
-		command_name = "help"
+    if command_name == '-h' or command_name == '--help':
+        command_name = "help"
 except IndexError as e:
-	print ("IndexError: " + str(e))
-	command_name = "help"
-	tdata = []
+    print("IndexError: " + str(e))
+    command_name = "help"
+    tdata = []
 
 command = commands.get(command_name, sys.argv, tdata)
 command.execute()

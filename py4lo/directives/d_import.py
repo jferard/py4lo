@@ -18,16 +18,17 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import os
 
+
 class Import:
     sig = "import"
 
     def __init__(self, _py4lo_path, scripts_path):
-        self.__scripts_path = scripts_path
+        self._scripts_path = scripts_path
 
     def execute(self, processor, args):
         processor.include("py4lo_import.py")
         script_ref = args[0]
-        script_fname = os.path.join(self.__scripts_path, script_ref+".py")
+        script_fname = os.path.join(self._scripts_path, script_ref+".py")
         processor.append_script(script_fname)
         processor.append("import "+script_ref+"\n")
         return True

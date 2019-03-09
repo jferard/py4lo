@@ -23,30 +23,32 @@ from directives.import_lib import ImportLib
 from directives.d_import import Import
 from directives.embed import Embed
 
+
 class _DirectiveProviderFactory:
     def __init__(self, directive_classes):
-        self.__directive_classes = directive_classes
+        self._directive_classes = directive_classes
 
     def create(self, py4lo_path, scripts_path):
-        self.__directives_tree = {}
-        for d in self.__directive_classes:
+        self._directives_tree = {}
+        for d in self._directive_classes:
             sig_elements = d.sig.split(" ")
             assert len(sig_elements)
 
             directive = d(py4lo_path, scripts_path)
 
-            self.__put_directive_class(sig_elements, directive)
+            self._put_directive_class(sig_elements, directive)
 
-        return DirectiveProvider(self.__directives_tree)
+        return DirectiveProvider(self._directives_tree)
 
-    def __put_directive_class(self, sig_elements, directive):
-            cur_directives_tree = self.__directives_tree
+    def _put_directive_class(self, sig_elements, directive):
+            cur_directives_tree = self._directives_tree
             for fst in sig_elements:
                 if fst not in cur_directives_tree:
                     cur_directives_tree[fst] = {}
                 cur_directives_tree = cur_directives_tree[fst]
 
-            cur_directives_tree.update({"@": directive })
+            cur_directives_tree.update({"@": directive})
+
 
 class DirectiveProvider:
     @staticmethod
@@ -54,11 +56,11 @@ class DirectiveProvider:
         return _DirectiveProviderFactory([Include, ImportLib, Import, Embed]).create(py4lo_path, scripts_path)
 
     def __init__(self, directives_tree):
-        self.__directives_tree = directives_tree
+        self._directives_tree = directives_tree
 
     def get(self, args):
         """args are the shlex result"""
-        cur_directives_tree = self.__directives_tree
+        cur_directives_tree = self._directives_tree
 
         for i in range(len(args)):
             arg = args[i]

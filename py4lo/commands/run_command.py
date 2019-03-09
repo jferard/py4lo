@@ -22,6 +22,7 @@ from commands.command_executor import CommandExecutor
 from tools import open_with_calc
 import logging
 
+
 class RunCommand:
     @staticmethod
     def create(args, tdata):
@@ -30,15 +31,15 @@ class RunCommand:
         return CommandExecutor(run_command, update_executor)
 
     def __init__(self, calc_exe):
-        self.__calc_exe = calc_exe
+        self._calc_exe = calc_exe
 
     def execute(self, status, dest_name):
         if status == 0:
-            print ("All tests ok")
-            logging.warning(str(self.__calc_exe)+" "+str(dest_name))
-            open_with_calc(dest_name, self.__calc_exe)
+            print("All tests ok")
+            logging.warning(str(self._calc_exe)+" "+str(dest_name))
+            open_with_calc(dest_name, self._calc_exe)
         else:
-            print ("Error: some tests failed")
+            print("Error: some tests failed")
 
     @staticmethod
     def get_help():

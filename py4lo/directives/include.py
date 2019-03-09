@@ -18,16 +18,17 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import os
 
+
 class Include:
     """Include the content of a file inside the script. The file should be in a inc directory"""
 
     sig = "include"
 
     def __init__(self, _py4lo_path, scripts_path):
-        self.__scripts_path = scripts_path
+        self._scripts_path = scripts_path
 
     def execute(self, processor, args):
-        filename = os.path.join(self.__scripts_path, "inc", args[0]+".py")
+        filename = os.path.join(self._scripts_path, "inc", args[0]+".py")
 
         s = "# begin py4lo include: "+filename+"\n"
         with open(filename, 'r', encoding='utf-8') as f:

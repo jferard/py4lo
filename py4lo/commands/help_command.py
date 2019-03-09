@@ -33,6 +33,7 @@ command     a command = debug|help|init|test|update
         run:            update + open the created file
         update:         updates the file with all scripts"""
 
+
 class HelpCommand:
     @staticmethod
     def create(args, _tdata):
@@ -42,20 +43,20 @@ class HelpCommand:
             command_name = None
         return HelpCommand(real_command_factory_by_name, command_name)
 
-    def __init__(self, command_factory_by_name, command_name = None):
-        self.__command_factory_by_name = command_factory_by_name
-        self.__command_name = command_name
+    def __init__(self, command_factory_by_name, command_name=None):
+        self._command_factory_by_name = command_factory_by_name
+        self._command_name = command_name
 
     def execute(self):
         msg = DEFAULT_MSG
-        if self.__command_name:
+        if self._command_name:
             try:
-                msg = self.__command_factory_by_name[self.__command_name].get_help()
+                msg = self._command_factory_by_name[self._command_name].get_help()
             except KeyError as e:
                 print (e)
-                if self.__command_name == 'help':
+                if self._command_name == 'help':
                     msg = self.get_help()
-        print (msg)
+        print(msg)
 
     @staticmethod
     def get_help():

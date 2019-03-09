@@ -21,6 +21,7 @@ from tools import update_ods
 from commands.test_command import TestCommand
 from commands.command_executor import CommandExecutor
 
+
 class UpdateCommand:
     @staticmethod
     def create(args, tdata):
@@ -29,10 +30,10 @@ class UpdateCommand:
         return CommandExecutor(update_command, test_executor)
 
     def __init__(self, tdata):
-        self.__tdata = tdata
+        self._tdata = tdata
 
     def execute(self, status):
-        dest_name = update_ods(self.__tdata)
+        dest_name = update_ods(self._tdata)
         return status, dest_name
 
     @staticmethod

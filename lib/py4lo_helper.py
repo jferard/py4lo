@@ -36,10 +36,13 @@ MESSAGEBOX = 0
 
 from com.sun.star.lang import Locale
 
+
 def init(xsc):
     Py4LO_helper.instance = Py4LO_helper.create(xsc)
 
+
 class Py4LO_helper(unohelper.Base):
+    @staticmethod
     def create(xsc):
         doc = xsc.getDocument()
         ctxt = uno.getComponentContext()
@@ -71,7 +74,7 @@ class Py4LO_helper(unohelper.Base):
         self.reflect = reflect
         self.dispatcher = dispatcher
         self.loader = loader
-        self.__xray_script = None
+        self._xray_script = None
         self._ignore_xray = False
 
     def use_xray(self, fail_on_error=False):
@@ -81,7 +84,7 @@ class Py4LO_helper(unohelper.Base):
         :raises RuntimeException: if Xray is not avaliable and `fail_on_error` is True.
         """
         try:
-            self.__xray_script = self.msp.getScript("vnd.sun.star.script:XrayTool._Main.Xray?language=Basic&location=application")
+            self._xray_script = self.msp.getScript("vnd.sun.star.script:XrayTool._Main.Xray?language=Basic&location=application")
         except:
             if fail_on_error:
                 raise RuntimeException("\nBasic library Xray is not installed", self.ctxt)
@@ -97,12 +100,12 @@ class Py4LO_helper(unohelper.Base):
         if self._ignore_xray:
             return
 
-        if self.__xray_script is None:
+        if self._xray_script is None:
             self.use_xray(fail_on_error)
             if self._ignore_xray:
                 return
 
-        self.__xray_script.invoke((object,), (), ())
+        self._xray_script.invoke((object,), (), ())
 
     def make_pv(self, name, value):
         pv = uno.createUnoStruct('com.sun.star.beans.PropertyValue')
@@ -197,7 +200,7 @@ class Py4LO_helper(unohelper.Base):
 
     def set_validation_list_by_name(self, cell_name, fields, default_string=None, allow_blank=False):
         oCell = self.get_named_cell(cell_name)
-        self.set_validation_list_by_cell(self, oCell, fields, default_string, allow_blank)
+        self.set_validation_list_by_cell(oCell, fields, default_string, allow_blank)
 
     def set_validation_list_by_cell(self, oCell, fields, default_string=None, allow_blank=False):
         oValidation = oCell.Validation
@@ -267,17 +270,17 @@ class Py4LO_helper(unohelper.Base):
 class DocBuilder():
     def __init__(self, helper, t):
         """Create a blank new doc"""
-        self.__helper = helper
-        self.__oDoc = self.__helper.loader.loadComponentFromURL(
+        self._helper = helper
+        self._oDoc = self._helper.loader.loadComponentFromURL(
                      "private:factory/s"+t, "_blank", 0, () )
-        self.__oDoc.lockControllers()
+        self._oDoc.lockControllers()
 
     def build(self):
-        self.__oDoc.unlockControllers()
-        return self.__oDoc
+        self._oDoc.unlockControllers()
+        return self._oDoc
 
     def sheet_names(self, sheet_names, expand_if_necessary=True, trunc_if_necessary=True):
-        oSheets = self.__oDoc.Sheets
+        oSheets = self._oDoc.Sheets
         it = iter(sheet_names)
         s = 0
 
@@ -303,20 +306,20 @@ class DocBuilder():
         return self
 
     def apply_func_to_sheets(self, func):
-        oSheets = self.__oDoc.Sheets
+        oSheets = self._oDoc.Sheets
         for oSheet in oSheets:
             func(oSheet)
         return self
 
     def apply_func_list_to_sheets(self, funcs):
-        oSheets = self.__oDoc.Sheets
+        oSheets = self._oDoc.Sheets
         for func, oSheet in zip(funcs, oSheets):
             func(oSheet)
         return self
 
     def duplicate_base_sheet(self, func, sheet_names, trunc=True):
         """Create a base sheet and duplicate it n-1 times"""
-        oSheets = self.__oDoc.Sheets
+        oSheets = self._oDoc.Sheets
         oBaseSheet = oSheets.getByIndex(0)
         func(oBaseSheet)
         for s, sheet_name in enumerate(sheet_names, 1):
@@ -325,13 +328,13 @@ class DocBuilder():
         return self
 
     def make_base_sheet(self, func):
-        oSheets = self.__oDoc.Sheets
+        oSheets = self._oDoc.Sheets
         oBaseSheet = oSheets.getByIndex(0)
         func(oBaseSheet)
         return self
 
     def duplicate_to(self, n):
-        oSheets = self.__oDoc.Sheets
+        oSheets = self._oDoc.Sheets
         oBaseSheet = oSheets.getByIndex(0)
         for s in range(n+1):
             oSheets.copyByName(oBaseSheet.Name, oBaseSheet.Name+str(s), s)
@@ -339,7 +342,7 @@ class DocBuilder():
         return self
 
     def trunc_to_count(self, final_sheet_count):
-        oSheets = self.__oDoc.Sheets
+        oSheets = self._oDoc.Sheets
         while final_sheet_count < oSheets.getCount():
             oSheet = oSheets.getByIndex(final_sheet_count)
             oSheets.removeByName(oSheet.getName())

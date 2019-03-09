@@ -18,10 +18,11 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import os
 
+
 class IgnoreScripts:
     """Item callback. Ignore all existing scripts in source file"""
     def __init__(self, arc_scripts_path):
-        self.__arc_scripts_path = arc_scripts_path
+        self._arc_scripts_path = arc_scripts_path
 
     def call(self, _zin, _zout, item):
-        return not item.filename.startswith(self.__arc_scripts_path)
+        return not item.filename.startswith(self._arc_scripts_path)

@@ -16,53 +16,53 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
-import os
 import zipfile
+
 
 class ZipUpdater:
     """A zip file updater. Applies callbacks before, after and to each item."""
     def __init__(self):
-        self.__before_callbacks = []
-        self.__item_callbacks = []
-        self.__after_callbacks = []
+        self._before_callbacks = []
+        self._item_callbacks = []
+        self._after_callbacks = []
 
     def before(self, callback):
-        self.__before_callbacks.append(callback)
+        self._before_callbacks.append(callback)
         return self
 
     def item(self, callback):
-        self.__item_callbacks.append(callback)
+        self._item_callbacks.append(callback)
         return self
 
     def after(self, callback):
-        self.__after_callbacks.append(callback)
+        self._after_callbacks.append(callback)
         return self
 
     def update(self, zip_source_name, zip_dest_name):
         with zipfile.ZipFile(zip_dest_name, 'w') as zout:
-            self.__do_before(zout)
+            self._do_before(zout)
 
             with zipfile.ZipFile(zip_source_name, 'r') as zin:
-                zout.comment = zin.comment # preserve the comment
-                self.__do_items(zin, zout)
+                zout.comment = zin.comment  # preserve the comment
+                self._do_items(zin, zout)
 
-            self.__do_after(zout)
+            self._do_after(zout)
 
-    def __do_before(self, zout):
-        for before_callback in self.__before_callbacks:
+    def _do_before(self, zout):
+        for before_callback in self._before_callbacks:
             if not before_callback.call(zout):
                 break
 
-    def __do_items(self, zin, zout):
+    def _do_items(self, zin, zout):
         for item in zin.infolist():
-            self.__do_item(zin, zout, item)
+            self._do_item(zin, zout, item)
 
-    def __do_item(self, zin, zout, item):
-        for item_callback in self.__item_callbacks:
+    def _do_item(self, zin, zout, item):
+        for item_callback in self._item_callbacks:
             if not item_callback.call(zin, zout, item):
                 break
 
-    def __do_after(self, zout):
-        for after_callback in self.__after_callbacks:
+    def _do_after(self, zout):
+        for after_callback in self._after_callbacks:
             if not after_callback.call(zout):
                 break

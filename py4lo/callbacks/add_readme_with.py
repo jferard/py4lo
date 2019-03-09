@@ -18,17 +18,18 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import os
 
+
 class AddReadmeWith:
     """After callback. Add a readme in destination file"""
     def __init__(self, inc_path, contact):
-        self.__inc_path = inc_path
-        self.__contact = contact
+        self._inc_path = inc_path
+        self._contact = contact
 
     def call(self, zout):
-        zout.write(os.path.join(self.__inc_path, "script-lc.xml"), "Basic/script-lc.xml")
-        zout.write(os.path.join(self.__inc_path, "script-lb.xml"), "Basic/Standard/script-lb.xml")
-        with open(os.path.join(self.__inc_path, "py4lo.xml.tpl"), 'r', encoding='utf-8') as f:
+        zout.write(os.path.join(self._inc_path, "script-lc.xml"), "Basic/script-lc.xml")
+        zout.write(os.path.join(self._inc_path, "script-lb.xml"), "Basic/Standard/script-lb.xml")
+        with open(os.path.join(self._inc_path, "py4lo.xml.tpl"), 'r', encoding='utf-8') as f:
             tpl = f.read()
-            xml = tpl.format(contact = self.__contact)
+            xml = tpl.format(contact=self._contact)
             zout.writestr("Basic/Standard/py4lo.xml", xml)
         return True

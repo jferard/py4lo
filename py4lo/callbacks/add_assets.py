@@ -18,13 +18,13 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import os
 
+
 class AddAssets:
     """After callback. Add assets in destination file"""
     def __init__(self, assets):
-        self.__assets = assets
+        self._assets = assets
 
     def call(self, zout):
-        for asset in self.__assets:
-            print (asset.get_fname())
+        for asset in self._assets:
             zout.writestr(asset.get_fname(), asset.get_content())
         return True

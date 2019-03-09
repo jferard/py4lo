@@ -18,18 +18,19 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import logging
 
+
 class CommandExecutor:
-    def __init__(self, command, previous_executor = None):
-        self.__command = command
-        self.__previous_executor = previous_executor
+    def __init__(self, command, previous_executor=None):
+        self._command = command
+        self._previous_executor = previous_executor
 
     def execute(self, *args):
-        if self.__previous_executor is None:
+        if self._previous_executor is None:
             cur_args = []
         else:
-            cur_args = self.__previous_executor.execute(*args)
+            cur_args = self._previous_executor.execute(*args)
 
-        logging.warning(str(self.__command)+", args="+str(cur_args))
-        ret = self.__command.execute(*cur_args)
-        logging.warning(str(self.__command)+", args="+str(cur_args)+" ret="+str(ret))
+        logging.warning(str(self._command)+", args="+str(cur_args))
+        ret = self._command.execute(*cur_args)
+        logging.warning(str(self._command)+", args="+str(cur_args)+" ret="+str(ret))
         return ret

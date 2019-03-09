@@ -18,18 +18,19 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import logging
 
+
 class BranchProcessor:
     """The branch processor handles directives like 'if', 'elif', 'else', 'end'
     and acts as a preprocessor. Skipped block wont be included in the LO document"""
 
     def __init__(self, tester):
         """The tester will evaluate the arguments of 'if' or 'elif'"""
-        self.__assertion_is_true = tester
-        self.__dont_skips = []
+        self._assertion_is_true = tester
+        self._dont_skips = []
 
     def end(self):
         """To call before the end, to verify if there are no unclosed if block"""
-        if len(self.__dont_skips):
+        if len(self._dont_skips):
             logging.error("Branch condition not closed!")
             raise ValueError("Branch condition not closed!")
 
@@ -37,40 +38,40 @@ class BranchProcessor:
         """Return True if the next block should be read, False otherwise"""
 
         if directive == 'if':
-            self.__begin_block_and_skip_if_not(self.__assertion_is_true(args))
+            self._begin_block_and_skip_if_not(self._assertion_is_true(args))
         elif directive == 'elif':
-            if self.__was_not_skipping():
-                self.__start_skipping()
-            elif self.__assertion_is_true(args):
-                self.__stop_skipping()
+            if self._was_not_skipping():
+                self._start_skipping()
+            elif self._assertion_is_true(args):
+                self._stop_skipping()
             # else : continue to skip
         elif directive == 'else':
-            self.__flip_skipping()
+            self._flip_skipping()
         elif directive == 'endif':
-            self.__end_block()
+            self._end_block()
         else:
             return False
 
         return True
 
-    def __was_not_skipping(self):
-        return self.__dont_skips[-1]
+    def _was_not_skipping(self):
+        return self._dont_skips[-1]
 
-    def __start_skipping(self):
-        self.__dont_skips[-1] = False
+    def _start_skipping(self):
+        self._dont_skips[-1] = False
 
-    def __stop_skipping(self):
-        self.__dont_skips[-1] = True
+    def _stop_skipping(self):
+        self._dont_skips[-1] = True
 
-    def __flip_skipping(self):
-        self.__dont_skips[-1] = not self.__dont_skips[-1]
+    def _flip_skipping(self):
+        self._dont_skips[-1] = not self._dont_skips[-1]
 
-    def __begin_block_and_skip_if_not(self, b):
-        self.__dont_skips.append(b)
+    def _begin_block_and_skip_if_not(self, b):
+        self._dont_skips.append(b)
 
-    def __end_block(self):
-        self.__dont_skips.pop()
+    def _end_block(self):
+        self._dont_skips.pop()
 
     def skip(self):
         """Return True if the current block is skipped"""
-        return False in self.__dont_skips
+        return False in self._dont_skips

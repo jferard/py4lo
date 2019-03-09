@@ -23,6 +23,7 @@ import logging
 import subprocess
 from commands.command_executor import CommandExecutor
 
+
 class TestCommand:
     @staticmethod
     def create(_args, tdata):
@@ -31,40 +32,40 @@ class TestCommand:
         return CommandExecutor(TestCommand(logger, tdata["python_exe"], tdata["test_dir"], tdata["src_dir"]))
 
     def __init__(self, logger, python_exe, test_dir, src_dir):
-        self.__logger = logger
-        self.__python_exe = python_exe
-        self.__test_dir = test_dir
-        self.__src_dir = src_dir
-        self.__env = None
+        self._logger = logger
+        self._python_exe = python_exe
+        self._test_dir = test_dir
+        self._src_dir = src_dir
+        self._env = None
 
     def execute(self):
         final_status = 0
-        for path in self.__test_paths():
-            completed_process = self.__execute(path)
+        for path in self._test_paths():
+            completed_process = self._execute(path)
             status = completed_process.returncode
             if completed_process.stdout:
-                self.__logger.info("output: {0}".format(completed_process.stdout.decode('ascii')))
+                self._logger.info("output: {0}".format(completed_process.stdout.decode('ascii')))
             if status != 0:
                 if completed_process.stderr:
-                    self.__logger.error("error: {0}".format(completed_process.stderr.decode('ascii')))
+                    self._logger.error("error: {0}".format(completed_process.stderr.decode('ascii')))
                 final_status = 1
 
         return final_status,
 
-    def __execute(self, path):
-        cmd = "\""+self.__python_exe+"\" "+path
-        self.__logger.info("execute: {0}".format(cmd))
-        return subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=self.__get_env())
+    def _execute(self, path):
+        cmd = "\""+self._python_exe+"\" "+path
+        self._logger.info("execute: {0}".format(cmd))
+        return subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=self._get_env())
 
-    def __get_env(self):
-        if self.__env is None:
+    def _get_env(self):
+        if self._env is None:
             env = dict(os.environ)
-            env["PYTHONPATH"] = ";".join(sys.path+[self.__src_dir])
-            self.__env = env
-        return self.__env
+            env["PYTHONPATH"] = ";".join(sys.path+[self._src_dir])
+            self._env = env
+        return self._env
 
-    def __test_paths(self):
-        for dirpath, dirnames, filenames in os.walk(self.__test_dir):
+    def _test_paths(self):
+        for dirpath, dirnames, filenames in os.walk(self._test_dir):
             for filename in filenames:
                 if filename.endswith("_test.py"):
                     yield os.path.join(dirpath, filename)

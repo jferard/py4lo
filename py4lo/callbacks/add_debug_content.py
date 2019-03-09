@@ -29,19 +29,20 @@ begin_shapes = """<table:shapes>"""
 draw_control_tpl = """<draw:control draw:z-index="0" draw:text-style-name="P1" svg:width="80mm" svg:height="10mm" svg:x="{x}mm" svg:y="{y}mm" draw:control="control{id}"/>"""
 end_shapes = """</table:shapes>"""
 
+
 class AddDebugContent:
     """After callback. Add a debug content in destination file. The debug content
     is one button per function."""
     def __init__(self, funcs_by_script):
-        self.__funcs_by_script = funcs_by_script
+        self._funcs_by_script = funcs_by_script
 
     def call(self, zout):
         forms = begin_forms
         draw = begin_shapes
 
         i = 0
-        for script in sorted(self.__funcs_by_script):
-            for func in self.__funcs_by_script[script]:
+        for script in sorted(self._funcs_by_script):
+            for func in self._funcs_by_script[script]:
                 forms += form_tpl.format(name=func, id=i, file=script, func=func)
                 draw += draw_control_tpl.format(x=10, y=15*i+10, id=i)
                 i += 1

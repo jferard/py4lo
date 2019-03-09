@@ -24,16 +24,17 @@ import env
 from toml_helper import load_toml
 import io
 
+
 class TestTomlHelper(unittest.TestCase):
     @patch('builtins.open', spec=open)
     def test(self, open_mock):
         handle1 = MagicMock()
         handle1.__enter__.return_value = io.StringIO("a=1")
-        handle1.__exit__.return_value=False
+        handle1.__exit__.return_value = False
 
         handle2 = MagicMock()
         handle2.__enter__.return_value = io.StringIO("b=2")
-        handle2.__exit__.return_value=False
+        handle2.__exit__.return_value = False
 
         open_mock.side_effect = [handle1, handle2]
         tdata = load_toml("a")
@@ -41,7 +42,8 @@ class TestTomlHelper(unittest.TestCase):
             'a': 1,
             'b': 2,
             'log_level': 'INFO'}.items() <= tdata.items())
-        self.assertEqual(set(['a', 'b', 'log_level','py4lo_path', 'python_exe', 'python_version']), set(tdata.keys()))
+        self.assertEqual({'a', 'b', 'log_level', 'py4lo_path', 'python_exe', 'python_version'}, set(tdata.keys()))
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -36,11 +36,11 @@ class OdsTables():
                 return OdsTables(root, ns)
 
     def __init__(self, root, ns=OFFICE_NS):
-        self.__root = root
-        self.__ns = ns
+        self._root = root
+        self._ns = ns
 
     def __iter__(self):
-        tables = self.__root.findall("./office:body/office:spreadsheet/table:table", self.__ns)
+        tables = self._root.findall("./office:body/office:spreadsheet/table:table", self._ns)
         for table in tables:
             yield table
 
@@ -49,14 +49,14 @@ class OdsRows():
     The table must be simple (no spanned rows or repeated rows)"""
 
     def __init__(self, table, ns=OFFICE_NS):
-        self.__table = table
-        self.__ns = ns
+        self._table = table
+        self._ns = ns
 
     def __iter__(self):
-        for row in self.__table.findall("./table:table-row", self.__ns):
-            cells = row.findall("./table:table-cell", self.__ns)
-            l = [v for c in cells for v in self.__values(c)]
-            yield self.__trim_list(l)
+        for row in self._table.findall("./table:table-row", self._ns):
+            cells = row.findall("./table:table-cell", self._ns)
+            l = [v for c in cells for v in self._values(c)]
+            yield self._trim_list(l)
 
     def __trim_list(self, l):
         for i in range(len(l)-1, -1,-1):
@@ -64,14 +64,14 @@ class OdsRows():
                 return l[:i]
 
     def __values(self, c):
-        count = int(c.get(self.__attrib("table:number-columns-repeated"), c.get(self.__attrib("table:number-columns-spanned"), "1")))
+        count = int(c.get(self._attrib("table:number-columns-repeated"), c.get(self._attrib("table:number-columns-spanned"), "1")))
         v = ''.join(c.itertext())
         return [v]*count
 
     def __attrib(self, attr):
         try:
             i = attr.index(":")
-            attr = "{{{}}}{}".format(self.__ns.get(attr[:i], attr[:i]), attr[i+1:])
+            attr = "{{{}}}{}".format(self._ns.get(attr[:i], attr[:i]), attr[i+1:])
         except:
             pass
 

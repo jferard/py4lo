@@ -26,30 +26,34 @@ import scripts_processor
 from callbacks import *
 import zip_updater
 
+
 class DebugCommand:
     @staticmethod
     def create(args, tdata):
         test_executor = TestCommand.create(args, tdata)
         logger = logging.getLogger("py4lo")
         logger.setLevel(tdata["log_level"])
-        debug_command = DebugCommand(logger, tdata["py4lo_path"], tdata["src_dir"], tdata["assets_dir"], tdata["target_dir"], tdata["assets_dest_dir"], tdata["python_version"], tdata["debug_file"])
+        debug_command = DebugCommand(logger, tdata["py4lo_path"], tdata["src_dir"], tdata["assets_dir"],
+                                     tdata["target_dir"], tdata["assets_dest_dir"], tdata["python_version"],
+                                     tdata["debug_file"])
         return CommandExecutor(debug_command, test_executor)
 
-    def __init__(self, logger, py4lo_path, src_dir, assets_dir, target_dir, assets_dest_dir, python_version, ods_dest_name):
-        self.__logger = logger
-        self.__py4lo_path = py4lo_path
-        self.__src_dir = src_dir
-        self.__assets_dir = assets_dir
-        self.__target_dir = target_dir
-        self.__assets_dest_dir = assets_dest_dir
-        self.__python_version = python_version
-        self.__ods_dest_name = ods_dest_name
-        self.__debug_path = os.path.join(target_dir, ods_dest_name)
+    def __init__(self, logger, py4lo_path, src_dir, assets_dir, target_dir, assets_dest_dir, python_version,
+                 ods_dest_name):
+        self._logger = logger
+        self._py4lo_path = py4lo_path
+        self._src_dir = src_dir
+        self._assets_dir = assets_dir
+        self._target_dir = target_dir
+        self._assets_dest_dir = assets_dest_dir
+        self._python_version = python_version
+        self._ods_dest_name = ods_dest_name
+        self._debug_path = os.path.join(target_dir, ods_dest_name)
 
     def execute(self, *_args):
-        self.__logger.info("Debug or init. Generating '%s' for Python '%s'", self.__debug_path, self.__python_version)
+        self._logger.info("Debug or init. Generating '%s' for Python '%s'", self._debug_path, self._python_version)
 
-        scripts_processor = ScriptsProcessor(self.__logger, self.__src_dir, self.__target_dir, self.__python_version)
+        scripts_processor = ScriptsProcessor(self._logger, self._src_dir, self._target_dir, self._python_version)
         scripts = self._get_scripts(scripts_processor)
         assets = self._get_assets()
 
@@ -62,20 +66,20 @@ class DebugCommand:
                 .after(AddAssets(assets))
                 .after(AddDebugContent(scripts_processor.get_exported_func_names_by_script_name()))
         )
-        zupdater.update(os.path.join(self.__py4lo_path, "inc", "debug.ods"), self.__ods_dest_name)
-        return self.__ods_dest_name,
+        zupdater.update(os.path.join(self._py4lo_path, "inc", "debug.ods"), self._ods_dest_name)
+        return self._ods_dest_name,
 
     def _get_scripts(self, scripts_processor):
         script_fnames = set(
-            os.path.join(self.__src_dir, fname) for fname in os.listdir(self.__src_dir) if fname.endswith(".py"))
+            os.path.join(self._src_dir, fname) for fname in os.listdir(self._src_dir) if fname.endswith(".py"))
         return scripts_processor.process(script_fnames)
 
     def _get_assets(self):
         assets = []
-        for root, _, fnames in os.walk(self.__assets_dir):
+        for root, _, fnames in os.walk(self._assets_dir):
             for fname in fnames:
                 filename = os.path.join(root, fname)
-                dest_name = os.path.join(self.__assets_dest_dir, os.path.relpath(filename, self.__assets_dir)).replace(
+                dest_name = os.path.join(self._assets_dest_dir, os.path.relpath(filename, self._assets_dir)).replace(
                     os.path.sep, "/")
                 with open(filename, 'rb') as source:
                     assets.append(Asset(dest_name, source.read()))

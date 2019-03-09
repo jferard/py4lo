@@ -23,10 +23,11 @@ from commands.test_command import TestCommand
 from commands.run_command import RunCommand
 from commands.update_command import UpdateCommand
 
+
 real_command_factory_by_name = {
-    'debug' : DebugCommand,
-    'init' : InitCommand,
-    'test' : TestCommand,
-    'run' : RunCommand,
-    'update' : UpdateCommand,
+    'debug': DebugCommand,
+    'init': InitCommand,
+    'test': TestCommand,
+    'run': RunCommand,
+    'update': UpdateCommand,
 }

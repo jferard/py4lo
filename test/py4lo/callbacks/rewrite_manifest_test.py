@@ -26,8 +26,8 @@ from scripts_processor import TargetScript
 class TestRewriteManifest(unittest.TestCase):
     def setUp(self):
         self.maxDiff = None
-        self.__temp = io.BytesIO()
-        ztemp = zipfile.ZipFile(self.__temp, 'w')
+        self._temp = io.BytesIO()
+        ztemp = zipfile.ZipFile(self._temp, 'w')
         ztemp.writestr("x", "y")
         ztemp.writestr("META-INF/manifest.xml", """<?xml version="1.0" encoding="UTF-8"?>
         <manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.2">
@@ -35,7 +35,7 @@ class TestRewriteManifest(unittest.TestCase):
         ztemp.close()
 
     def test_rewrite_manifest_empty(self):
-        zin = zipfile.ZipFile(self.__temp, 'r')
+        zin = zipfile.ZipFile(self._temp, 'r')
         out = io.BytesIO()
         zout = zipfile.ZipFile(out, 'w')
 
@@ -51,7 +51,7 @@ class TestRewriteManifest(unittest.TestCase):
 </manifest:manifest>""", zout.read("META-INF/manifest.xml").decode("utf-8"))
 
     def test_rewrite_manifest_one_script(self):
-        zin = zipfile.ZipFile(self.__temp, 'r')
+        zin = zipfile.ZipFile(self._temp, 'r')
         out = io.BytesIO()
         zout = zipfile.ZipFile(out, 'w')
 

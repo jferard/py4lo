@@ -17,28 +17,29 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 
+
 class Comparator:
     """A comparator will be used to evaluate expressions. Used by the branch
     processor"""
 
-    def __init__(self, accepted_locals = {}):
+    def __init__(self, accepted_locals={}):
         """accepted_locals are """
-        self.__accepted_locals = accepted_locals
+        self._accepted_locals = accepted_locals
 
     def check(self, arg1, comparator, arg2):
         """Check arg1 vs arg2 using comparator. Args may be $var where var is
         a member of accepted_locals, a number 123456i, 123.456f, an expression or a litteral."""
-        arg1 = self.__parse_expr(arg1)
-        arg2 = self.__parse_expr(arg2)
+        arg1 = self._parse_expr(arg1)
+        arg2 = self._parse_expr(arg2)
         cmp_result = self._cmp(arg1, arg2)
-        return (   cmp_result == -1 and comparator in ["<", "<="]
-                or cmp_result ==  0 and comparator in ["<=", "==", ">="]
-                or cmp_result ==  1 and comparator in [">", ">="])
+        return (cmp_result == -1 and comparator in ["<", "<="]
+                or cmp_result == 0 and comparator in ["<=", "==", ">="]
+                or cmp_result == 1 and comparator in [">", ">="])
 
-    def __parse_expr(self, expr):
+    def _parse_expr(self, expr):
         if expr[0] == '$':
             name = expr[1:]
-            expr = eval(name, {'__builtin__':None}, self.__accepted_locals)
+            expr = eval(name, {'__builtin__': None}, self._accepted_locals)
         if not isinstance(expr, str):
             return expr
         try:

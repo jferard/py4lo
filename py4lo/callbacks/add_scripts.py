@@ -16,16 +16,15 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
-import os
-
 ARC_SCRIPTS_PATH = "Scripts/python"
+
 
 class AddScripts:
     """After callback. Add some scripts in destination file"""
     def __init__(self, scripts):
-        self.__scripts = scripts
+        self._scripts = scripts
 
     def call(self, zout):
-        for script in self.__scripts:
+        for script in self._scripts:
             zout.writestr(ARC_SCRIPTS_PATH+"/"+script.get_name(), script.get_content())
         return True

@@ -24,9 +24,9 @@ import os
 
 class O(unohelper.Base):
     def __init__(self, xsc):
-        self.__xsc = xsc
+        self._xsc = xsc
 
     def lib_example(self):
         from com.sun.star.awt.MessageBoxType import MESSAGEBOX
         from com.sun.star.awt.MessageBoxButtons import BUTTONS_OK
-        self.__xsc.message_box(_.parent_win, "A message from imported lib example-lib.py. Current dir is: "+os.abspath("."), "py4lo", MESSAGEBOX, BUTTONS_OK)
+        self._xsc.message_box(_.parent_win, "A message from imported lib example-lib.py. Current dir is: "+os.abspath("."), "py4lo", MESSAGEBOX, BUTTONS_OK)
