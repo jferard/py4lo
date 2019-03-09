@@ -148,10 +148,10 @@ class ScriptProcessor():
             return None
 
 
-class _ScriptParser():
+class _ScriptParser:
     """A script parser"""
 
-    __PATTERN = re.compile("^def\s+([^_].*?)\(.*\):\s*$")
+    __PATTERN = re.compile("^def\s+([^_].*?)\(.*\):.*$")
 
     def __init__(self, logger, directive_processor, script_fname):
         self.__logger = logger
@@ -204,5 +204,5 @@ class _ScriptParser():
             self.__lines.extend([
                 "",
                 "",
-                "g_exportedScripts = ({})".format(", ".join(self.__exported_func_names))
+                "g_exportedScripts = ({},)".format(", ".join(self.__exported_func_names))
             ])

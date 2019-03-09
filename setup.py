@@ -31,7 +31,7 @@ setup(
     version='0.1.0',
     description='Py4LO is a simple toolkit to help you write Python scripts for LibreOffice',
     long_description=long_description,
-    url='https://github.com/jferard/sqliteondbf',
+    url='https://github.com/jferard/py4lo',
     author='Julien Férard',
     license='GPLv3',
 

@@ -76,3 +76,39 @@ class TestScriptsParser(unittest.TestCase):
         self.assertEqual([call.process_line('#some line'), call.end()], dp.mock_calls)
         self.assertEqual([call.__enter__(), call.__exit__(None, None, None)], bound.mock_calls)
         self.assertEqual([call('script_fname', 'r', encoding='utf-8'), call().__enter__(), call().__exit__(None, None, None)], mock_open.mock_calls)
+
+    @patch("builtins.open")
+    def test_one_line_function(self, mock_open):
+        logger = Mock()
+        dp = Mock()
+        dp.ignore_lines.return_value = False
+
+        bound = MagicMock()
+        mock_open.return_value = bound
+        bound.__enter__.return_value = ["def f(x): return x"]
+
+        sp = scripts_processor._ScriptParser(logger, dp, "fname")
+        self.assertEqual(("""# parsed by py4lo (https://github.com/jferard/py4lo)
+def f(x): return x
+
+
+g_exportedScripts = (f,)""", ["f"]), sp.parse())
+
+
+    @patch("builtins.open")
+    def test_one_public_function(self, mock_open):
+        logger = Mock()
+        dp = Mock()
+        dp.ignore_lines.return_value = False
+
+        bound = MagicMock()
+        mock_open.return_value = bound
+        bound.__enter__.return_value = ["def f(x):", "    return x"]
+
+        sp = scripts_processor._ScriptParser(logger, dp, "fname")
+        self.assertEqual(("""# parsed by py4lo (https://github.com/jferard/py4lo)
+def f(x):
+    return x
+
+
+g_exportedScripts = (f,)""", ["f"]), sp.parse())
