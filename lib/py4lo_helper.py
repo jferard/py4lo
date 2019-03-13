@@ -28,6 +28,7 @@ import io
 # py4lo: endif
 from com.sun.star.uno import RuntimeException
 from com.sun.star.awt.MessageBoxButtons import BUTTONS_OK
+from com.sun.star.sheet.ConditionOperator import FORMULA
 # py4lo: if $python_version >= 3.0
 from com.sun.star.awt.MessageBoxType import MESSAGEBOX
 # py4lo: else
@@ -84,7 +85,8 @@ class Py4LO_helper(unohelper.Base):
         :raises RuntimeException: if Xray is not avaliable and `fail_on_error` is True.
         """
         try:
-            self._xray_script = self.msp.getScript("vnd.sun.star.script:XrayTool._Main.Xray?language=Basic&location=application")
+            self._xray_script = self.msp.getScript(
+                "vnd.sun.star.script:XrayTool._Main.Xray?language=Basic&location=application")
         except:
             if fail_on_error:
                 raise RuntimeException("\nBasic library Xray is not installed", self.ctxt)
@@ -230,7 +232,7 @@ class Py4LO_helper(unohelper.Base):
         oConditionalFormat = oColoredColumns.ConditionalFormat
         oConditionalFormat.clear()
 
-    def conditional_format_on_formulas(self, oSheet, range_name, style_by_formula, source_position=(0,0)):
+    def conditional_format_on_formulas(self, oSheet, range_name, style_by_formula, source_position=(0, 0)):
         oColoredColumns = oSheet.getCellRangeByName(range_name)
         oConditionalFormat = oColoredColumns.ConditionalFormat
         oSrc = oColoredColumns.getCellByPosition(*source_position).CellAddress
@@ -246,7 +248,8 @@ class Py4LO_helper(unohelper.Base):
 
     def get_conditional_entry(self, formula1, formula2, operator, style_name, oSrc):
         return (
-            self.make_pvs({"Formula1":formula1, "Formula2":formula2, "Operator":operator, "StyleName":style_name, "SourcePosition":oSrc})
+            self.make_pvs({"Formula1": formula1, "Formula2": formula2, "Operator": operator, "StyleName": style_name,
+                           "SourcePosition": oSrc})
         )
 
     # from Andrew Pitonyak 5.14 www.openoffice.org/documentation/HOW_TO/various_topics/AndrewMacro.odt
@@ -298,7 +301,7 @@ class DocBuilder():
                 for sheet_name in it:
                     oSheets.insertNewByName(sheet_name, s)
                     s += 1
-        except StopIteration: # it
+        except StopIteration:  # it
             assert s <= oSheets.getCount(), "s={} vs oSheets.getCount()={}".format(s, oSheets.getCount())
             if trunc_if_necessary:
                 self.trunc_to_count(s)

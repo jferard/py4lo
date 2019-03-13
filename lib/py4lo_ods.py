@@ -58,17 +58,17 @@ class OdsRows():
             l = [v for c in cells for v in self._values(c)]
             yield self._trim_list(l)
 
-    def __trim_list(self, l):
-        for i in range(len(l)-1, -1,-1):
+    def _trim_list(self, l):
+        for i in range(len(l)-1, -1, -1):
             if len(l[i]):
                 return l[:i]
 
-    def __values(self, c):
+    def _values(self, c):
         count = int(c.get(self._attrib("table:number-columns-repeated"), c.get(self._attrib("table:number-columns-spanned"), "1")))
         v = ''.join(c.itertext())
         return [v]*count
 
-    def __attrib(self, attr):
+    def _attrib(self, attr):
         try:
             i = attr.index(":")
             attr = "{{{}}}{}".format(self._ns.get(attr[:i], attr[:i]), attr[i+1:])

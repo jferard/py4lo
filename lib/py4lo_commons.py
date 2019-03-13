@@ -21,11 +21,12 @@
 import unohelper
 import uno
 import os
-import unicodedata
 import logging
+
 
 def init(xsc):
     Commons.xsc = xsc
+
 
 class Bus(unohelper.Base):
     """A minimal bus minimal to communicate with front end"""
@@ -41,6 +42,7 @@ class Bus(unohelper.Base):
             if hasattr(s, m_name):
                 m = getattr(s, m_name)
                 m(event_data)
+
 
 class Commons(unohelper.Base):
     def __init__(self, xsc=None):
@@ -72,13 +74,15 @@ class Commons(unohelper.Base):
             pass
         return s
 
-    def init_logger(self, file=None, mode="a", level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
+    def init_logger(self, file=None, mode="a", level=logging.DEBUG,
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
         if self._logger is not None:
             raise Exception("use init_logger ONCE")
 
         self._logger = self.get_logger(file, mode, level, format)
 
-    def get_logger(self, file=None, mode="a", level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
+    def get_logger(self, file=None, mode="a", level=logging.DEBUG,
+                   format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
         if file is None:
             file = self.join_current_dir("py4lo.log")
 
@@ -135,5 +139,5 @@ class Commons(unohelper.Base):
         apply(config)
         with zipfile.ZipFile(unohelper.fileUrlToSystemPath(self.doc.URL), 'r') as z:
             file = z.open(assets_dir + "/" + filename)
-            config.read_file(codecs.getreader("utf-8")(file))
+            config.read_file(codecs.getreader(encoding)(file))
         return config
