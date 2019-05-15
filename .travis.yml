@@ -1,4 +1,5 @@
 # py4lo
+dist: xenial
 language: python
 
 python:
