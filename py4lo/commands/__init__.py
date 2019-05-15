@@ -19,7 +19,7 @@
 
 from commands.real_command_factory_by_name import real_command_factory_by_name
 from commands.help_command import HelpCommand
-
+import logging
 
 class Commands:
     def __init__(self, command_factory_by_name):
@@ -30,6 +30,9 @@ class Commands:
         try:
             return self._command_factory_by_name[command_name].create(args, tdata)
         except KeyError:
+            logger = logging.getLogger("py4lo")
+            logger.warn("Command `{}` not found. Available commands are {}".format(
+                command_name, set(self._command_factory_by_name.keys())))
             return self._command_factory_by_name["help"].create(args, tdata)
 
 
