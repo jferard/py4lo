@@ -20,7 +20,6 @@ import unittest
 from unittest.mock import *
 import env
 import sys, os
-import uno
 
 from py4lo_helper import *
 

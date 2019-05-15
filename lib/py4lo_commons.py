@@ -23,7 +23,6 @@ import uno
 import os
 import logging
 
-
 def init(xsc):
     Commons.xsc = xsc
 

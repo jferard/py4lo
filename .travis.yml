@@ -7,7 +7,7 @@ python:
 cache: pip
 
 before_install:
-  - sudo aptitude install -y libreoffice libreoffice-script-provider-python uno-libs3 python3-uno python3
+  - sudo aptitude install -y libreoffice libreoffice-script-provider-python python3-uno python3 uno-libs3
   - export PYTHONPATH=${PYTHONPATH}:/usr/lib/python3/dist-packages
 
 # command to run tests and install dependencies
@@ -19,7 +19,6 @@ install:
 
   # dependencies
   - pip install -r requirements.txt
-  - pip list
 
 # script
 script:
