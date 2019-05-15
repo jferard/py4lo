@@ -44,11 +44,8 @@ setup(
         'Programming Language :: Python :: 3',
     ],
 
-    keywords='sqlite dbf converter sql script dbase dbf',
-    install_requires=[
-        'dbfread>=2.0.7',
-        'unotools'
-    ],
+    keywords='libreoffice ods script python macro',
+    install_requires=[],
     test_requires=[
         'pytest',
         'codecov',
