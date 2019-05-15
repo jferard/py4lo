@@ -30,24 +30,30 @@ class TestCommandTest(unittest.TestCase):
     @patch('subprocess.run', spec=subprocess.run)
     @patch('os.walk', spec=os.walk)
     def test(self, os_walk_mock, subprocess_run_mock):
-        os_walk_mock.return_value = [ ("/a", ("b",), ("c_test.py",)), ("/a/b", (), ("d_test.py",)) ]
+        os_walk_mock.side_effect = [
+            [("/a", ("b",), ("c_test.py",)), ("/a/b", (), ("d_test.py",))],     # unit test
+            [("/s", (), ("src_a.py",))]                                    # doctest
+        ]
         completed_process = MagicMock()
         subprocess_run_mock.return_value = completed_process
-        completed_process.returncode.side_effect = [(0, "ok"), (1, "not ok")]
-        completed_process.stdout.decode.side_effect = ["ok", "not ok"]
+        completed_process.returncode.side_effect = [(0, "ok"), (1, "not ok"), (0, "s ok")]
+        completed_process.stdout.decode.side_effect = ["ok", "not ok", "s ok"]
         logger = MagicMock()
-        tc = TestCommand(logger, "py", "a_dir", "b_dir")
+        tc = TestCommand(logger, "py", "a_dir", "b_dir", "p_dir")
         status = tc.execute()
 
         subprocess_run_mock.assert_has_calls([
             call('"py" /a/c_test.py', env=unittest.mock.ANY, stderr=-1, stdout=-1),
             call('"py" /a/b/d_test.py', env=unittest.mock.ANY, stderr=-1, stdout=-1),
+            call('"py" -m doctest /s/src_a.py', env=unittest.mock.ANY, stderr=-1, stdout=-1),
         ], any_order=True)
         logger.assert_has_calls([
             call.info('execute: "py" /a/c_test.py'),
             call.info('output: ok'),
             call.info('execute: "py" /a/b/d_test.py'),
-            call.info('output: not ok')
+            call.info('output: not ok'),
+            call.info('execute: "py" -m doctest /s/src_a.py'),
+            call.info('output: s ok'),
         ], any_order=True)
         self.assertEqual((1,), status)
 
