@@ -33,7 +33,9 @@ class InitCommand:
             logger,
             tdata["py4lo_path"],
             tdata["src_dir"],
+            tdata["assets_dir"],
             tdata["target_dir"],
+            tdata["assets_dest_dir"],
             tdata["python_version"],
             tdata["init_file"]
         )

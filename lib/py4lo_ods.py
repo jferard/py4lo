@@ -20,14 +20,36 @@ import zipfile
 import xml.etree.ElementTree as ET
 import itertools
 
-OFFICE_NS = {
+OFFICE_NS_DICT = {
     "office": "urn:oasis:names:tc:opendocument:xmlns:office:1.0",
     "table": "urn:oasis:names:tc:opendocument:xmlns:table:1.0",
     "text": "urn:oasis:names:tc:opendocument:xmlns:text:1.0",
 }
 
+
+class NameSpace:
+    def __init__(self, ns_dict=OFFICE_NS_DICT):
+        self._ns_dict = ns_dict
+
+    def findall(self, element, match):
+        return element.findall(match, self._ns_dict)
+
+    def attrib(self, attr):
+        try:
+            i = attr.index(":")
+            attr = "{{{}}}{}".format(self._ns_dict.get(attr[:i], attr[:i]), attr[i + 1:])
+        except ValueError:
+            pass
+
+        return attr
+
+
+OFFICE_NS = NameSpace(OFFICE_NS_DICT)
+
+
 class OdsTables:
     """An iterator over tables in an ods file"""
+
     @staticmethod
     def create(fullpath, ns=OFFICE_NS):
         with zipfile.ZipFile(fullpath) as list_ods:
@@ -41,23 +63,28 @@ class OdsTables:
         self._ns = ns
 
     def __iter__(self):
-        tables = self._root.findall("./office:body/office:spreadsheet/table:table", self._ns)
+        tables = self._ns.findall(self._root, "./office:body/office:spreadsheet/table:table")
         for table in tables:
             yield table
+
 
 class OdsRows:
     """An iterator over rows in a table.
     The table must be simple (no spanned rows or repeated rows)"""
 
-    def __init__(self, table, ns=OFFICE_NS):
+    def __init__(self, table, omit=None, ns=OFFICE_NS):
         self._table = table
         self._ns = ns
+        self._omit = omit
 
     def __iter__(self):
-        for row in self._table.findall("./table:table-row", self._ns):
-            count = int(row.get(self._attrib("table:number-rows-repeated"),
-                                row.get(self._attrib("table:number-rows-spanned"), "1")))
-            cell_elements = row.findall("./table:table-cell", self._ns)
+        for row in self._ns.findall(self._table, ".//table:table-row"):
+            if self._omit is not None and self._omit(row, self._ns):
+                continue
+
+            count = int(row.get(self._ns.attrib("table:number-rows-repeated"),
+                                row.get(self._ns.attrib("table:number-rows-spanned"), "1")))
+            cell_elements = self._ns.findall(row, "./table:table-cell")
             cells = [v for c in cell_elements for v in self._values(c)]
             cells = self._trim_list(cells)
             for _ in range(count):
@@ -82,22 +109,17 @@ class OdsRows:
     def _trim_list(self, l):
         if not l:
             return l
-        for i in range(len(l)-1, -1, -1):
+        for i in range(len(l) - 1, -1, -1):
             if len(l[i]):
-                return l[:i+1]
-
+                return l[:i + 1]
 
     def _values(self, c):
-        count = int(c.get(self._attrib("table:number-columns-repeated"),
-                          c.get(self._attrib("table:number-columns-spanned"), "1")))
-        v = '\n'.join(p.text for p in c.findall("./text:p", self._ns))
-        return [v]*count
+        spanned = self._ns.attrib("table:number-columns-spanned")
+        repeated = self._ns.attrib("table:number-columns-repeated")
+        count = int(c.get(repeated, c.get(spanned, "1")))
+        v = '\n'.join(p.text for p in self._ns.findall(c, "./text:p") if p.text)
+        return [v] * count
 
-    def _attrib(self, attr):
-        try:
-            i = attr.index(":")
-            attr = "{{{}}}{}".format(self._ns.get(attr[:i], attr[:i]), attr[i+1:])
-        except ValueError:
-            pass
 
-        return attr
+def omit_filtered(row, ns):
+    return row.get(ns.attrib("table:visibility"), "") == "filter"

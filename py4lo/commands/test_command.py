@@ -51,10 +51,10 @@ class TestCommand:
             completed_process = execute_tests(path)
             status = completed_process.returncode
             if completed_process.stdout:
-                self._logger.info("output: {0}".format(completed_process.stdout.decode('ascii')))
+                self._logger.info("output: {0}".format(completed_process.stdout.decode('iso-8859-1')))
             if status != 0:
                 if completed_process.stderr:
-                    self._logger.error("error: {0}".format(completed_process.stderr.decode('ascii')))
+                    self._logger.error("error: {0}".format(completed_process.stderr.decode('iso-8859-1')))
                 final_status = 1
 
         return final_status

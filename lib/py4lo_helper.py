@@ -270,7 +270,7 @@ class Py4LO_helper(unohelper.Base):
                 oSheet.getCellByPosition(c, r).Value = float(value)
 
 
-class DocBuilder():
+class DocBuilder:
     def __init__(self, helper, t):
         """Create a blank new doc"""
         self._helper = helper

@@ -34,8 +34,8 @@ class DebugCommand:
         logger = logging.getLogger("py4lo")
         logger.setLevel(tdata["log_level"])
         debug_command = DebugCommand(logger, tdata["py4lo_path"], tdata["src_dir"], tdata["assets_dir"],
-                                     tdata["target_dir"], tdata["assets_dest_dir"], tdata["python_version"],
-                                     tdata["debug_file"])
+                                         tdata["target_dir"], tdata["assets_dest_dir"], tdata["python_version"],
+                                         tdata["debug_file"])
         return CommandExecutor(debug_command, test_executor)
 
     def __init__(self, logger, py4lo_path, src_dir, assets_dir, target_dir, assets_dest_dir, python_version,
