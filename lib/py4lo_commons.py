@@ -18,10 +18,19 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
+
+"""
+py4lo_commons deals with ordinary Python objects (POPOs ?).
+
+"""
 import unohelper
 import uno
 import os
 import logging
+import datetime
+
+ORIGIN = datetime.datetime(1899, 12, 30)
+
 
 def init(xsc):
     Commons.xsc = xsc
@@ -29,6 +38,7 @@ def init(xsc):
 
 class Bus(unohelper.Base):
     """A minimal bus minimal to communicate with front end"""
+
     def __init__(self):
         self._subscribers = []
 
@@ -37,17 +47,22 @@ class Bus(unohelper.Base):
 
     def post(self, event_type, event_data):
         for s in self._subscribers:
-            m_name = "_handle_"+event_type.lower()
+            m_name = "_handle_" + event_type.lower()
             if hasattr(s, m_name):
                 m = getattr(s, m_name)
                 m(event_data)
 
 
 class Commons(unohelper.Base):
-    def __init__(self, xsc=None):
+    @staticmethod
+    def create(xsc=None):
         if xsc is None:
             xsc = Commons.xsc
-        self.doc = xsc.getDocument()
+        doc = xsc.getDocument()
+        return Commons(doc.URL)
+
+    def __init__(self, url):
+        self._url = url
         self._logger = None
 
     def __del__(self):
@@ -56,22 +71,10 @@ class Commons(unohelper.Base):
                 h.flush()
                 h.close()
 
-    def create_bus(self):
-        return Bus()
-
     def cur_dir(self):
         """return the directory of the current document"""
-        url = self.doc.getURL()
-        path = uno.fileUrlToSystemPath( url )
-        return os.path.dirname( path )
-
-    def sanitize(self, s):
-        import unicodedata
-        try:
-            s = unicodedata.normalize('NFKD', s).encode('ascii','ignore').decode('ascii')
-        except Exception:
-            pass
-        return s
+        path = uno.fileUrlToSystemPath(self._url)
+        return os.path.dirname(path)
 
     def init_logger(self, file=None, mode="a", level=logging.DEBUG,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
@@ -85,14 +88,15 @@ class Commons(unohelper.Base):
         if file is None:
             file = self.join_current_dir("py4lo.log")
 
-        fh = self._get_handler(file, mode, level, format)
+        fh = Commons._get_handler(file, mode, level, format)
 
         logger = logging.getLogger()
         logger.addHandler(fh)
         logger.setLevel(level)
         return logger
 
-    def _get_handler(self, file, mode, level, format):
+    @staticmethod
+    def _get_handler(file, mode, level, format):
         if type(file) == str:
             fh = logging.FileHandler(file, mode)
         else:
@@ -108,21 +112,7 @@ class Commons(unohelper.Base):
         return self._logger
 
     def join_current_dir(self, filename):
-        return os.path.join(unohelper.fileUrlToSystemPath(self.doc.URL), "..", filename)
-
-    def read_config(self, filename, args={}, apply=lambda config: None, encoding='utf-8'):
-        """Read a config. See https://docs.python.org/3.7/library/configparser.html
-
-        :param args: arguments to be passed to the ConfigParser
-        :param apply: function to modifiy the config
-        :param encoding: the encoding of the file
-
-        Example: `config = commons.read_config(commons.join_current_dir("pcrp.ini"))`"""
-        import configparser
-        config = configparser.ConfigParser(**args)
-        apply(config)
-        config.read(filename, encoding)
-        return config
+        return os.path.join(unohelper.fileUrlToSystemPath(self._url), "..", filename)
 
     def read_internal_config(self, filename, args={}, apply=lambda config: None, encoding='utf-8', assets_dir="Assets"):
         """Read an internal config, in the assets directory of the document.
@@ -136,7 +126,43 @@ class Commons(unohelper.Base):
         import configparser, zipfile, codecs
         config = configparser.ConfigParser(**args)
         apply(config)
-        with zipfile.ZipFile(unohelper.fileUrlToSystemPath(self.doc.URL), 'r') as z:
+        with zipfile.ZipFile(unohelper.fileUrlToSystemPath(self._url), 'r') as z:
             file = z.open(assets_dir + "/" + filename)
             config.read_file(codecs.getreader(encoding)(file))
         return config
+
+
+def create_bus(self):
+    return Bus()
+
+
+def read_config(filename, args={}, apply=lambda config: None, encoding='utf-8'):
+    """Read a config. See https://docs.python.org/3.7/library/configparser.html
+
+    :param args: arguments to be passed to the ConfigParser
+    :param apply: function to modifiy the config
+    :param encoding: the encoding of the file
+
+    Example: `config = commons.read_config(commons.join_current_dir("pcrp.ini"))`"""
+    import configparser
+    config = configparser.ConfigParser(**args)
+    apply(config)
+    config.read(filename, encoding)
+    return config
+
+
+def sanitize(s):
+    import unicodedata
+    try:
+        s = unicodedata.normalize('NFKD', s).encode('ascii', 'ignore').decode('ascii')
+    except Exception:
+        pass
+    return s
+
+
+def date_to_int(a_date):
+    return (a_date - ORIGIN).days
+
+
+def int_to_date(days):
+    return ORIGIN + datetime.timedelta(days)

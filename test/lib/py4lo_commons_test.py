@@ -48,19 +48,13 @@ class TestBus(unittest.TestCase):
 
 class TestCommons(unittest.TestCase):
     def setUp(self):
-        self.xsc = Mock()
-        init(self.xsc)
-        self.c = Commons(self.xsc)
-
-    def testInit(self):
-        self.assertEqual(self.xsc, Commons.xsc)
+        self.c = Commons("file:///temp/")
 
     def testCurDir(self):
-        self.xsc.getDocument.return_value.getURL.return_value = "file:///temp/"
         self.assertTrue(self.c.cur_dir().endswith("temp"))
 
     def testSanitize(self):
-        self.assertEquals("e", self.c.sanitize("é"))
+        self.assertEquals("e", sanitize("é"))
 
     def testLogger(self):
         import tempfile, os, subprocess

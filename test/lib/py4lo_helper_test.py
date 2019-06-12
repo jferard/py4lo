@@ -51,13 +51,13 @@ class TestHelper(unittest.TestCase):
         self.msp.getScript.return_value.invoke.assert_has_calls([call((1,), (), ()), call((2,), (), ())])
 
     def testPv(self):
-        pv = self.p.make_pv("name", "value")
+        pv = make_pv("name", "value")
         self.assertTrue("uno.com.sun.star.beans.PropertyValue" in str(type(pv)))
         self.assertEqual("name", pv.Name)
         self.assertEqual("value", pv.Value)
 
     def testPvs(self):
-        pvs = self.p.make_pvs({"name1": "value1", "name2": "value2"})
+        pvs = make_pvs({"name1": "value1", "name2": "value2"})
         pvs = sorted(pvs, key=lambda pv: pv.Name)
         self.assertEqual("name1", pvs[0].Name)
         self.assertEqual("value1", pvs[0].Value)
@@ -89,7 +89,7 @@ class TestHelper(unittest.TestCase):
         aAdress.StartColumn = 0
         aAdress.EndRow = 10
         aAdress.StartRow = 0
-        self.p.read_options(oSheet, aAdress)
+        read_options(oSheet, aAdress)
 
     def test_set_validation_list(self):
         oCell = Mock()

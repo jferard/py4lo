@@ -103,7 +103,7 @@ CONTENT_XML = """<?xml version="1.0" encoding="UTF-8"?>
 class TestOds(unittest.TestCase):
     def setUp(self):
         root = ET.fromstring(CONTENT_XML)
-        table = root.find("./office:body/office:spreadsheet/table:table", OFFICE_NS)
+        table = root.find("./office:body/office:spreadsheet/table:table", OFFICE_NS_DICT)
         self.ods_rows = OdsRows(table)
 
     def test_list(self):
