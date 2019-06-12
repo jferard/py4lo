@@ -3,7 +3,7 @@
 Py4LO (Python For LibreOffice)
 ==============================
 
-Copyright (C) J. Férard 2016-2018
+Copyright (C) J. Férard 2016-2019
 
 Py4LO is a simple toolkit to help you write and include Python scripts in LibreOffice Calc spreadsheets.
 Under GPL v.3
@@ -156,6 +156,20 @@ imported modules. It's up to the script to pass this object to the
 modules that need it.
 
 **CAVEAT** If you have the LibreOffice quickstarter, new imports may not be recognized. You might have to kill manually the `soffice` process.
+
+*Note:* `# py4lo: import lib py4lo_helper` is a directive. This directive informs py4lo that the module py4lo_ods is needed. This has two effects:
+* copy py4lo_ods.py in the ODS destination file and declare it as a Script;
+* update the path so that the library is now accessible.
+
+The library
+-----------
+The library is still limited:
+
+- `py4lo_ods` is useful to manipulate ods documents in pure Python. Document content is parsed as XML, and never opened with LO.
+- `py4lo_helper` manipulate LO objects (cells, rows, sheets, ...)
+- `py4lo_commons` provides some helpful methods and classes (a simple bus, access to a config file, ...) for Python objects (strs, lists, ...).
+
+The lib modules are subject to the "classpath" exception of the GPLv3 (see https://www.gnu.org/software/classpath/license.html).
 
 Test
 ----
