@@ -41,8 +41,8 @@ class TestCommand:
         self._env = None
 
     def execute(self):
-        final_status = self._execute_all_tests(self._test_paths, self._execute_unittests)
-        final_status = final_status and self._execute_all_tests(self._src_paths, self._execute_doctests)
+        final_status = self._execute_all_tests(self._src_paths, self._execute_doctests)
+        final_status = self._execute_all_tests(self._test_paths, self._execute_unittests) or final_status
         return final_status,
 
     def _execute_all_tests(self, get_paths, execute_tests):
