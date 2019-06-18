@@ -112,6 +112,7 @@ class OdsRows:
         for i in range(len(l) - 1, -1, -1):
             if len(l[i]):
                 return l[:i + 1]
+        return []
 
     def _values(self, c):
         spanned = self._ns.attrib("table:number-columns-spanned")
