@@ -20,10 +20,13 @@ import zipfile
 import xml.etree.ElementTree as ET
 import itertools
 
+ACTIVE_TABLE_XPATH = "./office:settings/config:config-item-set[@config:name='ooo:view-settings']/config:config-item-map-indexed[@config:name='Views']/config:config-item-map-entry/config:config-item[@config:name='ActiveTable']"
+
 OFFICE_NS_DICT = {
     "office": "urn:oasis:names:tc:opendocument:xmlns:office:1.0",
     "table": "urn:oasis:names:tc:opendocument:xmlns:table:1.0",
     "text": "urn:oasis:names:tc:opendocument:xmlns:text:1.0",
+    "config": "urn:oasis:names:tc:opendocument:xmlns:config:1.0",
 }
 
 
@@ -52,20 +55,83 @@ class OdsTables:
 
     @staticmethod
     def create(fullpath, ns=OFFICE_NS):
-        with zipfile.ZipFile(fullpath) as list_ods:
-            with list_ods.open('content.xml') as content:
-                data = content.read().decode("utf-8")
-                root = ET.fromstring(data)
-                return OdsTables(root, ns)
+        return OdsTablesBuilder(fullpath).ns(ns).build()
 
-    def __init__(self, root, ns=OFFICE_NS):
+    def __init__(self, root, sort_func, ns=OFFICE_NS):
         self._root = root
+        self._sort_func = sort_func
         self._ns = ns
 
     def __iter__(self):
         tables = self._ns.findall(self._root, "./office:body/office:spreadsheet/table:table")
+        tables = self._sort_func(tables)
         for table in tables:
             yield table
+
+
+class OdsTablesBuilder:
+    def __init__(self, fullpath):
+        self._fullpath = fullpath
+        self._ns = OFFICE_NS
+        self._sort_func_creator = dont_sort
+
+    def ns(self, ns):
+        self._ns = ns
+        return self
+
+    def sort_func_creator(self, sort_func_creator):
+        self._sort_func_creator = sort_func_creator
+
+    def build(self):
+        with zipfile.ZipFile(self._fullpath) as z:
+            sort_func = self._sort_func_creator(z, self._ns)
+            with z.open('content.xml') as content:
+                data = content.read().decode("utf-8")
+                root = ET.fromstring(data)
+                return OdsTables(root, sort_func, self._ns)
+
+
+def dont_sort(*_args, **_kwargs):
+    def sort_func(tables):
+        return tables
+
+    return sort_func
+
+
+def put_active_first(z, ns=OFFICE_NS):
+    """
+    :param z: the zip file
+    :param ns: the name space
+    :returns: a sort function for tables
+    """
+    active_table_name = _find_active_table_name_in_zip(z, ns)
+
+    def sort_func(tables):
+        for i, table in enumerate(tables):
+            if table.get(ns.attrib("table:name")) == active_table_name:
+                return [tables[i]] + tables[:i] + tables[i + 1:]
+
+        return tables
+
+    return sort_func
+
+
+def _find_active_table_name_in_zip(z, ns=OFFICE_NS):
+    with z.open('settings.xml') as settings:
+        active_table_name = _find_active_table_name(settings, ns)
+
+    return active_table_name
+
+
+def _find_active_table_name(settings, ns=OFFICE_NS):
+    data = settings.read().decode("utf-8")
+    root = ET.fromstring(data)
+    active_tables = ns.findall(root, ACTIVE_TABLE_XPATH)
+    if active_tables:
+        active_table_name = active_tables[0].text
+    else:
+        active_table_name = None
+    return active_table_name
 
 
 class OdsRows:

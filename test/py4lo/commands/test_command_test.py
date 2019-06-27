@@ -31,31 +31,33 @@ class TestCommandTest(unittest.TestCase):
     @patch('os.walk', spec=os.walk)
     def test(self, os_walk_mock, subprocess_run_mock):
         os_walk_mock.side_effect = [
-            [("/a", ("b",), ("c_test.py",)), ("/a/b", (), ("d_test.py",))],     # unit test
-            [("/s", (), ("src_a.py",))]                                    # doctest
+            [("/src_dir", (), ("src_a.py",))],                                    # doctest
+            [("/test_dir", ("b",), ("c_test.py",)), ("/test_dir/b", (), ("d_test.py",))],     # unit test
         ]
         completed_process = MagicMock()
         subprocess_run_mock.return_value = completed_process
         completed_process.returncode.side_effect = [(0, "ok"), (1, "not ok"), (0, "s ok")]
         completed_process.stdout.decode.side_effect = ["ok", "not ok", "s ok"]
         logger = MagicMock()
-        tc = TestCommand(logger, "py", "a_dir", "b_dir", "p_dir")
+        tc = TestCommand(logger, "py_exe", "test_dir", "src_dir", "p_path")
         status = tc.execute()
 
         subprocess_run_mock.assert_has_calls([
-            call('"py" /a/c_test.py', env=unittest.mock.ANY, stderr=-1, stdout=-1),
-            call('"py" /a/b/d_test.py', env=unittest.mock.ANY, stderr=-1, stdout=-1),
-            call('"py" -m doctest /s/src_a.py', env=unittest.mock.ANY, stderr=-1, stdout=-1),
+            call('"py_exe" -m doctest /src_dir/src_a.py', env=unittest.mock.ANY, stderr=-1, stdout=-1),
+            call('"py_exe" /test_dir/c_test.py', env=unittest.mock.ANY, stderr=-1, stdout=-1),
+            call('"py_exe" /test_dir/b/d_test.py', env=unittest.mock.ANY, stderr=-1, stdout=-1),
         ], any_order=True)
         logger.assert_has_calls([
-            call.info('execute: "py" /a/c_test.py'),
-            call.info('output: ok'),
-            call.info('execute: "py" /a/b/d_test.py'),
-            call.info('output: not ok'),
-            call.info('execute: "py" -m doctest /s/src_a.py'),
+            call.info('execute: "py_exe" -m doctest /src_dir/src_a.py'),
             call.info('output: s ok'),
+            call.info('execute: "py_exe" /test_dir/c_test.py'),
+            call.info('output: ok'),
+            call.info('execute: "py_exe" /test_dir/b/d_test.py'),
+            call.info('output: not ok'),
         ], any_order=True)
         self.assertEqual((1,), status)
 
+
 if __name__ == '__main__':
     unittest.main()
+

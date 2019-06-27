@@ -19,7 +19,40 @@
 import unittest
 
 from py4lo_ods import *
+import py4lo_ods
 import xml.etree.ElementTree as ET
+
+SETTINGS_XML = """<?xml version="1.0" encoding="UTF-8"?>
+<office:document-settings
+    xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+    xmlns:config="urn:oasis:names:tc:opendocument:xmlns:config:1.0"
+    xmlns:ooo="http://openoffice.org/2004/office"
+    office:version="1.2">
+    <office:settings>
+        <config:config-item-set config:name="ooo:view-settings">
+            <config:config-item-map-indexed config:name="Views">
+                <config:config-item-map-entry>
+                    <config:config-item config:name="ViewId" config:type="string">view1</config:config-item>
+                    <config:config-item-map-named config:name="Tables">
+                        <config:config-item-map-entry config:name="Sheet1">
+                            <config:config-item config:name="AnchoredTextOverflowLegacy" config:type="boolean">false</config:config-item>
+                        </config:config-item-map-entry>
+                        <config:config-item-map-entry config:name="Sheet2">
+                            <config:config-item config:name="AnchoredTextOverflowLegacy" config:type="boolean">false</config:config-item>
+                        </config:config-item-map-entry>
+                    </config:config-item-map-named>
+                    <config:config-item config:name="ActiveTable" config:type="string">Sheet2</config:config-item>
+                </config:config-item-map-entry>
+            </config:config-item-map-indexed>
+        </config:config-item-set>
+        <config:config-item-set config:name="ooo:configuration-settings">
+            <config:config-item config:name="AllowPrintJobCancel" config:type="boolean">true</config:config-item>
+        </config:config-item-set>
+    </office:settings>
+</office:document-settings>
+
+"""
 
 CONTENT_XML = """<?xml version="1.0" encoding="UTF-8"?>
 <office:document-content
@@ -128,6 +161,11 @@ class TestOds(unittest.TestCase):
             ["A4", "B4", "C4", "D4"],
             ["A6", "B6", "C6", "D6"],
         ], self.ods_rows[1::2])
+
+    def test_active_table_name(self):
+        import io
+        settings = io.BytesIO(SETTINGS_XML.encode("utf-8"))
+        self.assertEqual("Sheet2", py4lo_ods._find_active_table_name(settings))
 
 if __name__ == '__main__':
     unittest.main()
