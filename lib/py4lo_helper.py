@@ -132,7 +132,12 @@ class Py4LO_helper(unohelper.Base):
                 return self.sm.createInstanceWithArgumentsAndContext(sname, args, ctxt)
 
     def open_in_calc(self, filename):
-        self.loader.loadComponentFromURL(
+        """
+        Open a document in calc
+        :param filename: the name of the file to open
+        :return: a reference on the doc
+        """
+        return self.loader.loadComponentFromURL(
             uno.systemPathToFileUrl(filename), "_blank", 0, ())
 
     def new_doc(self, t="calc"):
