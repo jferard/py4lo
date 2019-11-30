@@ -16,21 +16,22 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
-
-from tools import update_ods
-from commands.test_command import TestCommand
+from commands import Command
+from commands.command import PropertiesProvider
 from commands.command_executor import CommandExecutor
+from commands.test_command import TestCommand
+from tools import update_ods
 
 
-class UpdateCommand:
+class UpdateCommand(Command):
     @staticmethod
-    def create(args, tdata):
-        test_executor = TestCommand.create(args, tdata)
-        update_command = UpdateCommand(tdata)
+    def create(args, provider: PropertiesProvider):
+        test_executor = TestCommand.create(args, provider)
+        update_command = UpdateCommand(provider)
         return CommandExecutor(update_command, test_executor)
 
-    def __init__(self, tdata):
-        self._tdata = tdata
+    def __init__(self, provider: PropertiesProvider):
+        self._tdata = provider.get()
 
     def execute(self, status):
         dest_name = update_ods(self._tdata)

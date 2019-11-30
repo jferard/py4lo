@@ -13,3 +13,5 @@ assets_dir = "src/assets"
 assets_dest_dir = "Assets"
 target_dir = "target"
 log_level = "DEBUG"
+src_ignore = [] # list of glob patterns
+assets_ignore = [] # list of glob patterns

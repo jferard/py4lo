@@ -17,20 +17,25 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 
-import os
-import sys
 import logging
+import os
 import subprocess
+import sys
+
+from commands import Command
+from commands.command import PropertiesProvider
 from commands.command_executor import CommandExecutor
 
 
-class TestCommand:
+class TestCommand(Command):
     @staticmethod
-    def create(_args, tdata):
+    def create(_args, provider: PropertiesProvider):
+        tdata = provider.get()
         logger = logging.getLogger("py4lo")
         logger.setLevel(tdata["log_level"])
         return CommandExecutor(
-            TestCommand(logger, tdata["python_exe"], tdata["test_dir"], tdata["src_dir"], tdata["py4lo_path"]))
+            TestCommand(logger, tdata["python_exe"], tdata["test_dir"],
+                        tdata["src_dir"], tdata["py4lo_path"]))
 
     def __init__(self, logger, python_exe, test_dir, src_dir, py4lo_path):
         self._logger = logger
@@ -41,8 +46,10 @@ class TestCommand:
         self._env = None
 
     def execute(self):
-        final_status = self._execute_all_tests(self._src_paths, self._execute_doctests)
-        final_status = self._execute_all_tests(self._test_paths, self._execute_unittests) or final_status
+        final_status = self._execute_all_tests(self._src_paths,
+                                               self._execute_doctests)
+        final_status = self._execute_all_tests(self._test_paths,
+                                               self._execute_unittests) or final_status
         return final_status,
 
     def _execute_all_tests(self, get_paths, execute_tests):
@@ -51,10 +58,12 @@ class TestCommand:
             completed_process = execute_tests(path)
             status = completed_process.returncode
             if completed_process.stdout:
-                self._logger.info("output: {0}".format(completed_process.stdout.decode('iso-8859-1')))
+                self._logger.info("output: {0}".format(
+                    completed_process.stdout.decode('iso-8859-1')))
             if status != 0:
                 if completed_process.stderr:
-                    self._logger.error("error: {0}".format(completed_process.stderr.decode('iso-8859-1')))
+                    self._logger.error("error: {0}".format(
+                        completed_process.stderr.decode('iso-8859-1')))
                 final_status = 1
 
         return final_status
@@ -62,12 +71,14 @@ class TestCommand:
     def _execute_unittests(self, path):
         cmd = "\"" + self._python_exe + "\" " + path
         self._logger.info("execute: {0}".format(cmd))
-        return subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=self._get_env())
+        return subprocess.run(cmd, stdout=subprocess.PIPE,
+                              stderr=subprocess.PIPE, env=self._get_env())
 
     def _execute_doctests(self, path):
         cmd = "\"" + self._python_exe + "\" -m doctest " + path
         self._logger.info("execute: {0}".format(cmd))
-        return subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=self._get_env())
+        return subprocess.run(cmd, stdout=subprocess.PIPE,
+                              stderr=subprocess.PIPE, env=self._get_env())
 
     def _test_paths(self):
         for dirpath, dirnames, filenames in os.walk(self._test_dir):
@@ -84,7 +95,10 @@ class TestCommand:
     def _get_env(self):
         if self._env is None:
             env = dict(os.environ)
-            env["PYTHONPATH"] = ";".join(sys.path + [self._src_dir, os.path.join(self._py4lo_path, "lib")])
+            env["PYTHONPATH"] = ";".join(sys.path + [self._src_dir,
+                                                     os.path.join(
+                                                         self._py4lo_path,
+                                                         "lib")])
             self._env = env
         return self._env
 

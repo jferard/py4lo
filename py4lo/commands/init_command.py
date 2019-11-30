@@ -16,17 +16,20 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
-
-from commands.test_command import TestCommand
-from commands.debug_command import DebugCommand
-from commands.command_executor import CommandExecutor
 import logging
 
+from commands import Command
+from commands.command import PropertiesProvider
+from commands.command_executor import CommandExecutor
+from commands.debug_command import DebugCommand
+from commands.test_command import TestCommand
 
-class InitCommand:
+
+class InitCommand(Command):
     @staticmethod
-    def create(args, tdata):
-        test_executor = TestCommand.create(args, tdata)
+    def create(args, provider: PropertiesProvider):
+        tdata = provider.get()
+        test_executor = TestCommand.create(args, provider)
         logger = logging.getLogger("py4lo")
         logger.setLevel(tdata["log_level"])
         init_command = DebugCommand(

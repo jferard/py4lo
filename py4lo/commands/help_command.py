@@ -16,10 +16,11 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
-
+from commands import Command
+from commands.command import PropertiesProvider
 from commands.real_command_factory_by_name import real_command_factory_by_name
 
-DEFAULT_MSG = """usage: py4lo.py -h|--help|command [args]
+DEFAULT_MSG = """usage: py4lo.py [-h] [-t|--help|command [args]
 
 Python for LibreOffice.
 
@@ -34,9 +35,9 @@ command     a command = debug|help|init|test|update
         update:         updates the file with all scripts"""
 
 
-class HelpCommand:
+class HelpCommand(Command):
     @staticmethod
-    def create(args, _tdata):
+    def create(args, _provider: PropertiesProvider):
         if len(args) == 1:
             command_name = args[0]
         else:
@@ -48,16 +49,16 @@ class HelpCommand:
         self._command_name = command_name
 
     def execute(self):
-        msg = DEFAULT_MSG
         if self._command_name:
             try:
-                msg = self._command_factory_by_name[self._command_name].get_help()
+                msg = self._command_factory_by_name[
+                    self._command_name].get_help()
             except KeyError as e:
-                print (e)
-                if self._command_name == 'help':
-                    msg = self.get_help()
+                msg = self.get_help()
+        else:
+            msg = self.get_help()
         print(msg)
 
     @staticmethod
     def get_help():
-        return "You must be kitting!"
+        return "help [command]: Specific help message about command"

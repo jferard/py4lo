@@ -16,21 +16,22 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
-import sys
-from toml_helper import load_toml
+import argparse
+
 from commands import commands
+from commands.command import PropertiesProvider
 
-sys.argv.pop(0)  # remove the command
-try:
-    command_name = sys.argv.pop(0)
-    tdata = load_toml()
+parser = argparse.ArgumentParser(description="Python for LibreOffice",
+                                 formatter_class=argparse.RawTextHelpFormatter)
+parser.add_argument("-t", "--toml", help="the toml file (default=py4lo.toml)",
+                    type=str)
+parser.add_argument("command",
+                    help=commands.get_help_message(), type=str)
+parser.add_argument("parameter", nargs="*",
+                    help="command parameter")
+args = parser.parse_args()
 
-    if command_name == '-h' or command_name == '--help':
-        command_name = "help"
-except IndexError as e:
-    print("IndexError: " + str(e))
-    command_name = "help"
-    tdata = []
 
-command = commands.get(command_name, sys.argv, tdata)
+command = commands.get(args.command, args.parameter,
+                       PropertiesProvider(args.toml))
 command.execute()

@@ -16,24 +16,36 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
+from typing import Dict
 
+from commands.command import Command
 from commands.real_command_factory_by_name import real_command_factory_by_name
 from commands.help_command import HelpCommand
 import logging
 
+
 class Commands:
-    def __init__(self, command_factory_by_name):
-        assert "help" in command_factory_by_name
+    def __init__(self, command_factory_by_name: Dict[str, Command]):
+        # assert "help" in command_factory_by_name
         self._command_factory_by_name = command_factory_by_name
 
-    def get(self, command_name, args, tdata):
+    def get(self, command_name, args, get_tdata):
         try:
-            return self._command_factory_by_name[command_name].create(args, tdata)
+            return self._command_factory_by_name[command_name].create(args,
+                                                                      get_tdata)
         except KeyError:
             logger = logging.getLogger("py4lo")
-            logger.warn("Command `{}` not found. Available commands are {}".format(
-                command_name, set(self._command_factory_by_name.keys())))
-            return self._command_factory_by_name["help"].create(args, tdata)
+            logger.warning(
+                "Command `{}` not found. Available commands are {}".format(
+                    command_name, set(self._command_factory_by_name.keys())))
+            return self._command_factory_by_name["help"].create(args, get_tdata)
+
+    def get_help_message(self):
+        lines = [
+            "a command = {}".format(" | ".join(self._command_factory_by_name))]
+        for name, cf in self._command_factory_by_name.items():
+            lines.append("{}: {}".format(name, cf.get_help()))
+        return "\n".join(lines)
 
 
 cf_by_name = real_command_factory_by_name.copy()

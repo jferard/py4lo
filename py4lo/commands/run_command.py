@@ -16,17 +16,20 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
-
-from commands.update_command import UpdateCommand
-from commands.command_executor import CommandExecutor
-from tools import open_with_calc
 import logging
 
+from commands import Command
+from commands.command import PropertiesProvider
+from commands.command_executor import CommandExecutor
+from commands.update_command import UpdateCommand
+from tools import open_with_calc
 
-class RunCommand:
+
+class RunCommand(Command):
     @staticmethod
-    def create(args, tdata):
-        update_executor = UpdateCommand.create(args, tdata)
+    def create(args, provider: PropertiesProvider):
+        tdata = provider.get()
+        update_executor = UpdateCommand.create(args, provider)
         run_command = RunCommand(tdata["calc_exe"])
         return CommandExecutor(run_command, update_executor)
 

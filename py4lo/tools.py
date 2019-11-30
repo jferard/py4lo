@@ -42,12 +42,14 @@ def _get_dest_name(tdata):
     ods_source_name = tdata["source_file"]
     if "dest_name" in tdata:
         if "suffix" in tdata:
-            _get_logger(tdata).debug("Property dest_name set to {}; ignore suffix {}".format(
-                tdata["dest_name"], tdata["suffix"]))
+            _get_logger(tdata).debug(
+                "Property dest_name set to {}; ignore suffix {}".format(
+                    tdata["dest_name"], tdata["suffix"]))
         ods_dest_name = tdata["dest_name"]
     else:
         suffix = tdata["default_suffix"]
-        ods_dest_name = ods_source_name[0:-4] + "-" + suffix + ods_source_name[-4:]
+        ods_dest_name = ods_source_name[0:-4] + "-" + suffix + ods_source_name[
+                                                               -4:]
     return ods_dest_name
 
 
@@ -71,7 +73,8 @@ class OdsUpdater:
         add_readme = tdata["add_readme"]
         if add_readme:
             readme_contact = tdata["readme_contact"]
-            add_readme_callback = AddReadmeWith(os.path.join(py4lo_path, "inc"), readme_contact)
+            add_readme_callback = AddReadmeWith(os.path.join(py4lo_path, "inc"),
+                                                readme_contact)
         else:
             add_readme_callback = None
 
@@ -81,9 +84,11 @@ class OdsUpdater:
         target_dir = tdata["target_dir"]
         python_version = tdata["python_version"]
 
-        return OdsUpdater(logger, src_dir, assets_dir, target_dir, assets_dest_dir, python_version, add_readme_callback)
+        return OdsUpdater(logger, src_dir, assets_dir, target_dir,
+                          assets_dest_dir, python_version, add_readme_callback)
 
-    def __init__(self, logger, src_dir, assets_dir, target_dir, assets_dest_dir, python_version, add_readme_callback):
+    def __init__(self, logger, src_dir, assets_dir, target_dir, assets_dest_dir,
+                 python_version, add_readme_callback):
         self._logger = logger
         self._src_dir = src_dir
         self._assets_dir = assets_dir
@@ -93,7 +98,8 @@ class OdsUpdater:
         self._add_readme_callback = add_readme_callback
 
     def update(self, ods_source_name, ods_dest_name):
-        self._logger.info("Debug or init. Generating %s for Python %s", ods_dest_name, self._python_version)
+        self._logger.info("Debug or init. Generating %s for Python %s",
+                          ods_dest_name, self._python_version)
 
         scripts = self._get_scripts()
         assets = self._get_assets()
@@ -104,8 +110,11 @@ class OdsUpdater:
 
     def _get_scripts(self):
         script_fnames = set(
-            os.path.join(self._src_dir, fname) for fname in os.listdir(self._src_dir) if fname.endswith(".py"))
-        scripts_processor = ScriptsProcessor(self._logger, self._src_dir, self._target_dir, self._python_version)
+            os.path.join(self._src_dir, fname) for fname in
+            os.listdir(self._src_dir) if fname.endswith(".py"))
+        scripts_processor = ScriptsProcessor(self._logger, self._src_dir,
+                                             self._target_dir,
+                                             self._python_version)
         return scripts_processor.process(script_fnames)
 
     def _get_assets(self):
@@ -113,7 +122,9 @@ class OdsUpdater:
         for root, _, fnames in os.walk(self._assets_dir):
             for fname in fnames:
                 filename = os.path.join(root, fname)
-                dest_name = os.path.join(self._assets_dest_dir, os.path.relpath(filename, self._assets_dir)).replace(
+                dest_name = os.path.join(self._assets_dest_dir,
+                                         os.path.relpath(filename,
+                                                         self._assets_dir)).replace(
                     os.path.sep, "/")
                 with open(filename, 'rb') as source:
                     assets.append(Asset(dest_name, source.read()))
@@ -124,9 +135,9 @@ class OdsUpdater:
         zip_updater = ZipUpdater()
         (
             zip_updater.item(IgnoreScripts(ARC_SCRIPTS_PATH))
-                        .item(RewriteManifest(scripts, assets))
-                        .after(AddScripts(scripts))
-                        .after(AddAssets(assets))
+                .item(RewriteManifest(scripts, assets))
+                .after(AddScripts(scripts))
+                .after(AddAssets(assets))
         )
         if self._add_readme_callback is not None:
             zip_updater.after(self._add_readme_callback)
