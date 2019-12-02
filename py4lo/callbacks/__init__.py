@@ -16,6 +16,10 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
+
+"""
+These are callbacks for the ZipUpdater
+"""
 from callbacks.callback import BeforeAfterCallback, ItemCallback
 from callbacks.add_readme_with import AddReadmeWith
 from callbacks.add_assets import AddAssets

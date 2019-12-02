@@ -38,6 +38,9 @@ class AddDebugContent(BeforeAfterCallback):
     """After callback. Add a debug content in destination file. The debug content
     is one button per function."""
     def __init__(self, funcs_by_script: Dict[str, List[str]]):
+        """
+        :param funcs_by_script: a mapping
+        """
         self._funcs_by_script = funcs_by_script
 
     def call(self, zout: ZipFile) -> bool:

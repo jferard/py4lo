@@ -24,8 +24,11 @@ from asset import Asset
 
 
 class AddAssets(BeforeAfterCallback):
-    """After callback. Add assets in destination file"""
+    """AfterCallback. Add assets in destination file"""
     def __init__(self, assets: List[Asset]):
+        """
+        :param assets: the assets to add
+        """
         self._assets = assets
 
     def call(self, zout: ZipFile) -> bool:
