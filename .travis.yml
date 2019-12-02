@@ -13,16 +13,17 @@ before_install:
 
 # command to run tests and install dependencies
 install:
-  - sudo python -m pip install https://files.pythonhosted.org/packages/a2/12/ced7105d2de62fa7c8fb5fce92cc4ce66b57c95fb875e9318dba7f8c5db0/toml-0.10.0-py2.py3-none-any.whl
+  - sudo pip install --upgrade pip
+  - sudo pip install --upgrade setuptools
+  - sudo pip install https://files.pythonhosted.org/packages/a2/12/ced7105d2de62fa7c8fb5fce92cc4ce66b57c95fb875e9318dba7f8c5db0/toml-0.10.0-py2.py3-none-any.whl
   # for coverage
-  - sudo python -m pip install codecov
-  - sudo python -m pip install pytest-cov
-  - sudo python -m pip install --upgrade setuptools
+  - sudo pip install codecov
+  - sudo pip install pytest-cov
   - py.test --version
   - python -m pytest --version
 
   # dependencies
-  - sudo python -m pip install -r requirements.txt
+  - sudo pip install -r requirements.txt
 
 # script
 script:
