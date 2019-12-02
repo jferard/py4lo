@@ -39,11 +39,12 @@ class InitCommand(Command, ABC):
             Path(tdata["py4lo_path"]),
             Path(tdata["src_dir"]),
             tdata["src_ignore"],
-            tdata["assets_dir"],
-            tdata["target_dir"],
-            tdata["assets_dest_dir"],
+            Path(tdata["assets_dir"]),
+            tdata["assets_ignore"],
+            Path(tdata["target_dir"]),
+            Path(tdata["assets_dest_dir"]),
             tdata["python_version"],
-            tdata["init_file"]
+            Path(tdata["init_file"])
         )
         return CommandExecutor(init_command, test_executor)
 

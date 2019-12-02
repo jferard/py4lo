@@ -17,18 +17,24 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import os
+from pathlib import Path
+from typing import List
+
+from directives.directive import Directive
 
 
-class Import:
-    sig = "import"
+class Import(Directive):
+    @staticmethod
+    def sig_elements():
+        return ["import"]
 
-    def __init__(self, _py4lo_path, scripts_path):
+    def __init__(self, _py4lo_path: Path, scripts_path: Path):
         self._scripts_path = scripts_path
 
     def execute(self, processor, args):
         processor.include("py4lo_import.py")
         script_ref = args[0]
-        script_fname = os.path.join(self._scripts_path, script_ref+".py")
-        processor.append_script(script_fname)
-        processor.append("import "+script_ref+"\n")
+        script_path = self._scripts_path.joinpath(script_ref + ".py")
+        processor.append_script(script_path)
+        processor.append("import " + script_ref + "\n")
         return True

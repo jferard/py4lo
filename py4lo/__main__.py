@@ -23,14 +23,13 @@ from commands.command import PropertiesProvider
 
 parser = argparse.ArgumentParser(description="Python for LibreOffice",
                                  formatter_class=argparse.RawTextHelpFormatter)
-parser.add_argument("-t", "--toml", help="the toml file (default=py4lo.toml)",
-                    type=str)
+parser.add_argument("-t", "--toml", help="the toml file",
+                    default="py4lo.toml", type=str)
 parser.add_argument("command",
                     help=commands.get_help_message(), type=str)
 parser.add_argument("parameter", nargs="*",
                     help="command parameter")
 args = parser.parse_args()
-
 
 command = commands.get(args.command, args.parameter,
                        PropertiesProvider(args.toml))

@@ -29,6 +29,7 @@ class RunCommand(Command):
     @staticmethod
     def create(args, provider: PropertiesProvider):
         tdata = provider.get()
+        print(tdata)
         update_executor = UpdateCommand.create(args, provider)
         run_command = RunCommand(tdata["calc_exe"])
         return CommandExecutor(run_command, update_executor)

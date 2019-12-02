@@ -16,9 +16,9 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
-from typing import Dict
+from typing import Dict, List
 
-from commands.command import Command
+from commands.command import Command, PropertiesProvider
 from commands.real_command_factory_by_name import real_command_factory_by_name
 from commands.help_command import HelpCommand
 import logging
@@ -29,16 +29,16 @@ class Commands:
         # assert "help" in command_factory_by_name
         self._command_factory_by_name = command_factory_by_name
 
-    def get(self, command_name: str, args, get_tdata):
+    def get(self, command_name: str, args: List[str], provider: PropertiesProvider):
         try:
             return self._command_factory_by_name[command_name].create(args,
-                                                                      get_tdata)
+                                                                      provider)
         except KeyError:
             logger = logging.getLogger("py4lo")
             logger.warning(
                 "Command `{}` not found. Available commands are {}".format(
                     command_name, set(self._command_factory_by_name.keys())))
-            return self._command_factory_by_name["help"].create(args, get_tdata)
+            return self._command_factory_by_name["help"].create(args, provider)
 
     def get_help_message(self):
         lines = [

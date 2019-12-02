@@ -17,17 +17,23 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import os
+from pathlib import Path
+from typing import List
+
+from directives.directive import Directive
 
 
-class Embed:
+class Embed(Directive):
     """Embed a file. It's up to the user to import it if it is a module"""
 
-    sig = "embed"
+    @staticmethod
+    def sig_elements():
+        return ["embed"]
 
-    def __init__(self, _py4lo_path, _scripts_path):
+    def __init__(self, _py4lo_path: Path, _scripts_path: Path):
         pass
 
-    def execute(self, processor, args):
+    def execute(self, processor, args: List[str]):
         processor.include("py4lo_import.py")
         fname = args[0]
         processor.append_script(fname)

@@ -41,8 +41,7 @@ class DirectiveProcessor:
 
         branch_processor = BranchProcessor(local_is_true)
 
-        py4lo_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                                  "..")
+        py4lo_path = Path(__file__).parent.parent
         directive_provider = DirectiveProvider.create(py4lo_path, scripts_path)
 
         return DirectiveProcessor(scripts_path, scripts_processor,

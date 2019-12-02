@@ -26,7 +26,7 @@ from callbacks import *
 from zip_updater import ZipUpdater
 from script_set_processor import ScriptSetProcessor
 
-py4lo_path = Path(__file__).parent
+base_path = Path(__file__).parent.parent
 
 
 def update_ods(tdata):
@@ -83,7 +83,7 @@ class OdsUpdater:
         add_readme = tdata["add_readme"]
         if add_readme:
             readme_contact = tdata["readme_contact"]
-            add_readme_callback = AddReadmeWith(py4lo_path.joinpath("inc"),
+            add_readme_callback = AddReadmeWith(base_path.joinpath("inc"),
                                                 readme_contact)
         else:
             add_readme_callback = None
