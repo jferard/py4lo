@@ -1,5 +1,5 @@
 # py4lo
-dist: bionic
+dist: xenial
 language: python
 
 python:
