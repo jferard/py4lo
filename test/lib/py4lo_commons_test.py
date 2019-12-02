@@ -21,6 +21,7 @@ from unittest.mock import *
 import env
 import sys, os
 
+print("commons", sys.path)
 from py4lo_commons import *
 
 class TestBus(unittest.TestCase):
@@ -54,7 +55,7 @@ class TestCommons(unittest.TestCase):
         self.assertTrue(self.c.cur_dir().endswith("temp"))
 
     def testSanitize(self):
-        self.assertEquals("e", sanitize("é"))
+        self.assertEqual("e", sanitize("é"))
 
     def testLogger(self):
         import tempfile, os, subprocess
@@ -65,7 +66,7 @@ class TestCommons(unittest.TestCase):
         t.flush()
         t.close()
         res = subprocess.getoutput("cat {}".format(t.name))
-        self.assertEquals("DEBUG - é", res)
+        self.assertEqual("DEBUG - é", res)
         os.unlink(t.name)
 
 if __name__ == '__main__':

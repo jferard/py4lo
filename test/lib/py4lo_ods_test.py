@@ -140,7 +140,7 @@ class TestOds(unittest.TestCase):
         self.ods_rows = OdsRows(table)
 
     def test_list(self):
-        self.assertEquals([
+        self.assertEqual([
             ["A1:B1", "A1:B1", "C1", "D1"],
             ["A2:A3", "B2:D3", "B2:D3", "B2:D3"],
             [],
@@ -150,13 +150,13 @@ class TestOds(unittest.TestCase):
         ], list(self.ods_rows))
 
     def test_get_item1(self):
-        self.assertEquals(["A2:A3", "B2:D3", "B2:D3", "B2:D3"], self.ods_rows[1])
+        self.assertEqual(["A2:A3", "B2:D3", "B2:D3", "B2:D3"], self.ods_rows[1])
 
     def test_get_item_neg1(self):
-        self.assertEquals(["A6", "B6", "C6", "D6"], self.ods_rows[-1])
+        self.assertEqual(["A6", "B6", "C6", "D6"], self.ods_rows[-1])
 
     def test_get_slice(self):
-        self.assertEquals([
+        self.assertEqual([
             ["A2:A3", "B2:D3", "B2:D3", "B2:D3"],
             ["A4", "B4", "C4", "D4"],
             ["A6", "B6", "C6", "D6"],

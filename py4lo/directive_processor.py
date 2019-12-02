@@ -18,6 +18,8 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import shlex
 import os
+from pathlib import Path
+from typing import List
 
 from directives import DirectiveProvider
 from branch_processor import BranchProcessor
@@ -30,36 +32,47 @@ class DirectiveProcessor:
     directive, which may use some helpers: import2, ..."""
 
     @staticmethod
-    def create(scripts_path, scripts_processor, python_version):
+    def create(scripts_path: Path, scripts_processor: "ScriptSetProcessor",
+               python_version: str):
         comparator = Comparator({'python_version': python_version})
-        
-        def local_is_true(args):
+
+        def local_is_true(args: List[str]):
             return comparator.check(args[0], args[1], args[2])
 
         branch_processor = BranchProcessor(local_is_true)
 
-        py4lo_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
+        py4lo_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                  "..")
         directive_provider = DirectiveProvider.create(py4lo_path, scripts_path)
 
-        return DirectiveProcessor(scripts_path, scripts_processor, branch_processor, directive_provider)
+        return DirectiveProcessor(scripts_path, scripts_processor,
+                                  branch_processor, directive_provider)
 
-    def __init__(self, scripts_path, scripts_processor, branch_processor, directive_provider):
-        """Create a Directive processor. Scripts_path is the path to the scripts directory"""
+    def __init__(self, scripts_path: Path,
+                 scripts_processor: "ScriptSetProcessor",
+                 branch_processor: BranchProcessor,
+                 directive_provider: DirectiveProvider):
+        """
+        Create a Directive processor. Scripts_path is the path to the scripts
+        directory
+        """
         self._scripts_processor = scripts_processor
         self._scripts_path = scripts_path
         self._branch_processor = branch_processor
         self._directive_provider = directive_provider
         self._includes = set()
 
-    def append_script(self, script_fname):
+    def append_script(self, script_path: Path):
         """Append a script to the script processor"""
-        self._scripts_processor.append_script(script_fname)
+        self._scripts_processor.append_script(script_path)
 
-    def process_line(self, line):
+    def process_line(self, line: str):
         """Process a line that starts with #"""
-        return _DirectiveProcessorWorker(self, self._branch_processor, self._directive_provider, line).process_line()
+        return _DirectiveProcessorWorker(self, self._branch_processor,
+                                         self._directive_provider,
+                                         line).process_line()
 
-    def include(self, fname):
+    def include(self, fname: str):
         s = [""]
         if fname not in self._includes:
             s = _IncludeProcessor(fname).process()
@@ -78,7 +91,9 @@ class DirectiveProcessor:
 class _DirectiveProcessorWorker:
     """A worker that processes the line"""
 
-    def __init__(self, directive_processor, branch_processor, directive_provider, line):
+    def __init__(self, directive_processor: DirectiveProcessor,
+                 branch_processor: BranchProcessor,
+                 directive_provider: DirectiveProvider, line: str):
         self._directive_processor = directive_processor
         self._branch_processor = branch_processor
         self._directive_provider = directive_provider
@@ -102,16 +117,17 @@ class _DirectiveProcessorWorker:
         return self._target_lines
 
     @staticmethod
-    def _is_directive(ls):
+    def _is_directive(ls: List[str]):
         return len(ls) >= 2 and ls[0] == '#' and ls[1] == 'py4lo:'
 
-    def _process_directive(self, line, args):
-        is_branch_directive = self._branch_processor.handle_directive(args[0], args[1:])
+    def _process_directive(self, line: str, args: List[str]):
+        is_branch_directive = self._branch_processor.handle_directive(args[0],
+                                                                      args[1:])
         if is_branch_directive:
             return
 
         if self._branch_processor.skip():
-            self.append("### "+line)
+            self.append("### " + line)
         else:
             try:
                 directive, args = self._directive_provider.get(args)
@@ -121,21 +137,21 @@ class _DirectiveProcessorWorker:
 
     def _comment_or_write(self):
         if self._branch_processor.skip():
-            self.append("### "+self._line)
+            self.append("### " + self._line)
         else:
             self.append(self._line)
 
-    def include(self, fname):
+    def include(self, fname: str):
         """Called by directives"""
         self._target_lines.extend(self._directive_processor.include(fname))
 
-    def append(self, line):
+    def append(self, line: str):
         """Called by directives"""
         self._target_lines.append(line)
 
-    def append_script(self, script_fname):
+    def append_script(self, script_path: Path):
         """Append a script to the script processor"""
-        self._directive_processor.append_script(script_fname)
+        self._directive_processor.append_script(script_path)
 
 
 class _IncludeProcessor:
@@ -147,7 +163,7 @@ class _IncludeProcessor:
     IN_DOC_STRING = 1
     END = -1
 
-    def __init__(self, fname):
+    def __init__(self, fname: str):
         self._fname = fname
         self._inc_lines = []
         self._state = _IncludeProcessor.NORMAL
@@ -157,16 +173,16 @@ class _IncludeProcessor:
         if self._state != _IncludeProcessor.NORMAL:
             raise Exception("Create a new IncludeProcessor")
 
-        path = os.path.dirname(os.path.realpath(__file__))
-        fpath = os.path.join(path, "..", "inc", self._fname)
-        with open(fpath, 'r', encoding="utf-8") as b:
+        path = Path(__file__).parent
+        fpath = path.joinpath("..", "inc", self._fname)
+        with fpath.open('r', encoding="utf-8") as b:
             for line in b.readlines():
                 self._process_line(line)
 
         self._state = _IncludeProcessor.END
         return self._inc_lines
 
-    def _process_line(self, line):
+    def _process_line(self, line: str):
         line = line.rstrip()
         stripped_line = line.strip()
         if self._state == _IncludeProcessor.NORMAL:

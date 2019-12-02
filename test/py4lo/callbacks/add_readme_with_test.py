@@ -29,20 +29,21 @@ class TestAddReadmeWith(unittest.TestCase):
     def test_add_readme_with(self):
         out = io.BytesIO()
         zout = zipfile.ZipFile(out, 'w')
+        print(env.inc_dir, type(env.inc_dir))
         AddReadmeWith(env.inc_dir, "contact").call(zout)
-        self.assertEquals("""<?xml version="1.0" encoding="UTF-8"?>
+        self.assertEqual("""<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE library:libraries PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "libraries.dtd">
 <library:libraries xmlns:library="http://openoffice.org/2000/library" xmlns:xlink="http://www.w3.org/1999/xlink">
     <library:library library:name="Standard" library:link="false"/>
 </library:libraries>
 """, zout.read("Basic/script-lc.xml").decode("utf-8"))
-        self.assertEquals("""<?xml version="1.0" encoding="UTF-8"?>
+        self.assertEqual("""<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE library:library PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "library.dtd">
 <library:library xmlns:library="http://openoffice.org/2000/library" library:name="Standard" library:readonly="false" library:passwordprotected="false">
     <library:element library:name="py4lo"/>
 </library:library>
 """, zout.read("Basic/Standard/script-lb.xml").decode("utf-8"))
-        self.assertEquals("""<?xml version="1.0" encoding="UTF-8"?>
+        self.assertEqual("""<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
 <script:module xmlns:script="http://openoffice.org/2000/script" script:name="Module1" script:language="StarBasic">REM  *****  BASIC  *****
 REM The scripts are written in Python with an external text editor, and included in this file with py4lo.\nREM Py4LO - Python Toolkit For LibreOffice Calc

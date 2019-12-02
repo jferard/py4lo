@@ -19,25 +19,26 @@
 import unittest
 from unittest.mock import Mock, patch, call, MagicMock
 
-from scripts_processor import *
+from script_set_processor import *
 
 
 class TestScriptsProcessor(unittest.TestCase):
-    @patch("builtins.open")
-    def test(self, mock_open):
+    def test(self):
         logger = Mock()
         dp = Mock()
-
+        path = Mock(stem='fname')
+        target_dir = Mock()
         bound = MagicMock()
-        mock_open.return_value = bound
+        path.open.return_value = bound
         bound.__enter__.return_value = ["some line"]
 
-        sp = ScriptProcessor(logger, dp, "fname")
+        sp = ScriptProcessor(logger, dp, path, target_dir)
         sp.parse_script()
 
-        self.assertEqual([call.log(10, 'Parsing script: %s (%s)', 'fname', 'fname')], logger.mock_calls)
+        self.assertEqual(
+            [call.log(10, 'Parsing script: %s (%s)', 'fname', path)],
+            logger.mock_calls)
         self.assertEqual([call.ignore_lines(), call.end()], dp.mock_calls)
-        self.assertEqual([call('fname', 'r', encoding='utf-8'), call().__enter__(), call().__exit__(None, None, None)],
-                         mock_open.mock_calls)
-        self.assertEqual([call.__enter__(), call.__exit__(None, None, None)],
-                         bound.mock_calls)
+        self.assertEqual(
+            [call.open('r', encoding='utf-8'), call.open().__enter__(),
+             call.open().__exit__(None, None, None)], path.mock_calls)

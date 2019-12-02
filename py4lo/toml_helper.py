@@ -16,37 +16,37 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
+import subprocess
+import sys
+from pathlib import Path
 from typing import Dict
 
 import toml
-import os
-import sys
-import subprocess
 
 
 class TomlLoader:
     """Load a toml file and merge values with the default toml file"""
 
-    def __init__(self, py4lo_path, local_py4lo_toml):
-        self._default_py4lo_toml = os.path.join(py4lo_path,
-                                                "default-py4lo.toml")
+    def __init__(self, py4lo_path: Path, local_py4lo_toml: Path):
+        self._default_py4lo_toml = py4lo_path.joinpath(
+            "default-py4lo.toml")
         self._local_py4lo_toml = local_py4lo_toml
-        self._data = {"py4lo_path": py4lo_path}
+        self._data: Dict[str, object] = {"py4lo_path": py4lo_path}
 
-    def load(self):
+    def load(self) -> Dict[str, object]:
         self._load_toml(self._default_py4lo_toml)
         self._load_toml(self._local_py4lo_toml)
         self._check_python_target_version()
         self._check_level()
         return self._data
 
-    def _load_toml(self, fname):
+    def _load_toml(self, path: Path):
         try:
-            with open(fname, 'r', encoding="utf-8") as s:
+            with path.open('r', encoding="utf-8") as s:
                 content = s.read()
                 data = toml.loads(content)
         except Exception as e:
-            print("Error when loading toml file {}: {}".format(fname, e))
+            print("Error when loading toml file {}: {}".format(path, e))
         else:
             self._data.update(data)
 
@@ -54,7 +54,7 @@ class TomlLoader:
         # get version from target executable
         if "python_exe" in self._data:
             status, version = subprocess.getstatusoutput(
-                "\"" + self._data["python_exe"] + "\" -V")
+                "\"" + str(self._data["python_exe"]) + "\" -V")
             if status == 0:
                 self._data["python_version"] = \
                     ((version.split())[1].split("."))[0]
@@ -74,6 +74,6 @@ class TomlLoader:
             self._data["log_level"] = "INFO"
 
 
-def load_toml(local_py4lo_toml: str = "py4lo.toml") -> Dict[str, object]:
-    py4lo_path = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
+def load_toml(local_py4lo_toml: Path = Path("py4lo.toml")) -> Dict[str, object]:
+    py4lo_path = Path(__file__).parent
     return TomlLoader(py4lo_path, local_py4lo_toml).load()

@@ -16,15 +16,19 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
-import os
+from typing import List
+from zipfile import ZipFile
+
+from callbacks import BeforeAfterCallback
+from asset import Asset
 
 
-class AddAssets:
+class AddAssets(BeforeAfterCallback):
     """After callback. Add assets in destination file"""
-    def __init__(self, assets):
+    def __init__(self, assets: List[Asset]):
         self._assets = assets
 
-    def call(self, zout):
+    def call(self, zout: ZipFile) -> bool:
         for asset in self._assets:
-            zout.writestr(asset.get_fname(), asset.get_content())
+            zout.writestr(asset.path, asset.content)
         return True

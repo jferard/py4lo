@@ -17,24 +17,29 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import logging
+from typing import List, Callable, Any
 
 
 class BranchProcessor:
-    """The branch processor handles directives like 'if', 'elif', 'else', 'end'
-    and acts as a preprocessor. Skipped block wont be included in the LO document"""
-
-    def __init__(self, tester):
+    """
+    The branch processor handles directives like 'if', 'elif', 'else', 'end'
+    and acts as a preprocessor. Skipped block wont be included in the LO
+    document
+    """
+    def __init__(self, tester: Callable[[List[str]], bool]):
         """The tester will evaluate the arguments of 'if' or 'elif'"""
         self._assertion_is_true = tester
         self._dont_skips = []
 
     def end(self):
-        """To call before the end, to verify if there are no unclosed if block"""
+        """
+        To call before the end, to verify if there are no unclosed if block
+        """
         if len(self._dont_skips):
             logging.error("Branch condition not closed!")
             raise ValueError("Branch condition not closed!")
 
-    def handle_directive(self, directive, args):
+    def handle_directive(self, directive: str, args: List[Any]) -> bool:
         """Return True if the next block should be read, False otherwise"""
 
         if directive == 'if':
@@ -54,7 +59,7 @@ class BranchProcessor:
 
         return True
 
-    def _was_not_skipping(self):
+    def _was_not_skipping(self) -> bool:
         return self._dont_skips[-1]
 
     def _start_skipping(self):
@@ -66,12 +71,12 @@ class BranchProcessor:
     def _flip_skipping(self):
         self._dont_skips[-1] = not self._dont_skips[-1]
 
-    def _begin_block_and_skip_if_not(self, b):
+    def _begin_block_and_skip_if_not(self, b: bool):
         self._dont_skips.append(b)
 
     def _end_block(self):
         self._dont_skips.pop()
 
-    def skip(self):
+    def skip(self) -> bool:
         """Return True if the current block is skipped"""
         return False in self._dont_skips

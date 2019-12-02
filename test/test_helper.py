@@ -16,35 +16,24 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from abc import ABC, abstractmethod
+# see http://stackoverflow.com/questions/61151/where-do-the-python-unit-tests-go
+import sys
 from pathlib import Path
-from typing import List, Dict, Any, Optional
 
-from toml_helper import load_toml
-
-
-class PropertiesProvider:
-    def __init__(self, toml_filename="py4lo.toml"):
-        self._toml_filename = toml_filename
-        self._tdata = None
-
-    def get(self) -> Dict[str, Any]:
-        if self._tdata is None:
-            self._tdata = load_toml(Path(self._toml_filename))
-
-        return self._tdata
+def any_object():
+    class AnyObject:
+        def __eq__(self, other):
+            return True
+    return AnyObject()
 
 
-class Command(ABC):
-    @staticmethod
-    def create(args: List[str],
-               provider: PropertiesProvider) -> "CommandExecutor":
-        pass
+# append module root directory to sys.path
+test_dir = Path(__file__).parent
+root_dir = test_dir.parent
+py4lo_dir = root_dir.joinpath("py4lo")
+lib_dir = root_dir.joinpath("lib")
+inc_dir = root_dir.joinpath("inc")
 
-    @abstractmethod
-    def execute(self, *args: List[str]) -> Optional[Any]:
-        pass
-
-    @staticmethod
-    def get_help():
-        pass
+for p in map(str, [py4lo_dir, lib_dir, inc_dir]):
+    if p not in sys.path:
+        sys.path.insert(0, p)

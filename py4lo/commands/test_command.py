@@ -16,28 +16,32 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
-
 import logging
+from logging import Logger
 import os
 import subprocess
 import sys
+from pathlib import Path
+from typing import Dict, Callable, Iterator
 
-from commands import Command
-from commands.command import PropertiesProvider
+from commands.command import Command, PropertiesProvider
 from commands.command_executor import CommandExecutor
 
 
 class TestCommand(Command):
+    __test__ = False
+
     @staticmethod
     def create(_args, provider: PropertiesProvider):
         tdata = provider.get()
         logger = logging.getLogger("py4lo")
         logger.setLevel(tdata["log_level"])
         return CommandExecutor(
-            TestCommand(logger, tdata["python_exe"], tdata["test_dir"],
-                        tdata["src_dir"], tdata["py4lo_path"]))
+            TestCommand(logger, tdata["python_exe"], Path(tdata["test_dir"]),
+                        Path(tdata["src_dir"]), Path(tdata["py4lo_path"])))
 
-    def __init__(self, logger, python_exe, test_dir, src_dir, py4lo_path):
+    def __init__(self, logger: Logger, python_exe: str, test_dir: Path,
+                 src_dir: Path, py4lo_path: Path):
         self._logger = logger
         self._python_exe = python_exe
         self._test_dir = test_dir
@@ -46,15 +50,17 @@ class TestCommand(Command):
         self._env = None
 
     def execute(self):
-        final_status = self._execute_all_tests(self._src_paths,
+        final_status = self._execute_all_tests(self._src_paths(),
                                                self._execute_doctests)
-        final_status = self._execute_all_tests(self._test_paths,
+        final_status = self._execute_all_tests(self._test_paths(),
                                                self._execute_unittests) or final_status
         return final_status,
 
-    def _execute_all_tests(self, get_paths, execute_tests):
+    def _execute_all_tests(self, paths: Iterator[Path],
+                           execute_tests: Callable[
+                               [Path], subprocess.CompletedProcess]) -> int:
         final_status = 0
-        for path in get_paths():
+        for path in paths:
             completed_process = execute_tests(path)
             status = completed_process.returncode
             if completed_process.stdout:
@@ -68,37 +74,34 @@ class TestCommand(Command):
 
         return final_status
 
-    def _execute_unittests(self, path):
-        cmd = "\"" + self._python_exe + "\" " + path
+    def _execute_unittests(self, path: Path) -> subprocess.CompletedProcess:
+        cmd = "\"{}\" {}".format(self._python_exe, path)
         self._logger.info("execute: {0}".format(cmd))
         return subprocess.run(cmd, stdout=subprocess.PIPE,
                               stderr=subprocess.PIPE, env=self._get_env())
 
-    def _execute_doctests(self, path):
-        cmd = "\"" + self._python_exe + "\" -m doctest " + path
-        self._logger.info("execute: {0}".format(cmd))
+    def _execute_doctests(self, path: Path) -> subprocess.CompletedProcess:
+        cmd = "\"{}\" -m doctest {}".format(self._python_exe, path)
+        self._logger.info("execute: %s", cmd)
         return subprocess.run(cmd, stdout=subprocess.PIPE,
                               stderr=subprocess.PIPE, env=self._get_env())
 
-    def _test_paths(self):
-        for dirpath, dirnames, filenames in os.walk(self._test_dir):
-            for filename in filenames:
-                if filename.endswith("_test.py"):
-                    yield os.path.join(dirpath, filename)
+    def _test_paths(self) -> Iterator[Path]:
+        for path in self._test_dir.rglob("*.py"):
+            if path.name.endswith("_test.py"):
+                yield path
 
-    def _src_paths(self):
-        for dirpath, dirnames, filenames in os.walk(self._src_dir):
-            for filename in filenames:
-                if filename.endswith(".py") and filename != "main.py":
-                    yield os.path.join(dirpath, filename)
+    def _src_paths(self) -> Iterator[Path]:
+        for path in self._src_dir.rglob("*.py"):
+            if path.name != "main.py":
+                yield path
 
-    def _get_env(self):
+    def _get_env(self) -> Dict[str, str]:
         if self._env is None:
             env = dict(os.environ)
-            env["PYTHONPATH"] = ";".join(sys.path + [self._src_dir,
-                                                     os.path.join(
-                                                         self._py4lo_path,
-                                                         "lib")])
+            src_lib = [str(self._src_dir),
+                       str(self._py4lo_path.joinpath("lib"))]
+            env["PYTHONPATH"] = ";".join(sys.path + src_lib)
             self._env = env
         return self._env
 

@@ -22,7 +22,7 @@ import env
 from zip_updater import *
 
 class TestZipUpdater(unittest.TestCase):
-    @patch('zipfile.ZipFile', autospec=True)
+    @patch('zip_updater.ZipFile', autospec=True)
     def test(self, zf):
         zu = ZipUpdater()
         cbs = []
@@ -38,7 +38,7 @@ class TestZipUpdater(unittest.TestCase):
         p = PropertyMock()
         type(zout).comment = p
         zin = Mock(comment="a")
-        zin.infolist.return_value = [1,2]
+        zin.infolist.return_value = [1, 2]
 
         rout = MagicMock()
         rout.__enter__.return_value = zout
@@ -57,13 +57,14 @@ class TestZipUpdater(unittest.TestCase):
         a2.call.return_value = False
 
         zu.before(b1).before(b2).item(i1).item(i2).after(a1).after(a2)
-        zu.update("source", "dest")
-
+        zu.update(Path("source"), Path("dest"))
 
         p.assert_called_once_with("a")
         b1.call.assert_called_once_with(zout)
         b2.call.assert_called_once_with(zout)
-        self.assertEquals([call(zin, zout, 1), call(zin, zout, 2)], i1.call.mock_calls)
-        self.assertEquals([call(zin, zout, 1), call(zin, zout, 2)], i2.call.mock_calls)
+        self.assertEqual([call(zin, zout, 1), call(zin, zout, 2)],
+                          i1.call.mock_calls)
+        self.assertEqual([call(zin, zout, 1), call(zin, zout, 2)],
+                          i2.call.mock_calls)
         a1.call.assert_called_once_with(zout)
         a2.call.assert_called_once_with(zout)

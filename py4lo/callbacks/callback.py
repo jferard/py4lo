@@ -16,17 +16,17 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
-from pathlib import Path
+from abc import ABC, abstractmethod
 from zipfile import ZipFile, ZipInfo
 
-from callbacks import ItemCallback
+
+class BeforeAfterCallback(ABC):
+    @abstractmethod
+    def call(self, zout: ZipFile) -> bool:
+        pass
 
 
-class IgnoreScripts(ItemCallback):
-    """Item callback. Ignore all existing scripts in source file"""
-
-    def __init__(self, arc_scripts_path: Path):
-        self._arc_scripts_path = arc_scripts_path
-
-    def call(self, _zin: ZipFile, _zout: ZipFile, item: ZipInfo):
-        return not item.filename.startswith(self._arc_scripts_path)
+class ItemCallback(ABC):
+    @abstractmethod
+    def call(self, zin: ZipFile, zout: ZipFile, item: ZipInfo):
+        pass

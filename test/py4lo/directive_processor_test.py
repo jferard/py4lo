@@ -33,13 +33,13 @@ class TestDirectiveProcessor(unittest.TestCase):
                                        self._directive_provider)
 
     def test_create(self):
-        dp = DirectiveProcessor.create("", "", "3.6")
+        dp = DirectiveProcessor.create(Path(""), Path(""), "3.6")
 
     def test_append_script(self):
-        self._dp.append_script("ok")
+        self._dp.append_script(Path("ok"))
 
         self.assertEqual([], self._scripts_path.mock_calls)
-        self.assertEqual([call.append_script("ok")], self._scripts_processor.mock_calls)
+        self.assertEqual([call.append_script(Path("ok"))], self._scripts_processor.mock_calls)
         self.assertEqual([], self._branch_processor.mock_calls)
         self.assertEqual([], self._directive_provider.mock_calls)
 

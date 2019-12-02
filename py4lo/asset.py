@@ -16,35 +16,11 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Dict, Any, Optional
-
-from toml_helper import load_toml
 
 
-class PropertiesProvider:
-    def __init__(self, toml_filename="py4lo.toml"):
-        self._toml_filename = toml_filename
-        self._tdata = None
-
-    def get(self) -> Dict[str, Any]:
-        if self._tdata is None:
-            self._tdata = load_toml(Path(self._toml_filename))
-
-        return self._tdata
-
-
-class Command(ABC):
-    @staticmethod
-    def create(args: List[str],
-               provider: PropertiesProvider) -> "CommandExecutor":
-        pass
-
-    @abstractmethod
-    def execute(self, *args: List[str]) -> Optional[Any]:
-        pass
-
-    @staticmethod
-    def get_help():
-        pass
+@dataclass
+class Asset:
+    path: Path
+    content: bytes

@@ -16,19 +16,26 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
-import os
+from pathlib import Path
+from zipfile import ZipFile
+
+from callbacks import BeforeAfterCallback
 
 
-class AddReadmeWith:
+class AddReadmeWith(BeforeAfterCallback):
     """After callback. Add a readme in destination file"""
-    def __init__(self, inc_path, contact):
+
+    def __init__(self, inc_path: Path, contact: str):
         self._inc_path = inc_path
         self._contact = contact
 
-    def call(self, zout):
-        zout.write(os.path.join(self._inc_path, "script-lc.xml"), "Basic/script-lc.xml")
-        zout.write(os.path.join(self._inc_path, "script-lb.xml"), "Basic/Standard/script-lb.xml")
-        with open(os.path.join(self._inc_path, "py4lo.xml.tpl"), 'r', encoding='utf-8') as f:
+    def call(self, zout: ZipFile) -> bool:
+        zout.write(self._inc_path.joinpath("script-lc.xml"),
+                   "Basic/script-lc.xml")
+        zout.write(self._inc_path.joinpath("script-lb.xml"),
+                   "Basic/Standard/script-lb.xml")
+        with self._inc_path.joinpath("py4lo.xml.tpl").open('r',
+                                                           encoding='utf-8') as f:
             tpl = f.read()
             xml = tpl.format(contact=self._contact)
             zout.writestr("Basic/Standard/py4lo.xml", xml)

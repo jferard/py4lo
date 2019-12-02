@@ -17,20 +17,24 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import logging
+from typing import List
+
+from commands.command import Command
 
 
 class CommandExecutor:
-    def __init__(self, command, previous_executor=None):
+    def __init__(self, command: Command,
+                 previous_executor: "CommandExecutor" = None):
         self._command = command
         self._previous_executor = previous_executor
 
-    def execute(self, *args):
+    def execute(self, *args: List[str]):
         if self._previous_executor is None:
             cur_args = []
         else:
             cur_args = self._previous_executor.execute(*args)
 
-        logging.warning(str(self._command)+", args="+str(cur_args))
+        logging.warning("%s, args=%s", self._command, cur_args)
         ret = self._command.execute(*cur_args)
-        logging.warning(str(self._command)+", args="+str(cur_args)+" ret="+str(ret))
+        logging.warning("%s, args=%s, ret=%s", self._command, cur_args, ret)
         return ret

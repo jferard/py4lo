@@ -17,6 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import logging
+from abc import ABC
+from pathlib import Path
 
 from commands import Command
 from commands.command import PropertiesProvider
@@ -25,7 +27,7 @@ from commands.debug_command import DebugCommand
 from commands.test_command import TestCommand
 
 
-class InitCommand(Command):
+class InitCommand(Command, ABC):
     @staticmethod
     def create(args, provider: PropertiesProvider):
         tdata = provider.get()
@@ -34,8 +36,9 @@ class InitCommand(Command):
         logger.setLevel(tdata["log_level"])
         init_command = DebugCommand(
             logger,
-            tdata["py4lo_path"],
-            tdata["src_dir"],
+            Path(tdata["py4lo_path"]),
+            Path(tdata["src_dir"]),
+            tdata["src_ignore"],
             tdata["assets_dir"],
             tdata["target_dir"],
             tdata["assets_dest_dir"],

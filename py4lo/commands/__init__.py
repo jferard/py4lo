@@ -29,7 +29,7 @@ class Commands:
         # assert "help" in command_factory_by_name
         self._command_factory_by_name = command_factory_by_name
 
-    def get(self, command_name, args, get_tdata):
+    def get(self, command_name: str, args, get_tdata):
         try:
             return self._command_factory_by_name[command_name].create(args,
                                                                       get_tdata)

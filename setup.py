@@ -56,5 +56,5 @@ setup(
             'py4lo=py4lo:main',
         ],
     },
-    python_requires='>=3',
+    python_requires='>=3.7',
 )

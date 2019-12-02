@@ -16,14 +16,17 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
-import os
-from zip_updater import ZipUpdater
 import logging
-from callbacks import *
-from scripts_processor import ScriptsProcessor
 import subprocess
+from pathlib import Path
+from typing import List, Collection
 
-py4lo_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+from asset import Asset
+from callbacks import *
+from zip_updater import ZipUpdater
+from script_set_processor import ScriptSetProcessor
+
+py4lo_path = Path(__file__).parent
 
 
 def update_ods(tdata):
@@ -53,16 +56,23 @@ def _get_dest_name(tdata):
     return ods_dest_name
 
 
-class Asset:
-    def __init__(self, fname, content):
-        self._fname = fname
-        self._content = content
+def get_assets(assets_dir: Path, assets_ignore: List[str],
+               assets_dest_dir: Path) -> List[Asset]:
+    assets = []
+    for p in get_paths(assets_dir, assets_ignore):
+        dest = assets_dest_dir.joinpath(p.relative_to(assets_dir))
+        with dest.open('rb') as source:
+            assets.append(Asset(dest, source.read()))
 
-    def get_fname(self):
-        return self._fname
+    return assets
 
-    def get_content(self):
-        return self._content
+
+def get_paths(source_dir: Path, ignore: List[str], glob="*") -> Collection[
+    Path]:
+    paths = set(source_dir.rglob(glob))
+    for pattern in ignore:
+        paths -= set(source_dir.rglob(pattern))
+    return set(p for p in paths if p.is_file())
 
 
 class OdsUpdater:
@@ -73,63 +83,58 @@ class OdsUpdater:
         add_readme = tdata["add_readme"]
         if add_readme:
             readme_contact = tdata["readme_contact"]
-            add_readme_callback = AddReadmeWith(os.path.join(py4lo_path, "inc"),
+            add_readme_callback = AddReadmeWith(py4lo_path.joinpath("inc"),
                                                 readme_contact)
         else:
             add_readme_callback = None
 
         src_dir = tdata["src_dir"]
+        src_ignore = tdata["src_ignore"]
         assets_dir = tdata["assets_dir"]
+        assets_ignore = tdata["assets_ignore"]
         assets_dest_dir = tdata["assets_dest_dir"]
         target_dir = tdata["target_dir"]
         python_version = tdata["python_version"]
 
-        return OdsUpdater(logger, src_dir, assets_dir, target_dir,
-                          assets_dest_dir, python_version, add_readme_callback)
+        return OdsUpdater(logger, Path(src_dir), src_ignore, Path(assets_dir),
+                          assets_ignore, Path(target_dir),
+                          Path(assets_dest_dir), python_version,
+                          add_readme_callback)
 
-    def __init__(self, logger, src_dir, assets_dir, target_dir, assets_dest_dir,
-                 python_version, add_readme_callback):
+    def __init__(self, logger: logging.Logger, src_dir: Path,
+                 src_ignore: List[str], assets_dir: Path,
+                 assets_ignore: List[str],
+                 target_dir: Path, assets_dest_dir: Path,
+                 python_version: str, add_readme_callback: AddReadmeWith):
         self._logger = logger
         self._src_dir = src_dir
+        self._src_ignore = src_ignore
         self._assets_dir = assets_dir
+        self._assets_ignore = assets_ignore
         self._assets_dest_dir = assets_dest_dir
         self._target_dir = target_dir
         self._python_version = python_version
         self._add_readme_callback = add_readme_callback
 
-    def update(self, ods_source_name, ods_dest_name):
+    def update(self, ods_source: Path, ods_dest: Path) -> Path:
         self._logger.info("Debug or init. Generating %s for Python %s",
-                          ods_dest_name, self._python_version)
+                          ods_dest, self._python_version)
 
         scripts = self._get_scripts()
-        assets = self._get_assets()
+        assets = get_assets(self._assets_dir, self._assets_ignore,
+                            self._assets_dest_dir)
 
         zip_updater = self._create_updater(scripts, assets)
-        zip_updater.update(ods_source_name, ods_dest_name)
-        return ods_dest_name
+        zip_updater.update(ods_source, ods_dest)
+        return ods_dest
 
     def _get_scripts(self):
-        script_fnames = set(
-            os.path.join(self._src_dir, fname) for fname in
-            os.listdir(self._src_dir) if fname.endswith(".py"))
-        scripts_processor = ScriptsProcessor(self._logger, self._src_dir,
-                                             self._target_dir,
-                                             self._python_version)
-        return scripts_processor.process(script_fnames)
-
-    def _get_assets(self):
-        assets = []
-        for root, _, fnames in os.walk(self._assets_dir):
-            for fname in fnames:
-                filename = os.path.join(root, fname)
-                dest_name = os.path.join(self._assets_dest_dir,
-                                         os.path.relpath(filename,
-                                                         self._assets_dir)).replace(
-                    os.path.sep, "/")
-                with open(filename, 'rb') as source:
-                    assets.append(Asset(dest_name, source.read()))
-
-        return assets
+        script_paths = get_paths(self._src_dir, self._src_ignore, "*.py")
+        scripts_processor = ScriptSetProcessor(self._logger, self._src_dir,
+                                               self._target_dir,
+                                               self._python_version,
+                                               script_paths)
+        return scripts_processor.process()
 
     def _create_updater(self, scripts, assets):
         zip_updater = ZipUpdater()
@@ -145,6 +150,6 @@ class OdsUpdater:
         return zip_updater
 
 
-def open_with_calc(ods_name, calc_exe):
+def open_with_calc(ods_name: Path, calc_exe):
     """Open a file with calc"""
-    _r = subprocess.call([calc_exe, ods_name])
+    _r = subprocess.call([calc_exe, str(ods_name)])

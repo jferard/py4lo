@@ -16,15 +16,23 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
+from typing import List
+from zipfile import ZipFile
+
+from callbacks import BeforeAfterCallback
+from script_set_processor import TargetScript
+
 ARC_SCRIPTS_PATH = "Scripts/python"
 
 
-class AddScripts:
+class AddScripts(BeforeAfterCallback):
     """After callback. Add some scripts in destination file"""
-    def __init__(self, scripts):
+
+    def __init__(self, scripts: List[TargetScript]):
         self._scripts = scripts
 
-    def call(self, zout):
+    def call(self, zout: ZipFile) -> bool:
         for script in self._scripts:
-            zout.writestr(ARC_SCRIPTS_PATH+"/"+script.get_name(), script.get_content())
+            zout.writestr(ARC_SCRIPTS_PATH + "/" + script.name,
+                          script.script_content)
         return True

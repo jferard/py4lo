@@ -18,6 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 
 import unittest
+from pathlib import Path
 from unittest.mock import *
 import env
 
@@ -28,36 +29,46 @@ import subprocess
 
 class TestCommandTest(unittest.TestCase):
     @patch('subprocess.run', spec=subprocess.run)
-    @patch('os.walk', spec=os.walk)
-    def test(self, os_walk_mock, subprocess_run_mock):
-        os_walk_mock.side_effect = [
-            [("/src_dir", (), ("src_a.py",))],                                    # doctest
-            [("/test_dir", ("b",), ("c_test.py",)), ("/test_dir/b", (), ("d_test.py",))],     # unit test
-        ]
-        completed_process = MagicMock()
-        subprocess_run_mock.return_value = completed_process
-        completed_process.returncode.side_effect = [(0, "ok"), (1, "not ok"), (0, "s ok")]
-        completed_process.stdout.decode.side_effect = ["ok", "not ok", "s ok"]
+    def test(self, subprocess_run_mock):
+        completed_process1 = MagicMock(returncode=0)
+        completed_process1.stdout.decode.return_value = "ok"
+        completed_process2 = MagicMock(returncode=1)
+        completed_process2.stdout.decode.return_value = "not ok"
+        completed_process2.stderr.decode.return_value = "err"
+        completed_process3 = MagicMock(returncode=0)
+        completed_process3.stdout.decode.return_value = "s ok"
+        subprocess_run_mock.side_effect = [completed_process1,
+                                            completed_process2,
+                                            completed_process3]
         logger = MagicMock()
-        tc = TestCommand(logger, "py_exe", "test_dir", "src_dir", "p_path")
+        test_dir = Mock()
+        test_dir.rglob.side_effect = [[Path("/test_dir/c_test.py"),
+                                       Path("/test_dir/b/d_test.py")]]
+        src_dir = Mock()
+        src_dir.rglob.side_effect = [[Path("/src_dir/src_a.py")]]
+        tc = TestCommand(logger, "py_exe", test_dir, src_dir,
+                         Path("p_path"))
         status = tc.execute()
 
-        subprocess_run_mock.assert_has_calls([
-            call('"py_exe" -m doctest /src_dir/src_a.py', env=unittest.mock.ANY, stderr=-1, stdout=-1),
-            call('"py_exe" /test_dir/c_test.py', env=unittest.mock.ANY, stderr=-1, stdout=-1),
-            call('"py_exe" /test_dir/b/d_test.py', env=unittest.mock.ANY, stderr=-1, stdout=-1),
-        ], any_order=True)
-        logger.assert_has_calls([
-            call.info('execute: "py_exe" -m doctest /src_dir/src_a.py'),
-            call.info('output: s ok'),
-            call.info('execute: "py_exe" /test_dir/c_test.py'),
+        self.assertEqual([
+            call.info('execute: %s', '"py_exe" -m doctest /src_dir/src_a.py'),
             call.info('output: ok'),
-            call.info('execute: "py_exe" /test_dir/b/d_test.py'),
+            call.info('execute: "py_exe" /test_dir/c_test.py'),
             call.info('output: not ok'),
-        ], any_order=True)
+            call.error('error: err'),
+            call.info('execute: "py_exe" /test_dir/b/d_test.py'),
+            call.info('output: s ok'),
+        ], logger.mock_calls)
+        self.assertEqual([
+            call('"py_exe" -m doctest /src_dir/src_a.py', env=unittest.mock.ANY,
+                 stderr=-1, stdout=-1),
+            call('"py_exe" /test_dir/c_test.py', env=unittest.mock.ANY,
+                 stderr=-1, stdout=-1),
+            call('"py_exe" /test_dir/b/d_test.py', env=unittest.mock.ANY,
+                 stderr=-1, stdout=-1),
+        ], subprocess_run_mock.mock_calls)
         self.assertEqual((1,), status)
 
 
 if __name__ == '__main__':
     unittest.main()
-

@@ -16,36 +16,36 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
-import env
 import unittest
 from unittest.mock import Mock, patch, call
 
-from callbacks import *
 from commands.debug_command import *
-
 from py4lo.commands.debug_command import DebugCommand
 
 
 class TestDebugCommand(unittest.TestCase):
     @patch('zip_updater.ZipUpdater', autospec=True)
-    @patch('os.listdir')
-    def test(self, listdir, Zupdater):
+    def test(self, Zupdater):
         logger = Mock()
-        py4lo_path = ""
-        src_dir = ""
-        assets_dir = ""
-        target_dir = ""
-        assets_dest_dir = ""
+        py4lo_path = Path("")
+        src_dir = Path("")
+        src_ignore = ["*"]
+        assets_dir = Path("")
+        assets_ignore = []
+        target_dir = Path("")
+        assets_dest_dir = Path("")
         python_version = ""
-        ods_dest_name = ""
+        ods_dest_name = Path("")
 
-        listdir.return_value = []
-
-        d = DebugCommand(logger, py4lo_path, src_dir, assets_dir, target_dir, assets_dest_dir, python_version, ods_dest_name)
+        d = DebugCommand(logger, py4lo_path, src_dir, src_ignore, assets_dir,
+                         assets_ignore, target_dir, assets_dest_dir,
+                         python_version, ods_dest_name)
         d.execute([])
 
-        self.assertEqual([call.info("Debug or init. Generating '%s' for Python '%s'", '', ''),
-                          call.log(10, 'Scripts to process: %s', set())], logger.mock_calls)
-        self.assertEqual([call('')], listdir.mock_calls)
+        self.assertEqual([call.info(
+            "Debug or init. Generating '%s' for Python '%s'", Path('.'), ''),
+                          call.log(10, 'Scripts to process: %s', set())],
+                         logger.mock_calls)
         self.assertEqual(call(), Zupdater.mock_calls[0])
-        self.assertEqual(call().update('inc/debug.ods', ''), Zupdater.mock_calls[-1])
+        self.assertEqual(call().update(Path('inc/debug.ods'), Path('')),
+                         Zupdater.mock_calls[-1])

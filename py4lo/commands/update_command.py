@@ -16,8 +16,9 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
-from commands import Command
-from commands.command import PropertiesProvider
+from pathlib import Path
+
+from commands.command import Command, PropertiesProvider
 from commands.command_executor import CommandExecutor
 from commands.test_command import TestCommand
 from tools import update_ods
@@ -33,7 +34,7 @@ class UpdateCommand(Command):
     def __init__(self, provider: PropertiesProvider):
         self._tdata = provider.get()
 
-    def execute(self, status):
+    def execute(self, status: int) -> (int, Path):
         dest_name = update_ods(self._tdata)
         return status, dest_name
 

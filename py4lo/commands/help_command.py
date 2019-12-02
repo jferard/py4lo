@@ -16,8 +16,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
-from commands import Command
-from commands.command import PropertiesProvider
+from commands.command import Command, PropertiesProvider
 from commands.real_command_factory_by_name import real_command_factory_by_name
 
 DEFAULT_MSG = """usage: py4lo.py [-h] [-t|--help|command [args]
