@@ -35,28 +35,32 @@ END_SHAPES = """</table:shapes>"""
 
 
 class AddDebugContent(BeforeAfterCallback):
-    """After callback. Add a debug content in destination file. The debug content
-    is one button per function."""
+    """
+    AfterCallback. Add a debug content in destination file.
+    The debug content is one button per function.
+    """
+
     def __init__(self, funcs_by_script: Dict[str, List[str]]):
         """
-        :param funcs_by_script: a mapping
+        :param funcs_by_script: a mapping script_name -> [func name]
         """
         self._funcs_by_script = funcs_by_script
 
     def call(self, zout: ZipFile) -> bool:
-        forms = BEGIN_FORMS
-        draw = BEGIN_SHAPES
+        forms = [BEGIN_FORMS]
+        draw = [BEGIN_SHAPES]
 
         i = 0
         for script in sorted(self._funcs_by_script):
             for func in self._funcs_by_script[script]:
-                forms += FORM_TPL.format(name=func, id=i, file=script, func=func)
-                draw += DRAW_CONTROL_TPL.format(x=10, y=15 * i + 10, id=i)
+                forms.append(
+                    FORM_TPL.format(name=func, id=i, file=script, func=func))
+                draw.append(DRAW_CONTROL_TPL.format(x=10, y=15 * i + 10, id=i))
                 i += 1
 
-        forms += END_FORMS
-        draw += END_SHAPES
+        forms.append(END_FORMS)
+        draw.append(END_SHAPES)
 
-        s = BEFORE + forms + draw + AFTER
+        s = "".join([BEFORE] + forms + draw + [AFTER])
         zout.writestr("content.xml", s)
         return True

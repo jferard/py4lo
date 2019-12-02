@@ -30,7 +30,7 @@ class Include(Directive):
     def sig_elements():
         return ["include"]
 
-    def __init__(self, _py4lo_path: Path, scripts_path: Path):
+    def __init__(self, _base_path: Path, scripts_path: Path):
         self._scripts_path = scripts_path
 
     def execute(self, processor, args: List[str]):

@@ -22,7 +22,7 @@ from typing import List
 
 class Directive(ABC):
     @abstractmethod
-    def __init__(self, py4lo_path: Path, scripts_path: Path):
+    def __init__(self, base_path: Path, scripts_path: Path):
         pass
 
     @abstractmethod

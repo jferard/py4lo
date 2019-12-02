@@ -48,7 +48,7 @@ class TestTomlHelper(unittest.TestCase):
             'a': 1,
             'b': 2,
             'log_level': 'INFO'}.items() <= tdata.items())
-        self.assertEqual({'a', 'b', 'log_level', 'py4lo_path', 'python_exe', 'python_version'}, set(tdata.keys()))
+        self.assertEqual({'a', 'b', 'log_level', 'base_path', 'python_exe', 'python_version'}, set(tdata.keys()))
 
 
 if __name__ == '__main__':

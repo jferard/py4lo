@@ -27,7 +27,7 @@ class TestDebugCommand(unittest.TestCase):
     @patch('zip_updater.ZipUpdater', autospec=True)
     def test(self, Zupdater):
         logger = Mock()
-        py4lo_path = Path("")
+        base_path = Path("")
         src_dir = Path("")
         src_ignore = ["*"]
         assets_dir = Path("")
@@ -37,7 +37,7 @@ class TestDebugCommand(unittest.TestCase):
         python_version = ""
         ods_dest_name = Path("")
 
-        d = DebugCommand(logger, py4lo_path, src_dir, src_ignore, assets_dir,
+        d = DebugCommand(logger, base_path, src_dir, src_ignore, assets_dir,
                          assets_ignore, target_dir, assets_dest_dir,
                          python_version, ods_dest_name)
         d.execute([])

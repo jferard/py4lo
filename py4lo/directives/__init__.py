@@ -31,13 +31,13 @@ class _DirectiveProviderFactory:
                  directive_classes: List[Type[Directive]]):
         self._directive_classes = directive_classes
 
-    def create(self, py4lo_path: Path, scripts_path: Path):
+    def create(self, base_path: Path, scripts_path: Path):
         self._directives_tree = {}
         for d in self._directive_classes:
             sig_elements = d.sig_elements()
             assert len(sig_elements)
 
-            directive = d(py4lo_path, scripts_path)
+            directive = d(base_path, scripts_path)
 
             self._put_directive_class(sig_elements, directive)
 
@@ -59,9 +59,9 @@ T = Dict[str, "T"]
 
 class DirectiveProvider:
     @staticmethod
-    def create(py4lo_path: Path, scripts_path: Path):
+    def create(base_path: Path, scripts_path: Path):
         return _DirectiveProviderFactory(
-            [Include, ImportLib, Import, Embed]).create(py4lo_path,
+            [Include, ImportLib, Import, Embed]).create(base_path,
                                                         scripts_path)
 
     def __init__(self, directives_tree: T):

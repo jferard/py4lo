@@ -38,15 +38,15 @@ class TestCommand(Command):
         logger.setLevel(tdata["log_level"])
         return CommandExecutor(
             TestCommand(logger, tdata["python_exe"], Path(tdata["test_dir"]),
-                        Path(tdata["src_dir"]), Path(tdata["py4lo_path"])))
+                        Path(tdata["src_dir"]), Path(tdata["base_path"])))
 
     def __init__(self, logger: Logger, python_exe: str, test_dir: Path,
-                 src_dir: Path, py4lo_path: Path):
+                 src_dir: Path, base_path: Path):
         self._logger = logger
         self._python_exe = python_exe
         self._test_dir = test_dir
         self._src_dir = src_dir
-        self._py4lo_path = py4lo_path
+        self._base_path = base_path
         self._env = None
 
     def execute(self):
@@ -102,7 +102,7 @@ class TestCommand(Command):
         if self._env is None:
             env = dict(os.environ)
             src_lib = [str(self._src_dir),
-                       str(self._py4lo_path.joinpath("lib"))]
+                       str(self._base_path.joinpath("lib"))]
             env["PYTHONPATH"] = ";".join(sys.path + src_lib)
             self._env = env
         return self._env

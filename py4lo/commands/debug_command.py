@@ -38,7 +38,7 @@ class DebugCommand(Command):
         tdata = provider.get()
         logger = logging.getLogger("py4lo")
         logger.setLevel(tdata["log_level"])
-        debug_command = DebugCommand(logger, Path(tdata["py4lo_path"]),
+        debug_command = DebugCommand(logger, Path(tdata["base_path"]),
                                      Path(tdata["src_dir"]),
                                      tdata["src_ignore"],
                                      Path(tdata["assets_dir"]),
@@ -49,13 +49,13 @@ class DebugCommand(Command):
                                      Path(tdata["debug_file"]))
         return CommandExecutor(debug_command, test_executor)
 
-    def __init__(self, logger: logging.Logger, py4lo_path: Path, src_dir: Path,
+    def __init__(self, logger: logging.Logger, base_path: Path, src_dir: Path,
                  src_ignore: List[str], assets_dir: Path,
                  assets_ignore: List[str], target_dir: Path,
                  assets_dest_dir: Path, python_version: str,
                  ods_dest_name: Path):
         self._logger = logger
-        self._py4lo_path = py4lo_path
+        self._base_path = base_path
         self._src_dir = src_dir
         self._src_ignore = src_ignore
         self._assets_dir = assets_dir
@@ -83,7 +83,7 @@ class DebugCommand(Command):
                 .after(AddAssets(assets))
                 .after(AddDebugContent(exported_func_names))
         )
-        zupdater.update(self._py4lo_path.joinpath("inc", "debug.ods"),
+        zupdater.update(self._base_path.joinpath("inc", "debug.ods"),
                         self._ods_dest_name)
         return self._ods_dest_name,
 

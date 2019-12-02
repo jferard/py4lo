@@ -27,11 +27,11 @@ import toml
 class TomlLoader:
     """Load a toml file and merge values with the default toml file"""
 
-    def __init__(self, py4lo_path: Path, local_py4lo_toml: Path):
-        self._default_py4lo_toml = py4lo_path.joinpath(
+    def __init__(self, base_path: Path, local_py4lo_toml: Path):
+        self._default_py4lo_toml = base_path.joinpath(
             "default-py4lo.toml")
         self._local_py4lo_toml = local_py4lo_toml
-        self._data: Dict[str, object] = {"py4lo_path": py4lo_path}
+        self._data: Dict[str, object] = {"base_path": base_path}
 
     def load(self) -> Dict[str, object]:
         self._load_toml(self._default_py4lo_toml)
@@ -75,5 +75,5 @@ class TomlLoader:
 
 
 def load_toml(local_py4lo_toml: Path = Path("py4lo.toml")) -> Dict[str, object]:
-    py4lo_path = Path(__file__).parent
-    return TomlLoader(py4lo_path, local_py4lo_toml).load()
+    base_path = Path(__file__).parent.parent.resolve()
+    return TomlLoader(base_path, local_py4lo_toml).load()

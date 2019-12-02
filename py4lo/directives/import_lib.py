@@ -28,13 +28,13 @@ class ImportLib(Directive):
     def sig_elements():
         return ["import", "lib"]
 
-    def __init__(self, py4lo_path: Path, _scripts_path: Path):
-        self._py4lo_path = py4lo_path
+    def __init__(self, base_path: Path, _scripts_path: Path):
+        self._base_path = base_path
 
     def execute(self, processor, args):
         processor.include("py4lo_import.py")
         script_ref = args[0]
-        script_fname = self._py4lo_path.joinpath("lib", script_ref + ".py")
+        script_fname = self._base_path.joinpath("lib", script_ref + ".py")
         processor.append_script(script_fname)
         processor.append("import " + script_ref + "\n")
         return True

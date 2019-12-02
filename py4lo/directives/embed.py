@@ -30,7 +30,7 @@ class Embed(Directive):
     def sig_elements():
         return ["embed"]
 
-    def __init__(self, _py4lo_path: Path, _scripts_path: Path):
+    def __init__(self, _base_path: Path, _scripts_path: Path):
         pass
 
     def execute(self, processor, args: List[str]):

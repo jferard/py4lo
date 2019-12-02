@@ -36,7 +36,7 @@ class InitCommand(Command, ABC):
         logger.setLevel(tdata["log_level"])
         init_command = DebugCommand(
             logger,
-            Path(tdata["py4lo_path"]),
+            Path(tdata["base_path"]),
             Path(tdata["src_dir"]),
             tdata["src_ignore"],
             Path(tdata["assets_dir"]),

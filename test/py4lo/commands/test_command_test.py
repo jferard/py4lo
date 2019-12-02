@@ -46,25 +46,25 @@ class TestCommandTest(unittest.TestCase):
                                        Path("/test_dir/b/d_test.py")]]
         src_dir = Mock()
         src_dir.rglob.side_effect = [[Path("/src_dir/src_a.py")]]
-        tc = TestCommand(logger, "py_exe", test_dir, src_dir,
-                         Path("p_path"))
+        tc = TestCommand(logger, "test_py_exe", test_dir, src_dir,
+                         Path("test_p_path"))
         status = tc.execute()
 
         self.assertEqual([
-            call.info('execute: %s', '"py_exe" -m doctest /src_dir/src_a.py'),
+            call.info('execute: %s', '"test_py_exe" -m doctest /src_dir/src_a.py'),
             call.info('output: ok'),
-            call.info('execute: "py_exe" /test_dir/c_test.py'),
+            call.info('execute: "test_py_exe" /test_dir/c_test.py'),
             call.info('output: not ok'),
             call.error('error: err'),
-            call.info('execute: "py_exe" /test_dir/b/d_test.py'),
+            call.info('execute: "test_py_exe" /test_dir/b/d_test.py'),
             call.info('output: s ok'),
         ], logger.mock_calls)
         self.assertEqual([
-            call('"py_exe" -m doctest /src_dir/src_a.py', env=unittest.mock.ANY,
+            call(["test_py_exe", "-m", "doctest", "/src_dir/src_a.py"], env=unittest.mock.ANY,
                  stderr=-1, stdout=-1),
-            call('"py_exe" /test_dir/c_test.py', env=unittest.mock.ANY,
+            call(["test_py_exe", "/test_dir/c_test.py"], env=unittest.mock.ANY,
                  stderr=-1, stdout=-1),
-            call('"py_exe" /test_dir/b/d_test.py', env=unittest.mock.ANY,
+            call(["test_py_exe", "/test_dir/b/d_test.py"], env=unittest.mock.ANY,
                  stderr=-1, stdout=-1),
         ], subprocess_run_mock.mock_calls)
         self.assertEqual((1,), status)

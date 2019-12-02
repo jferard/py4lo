@@ -17,6 +17,7 @@ install:
   # for coverage
   - sudo pip install codecov
   - sudo pip install pytest-cov
+  - sudo pip install --upgrade setuptools
 
   # dependencies
   - sudo pip install -r requirements.txt
