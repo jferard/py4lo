@@ -23,7 +23,7 @@ install:
 
 # script
 script:
-  - python3.6 -m pytest --cov=py4lo test
+  - python3.7 -m pytest --cov=py4lo test
 
 after_success:
   - codecov
