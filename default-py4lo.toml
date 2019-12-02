@@ -2,7 +2,7 @@
 
 calc_exe = "C:/Program Files (x86)/LibreOffice 5/program/scalc.exe"
 python_exe = "C:/Program Files (x86)/LibreOffice 5/program/python.exe"
-default_suffix = "updated"
+suffix = "updated"
 add_readme = "true"
 readme_contact = "add a contact here"
 debug_file = "py4lo-debug.ods" 

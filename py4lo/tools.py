@@ -29,31 +29,31 @@ from script_set_processor import ScriptSetProcessor, TargetScript
 base_path = Path(__file__).parent.parent
 
 
-def update_ods(tdata):
-    ods_source_name = tdata["source_file"]
-    ods_dest_name = _get_dest_name(tdata)
-    return OdsUpdater.create(tdata).update(ods_source_name, ods_dest_name)
+def update_ods(tdata: Dict[str, Any]) -> Path:
+    ods_source = Path(tdata["source_file"])
+    ods_dest = _get_dest(tdata)
+    return OdsUpdater.create(tdata).update(ods_source, ods_dest)
 
 
-def _get_logger(tdata):
+def _get_logger(tdata: Dict[str, Any]) -> logging.Logger:
     logger = logging.getLogger("py4lo")
     logger.setLevel(tdata["log_level"])
     return logger
 
 
-def _get_dest_name(tdata):
-    ods_source_name = tdata["source_file"]
+def _get_dest(tdata: Dict[str, Any]) -> Path:
     if "dest_name" in tdata:
         if "suffix" in tdata:
             _get_logger(tdata).debug(
                 "Property dest_name set to {}; ignore suffix {}".format(
                     tdata["dest_name"], tdata["suffix"]))
-        ods_dest_name = tdata["dest_name"]
+        ods_dest = Path(tdata["dest_name"])
     else:
-        suffix = tdata["default_suffix"]
-        ods_dest_name = ods_source_name[0:-4] + "-" + suffix + ods_source_name[
-                                                               -4:]
-    return ods_dest_name
+        suffix = tdata["suffix"]
+        ods_source = Path(tdata["source_file"])
+        ods_dest = ods_source.parent.joinpath(
+            ods_source.stem + "-" + suffix + ods_source.suffix)
+    return ods_dest
 
 
 def get_assets(assets_dir: Path, assets_ignore: List[str],
