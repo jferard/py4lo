@@ -23,7 +23,11 @@
 
 import os
 import uno
-import unohelper
+try:
+    import unohelper
+except ImportError:
+    import unotools.unohelper
+
 # py4lo: if $python_version >= 2.6
 # py4lo: if $python_version <= 3.0
 import io

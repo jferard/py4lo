@@ -23,7 +23,11 @@
 py4lo_commons deals with ordinary Python objects (POPOs ?).
 
 """
-import unohelper
+try:
+    import unohelper
+except ImportError:
+    import unotools.unohelper
+
 import uno
 import os
 import logging
