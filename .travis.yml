@@ -18,6 +18,8 @@ install:
   - sudo pip install codecov
   - sudo pip install pytest-cov
   - sudo pip install --upgrade setuptools
+  - py.test --version
+  - python3.7 -m pytest --version
 
   # dependencies
   - sudo pip install -r requirements.txt
