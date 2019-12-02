@@ -19,7 +19,7 @@
 import logging
 import subprocess
 from pathlib import Path
-from typing import List, Collection
+from typing import List, Collection, Dict, Any
 
 from asset import Asset
 from callbacks import *
@@ -77,7 +77,7 @@ def get_paths(source_dir: Path, ignore: List[str], glob="*") -> Collection[
 
 class OdsUpdater:
     @staticmethod
-    def create(tdata):
+    def create(tdata: Dict[str, Any]) -> "OdsUpdater":
         logger = logging.getLogger("py4lo")
         logger.setLevel(tdata["log_level"])
         add_readme = tdata["add_readme"]
@@ -88,17 +88,17 @@ class OdsUpdater:
         else:
             add_readme_callback = None
 
-        src_dir = tdata["src_dir"]
+        src_dir = Path(tdata["src_dir"])
         src_ignore = tdata["src_ignore"]
-        assets_dir = tdata["assets_dir"]
+        assets_dir = Path(tdata["assets_dir"])
         assets_ignore = tdata["assets_ignore"]
-        assets_dest_dir = tdata["assets_dest_dir"]
-        target_dir = tdata["target_dir"]
+        assets_dest_dir = Path(tdata["assets_dest_dir"])
+        target_dir = Path(tdata["target_dir"])
         python_version = tdata["python_version"]
 
-        return OdsUpdater(logger, Path(src_dir), src_ignore, Path(assets_dir),
-                          assets_ignore, Path(target_dir),
-                          Path(assets_dest_dir), python_version,
+        return OdsUpdater(logger, src_dir, src_ignore, assets_dir,
+                          assets_ignore, target_dir,
+                          assets_dest_dir, python_version,
                           add_readme_callback)
 
     def __init__(self, logger: logging.Logger, src_dir: Path,
@@ -136,7 +136,8 @@ class OdsUpdater:
                                                script_paths)
         return scripts_processor.process()
 
-    def _create_updater(self, scripts: List[TargetScript], assets: List[Asset]):
+    def _create_updater(self, scripts: List[TargetScript],
+                        assets: List[Asset]) -> ZipUpdater:
         zip_updater_builder = ZipUpdaterBuilder()
         (
             zip_updater_builder.item(IgnoreScripts(ARC_SCRIPTS_PATH))
@@ -150,6 +151,6 @@ class OdsUpdater:
         return zip_updater_builder.build()
 
 
-def open_with_calc(ods_name: Path, calc_exe):
+def open_with_calc(ods_path: Path, calc_exe: str):
     """Open a file with calc"""
-    _r = subprocess.call([calc_exe, str(ods_name)])
+    _r = subprocess.call([calc_exe, str(ods_path)])

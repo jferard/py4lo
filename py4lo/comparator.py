@@ -40,7 +40,7 @@ class Comparator:
         else:
             self._accepted_locals = accepted_locals
 
-    def check(self, arg1: T, comparator: "Comparator", arg2: T):
+    def check(self, arg1: T, comparator: str, arg2: T):
         """Check arg1 vs arg2 using comparator. Args may be $var where var is
         a member of accepted_locals, a number 123456i, 123.456f, an expression
         or a litteral."""

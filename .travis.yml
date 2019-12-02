@@ -5,13 +5,11 @@ language: python
 python:
   - "3.7"
 
-virtualenv:
-  system_site_packages: true
-
 cache: pip
 
 before_install:
   - sudo aptitude install -y libreoffice libreoffice-script-provider-python python3-uno uno-libs3
+  - ls /usr/lib/python3/dist-packages/
   - export PYTHONPATH=${PYTHONPATH}:/usr/lib/python3/dist-packages
 
 # command to run tests and install dependencies
@@ -25,6 +23,9 @@ install:
 
   # dependencies
   - pip install -r requirements.txt
+  - echo $PYTHONPATH
+  - python -c "help('modules')"
+
 
 # script
 script:

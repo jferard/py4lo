@@ -17,13 +17,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import shlex
-import os
 from pathlib import Path
 from typing import List
 
-from directives import DirectiveProvider
 from branch_processor import BranchProcessor
 from comparator import Comparator
+from directives import DirectiveProvider
 
 
 class DirectiveProcessor:
@@ -65,13 +64,13 @@ class DirectiveProcessor:
         """Append a script to the script processor"""
         self._scripts_processor.append_script(script_path)
 
-    def process_line(self, line: str):
+    def process_line(self, line: str) -> List[str]:
         """Process a line that starts with #"""
         return _DirectiveProcessorWorker(self, self._branch_processor,
                                          self._directive_provider,
                                          line).process_line()
 
-    def include(self, fname: str):
+    def include(self, fname: str) -> List[str]:
         s = [""]
         if fname not in self._includes:
             s = _IncludeProcessor(fname).process()
@@ -83,7 +82,7 @@ class DirectiveProcessor:
         """Verify the end of the scripts"""
         self._branch_processor.end()
 
-    def ignore_lines(self):
+    def ignore_lines(self) -> bool:
         return self._branch_processor.skip()
 
 
@@ -99,7 +98,7 @@ class _DirectiveProcessorWorker:
         self._line = line
         self._target_lines = []
 
-    def process_line(self):
+    def process_line(self) -> List[str]:
         """Return a list of lines"""
         if self._target_lines:
             return self._target_lines
@@ -116,7 +115,7 @@ class _DirectiveProcessorWorker:
         return self._target_lines
 
     @staticmethod
-    def _is_directive(ls: List[str]):
+    def _is_directive(ls: List[str]) -> bool:
         return len(ls) >= 2 and ls[0] == '#' and ls[1] == 'py4lo:'
 
     def _process_directive(self, line: str, args: List[str]):
@@ -167,7 +166,7 @@ class _IncludeProcessor:
         self._inc_lines = []
         self._state = _IncludeProcessor.NORMAL
 
-    def process(self):
+    def process(self) -> List[str]:
         """Return a list of lines"""
         if self._state != _IncludeProcessor.NORMAL:
             raise Exception("Create a new IncludeProcessor")
