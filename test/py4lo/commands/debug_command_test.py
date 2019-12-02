@@ -44,8 +44,8 @@ class TestDebugCommand(unittest.TestCase):
 
         self.assertEqual([call.info(
             "Debug or init. Generating '%s' for Python '%s'", Path('.'), ''),
-                          call.log(10, 'Scripts to process: %s', set())],
-                         logger.mock_calls)
-        self.assertEqual(call(), Zupdater.mock_calls[0])
+            call.log(10, 'Scripts to process: %s', set())],
+            logger.mock_calls)
+        print(Zupdater.mock_calls)
         self.assertEqual(call().update(Path('inc/debug.ods'), Path('')),
                          Zupdater.mock_calls[-1])

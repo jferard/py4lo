@@ -19,13 +19,13 @@
 from typing import List
 from zipfile import ZipFile
 
-from callbacks import BeforeAfterCallback
+from callbacks.callback import AfterCallback
 from script_set_processor import TargetScript
 
 ARC_SCRIPTS_PATH = "Scripts/python"
 
 
-class AddScripts(BeforeAfterCallback):
+class AddScripts(AfterCallback):
     """After callback. Add some scripts in destination file"""
 
     def __init__(self, scripts: List[TargetScript]):

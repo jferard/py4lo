@@ -16,22 +16,24 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
-import zipfile
 from pathlib import Path
+from typing import List
 from zipfile import ZipFile
 
-from callbacks.callback import BeforeAfterCallback, ItemCallback
+from callbacks.callback import AfterCallback, BeforeCallback, ItemCallback
 
 
-class ZipUpdater:
-    """A zip file updater. Applies callbacks before, after and to each item."""
+class ZipUpdaterBuilder:
+    """
+    A zip file updater. Applies callbacks before, after and to each item.
+    """
 
     def __init__(self):
         self._before_callbacks = []
         self._item_callbacks = []
         self._after_callbacks = []
 
-    def before(self, callback: BeforeAfterCallback):
+    def before(self, callback: BeforeCallback):
         self._before_callbacks.append(callback)
         return self
 
@@ -39,11 +41,34 @@ class ZipUpdater:
         self._item_callbacks.append(callback)
         return self
 
-    def after(self, callback: BeforeAfterCallback):
+    def after(self, callback: AfterCallback):
         self._after_callbacks.append(callback)
         return self
 
+    def build(self):
+        return ZipUpdater(self._before_callbacks, self._item_callbacks,
+                          self._after_callbacks)
+
+
+class ZipUpdater:
+    """
+    A zip file updater. Applies callbacks before, after and to each item.
+    """
+
+    def __init__(self, before_callbacks: List[BeforeCallback],
+                 item_callbacks: List[ItemCallback], after_callbacks: List[
+                AfterCallback]):
+        self._before_callbacks = before_callbacks
+        self._item_callbacks = item_callbacks
+        self._after_callbacks = after_callbacks
+
     def update(self, zip_source: Path, zip_dest: Path):
+        """
+        Update the given zip
+
+        :param zip_source: a source zip archive
+        :param zip_dest: a dest path
+        """
         with ZipFile(zip_dest, 'w') as zout:
             self._do_before(zout)
 

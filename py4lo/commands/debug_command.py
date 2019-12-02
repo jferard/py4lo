@@ -19,15 +19,16 @@
 
 import logging
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 import zip_updater
+from asset import Asset
 from callbacks import IgnoreScripts, RewriteManifest, AddScripts, AddAssets, \
     AddDebugContent
 from commands.command import Command, PropertiesProvider
 from commands.command_executor import CommandExecutor
 from commands.test_command import TestCommand
-from script_set_processor import ScriptSetProcessor
+from script_set_processor import ScriptSetProcessor, TargetScript
 from tools import get_assets, get_paths
 
 
@@ -70,30 +71,35 @@ class DebugCommand(Command):
         self._logger.info("Debug or init. Generating '%s' for Python '%s'",
                           self._debug_path, self._python_version)
 
-        scripts, exported_func_names = self._get_scripts()
+        scripts, exported_func_names_by_script = self._get_scripts()
         assets = get_assets(self._assets_dir, self._assets_ignore,
                             self._assets_dest_dir)
 
-        zupdater = zip_updater.ZipUpdater()
-        (
-            zupdater
-                .item(IgnoreScripts(Path("Scripts")))
-                .item(RewriteManifest(scripts, assets))
-                .after(AddScripts(scripts))
-                .after(AddAssets(assets))
-                .after(AddDebugContent(exported_func_names))
-        )
+        zupdater = self._get_zip_updater(assets, exported_func_names_by_script,
+                                         scripts)
         zupdater.update(self._base_path.joinpath("inc", "debug.ods"),
                         self._ods_dest_name)
         return self._ods_dest_name,
 
-    def _get_scripts(self):
+    def _get_zip_updater(self, assets: List[Asset],
+                         exported_func_names_by_script: Dict[str, List[str]],
+                         scripts: List[TargetScript]):
+        zupdater_builder = zip_updater.ZipUpdaterBuilder()
+        zupdater_builder.item(IgnoreScripts(Path("Scripts"))).item(
+            RewriteManifest(scripts, assets)).after(AddScripts(scripts)).after(
+            AddAssets(assets)).after(
+            AddDebugContent(exported_func_names_by_script))
+        zupdater = zupdater_builder.build()
+        return zupdater
+
+    def _get_scripts(self) -> (List[TargetScript], Dict[str, List[str]]):
         script_paths = get_paths(self._src_dir, self._src_ignore, "*.py")
         scripts_processor = ScriptSetProcessor(self._logger, self._src_dir,
                                                self._target_dir,
                                                self._python_version,
                                                script_paths)
-        return scripts_processor.process(), scripts_processor.get_exported_func_names_by_script_name()
+        return scripts_processor.process(), \
+               scripts_processor.get_exported_func_names_by_script_name()
 
     @staticmethod
     def get_help():

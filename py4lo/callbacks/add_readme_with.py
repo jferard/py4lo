@@ -19,11 +19,13 @@
 from pathlib import Path
 from zipfile import ZipFile
 
-from callbacks import BeforeAfterCallback
+from callbacks import AfterCallback
 
 
-class AddReadmeWith(BeforeAfterCallback):
-    """After callback. Add a readme in destination file"""
+class AddReadmeWith(AfterCallback):
+    """
+    Add a readme in destination file
+    """
 
     def __init__(self, inc_path: Path, contact: str):
         self._inc_path = inc_path

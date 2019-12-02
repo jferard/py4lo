@@ -23,8 +23,8 @@ from typing import List, Collection
 
 from asset import Asset
 from callbacks import *
-from zip_updater import ZipUpdater
-from script_set_processor import ScriptSetProcessor
+from zip_updater import ZipUpdater, ZipUpdaterBuilder
+from script_set_processor import ScriptSetProcessor, TargetScript
 
 base_path = Path(__file__).parent.parent
 
@@ -128,7 +128,7 @@ class OdsUpdater:
         zip_updater.update(ods_source, ods_dest)
         return ods_dest
 
-    def _get_scripts(self):
+    def _get_scripts(self) -> List[TargetScript]:
         script_paths = get_paths(self._src_dir, self._src_ignore, "*.py")
         scripts_processor = ScriptSetProcessor(self._logger, self._src_dir,
                                                self._target_dir,
@@ -136,18 +136,18 @@ class OdsUpdater:
                                                script_paths)
         return scripts_processor.process()
 
-    def _create_updater(self, scripts, assets):
-        zip_updater = ZipUpdater()
+    def _create_updater(self, scripts: List[TargetScript], assets: List[Asset]):
+        zip_updater_builder = ZipUpdaterBuilder()
         (
-            zip_updater.item(IgnoreScripts(ARC_SCRIPTS_PATH))
+            zip_updater_builder.item(IgnoreScripts(ARC_SCRIPTS_PATH))
                 .item(RewriteManifest(scripts, assets))
                 .after(AddScripts(scripts))
                 .after(AddAssets(assets))
         )
         if self._add_readme_callback is not None:
-            zip_updater.after(self._add_readme_callback)
+            zip_updater_builder.after(self._add_readme_callback)
 
-        return zip_updater
+        return zip_updater_builder.build()
 
 
 def open_with_calc(ods_name: Path, calc_exe):

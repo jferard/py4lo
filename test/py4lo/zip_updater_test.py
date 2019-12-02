@@ -24,7 +24,7 @@ from zip_updater import *
 class TestZipUpdater(unittest.TestCase):
     @patch('zip_updater.ZipFile', autospec=True)
     def test(self, zf):
-        zu = ZipUpdater()
+        zub = ZipUpdaterBuilder()
         cbs = []
 
         b1 = Mock()
@@ -56,7 +56,8 @@ class TestZipUpdater(unittest.TestCase):
         a1.call.return_value = True
         a2.call.return_value = False
 
-        zu.before(b1).before(b2).item(i1).item(i2).after(a1).after(a2)
+        zub.before(b1).before(b2).item(i1).item(i2).after(a1).after(a2)
+        zu = zub.build()
         zu.update(Path("source"), Path("dest"))
 
         p.assert_called_once_with("a")

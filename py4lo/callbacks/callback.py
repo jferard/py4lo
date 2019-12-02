@@ -20,11 +20,15 @@ from abc import ABC, abstractmethod
 from zipfile import ZipFile, ZipInfo
 
 
-class BeforeAfterCallback(ABC):
+class BeforeCallback(ABC):
     @abstractmethod
     def call(self, zout: ZipFile) -> bool:
         pass
 
+class AfterCallback(ABC):
+    @abstractmethod
+    def call(self, zout: ZipFile) -> bool:
+        pass
 
 class ItemCallback(ABC):
     @abstractmethod

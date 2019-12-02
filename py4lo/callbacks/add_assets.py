@@ -19,12 +19,14 @@
 from typing import List
 from zipfile import ZipFile
 
-from callbacks import BeforeAfterCallback
+from callbacks import AfterCallback
 from asset import Asset
 
 
-class AddAssets(BeforeAfterCallback):
-    """AfterCallback. Add assets in destination file"""
+class AddAssets(AfterCallback):
+    """
+    Add assets in destination file
+    """
     def __init__(self, assets: List[Asset]):
         """
         :param assets: the assets to add

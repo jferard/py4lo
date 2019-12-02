@@ -21,7 +21,7 @@ import py_compile
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Collection, Optional
+from typing import List, Collection, Optional, Dict
 
 from directive_processor import DirectiveProcessor
 
@@ -102,7 +102,7 @@ class ScriptSetProcessor:
         self._write_script(script)
         self._scripts.append(script)
 
-    def get_exported_func_names_by_script_name(self):
+    def get_exported_func_names_by_script_name(self) -> Dict[str, List[str]]:
         """Return a dict: script name -> exported functions"""
         return {script.name: script.exported_func_names for script
                 in self._scripts}
