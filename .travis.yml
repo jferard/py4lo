@@ -8,7 +8,7 @@ python:
 cache: pip
 
 before_install:
-  - sudo aptitude install -y libreoffice libreoffice-script-provider-python python3-uno python3 uno-libs3
+  - sudo aptitude install -y libreoffice libreoffice-script-provider-python python3-uno uno-libs3
   - export PYTHONPATH=${PYTHONPATH}:/usr/lib/python3/dist-packages
 
 # command to run tests and install dependencies
@@ -19,7 +19,7 @@ install:
   # for coverage
   - sudo pip install pytest py codecov pytest-cov
   - py.test --version
-  - pytest --version
+  - sudo pytest --version
   - python -m pytest --version
 
   # dependencies
