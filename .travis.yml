@@ -13,17 +13,17 @@ before_install:
 
 # command to run tests and install dependencies
 install:
-  - pip install --user --upgrade pip
-  - pip install --user --upgrade setuptools
-  - pip install --user https://files.pythonhosted.org/packages/a2/12/ced7105d2de62fa7c8fb5fce92cc4ce66b57c95fb875e9318dba7f8c5db0/toml-0.10.0-py2.py3-none-any.whl
+  - pip install --upgrade pip
+  - pip install --upgrade setuptools
+  - pip install https://files.pythonhosted.org/packages/a2/12/ced7105d2de62fa7c8fb5fce92cc4ce66b57c95fb875e9318dba7f8c5db0/toml-0.10.0-py2.py3-none-any.whl
   # for coverage
-  - pip install --user pytest codecov pytest-cov
+  - pip install pytest codecov pytest-cov
   - py.test --version
   - pytest --version
   - python -m pytest --version
 
   # dependencies
-  - pip install --user -r requirements.txt
+  - pip install -r requirements.txt
 
 # script
 script:
