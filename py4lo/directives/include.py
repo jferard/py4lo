@@ -24,7 +24,9 @@ from directives.directive import Directive
 
 
 class Include(Directive):
-    """Include the content of a file inside the script. The file should be in a inc directory"""
+    """
+    Include the content of a file inside the script.
+    The file should be in a inc directory"""
 
     @staticmethod
     def sig_elements():
@@ -33,7 +35,7 @@ class Include(Directive):
     def __init__(self, _base_path: Path, scripts_path: Path):
         self._scripts_path = scripts_path
 
-    def execute(self, processor, args: List[str]):
+    def execute(self, processor: "DirectiveProcessor", args: List[str]):
         path = self._scripts_path.joinpath("inc", args[0] + ".py")
 
         s = "# begin py4lo include: {}\n".format(path)

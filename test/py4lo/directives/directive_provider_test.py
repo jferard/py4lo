@@ -15,21 +15,9 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from abc import ABC, abstractmethod
-from pathlib import Path
-from typing import List
+
+import unittest
 
 
-class Directive(ABC):
-    @abstractmethod
-    def __init__(self, base_path: Path, scripts_path: Path):
-        pass
-
-    @abstractmethod
-    def execute(self, processor: "DirectiveProcessor", args: List[str]):
-        pass
-
-    @staticmethod
-    @abstractmethod
-    def sig_elements():
-        pass
+class TestDirectiveProvider(unittest.TestCase):
+    pass

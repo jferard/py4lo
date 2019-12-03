@@ -78,7 +78,7 @@ class ScriptSetProcessor:
 
     def _process_script(self, script_path: Path):
         directive_processor = DirectiveProcessor.create(self._src_dir, self,
-                                                        self._python_version)
+                                                             self._python_version)
         script_processor = ScriptProcessor(self._logger, directive_processor,
                                            script_path, self._target_dir)
         script = script_processor.parse_script()

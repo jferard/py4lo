@@ -25,5 +25,5 @@ from callbacks.add_readme_with import AddReadmeWith
 from callbacks.add_assets import AddAssets
 from callbacks.add_debug_content import AddDebugContent
 from callbacks.add_scripts import AddScripts, ARC_SCRIPTS_PATH
-from callbacks.ignore_scripts import IgnoreScripts
+from callbacks.ignore_item import IgnoreItem
 from callbacks.rewrite_manifest import RewriteManifest

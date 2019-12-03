@@ -28,7 +28,9 @@ install:
 
 # script
 script:
-  - pytest --cov=py4lo test
+#  - pytest --cov=py4lo test
+  - pytest --cov=py4lo --doctest-modules --doctest-ignore-import-errors
+
 
 after_success:
   - codecov

@@ -23,7 +23,7 @@ from typing import List, Tuple, Dict
 
 import zip_updater
 from asset import Asset
-from callbacks import IgnoreScripts, RewriteManifest, AddScripts, AddAssets, \
+from callbacks import IgnoreItem, RewriteManifest, AddScripts, AddAssets, \
     AddDebugContent
 from commands.command import Command, PropertiesProvider
 from commands.command_executor import CommandExecutor
@@ -85,7 +85,7 @@ class DebugCommand(Command):
                          exported_func_names_by_script: Dict[str, List[str]],
                          scripts: List[TargetScript]):
         zupdater_builder = zip_updater.ZipUpdaterBuilder()
-        zupdater_builder.item(IgnoreScripts(Path("Scripts"))).item(
+        zupdater_builder.item(IgnoreItem(Path("Scripts"))).item(
             RewriteManifest(scripts, assets)).after(AddScripts(scripts)).after(
             AddAssets(assets)).after(
             AddDebugContent(exported_func_names_by_script))

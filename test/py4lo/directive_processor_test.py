@@ -30,7 +30,7 @@ class TestDirectiveProcessor(unittest.TestCase):
         self._branch_processor = Mock()
         self._directive_provider = Mock()
         self._dp = DirectiveProcessor(self._scripts_path, self._scripts_processor, self._branch_processor,
-                                       self._directive_provider)
+                                           self._directive_provider)
 
     def test_create(self):
         dp = DirectiveProcessor.create(Path(""), Path(""), "3.6")

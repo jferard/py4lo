@@ -44,7 +44,7 @@ class DirectiveProcessor:
         directive_provider = DirectiveProvider.create(base_path, scripts_path)
 
         return DirectiveProcessor(scripts_path, scripts_processor,
-                                  branch_processor, directive_provider)
+                                       branch_processor, directive_provider)
 
     def __init__(self, scripts_path: Path,
                  scripts_processor: "ScriptSetProcessor",

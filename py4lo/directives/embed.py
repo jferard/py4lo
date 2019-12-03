@@ -24,7 +24,10 @@ from directives.directive import Directive
 
 
 class Embed(Directive):
-    """Embed a file. It's up to the user to import it if it is a module"""
+    """
+    Embed a file in the archive and... do nothing else.
+    It's up to the user to import it if it is a module
+    """
 
     @staticmethod
     def sig_elements():
@@ -33,8 +36,8 @@ class Embed(Directive):
     def __init__(self, _base_path: Path, _scripts_path: Path):
         pass
 
-    def execute(self, processor, args: List[str]):
+    def execute(self, processor: "DirectiveProcessor", args: List[str]):
         processor.include("py4lo_import.py")
-        fname = args[0]
+        fname = Path(args[0])
         processor.append_script(fname)
         return True

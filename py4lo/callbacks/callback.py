@@ -21,16 +21,44 @@ from zipfile import ZipFile, ZipInfo
 
 
 class BeforeCallback(ABC):
+    """
+    Called before the item processing
+    """
+
     @abstractmethod
     def call(self, zout: ZipFile) -> bool:
+        """
+        :param zout: write to this file
+        :return: False to prevent the execution of nextcallbacks
+        """
         pass
+
 
 class AfterCallback(ABC):
+    """
+    Called after the item processing. Use an AfterCallback to add some files
+    to the archive
+    """
+
     @abstractmethod
     def call(self, zout: ZipFile) -> bool:
+        """
+        :param zout: write to this file
+        :return: False to prevent the execution of nextcallbacks
+        """
         pass
 
+
 class ItemCallback(ABC):
+    """
+    Cald on each item of the source. Use a ItemCallback to ignore a script.
+    """
     @abstractmethod
-    def call(self, zin: ZipFile, zout: ZipFile, item: ZipInfo):
+    def call(self, zin: ZipFile, zout: ZipFile, item: ZipInfo) -> bool:
+        """
+        :param zin: read from this file
+        :param zout: write to this file
+        :param item: the item to process
+        :return: False to prevent the execution of nextcallbacks
+        """
         pass

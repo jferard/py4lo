@@ -140,7 +140,7 @@ class OdsUpdater:
                         assets: List[Asset]) -> ZipUpdater:
         zip_updater_builder = ZipUpdaterBuilder()
         (
-            zip_updater_builder.item(IgnoreScripts(ARC_SCRIPTS_PATH))
+            zip_updater_builder.item(IgnoreItem(ARC_SCRIPTS_PATH))
                 .item(RewriteManifest(scripts, assets))
                 .after(AddScripts(scripts))
                 .after(AddAssets(assets))

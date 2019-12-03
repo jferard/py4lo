@@ -15,21 +15,27 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from abc import ABC, abstractmethod
-from pathlib import Path
-from typing import List
+
+import unittest
+from unittest.mock import Mock, call
+
+from callbacks import AddScripts
 
 
-class Directive(ABC):
-    @abstractmethod
-    def __init__(self, base_path: Path, scripts_path: Path):
-        pass
+class TestAddScripts(unittest.TestCase):
+    def test_add_two_scripts(self):
+        zout = Mock()
+        t1 = Mock()
+        # use configure_mock to set the name attribute
+        t1.configure_mock(name="t1", script_content="c1")
+        t2 = Mock()
+        t2.configure_mock(name="t2", script_content="c2")
+        a = AddScripts([t1, t2])
+        a.call(zout)
+        self.assertEqual([call.writestr('Scripts/python/t1', 'c1'),
+                          call.writestr('Scripts/python/t2', 'c2')],
+                         zout.mock_calls)
 
-    @abstractmethod
-    def execute(self, processor: "DirectiveProcessor", args: List[str]):
-        pass
 
-    @staticmethod
-    @abstractmethod
-    def sig_elements():
-        pass
+if __name__ == '__main__':
+    unittest.main()

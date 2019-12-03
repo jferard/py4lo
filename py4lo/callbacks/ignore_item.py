@@ -22,11 +22,13 @@ from zipfile import ZipFile, ZipInfo
 from callbacks import ItemCallback
 
 
-class IgnoreScripts(ItemCallback):
-    """Item callback. Ignore all existing scripts in source file"""
+class IgnoreItem(ItemCallback):
+    """
+    Item callback. Ignore all existing scripts in source file
+    """
 
     def __init__(self, arc_scripts_path: Path):
         self._arc_scripts_path = arc_scripts_path
 
-    def call(self, _zin: ZipFile, _zout: ZipFile, item: ZipInfo):
-        return not item.filename.startswith(self._arc_scripts_path)
+    def call(self, _zin: ZipFile, _zout: ZipFile, item: ZipInfo) -> bool:
+        return self._arc_scripts_path not in Path(item.filename).parents
