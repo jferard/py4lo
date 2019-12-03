@@ -29,9 +29,9 @@ from commands.test_command import TestCommand
 
 class InitCommand(Command, ABC):
     @staticmethod
-    def create(args, provider: PropertiesProvider):
+    def create_executor(args, provider: PropertiesProvider):
         tdata = provider.get()
-        test_executor = TestCommand.create(args, provider)
+        test_executor = TestCommand.create_executor(args, provider)
         logger = logging.getLogger("py4lo")
         logger.setLevel(tdata["log_level"])
         init_command = DebugCommand(

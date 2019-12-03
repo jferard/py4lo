@@ -26,8 +26,8 @@ from tools import update_ods
 
 class UpdateCommand(Command):
     @staticmethod
-    def create(args, provider: PropertiesProvider):
-        test_executor = TestCommand.create(args, provider)
+    def create_executor(args, provider: PropertiesProvider):
+        test_executor = TestCommand.create_executor(args, provider)
         update_command = UpdateCommand(provider)
         return CommandExecutor(update_command, test_executor)
 

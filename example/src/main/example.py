@@ -25,7 +25,7 @@ import os
 # py4lo: import lib py4lo_commons
 # py4lo: import example_lib
 try:
-    _ = py4lo_helper.Py4LO_helper.create(XSCRIPTCONTEXT)
+    _ = py4lo_helper.Py4LO_helper.create_executor(XSCRIPTCONTEXT)
     c = py4lo_commons.Commons(XSCRIPTCONTEXT)
     o = example_lib.O(XSCRIPTCONTEXT)
 except NameError:

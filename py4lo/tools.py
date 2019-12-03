@@ -80,7 +80,7 @@ class OdsUpdater:
     def create(tdata: Dict[str, Any]) -> "OdsUpdater":
         logger = logging.getLogger("py4lo")
         logger.setLevel(tdata["log_level"])
-        add_readme = tdata["add_readme"]
+        add_readme = tdata.get("add_readme", False)
         if add_readme:
             readme_contact = tdata["readme_contact"]
             add_readme_callback = AddReadmeWith(base_path.joinpath("inc"),

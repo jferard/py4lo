@@ -32,7 +32,7 @@ class TestCommand(Command):
     __test__ = False
 
     @staticmethod
-    def create(_args, provider: PropertiesProvider):
+    def create_executor(_args, provider: PropertiesProvider):
         tdata = provider.get()
         logger = logging.getLogger("py4lo")
         logger.setLevel(tdata["log_level"])

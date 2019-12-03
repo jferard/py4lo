@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import logging
-from typing import List
+from typing import List, Tuple, Optional
 
 from commands.command import Command
 
@@ -28,7 +28,7 @@ class CommandExecutor:
         self._command = command
         self._previous_executor = previous_executor
 
-    def execute(self, *args: List[str]):
+    def execute(self, *args: List[str]) -> Optional[Tuple]:
         if self._previous_executor is None:
             cur_args = []
         else:

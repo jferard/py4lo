@@ -31,14 +31,14 @@ class Commands:
 
     def get(self, command_name: str, args: List[str], provider: PropertiesProvider):
         try:
-            return self._command_factory_by_name[command_name].create(args,
-                                                                      provider)
+            return self._command_factory_by_name[command_name].create_executor(args,
+                                                                               provider)
         except KeyError:
             logger = logging.getLogger("py4lo")
             logger.warning(
                 "Command `{}` not found. Available commands are {}".format(
                     command_name, set(self._command_factory_by_name.keys())))
-            return self._command_factory_by_name["help"].create(args, provider)
+            return self._command_factory_by_name["help"].create_executor(args, provider)
 
     def get_help_message(self):
         lines = [

@@ -34,8 +34,8 @@ from tools import get_assets, get_paths
 
 class DebugCommand(Command):
     @staticmethod
-    def create(args, provider: PropertiesProvider):
-        test_executor = TestCommand.create(args, provider)
+    def create_executor(args, provider: PropertiesProvider):
+        test_executor = TestCommand.create_executor(args, provider)
         tdata = provider.get()
         logger = logging.getLogger("py4lo")
         logger.setLevel(tdata["log_level"])

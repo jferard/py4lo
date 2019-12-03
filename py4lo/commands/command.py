@@ -18,7 +18,7 @@
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 
 from toml_helper import load_toml
 
@@ -37,12 +37,12 @@ class PropertiesProvider:
 
 class Command(ABC):
     @staticmethod
-    def create(args: List[str],
-               provider: PropertiesProvider) -> "CommandExecutor":
+    def create_executor(args: List[str],
+                        provider: PropertiesProvider) -> "CommandExecutor":
         pass
 
     @abstractmethod
-    def execute(self, *args: List[str]) -> Optional[Any]:
+    def execute(self, *args: List[str]) -> Optional[Tuple]:
         pass
 
     @staticmethod

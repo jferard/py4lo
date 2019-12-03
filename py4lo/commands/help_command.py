@@ -36,7 +36,7 @@ command     a command = debug|help|init|test|update
 
 class HelpCommand(Command):
     @staticmethod
-    def create(args, _provider: PropertiesProvider):
+    def create_executor(args, _provider: PropertiesProvider):
         if len(args) == 1:
             command_name = args[0]
         else:
@@ -47,7 +47,7 @@ class HelpCommand(Command):
         self._command_factory_by_name = command_factory_by_name
         self._command_name = command_name
 
-    def execute(self):
+    def execute(self) -> None:
         if self._command_name:
             try:
                 msg = self._command_factory_by_name[

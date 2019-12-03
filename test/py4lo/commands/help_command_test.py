@@ -17,8 +17,36 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import unittest
+from unittest.mock import Mock, patch, call
+
 import env
 from commands.help_command import *
 
+
 class TestHelpCommand(unittest.TestCase):
-    pass
+    def setUp(self):
+        self.provider = Mock()
+
+    @patch("__main__.__builtins__.print", autospec=True)
+    def test_without_command(self, print_mock):
+        h = HelpCommand.create_executor([], self.provider)
+        h.execute()
+        self.assertEqual(
+            [call('help [command]: Specific help message about command')],
+            print_mock.mock_calls)
+
+    @patch("__main__.__builtins__.print", autospec=True)
+    def test_with_command(self, print_mock):
+        h = HelpCommand.create_executor(["run"], self.provider)
+        h.execute()
+        self.assertEqual(
+            [call('Update + open the created file')],
+            print_mock.mock_calls)
+
+    @patch("__main__.__builtins__.print", autospec=True)
+    def test_with_grabage(self, print_mock):
+        h = HelpCommand.create_executor(["a", "b", "c"], self.provider)
+        h.execute()
+        self.assertEqual(
+            [call('help [command]: Specific help message about command')],
+            print_mock.mock_calls)

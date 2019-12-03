@@ -27,17 +27,16 @@ from tools import open_with_calc
 
 class RunCommand(Command):
     @staticmethod
-    def create(args, provider: PropertiesProvider):
+    def create_executor(args, provider: PropertiesProvider):
         tdata = provider.get()
-        print(tdata)
-        update_executor = UpdateCommand.create(args, provider)
+        update_executor = UpdateCommand.create_executor(args, provider)
         run_command = RunCommand(tdata["calc_exe"])
         return CommandExecutor(run_command, update_executor)
 
     def __init__(self, calc_exe: str):
         self._calc_exe = calc_exe
 
-    def execute(self, status: int, dest_name: Path):
+    def execute(self, status: int, dest_name: Path) -> None:
         if status == 0:
             print("All tests ok")
             logging.warning("%s %s", self._calc_exe, dest_name)

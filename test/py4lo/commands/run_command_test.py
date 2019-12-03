@@ -17,8 +17,35 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import unittest
-import env
+from unittest.mock import Mock, patch, call
+
 from commands.run_command import *
 
+
 class TestRunCommand(unittest.TestCase):
-    pass
+    def setUp(self):
+        self.provider = Mock()
+
+    def test_with_empty_tdata(self):
+        self.provider.get.return_value = {}
+        self.assertRaises(KeyError,
+                          lambda: RunCommand.create_executor([], self.provider))
+
+    @patch("subprocess.call", autospec=True)
+    def test_create(self, call_mock):
+        self.provider.get.return_value = {"log_level": 0, "python_exe": "py",
+                                          "python_version": 3.7,
+                                          "test_dir": ".", "src_dir": ".",
+                                          "base_path": ".", "calc_exe": "ca",
+                                          "source_file": "ods",
+                                          "suffix": ".ext", "src_ignore": "*",
+                                          "assets_dir": ".",
+                                          "target_dir": ".",
+                                          "assets_dest_dir": ".",
+                                          "assets_ignore": "*"}
+
+    @patch("subprocess.call", autospec=True)
+    def test(self, call_mock):
+        h = RunCommand("calc")
+        h.execute(0, Path(""))
+        self.assertEqual([call(['calc', '.'])], call_mock.mock_calls)
