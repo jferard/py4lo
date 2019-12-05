@@ -16,14 +16,14 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
+import io
 import unittest
+import zipfile
 from pathlib import Path
 
-import env
 from callbacks import *
-import io
-import zipfile
-from script_set_processor import TargetScript
+from core.asset import DestinationAsset
+from core.script import DestinationScript
 
 
 class TestRewriteManifest(unittest.TestCase):
@@ -50,8 +50,6 @@ class TestRewriteManifest(unittest.TestCase):
     <manifest:file-entry manifest:full-path="Basic/Standard/py4lo.xml" manifest:media-type="text/xml"/>
     <manifest:file-entry manifest:full-path="Basic/Standard/script-lb.xml" manifest:media-type="text/xml"/>
     <manifest:file-entry manifest:full-path="Basic/script-lc.xml" manifest:media-type="text/xml"/>
-    <manifest:file-entry manifest:full-path="Scripts" manifest:media-type="application/binary"/>
-    <manifest:file-entry manifest:full-path="Scripts/python" manifest:media-type="application/binary"/>
 </manifest:manifest>""", zout.read("META-INF/manifest.xml").decode("utf-8"))
 
     def test_rewrite_manifest_one_script(self):
@@ -59,17 +57,19 @@ class TestRewriteManifest(unittest.TestCase):
         out = io.BytesIO()
         zout = zipfile.ZipFile(out, 'w')
 
-        RewriteManifest([TargetScript(Path("script"), bytes(), [], None)],
-                        []).call(zin, zout,
-                                 zin.getinfo("META-INF/manifest.xml"))
-        print(zout.read("META-INF/manifest.xml").decode("utf-8"))
+        RewriteManifest(
+            [DestinationScript(Path("s/script"), bytes(), Path("s"), [], None)],
+            [DestinationAsset(Path("a/asset"), bytes())]).call(zin, zout,
+                                                               zin.getinfo(
+                                                                   "META-INF/manifest.xml"))
         self.assertEqual("""<?xml version="1.0" ?><manifest:manifest manifest:version="1.2" xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0">
     <manifest:file-entry manifest:full-path="Basic/Standard/py4lo.xml" manifest:media-type="text/xml"/>
     <manifest:file-entry manifest:full-path="Basic/Standard/script-lb.xml" manifest:media-type="text/xml"/>
     <manifest:file-entry manifest:full-path="Basic/script-lc.xml" manifest:media-type="text/xml"/>
-    <manifest:file-entry manifest:full-path="Scripts" manifest:media-type="application/binary"/>
-    <manifest:file-entry manifest:full-path="Scripts/python" manifest:media-type="application/binary"/>
-    <manifest:file-entry manifest:full-path="Scripts/python/script" manifest:media-type=""/>
+    <manifest:file-entry manifest:full-path="a" manifest:media-type="application/binary"/>
+    <manifest:file-entry manifest:full-path="s" manifest:media-type="application/binary"/>
+    <manifest:file-entry manifest:full-path="s/script" manifest:media-type=""/>
+    <manifest:file-entry manifest:full-path="a/asset" manifest:media-type="application/octet-stream"/>
 </manifest:manifest>""", zout.read("META-INF/manifest.xml").decode("utf-8"))
 
 

@@ -20,11 +20,12 @@ import unittest
 from unittest.mock import Mock, patch, call
 
 from commands.run_command import *
+from core.properties import PropertiesProvider
 
 
 class TestRunCommand(unittest.TestCase):
     def setUp(self):
-        self.provider = Mock()
+        self.provider: PropertiesProvider = Mock()
 
     def test_with_empty_tdata(self):
         self.provider.get.return_value = {}

@@ -17,20 +17,22 @@
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
+from logging import Logger
 from unittest.mock import Mock, call
+from zipfile import ZipFile
 
 from callbacks import AddScripts
+from core.script import DestinationScript
 
 
 class TestAddScripts(unittest.TestCase):
     def test_add_two_scripts(self):
-        zout = Mock()
-        t1 = Mock()
-        # use configure_mock to set the name attribute
-        t1.configure_mock(name="t1", script_content="c1")
-        t2 = Mock()
-        t2.configure_mock(name="t2", script_content="c2")
-        a = AddScripts([t1, t2])
+        logger:Logger = Mock()
+        zout: ZipFile = Mock()
+        t1: DestinationScript = Mock(script_path="Scripts/python/t1", script_content="c1")
+        t2: DestinationScript = Mock(script_path="Scripts/python/t2", script_content="c2")
+
+        a = AddScripts(logger, [t1, t2])
         a.call(zout)
         self.assertEqual([call.writestr('Scripts/python/t1', 'c1'),
                           call.writestr('Scripts/python/t2', 'c2')],

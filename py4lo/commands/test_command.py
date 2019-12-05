@@ -16,16 +16,16 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
-import logging
-from logging import Logger
 import os
 import subprocess
 import sys
+from logging import Logger
 from pathlib import Path
 from typing import Dict, Callable, Iterator
 
-from commands.command import Command, PropertiesProvider
+from commands.command import Command
 from commands.command_executor import CommandExecutor
+from core.properties import PropertiesProvider, Sources
 
 
 class TestCommand(Command):
@@ -34,19 +34,14 @@ class TestCommand(Command):
     @staticmethod
     def create_executor(_args, provider: PropertiesProvider):
         tdata = provider.get()
-        logger = logging.getLogger("py4lo")
-        logger.setLevel(tdata["log_level"])
+        logger = provider.get_logger()
         return CommandExecutor(
-            TestCommand(logger, tdata["python_exe"], Path(tdata["test_dir"]),
-                        Path(tdata["src_dir"]), Path(tdata["base_path"])))
+            TestCommand(logger, tdata["python_exe"], provider.get_sources()))
 
-    def __init__(self, logger: Logger, python_exe: str, test_dir: Path,
-                 src_dir: Path, base_path: Path):
+    def __init__(self, logger: Logger, python_exe: str, sources: Sources):
         self._logger = logger
         self._python_exe = python_exe
-        self._test_dir = test_dir
-        self._src_dir = src_dir
-        self._base_path = base_path
+        self._sources = sources
         self._env = None
 
     def execute(self):
@@ -89,20 +84,20 @@ class TestCommand(Command):
                               env=self._get_env())
 
     def _test_paths(self) -> Iterator[Path]:
-        for path in self._test_dir.rglob("*.py"):
+        for path in self._sources.test_dir.rglob("*.py"):
             if path.name.endswith("_test.py"):
                 yield path
 
     def _src_paths(self) -> Iterator[Path]:
-        for path in self._src_dir.rglob("*.py"):
+        for path in self._sources.src_dir.rglob("*.py"):
             if path.name != "main.py":
                 yield path
 
     def _get_env(self) -> Dict[str, str]:
         if self._env is None:
             env = dict(os.environ)
-            src_lib = [str(self._src_dir),
-                       str(self._base_path.joinpath("lib"))]
+            src_lib = [str(self._sources.src_dir),
+                       str(self._sources.lib_dir), str(self._sources.inc_dir)]
             env["PYTHONPATH"] = ";".join(sys.path + src_lib)
             self._env = env
         return self._env

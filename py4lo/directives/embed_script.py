@@ -16,23 +16,27 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
+import os
 from pathlib import Path
+from typing import List
 
+from core.script import SourceScript
 from directives.directive import Directive
 
 
-class ImportLib(Directive):
+class EmbedScript(Directive):
+    """
+    Embed a script in the archive and... do nothing else.
+    It's up to the user to import it if it is a module
+    """
+
     @staticmethod
     def sig_elements():
-        return ["import", "lib"]
+        return ["embed", "script"]
 
-    def __init__(self, base_path: Path, _scripts_path: Path):
-        self._base_path = base_path
-
-    def execute(self, processor: "DirectiveProcessor", args):
-        processor.include("py4lo_import.py")
-        script_ref = args[0]
-        script_fname = self._base_path.joinpath("lib", script_ref + ".py")
-        processor.append_script(script_fname)
-        processor.append("import " + script_ref + "\n")
+    def execute(self, processor: "DirectiveProcessor", args: List[str]):
+        dir = Path(args[0])
+        path = Path(args[1])
+        source_script = SourceScript(dir.joinpath(path), dir)
+        processor.append_script(source_script)
         return True

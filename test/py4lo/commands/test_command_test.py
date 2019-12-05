@@ -17,14 +17,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 
+import subprocess
 import unittest
 from pathlib import Path
 from unittest.mock import *
-import env
 
 from commands.test_command import TestCommand
-import os
-import subprocess
 
 
 class TestCommandTest(unittest.TestCase):
@@ -41,13 +39,11 @@ class TestCommandTest(unittest.TestCase):
                                             completed_process2,
                                             completed_process3]
         logger = MagicMock()
-        test_dir = Mock()
-        test_dir.rglob.side_effect = [[Path("/test_dir/c_test.py"),
+        sources = Mock()
+        sources.test_dir.rglob.side_effect = [[Path("/test_dir/c_test.py"),
                                        Path("/test_dir/b/d_test.py")]]
-        src_dir = Mock()
-        src_dir.rglob.side_effect = [[Path("/src_dir/src_a.py")]]
-        tc = TestCommand(logger, "test_py_exe", test_dir, src_dir,
-                         Path("test_p_path"))
+        sources.src_dir.rglob.side_effect = [[Path("/src_dir/src_a.py")]]
+        tc = TestCommand(logger, "test_py_exe", sources)
         status = tc.execute()
 
         self.assertEqual([

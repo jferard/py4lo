@@ -15,33 +15,36 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+from logging import Logger
+from typing import List, Dict, Union, TypeVar
 
-from pathlib import Path
-from typing import List, Dict, Type
-
-from directives.include import Include
-from directives.d_import import Import
-from directives.import_lib import ImportLib
-from directives.embed import Embed
+from core.properties import Sources
 from directives.directive import Directive
+from directives.embed_script import EmbedScript
+from directives.embed_lib import EmbedLib
+from directives.include import Include
+from directives.entry import Entry
+
+GET_DIRECTIVE = "@"
+U = TypeVar('U', bound=Directive)
 
 
 class _DirectiveProviderFactory:
-    def __init__(self,
-                 directive_classes: List[Type[Directive]]):
-        self._directive_classes = directive_classes
-
-    def create(self, base_path: Path, scripts_path: Path):
+    def __init__(self, logger: Logger,
+                 *directives: Directive):
+        self._logger = logger
+        self._directives = directives
         self._directives_tree = {}
-        for d in self._directive_classes:
-            sig_elements = d.sig_elements()
-            assert len(sig_elements)
 
-            directive = d(base_path, scripts_path)
+    def create_provider(self):
+        for directive in self._directives:
+            sig_elements = directive.sig_elements()
+            assert len(sig_elements)
 
             self._put_directive_class(sig_elements, directive)
 
-        return DirectiveProvider(self._directives_tree)
+        self._logger.debug("Directives tree: %s", self._directives_tree)
+        return DirectiveProvider(self._logger, self._directives_tree)
 
     def _put_directive_class(self, sig_elements: List[str],
                              directive: Directive):
@@ -51,33 +54,40 @@ class _DirectiveProviderFactory:
                 cur_directives_tree[fst] = {}
             cur_directives_tree = cur_directives_tree[fst]
 
-        cur_directives_tree.update({"@": directive})
+        cur_directives_tree.update({GET_DIRECTIVE: directive})
 
 
-T = Dict[str, "T"]
+T = Dict[str, Union["T", Directive]]
 
 
 class DirectiveProvider:
     @staticmethod
-    def create(base_path: Path, scripts_path: Path):
-        return _DirectiveProviderFactory(
-            [Include, ImportLib, Import, Embed]).create(base_path,
-                                                        scripts_path)
+    def create(logger: Logger, sources: Sources):
+        return _DirectiveProviderFactory(logger,
+            Entry(), Include(sources.inc_dir), EmbedLib(sources.lib_dir),
+            EmbedScript()).create_provider()
 
-    def __init__(self, directives_tree: T):
+    def __init__(self, logger: Logger, directives_tree: T):
+        self._logger = logger
         self._directives_tree = directives_tree
 
-    def get(self, args: List[str]) -> (T, List[str]):
-        """args are the shlex result"""
+    def get(self, args: List[str]) -> (Directive, List[str]):
+        """
+        args are the shlex result
+        """
+        self._logger.debug("Lookup directive: %s", args)
         cur_directives_tree = self._directives_tree
 
         for i in range(len(args)):
             arg = args[i]
             if arg in cur_directives_tree:
                 cur_directives_tree = cur_directives_tree[arg]
-            elif "@" in cur_directives_tree:
-                return cur_directives_tree["@"], args[i:]
+            elif GET_DIRECTIVE in cur_directives_tree:
+                return cur_directives_tree[GET_DIRECTIVE], args[i:]
             else:
                 raise KeyError(args)
+
+        if GET_DIRECTIVE in cur_directives_tree:
+            return cur_directives_tree[GET_DIRECTIVE], args[i:]
 
         assert False, "no args"

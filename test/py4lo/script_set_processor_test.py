@@ -17,6 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import unittest
+from logging import Logger
 from unittest.mock import *
 import env
 from script_set_processor import *
@@ -29,36 +30,36 @@ class TestScriptSetProcessor(unittest.TestCase):
 
     @patch("py_compile.compile")
     def test_scripts_processor(self, mock_compile):
-        logger = Mock()
-        source_path = Mock(stem='script_fname')
+        logger: Logger = Mock()
+        source_path: Path = Mock(stem='script_fname')
         src = MagicMock()
         target = MagicMock()
         source_path.open.return_value = src
 
-        target_path = Mock(stem='target/script_fname')
-        target_dir = Mock()
+        target_path: Path = Mock()
+        target_dir: Path = Mock()
         target_dir.joinpath.return_value = target_path
-        #        target_dir.join_path().stem = 'ok'
         target_path.open.return_value = target
         dest = MagicMock()
 
         src.__enter__.return_value = ["some line"]
         target.__enter__.return_value = dest
+        script: SourceScript = MagicMock(relative_path=Path("rel source"), script_path=source_path)
+        dp: DirectiveProvider = Mock()
+        target_path.relative_to.side_effect = [Path("rel target")]
 
         try:
-            sp = script_set_processor.ScriptSetProcessor(logger, Path("src"),
-                                                         target_dir,
-                                                         "3.7",
-                                                         [source_path])
+            sp = script_set_processor.ScriptSetProcessor(logger, target_dir,
+                                                         "3.7", dp, [script])
             sp.process()
         except Exception as e:
-            pass
+            raise
 
         self.assertEqual([
-            call.log(10, 'Scripts to process: %s', [source_path]),
-            call.log(10, 'Parsing script: %s (%s)', 'script_fname',
-                     source_path),
-            call.log(10, 'Writing script: %s (%s)', 'target/script_fname',
+            call.log(10, 'Scripts to process: %s', [script]),
+            call.log(10, 'Parsing script: %s (%s)', Path("rel source"), source_path),
+            call.log(10, 'Temp output script is: %s (%s)', target_path, []),
+            call.log(10, 'Writing temp script: %s (%s)', Path('rel target'),
                      target_path),
         ], logger.mock_calls)
         self.assertEqual([

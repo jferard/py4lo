@@ -22,84 +22,75 @@ from pathlib import Path
 from typing import List, Tuple, Dict
 
 import zip_updater
-from asset import Asset
 from callbacks import IgnoreItem, RewriteManifest, AddScripts, AddAssets, \
     AddDebugContent
-from commands.command import Command, PropertiesProvider
+from commands.command import Command
 from commands.command_executor import CommandExecutor
+from commands.ods_updater import OdsUpdaterHelper
 from commands.test_command import TestCommand
-from script_set_processor import ScriptSetProcessor, TargetScript
-from tools import get_assets, get_paths
+from core.asset import DestinationAsset
+from core.properties import PropertiesProvider, Destinations, Sources
+from core.script import DestinationScript
 
 
 class DebugCommand(Command):
+    """
+    Create a simple ods file with a button per exported function.
+    This is a good start.
+    """
+
     @staticmethod
     def create_executor(args, provider: PropertiesProvider):
         test_executor = TestCommand.create_executor(args, provider)
         tdata = provider.get()
         logger = logging.getLogger("py4lo")
         logger.setLevel(tdata["log_level"])
-        debug_command = DebugCommand(logger, Path(tdata["base_path"]),
-                                     Path(tdata["src_dir"]),
-                                     tdata["src_ignore"],
-                                     Path(tdata["assets_dir"]),
-                                     tdata["assets_ignore"],
-                                     Path(tdata["target_dir"]),
-                                     Path(tdata["assets_dest_dir"]),
+        sources = provider.get_sources()
+        destinations = provider.get_destinations()
+        debug_command = DebugCommand(logger, Path(tdata["base_path"]), sources,
                                      tdata["python_version"],
                                      Path(tdata["debug_file"]))
         return CommandExecutor(debug_command, test_executor)
 
-    def __init__(self, logger: logging.Logger, base_path: Path, src_dir: Path,
-                 src_ignore: List[str], assets_dir: Path,
-                 assets_ignore: List[str], target_dir: Path,
-                 assets_dest_dir: Path, python_version: str,
-                 ods_dest_name: Path):
+    def __init__(self, logger: logging.Logger, helper: OdsUpdaterHelper,
+                 sources: Sources, destinations: Destinations,
+                 python_version: str):
         self._logger = logger
-        self._base_path = base_path
-        self._src_dir = src_dir
-        self._src_ignore = src_ignore
-        self._assets_dir = assets_dir
-        self._assets_ignore = assets_ignore
-        self._target_dir = target_dir
-        self._assets_dest_dir = assets_dest_dir
+        self._helper = helper
+        self._sources = sources
+        self._destinations = destinations
         self._python_version = python_version
-        self._ods_dest_name = ods_dest_name
-        self._debug_path = target_dir.joinpath(ods_dest_name)
+        self._debug_path = destinations.target_dir.joinpath(
+            destinations.dest_ods_file)
 
     def execute(self, *_args: List[str]) -> Tuple[Path]:
         self._logger.info("Debug or init. Generating '%s' for Python '%s'",
                           self._debug_path, self._python_version)
 
-        scripts, exported_func_names_by_script = self._get_scripts()
-        assets = get_assets(self._assets_dir, self._assets_ignore,
-                            self._assets_dest_dir)
+        temp_scripts = self._helper.get_temp_scripts()
+        exported_func_names_by_script = {ts.dest_name: ts.exported_func_names
+                                         for ts in temp_scripts}
+        dest_scripts = [ts.to_destination(self._destinations.dest_dir) for ts in
+                        temp_scripts]
+        assets = self._helper.get_assets()
 
         zupdater = self._get_zip_updater(assets, exported_func_names_by_script,
-                                         scripts)
-        zupdater.update(self._base_path.joinpath("inc", "debug.ods"),
-                        self._ods_dest_name)
-        return self._ods_dest_name,
+                                         dest_scripts)
+        zupdater.update(self._sources.inc_dir.joinpath("debug.ods"),
+                        self._debug_path)
+        return self._debug_path,
 
-    def _get_zip_updater(self, assets: List[Asset],
+    def _get_zip_updater(self, assets: List[DestinationAsset],
                          exported_func_names_by_script: Dict[str, List[str]],
-                         scripts: List[TargetScript]):
-        zupdater_builder = zip_updater.ZipUpdaterBuilder()
+                         scripts: List[DestinationScript]):
+        zupdater_builder = zip_updater.ZipUpdaterBuilder(self._logger)
         zupdater_builder.item(IgnoreItem(Path("Scripts"))).item(
-            RewriteManifest(scripts, assets)).after(AddScripts(scripts)).after(
+            RewriteManifest(scripts, assets)).after(
+            AddScripts(self._logger, scripts)).after(
             AddAssets(assets)).after(
             AddDebugContent(exported_func_names_by_script))
         zupdater = zupdater_builder.build()
         return zupdater
-
-    def _get_scripts(self) -> (List[TargetScript], Dict[str, List[str]]):
-        script_paths = get_paths(self._src_dir, self._src_ignore, "*.py")
-        scripts_processor = ScriptSetProcessor(self._logger, self._src_dir,
-                                               self._target_dir,
-                                               self._python_version,
-                                               script_paths)
-        return scripts_processor.process(), \
-               scripts_processor.get_exported_func_names_by_script_name()
 
     @staticmethod
     def get_help():

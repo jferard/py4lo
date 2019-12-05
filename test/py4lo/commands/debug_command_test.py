@@ -17,35 +17,39 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import unittest
+from logging import Logger
 from unittest.mock import Mock, patch, call
 
 from commands.debug_command import *
-from py4lo.commands.debug_command import DebugCommand
+from commands.debug_command import DebugCommand
+from core.properties import Sources
+from core.script import TempScript
 
 
 class TestDebugCommand(unittest.TestCase):
     @patch('zip_updater.ZipUpdater', autospec=True)
     def test(self, Zupdater):
-        logger = Mock()
-        base_path = Path("")
-        src_dir = Path("")
-        src_ignore = ["*"]
-        assets_dir = Path("")
-        assets_ignore = []
-        target_dir = Path("")
-        assets_dest_dir = Path("")
-        python_version = ""
-        ods_dest_name = Path("")
+        logger: Logger = Mock()
+        dest_path = Path("dest.ods")
+        inc_path = Path("inc/debug.ods")
+        python_version = "3.1"
+        helper: OdsUpdaterHelper = Mock()
+        t1: TempScript = Mock()
+        t2: TempScript = Mock()
+        helper.get_temp_scripts.side_effect = [[t1, t2]]
+        destinations: Destinations = Mock()
+        destinations.target_dir.joinpath.return_value = dest_path
+        sources: Sources = Mock()
+        sources.inc_dir.joinpath.return_value = inc_path
+        d = DebugCommand(logger, helper, sources, destinations,
+                         python_version)
 
-        d = DebugCommand(logger, base_path, src_dir, src_ignore, assets_dir,
-                         assets_ignore, target_dir, assets_dest_dir,
-                         python_version, ods_dest_name)
         d.execute([])
 
         self.assertEqual([call.info(
-            "Debug or init. Generating '%s' for Python '%s'", Path('.'), ''),
-            call.log(10, 'Scripts to process: %s', set())],
+            "Debug or init. Generating '%s' for Python '%s'", Path('dest.ods'),
+            '3.1')],
             logger.mock_calls)
         print(Zupdater.mock_calls)
-        self.assertEqual(call().update(Path('inc/debug.ods'), Path('')),
+        self.assertEqual(call().update(Path('inc/debug.ods'), Path('dest.ods')),
                          Zupdater.mock_calls[-1])

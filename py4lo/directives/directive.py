@@ -22,14 +22,9 @@ from typing import List
 
 class Directive(ABC):
     @abstractmethod
-    def __init__(self, base_path: Path, scripts_path: Path):
-        pass
-
-    @abstractmethod
     def execute(self, processor: "DirectiveProcessor", args: List[str]):
         pass
 
-    @staticmethod
     @abstractmethod
-    def sig_elements():
+    def sig_elements(self):
         pass

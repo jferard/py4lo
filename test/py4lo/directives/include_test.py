@@ -34,7 +34,7 @@ class TestInclude(unittest.TestCase):
         inc_path.open.return_value = bound
         bound.__enter__.return_value = ["some line"]
 
-        d = Include(Path(""), path)
+        d = Include(path)
         self.assertEqual(["include"], d.sig_elements())
         self.assertEqual(True, d.execute(proc, ["a.py"]))
         self.assertEqual([call.append(

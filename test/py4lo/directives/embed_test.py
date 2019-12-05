@@ -20,18 +20,24 @@ import unittest
 from pathlib import Path
 from unittest.mock import Mock, call
 
-from directives import Embed
+from core.script import SourceScript
+from directives import EmbedScript
 
 
 class TestEmbed(unittest.TestCase):
-    def test(self):
+    def setUp(self):
+        self._directive = EmbedScript()
+
+    def test_sig_elements(self):
+        self.assertEqual(["embed", "script"], self._directive.sig_elements())
+
+    def test_execute(self):
         proc = Mock()
-        d = Embed(Path(""), Path(""))
-        self.assertEqual(["embed"], d.sig_elements())
-        self.assertEqual(True, d.execute(proc, ["a.py"]))
-        self.assertEqual([call.include('py4lo_import.py'),
-                          call.append_script(Path('a.py'))], proc.mock_calls)
+        self.assertEqual(True,
+                         self._directive.execute(proc, ["MyDir", "a/b.py"]))
+        self.assertEqual([call.append_script(
+            SourceScript(Path('MyDir/a/b.py'), Path("MyDir")))],
+            proc.mock_calls)
 
-
-if __name__ == '__main__':
-    unittest.main()
+        if __name__ == '__main__':
+            unittest.main()

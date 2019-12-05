@@ -16,23 +16,22 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import unittest
+from dataclasses import dataclass
 from pathlib import Path
-from unittest.mock import Mock, call
 
-from directives import ImportLib
+@dataclass
+class DestinationAsset:
+    path: Path
+    content: bytes
+
+@dataclass
+class SourceAsset:
+    path: Path
+    assets_dir: Path
+
+    def to_dest(self, assets_dest_dir) -> DestinationAsset:
+        dest_path = assets_dest_dir.joinpath(self.path.relative_to(self.assets_dir))
+        with self.path.open('rb') as source:
+            return DestinationAsset(dest_path, source.read())
 
 
-class TestImportLib(unittest.TestCase):
-    def test(self):
-        proc = Mock()
-        d = ImportLib(Path(""), Path(""))
-        self.assertEqual(["import", "lib"], d.sig_elements())
-        self.assertEqual(True, d.execute(proc, ["a"]))
-        self.assertEqual([call.include('py4lo_import.py'),
-                          call.append_script(Path('lib/a.py')),
-                          call.append('import a\n')], proc.mock_calls)
-
-
-if __name__ == '__main__':
-    unittest.main()

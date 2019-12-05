@@ -17,22 +17,9 @@
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from abc import ABC, abstractmethod
-from pathlib import Path
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Optional, Tuple
 
-from toml_helper import load_toml
-
-
-class PropertiesProvider:
-    def __init__(self, toml_filename="py4lo.toml"):
-        self._toml_filename = toml_filename
-        self._tdata = None
-
-    def get(self) -> Dict[str, Any]:
-        if self._tdata is None:
-            self._tdata = load_toml(Path(self._toml_filename))
-
-        return self._tdata
+from core.properties import PropertiesProvider
 
 
 class Command(ABC):

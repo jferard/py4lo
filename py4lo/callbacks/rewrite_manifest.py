@@ -18,31 +18,27 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import xml.dom.minidom
 from pathlib import Path
-from typing import List
+from typing import List, Set
 from zipfile import ZipFile, ZipInfo
 
-from script_set_processor import TargetScript
 from callbacks.callback import ItemCallback
-from asset import Asset
+from core.asset import DestinationAsset
+from core.script import DestinationScript
 
-BASIC_ENTRIES = """    <manifest:file-entry manifest:full-path="Basic/Standard/py4lo.xml" manifest:media-type="text/xml"/>
-    <manifest:file-entry manifest:full-path="Basic/Standard/script-lb.xml" manifest:media-type="text/xml"/>
-    <manifest:file-entry manifest:full-path="Basic/script-lc.xml" manifest:media-type="text/xml"/>
-"""
-PYTHON_DIRS = """    <manifest:file-entry manifest:full-path="Scripts" manifest:media-type="application/binary"/>
-    <manifest:file-entry manifest:full-path="Scripts/python" manifest:media-type="application/binary"/>
-"""
-PYTHON_ENTRY_TPL = """    <manifest:file-entry manifest:full-path="Scripts/python/{0}" manifest:media-type=""/>
-"""
-ASSET_DIR_TPL = """    <manifest:file-entry manifest:full-path="{0}" manifest:media-type="application/binary"/>
-"""
-ASSET_ENTRY_TPL = """    <manifest:file-entry manifest:full-path="{0}" manifest:media-type="application/octet-stream"/>
-"""
+BASIC_ENTRIES = [
+    """<manifest:file-entry manifest:full-path="Basic/Standard/py4lo.xml" manifest:media-type="text/xml"/>""",
+    """<manifest:file-entry manifest:full-path="Basic/Standard/script-lb.xml" manifest:media-type="text/xml"/>""",
+    """<manifest:file-entry manifest:full-path="Basic/script-lc.xml" manifest:media-type="text/xml"/>"""
+]
+PYTHON_ENTRY_TPL = """<manifest:file-entry manifest:full-path="{0}" manifest:media-type=""/>"""
+DIR_TPL = """<manifest:file-entry manifest:full-path="{0}" manifest:media-type="application/binary"/>"""
+ASSET_ENTRY_TPL = """<manifest:file-entry manifest:full-path="{0}" manifest:media-type="application/octet-stream"/>"""
 MANIFEST_CLOSE_TAG = """</manifest:manifest>"""
 
 
 class RewriteManifest(ItemCallback):
-    def __init__(self, scripts: List[TargetScript], assets: List[Asset]):
+    def __init__(self, scripts: List[DestinationScript],
+                 assets: List[DestinationAsset]):
         self._scripts = scripts
         self._assets = assets
 
@@ -58,9 +54,9 @@ class RewriteManifest(ItemCallback):
     def _rewrite_manifest(self, zin: ZipFile, manifest_item: ZipInfo):
         pretty_manifest = RewriteManifest._prettyfy_xml(zin,
                                                         manifest_item.filename)
-        s = RewriteManifest._strip_close(pretty_manifest)
-        s = self._add_script_lines(s)
-        return s.encode("utf-8")
+        lines = RewriteManifest._strip_close(pretty_manifest)
+        lines += self._script_lines()
+        return "\n".join(lines).encode("utf-8")
 
     @staticmethod
     def _prettyfy_xml(zin: ZipFile, fname: str):
@@ -70,30 +66,35 @@ class RewriteManifest(ItemCallback):
 
     @staticmethod
     def _strip_close(pretty_manifest: str):
-        s = ""
+        lines = []
         for line in pretty_manifest.splitlines():
             if line.strip() == MANIFEST_CLOSE_TAG:  # end of manifest
-                return s
-            s += line + "\n"
+                return lines
+            lines.append(line)
 
         raise Exception("no manifest closing tag in " + pretty_manifest)
 
-    def _add_script_lines(self, s: str):
-        s += BASIC_ENTRIES
-        s += PYTHON_DIRS
+    def _script_lines(self):
+        lines = ["    " + be for be in BASIC_ENTRIES]
+
+        for d in self._get_dirs():
+            lines.append("    " + DIR_TPL.format(d.as_posix()))
         for script in self._scripts:
-            s += PYTHON_ENTRY_TPL.format(script.name)
-        assets_dirs = set()
+            lines.append(
+                "    " + PYTHON_ENTRY_TPL.format(script.script_path.as_posix()))
         for asset in self._assets:
-            path_chunks = asset.path.parts
-            assets_dirs.update(
-                Path("/").joinpath(*path_chunks[:i]) for i in
-                range(1, len(path_chunks)))
+            lines.append("    " + ASSET_ENTRY_TPL.format(asset.path.as_posix()))
 
-        for asset_dir in assets_dirs:
-            s += ASSET_DIR_TPL.format(asset_dir)
+        lines.append(MANIFEST_CLOSE_TAG)
+        return lines
+
+    def _get_dirs(self) -> List[Path]:
+        """
+        @return: the destination directories for scripts and assets
+        """
+        dirs = set()
+        for script in self._scripts:
+            dirs.update(list(script.script_path.parents)[:-1])
         for asset in self._assets:
-            s += ASSET_ENTRY_TPL.format(asset.path)
-
-        s += MANIFEST_CLOSE_TAG
-        return s
+            dirs.update(list(asset.path.parents)[:-1])
+        return sorted(dirs)

@@ -18,21 +18,23 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 from pathlib import Path
 
+from core.script import SourceScript
 from directives.directive import Directive
 
 
-class Import(Directive):
+class EmbedLib(Directive):
+    """
+    Embed a py4lo library
+    """
     @staticmethod
     def sig_elements():
-        return ["import"]
+        return ["embed", "lib"]
 
-    def __init__(self, _base_path: Path, scripts_path: Path):
-        self._scripts_path = scripts_path
+    def __init__(self, lib_dir: Path):
+        self._lib_dir = lib_dir
 
     def execute(self, processor: "DirectiveProcessor", args):
-        processor.include("py4lo_import.py")
         script_ref = args[0]
-        script_path = self._scripts_path.joinpath(script_ref + ".py")
-        processor.append_script(script_path)
-        processor.append("import " + script_ref + "\n")
+        script_path = self._lib_dir.joinpath(script_ref + ".py")
+        processor.append_script(SourceScript(script_path, self._lib_dir))
         return True

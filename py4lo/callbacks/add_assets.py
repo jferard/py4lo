@@ -20,14 +20,14 @@ from typing import List
 from zipfile import ZipFile
 
 from callbacks import AfterCallback
-from asset import Asset
+from core.asset import DestinationAsset
 
 
 class AddAssets(AfterCallback):
     """
     Add assets in destination file
     """
-    def __init__(self, assets: List[Asset]):
+    def __init__(self, assets: List[DestinationAsset]):
         """
         :param assets: the assets to add
         """
@@ -35,5 +35,5 @@ class AddAssets(AfterCallback):
 
     def call(self, zout: ZipFile) -> bool:
         for asset in self._assets:
-            zout.writestr(asset.path, asset.content)
+            zout.writestr(str(asset.path), asset.content)
         return True

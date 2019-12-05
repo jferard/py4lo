@@ -16,6 +16,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
+from logging import Logger
 from pathlib import Path
 from typing import List
 from zipfile import ZipFile
@@ -28,7 +29,8 @@ class ZipUpdaterBuilder:
     A zip file updater. Applies callbacks before, after and to each item.
     """
 
-    def __init__(self):
+    def __init__(self, logger: Logger):
+        self._logger = logger
         self._before_callbacks = []
         self._item_callbacks = []
         self._after_callbacks = []
@@ -46,7 +48,7 @@ class ZipUpdaterBuilder:
         return self
 
     def build(self):
-        return ZipUpdater(self._before_callbacks, self._item_callbacks,
+        return ZipUpdater(self._logger, self._before_callbacks, self._item_callbacks,
                           self._after_callbacks)
 
 
@@ -55,9 +57,10 @@ class ZipUpdater:
     A zip file updater. Applies callbacks before, after and to each item.
     """
 
-    def __init__(self, before_callbacks: List[BeforeCallback],
+    def __init__(self, logger: Logger, before_callbacks: List[BeforeCallback],
                  item_callbacks: List[ItemCallback], after_callbacks: List[
                 AfterCallback]):
+        self._logger = logger
         self._before_callbacks = before_callbacks
         self._item_callbacks = item_callbacks
         self._after_callbacks = after_callbacks

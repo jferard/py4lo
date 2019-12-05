@@ -19,7 +19,8 @@
 import logging
 from pathlib import Path
 
-from commands.command import Command, PropertiesProvider
+from commands.command import Command
+from core.properties import PropertiesProvider
 from commands.command_executor import CommandExecutor
 from commands.update_command import UpdateCommand
 from tools import open_with_calc

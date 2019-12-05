@@ -19,44 +19,35 @@
 import logging
 import py_compile
 import re
-from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Collection, Optional, Dict
+from typing import List, Optional, Dict, Sequence
 
+from core.script import TempScript, ParsedScriptContent, SourceScript
 from directive_processor import DirectiveProcessor
-
-
-@dataclass
-class TargetScript:
-    """A target script has a file name, a content (the file was processed),
-    some exported functions and the exceptions encountered by the interpreter"""
-    script_path: Path
-    script_content: bytes
-    exported_func_names: List[str]
-    exception: Optional[Exception]
-
-    @property
-    def name(self):
-        return self.script_path.stem
+from directives import DirectiveProvider
 
 
 class ScriptSetProcessor:
-    """A script processor processes some file from a source dir and writes
-    the target scripts to a target dir"""
+    """
+    A script processor processes some file from a source dir and writes
+    the target scripts to a target dir
+    """
 
-    def __init__(self, logger: logging.Logger, src_dir: Path, target_dir: Path,
-                 python_version: str,
-                 script_paths: Collection[Path]):
+    def __init__(self, logger: logging.Logger, target_dir: Path,
+                 python_version: str, directive_provider: DirectiveProvider,
+                 source_scripts: Sequence[SourceScript]):
         self._logger = logger
-        self._src_dir = src_dir
         self._target_dir = target_dir
         self._python_version = python_version
-        self._logger.log(logging.DEBUG, "Scripts to process: %s", script_paths)
-        self._scripts: List[TargetScript] = []
-        self._cur_script_paths = list(script_paths)  # our stack.
+        self._directive_provider = directive_provider
+        self._source_scripts = source_scripts
+        self._logger.log(logging.DEBUG, "Scripts to process: %s",
+                         source_scripts)
+        self._scripts: List[TempScript] = []
+        self._cur_source_scripts = list(source_scripts)  # our stack.
         self._visited = set()  # avoid cycles
 
-    def process(self) -> List[TargetScript]:
+    def process(self) -> List[TempScript]:
         """Explore the scripts. Since a script may import another script, we
         have a tree structure. We traverse the tree with classical DFS"""
         while self._has_more_scripts():
@@ -66,23 +57,26 @@ class ScriptSetProcessor:
         return self._scripts
 
     def _has_more_scripts(self) -> bool:
-        return bool(self._cur_script_paths)
+        return bool(self._cur_source_scripts)
 
     def _process_next_script_if_not_visited(self):
-        next_script_path = self._cur_script_paths.pop()
-        if next_script_path in self._visited:
+        next_script = self._cur_source_scripts.pop()
+        if next_script in self._visited:
             return  # avoid cycles !
 
-        self._process_script(next_script_path)
-        self._visited.add(next_script_path)
+        self._process_script(next_script)
+        self._visited.add(next_script)
 
-    def _process_script(self, script_path: Path):
-        directive_processor = DirectiveProcessor.create(self._src_dir, self,
-                                                             self._python_version)
+    def _process_script(self, source_script: SourceScript):
+        directive_processor = DirectiveProcessor.create(self,
+                                                        self._directive_provider,
+                                                        self._python_version,
+                                                        source_script)
         script_processor = ScriptProcessor(self._logger, directive_processor,
-                                           script_path, self._target_dir)
-        script = script_processor.parse_script()
-        self._add_script(script)
+                                           source_script,
+                                           self._target_dir)
+        temp_script = script_processor.parse_script()
+        self._add_script(temp_script)
 
     def _raise_exceptions(self):
         es = [script.exception for script in self._scripts if
@@ -94,23 +88,22 @@ class ScriptSetProcessor:
             self._logger.log(logging.ERROR, str(e))
         raise Exception("Compilation errors: see above")
 
-    def append_script(self, script_path: Path):
+    def append_script(self, source_script: SourceScript):
         """Append a new script. The directive UseLib will call this method"""
-        self._cur_script_paths.append(script_path)
+        self._cur_source_scripts.append(source_script)
 
-    def _add_script(self, script: TargetScript):
+    def _add_script(self, script: TempScript):
         self._write_script(script)
         self._scripts.append(script)
 
     def get_exported_func_names_by_script_name(self) -> Dict[str, List[str]]:
         """Return a dict: script name -> exported functions"""
-        return {script.name: script.exported_func_names for script
+        return {script.dest_name: script.exported_func_names for script
                 in self._scripts}
 
-    def _write_script(self, script: TargetScript):
-        script_name = script.name
+    def _write_script(self, script: TempScript):
         self._ensure_target_dir_exists()
-        self._logger.log(logging.DEBUG, "Writing script: %s (%s)", script_name,
+        self._logger.log(logging.DEBUG, "Writing temp script: %s (%s)", script.relative_path,
                          script.script_path)
         with script.script_path.open('wb') as f:
             f.write(script.script_content)
@@ -124,36 +117,40 @@ class ScriptProcessor:
     """A script processor"""
 
     def __init__(self, logger: logging.Logger,
-                 directive_processor: DirectiveProcessor, script_path: Path,
-                 target_dir: Path):
+                 directive_processor: DirectiveProcessor,
+                 source_script: SourceScript, target_dir: Path):
         self._logger = logger
         self._directive_processor = directive_processor
-        self._script_path = script_path
+        self._source_script = source_script
         self._target_dir = target_dir
 
-    def parse_script(self) -> TargetScript:
+    def parse_script(self) -> TempScript:
         self._logger.log(logging.DEBUG, "Parsing script: %s (%s)",
-                         self._script_path.stem,
-                         self._script_path)
+                         self._source_script.relative_path,
+                         self._source_script.script_path)
         exception = self._get_exception()
-        content, exported_func_names = _ScriptParser(self._logger,
-                                                     self._directive_processor,
-                                                     self._script_path) \
-            .parse()
-        target_path = self._target_dir.joinpath(self._script_path.name)
-        return TargetScript(target_path, content.encode("utf-8"),
-                            exported_func_names, exception)
+        parser = _ContentParser(self._logger, self._directive_processor,
+                                self._source_script.script_path)
+        parsed_content = parser.parse()
+        target_path = self._target_dir.joinpath(
+            self._source_script.relative_path)
+        script = TempScript(target_path, parsed_content.text.encode("utf-8"),
+                            self._target_dir,
+                            parsed_content.exported_func_names, exception)
+        self._logger.log(logging.DEBUG, "Temp output script is: %s (%s)",
+                         script.script_path, script.exported_func_names)
+        return script
 
     def _get_exception(self) -> Optional[Exception]:
         try:
-            py_compile.compile(self._script_path, doraise=True)
+            py_compile.compile(self._source_script.script_path, doraise=True)
         except Exception as e:
             return e
         else:
             return None
 
 
-class _ScriptParser:
+class _ContentParser:
     """A script parser"""
 
     _PATTERN = re.compile("^def\\s+([^_].*?)\\(.*\\):.*$")
@@ -168,7 +165,7 @@ class _ScriptParser:
         self._exported_func_names = []
         self._lines = ["# parsed by py4lo (https://github.com/jferard/py4lo)"]
 
-    def parse(self) -> (str, List[str]):
+    def parse(self) -> ParsedScriptContent:
         if self._script:
             return self._script
 
@@ -177,7 +174,8 @@ class _ScriptParser:
 
         self._directive_processor.end()
         self._add_exported_func_names()
-        return "\n".join(self._lines), self._exported_func_names
+        return ParsedScriptContent("\n".join(self._lines),
+                                   self._exported_func_names)
 
     def _process_lines(self, f):
         line = None
@@ -202,7 +200,7 @@ class _ScriptParser:
             self._lines.append(line)
 
     def _update_exported(self, line: str):
-        m = _ScriptParser._PATTERN.match(line)
+        m = _ContentParser._PATTERN.match(line)
         if m:
             func_name = m.group(1)
             self._exported_func_names.append(func_name)

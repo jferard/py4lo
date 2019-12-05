@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 from abc import ABC, abstractmethod
-from typing import TypeVar, Any, Union, Dict
+from typing import Any, Union, Dict
 
 
 class Comparable(ABC):
@@ -26,7 +26,7 @@ class Comparable(ABC):
         pass
 
 
-T = TypeVar('T', bound=Union[int, float, str])
+T = Union[int, float, str]
 
 
 class Comparator:

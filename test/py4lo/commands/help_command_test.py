@@ -19,13 +19,13 @@
 import unittest
 from unittest.mock import Mock, patch, call
 
-import env
 from commands.help_command import *
+from core.properties import PropertiesProvider
 
 
 class TestHelpCommand(unittest.TestCase):
     def setUp(self):
-        self.provider = Mock()
+        self.provider: PropertiesProvider = Mock()
 
     @patch("__main__.__builtins__.print", autospec=True)
     def test_without_command(self, print_mock):

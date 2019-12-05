@@ -17,6 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import unittest
+from logging import Logger
 from unittest.mock import Mock, patch, call, MagicMock
 
 from script_set_processor import *
@@ -24,21 +25,21 @@ from script_set_processor import *
 
 class TestScriptsProcessor(unittest.TestCase):
     def test(self):
-        logger = Mock()
-        dp = Mock()
-        path = Mock(stem='fname')
-        target_dir = Mock()
+        logger: Logger = Mock()
+        dp: DirectiveProcessor = Mock()
+        source_script: SourceScript = Mock(relative_path="fname")
+        target_dir: Path = Mock()
+        target_dir.joinpath.side_effect = [Path('t')]
         bound = MagicMock()
-        path.open.return_value = bound
+        source_script.script_path.open.return_value = bound
         bound.__enter__.return_value = ["some line"]
 
-        sp = ScriptProcessor(logger, dp, path, target_dir)
+        sp = ScriptProcessor(logger, dp, source_script, target_dir)
         sp.parse_script()
 
         self.assertEqual(
-            [call.log(10, 'Parsing script: %s (%s)', 'fname', path)],
+            [call.log(10, 'Parsing script: %s (%s)', 'fname',
+                      source_script.script_path),
+             call.log(10, 'Temp output script is: %s (%s)', Path('t'), [])],
             logger.mock_calls)
         self.assertEqual([call.ignore_lines(), call.end()], dp.mock_calls)
-        self.assertEqual(
-            [call.open('r', encoding='utf-8'), call.open().__enter__(),
-             call.open().__exit__(None, None, None)], path.mock_calls)

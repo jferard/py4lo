@@ -18,10 +18,11 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import shlex
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from branch_processor import BranchProcessor
 from comparator import Comparator
+from core.script import SourceScript
 from directives import DirectiveProvider
 
 
@@ -31,8 +32,8 @@ class DirectiveProcessor:
     directive, which may use some helpers: import2, ..."""
 
     @staticmethod
-    def create(scripts_path: Path, scripts_processor: "ScriptSetProcessor",
-               python_version: str):
+    def create(scripts_processor: "ScriptSetProcessor", directive_provider: DirectiveProvider, python_version: str,
+               source_script: SourceScript):
         comparator = Comparator({'python_version': python_version})
 
         def local_is_true(args: List[str]):
@@ -40,29 +41,24 @@ class DirectiveProcessor:
 
         branch_processor = BranchProcessor(local_is_true)
 
-        base_path = Path(__file__).parent.parent.resolve()
-        directive_provider = DirectiveProvider.create(base_path, scripts_path)
+        return DirectiveProcessor(scripts_processor, branch_processor,
+                                  directive_provider)
 
-        return DirectiveProcessor(scripts_path, scripts_processor,
-                                       branch_processor, directive_provider)
-
-    def __init__(self, scripts_path: Path,
-                 scripts_processor: "ScriptSetProcessor",
+    def __init__(self, script_set_processor: "ScriptSetProcessor",
                  branch_processor: BranchProcessor,
                  directive_provider: DirectiveProvider):
         """
         Create a Directive processor. Scripts_path is the path to the scripts
         directory
         """
-        self._scripts_processor = scripts_processor
-        self._scripts_path = scripts_path
+        self._script_set_processor = script_set_processor
         self._branch_processor = branch_processor
         self._directive_provider = directive_provider
         self._includes = set()
 
-    def append_script(self, script_path: Path):
+    def append_script(self, source_script: SourceScript):
         """Append a script to the script processor"""
-        self._scripts_processor.append_script(script_path)
+        self._script_set_processor.append_script(source_script)
 
     def process_line(self, line: str) -> List[str]:
         """Process a line that starts with #"""
@@ -104,19 +100,23 @@ class _DirectiveProcessorWorker:
             return self._target_lines
 
         try:
-            ls = shlex.split(self._line)
-            if self._is_directive(ls):
-                self._process_directive(self._line, ls[2:])
-            else:  # thats maybe a simple comment
+            directive = self._get_directive()
+            if directive is None: # that's maybe a simple comment
                 self._comment_or_write()
+            else:
+                self._process_directive(self._line, directive)
         except ValueError:
             self._comment_or_write()
 
         return self._target_lines
 
-    @staticmethod
-    def _is_directive(ls: List[str]) -> bool:
-        return len(ls) >= 2 and ls[0] == '#' and ls[1] == 'py4lo:'
+    def _get_directive(self) -> Optional[List[str]]:
+        mark, directive = self._line.split(":", 1)
+        mark = mark.split()
+        if mark == ['#py4lo'] or mark == ['#', 'py4lo']:
+            return shlex.split(directive)
+        else:
+            return None
 
     def _process_directive(self, line: str, args: List[str]):
         is_branch_directive = self._branch_processor.handle_directive(args[0],
@@ -147,9 +147,9 @@ class _DirectiveProcessorWorker:
         """Called by directives"""
         self._target_lines.append(line)
 
-    def append_script(self, script_path: Path):
+    def append_script(self, source_script: SourceScript):
         """Append a script to the script processor"""
-        self._directive_processor.append_script(script_path)
+        self._directive_processor.append_script(source_script)
 
 
 class _IncludeProcessor:

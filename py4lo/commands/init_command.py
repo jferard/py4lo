@@ -16,37 +16,36 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
-import logging
-from abc import ABC
 from pathlib import Path
+from typing import List, Tuple, Optional
 
 from commands import Command
-from commands.command import PropertiesProvider
+from commands.ods_updater import OdsUpdaterHelper
+from core.properties import PropertiesProvider
 from commands.command_executor import CommandExecutor
 from commands.debug_command import DebugCommand
 from commands.test_command import TestCommand
 
 
-class InitCommand(Command, ABC):
+class InitCommand(Command):
     @staticmethod
     def create_executor(args, provider: PropertiesProvider):
         tdata = provider.get()
         test_executor = TestCommand.create_executor(args, provider)
-        logger = logging.getLogger("py4lo")
-        logger.setLevel(tdata["log_level"])
-        init_command = DebugCommand(
-            logger,
-            Path(tdata["base_path"]),
-            Path(tdata["src_dir"]),
-            tdata["src_ignore"],
-            Path(tdata["assets_dir"]),
-            tdata["assets_ignore"],
-            Path(tdata["target_dir"]),
-            Path(tdata["assets_dest_dir"]),
-            tdata["python_version"],
-            Path(tdata["init_file"])
-        )
+        logger = provider.get_logger()
+        sources = provider.get_sources()
+        destinations = provider.get_destinations()
+        python_version = provider.get("python_version")
+        helper = OdsUpdaterHelper(logger, sources,
+                                  destinations,
+                                  python_version)
+        init_command = DebugCommand(logger, helper,
+                                    sources, destinations,
+                                    python_version)
         return CommandExecutor(init_command, test_executor)
+
+    def execute(self, *args: List[str]) -> Optional[Tuple]:
+        pass
 
     @staticmethod
     def get_help():

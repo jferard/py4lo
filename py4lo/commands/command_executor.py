@@ -24,7 +24,7 @@ from commands.command import Command
 
 class CommandExecutor:
     def __init__(self, command: Command,
-                 previous_executor: "CommandExecutor" = None):
+                 previous_executor: Optional["CommandExecutor"] = None):
         self._command = command
         self._previous_executor = previous_executor
 

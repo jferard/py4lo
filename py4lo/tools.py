@@ -16,141 +16,31 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
-import logging
 import subprocess
 from pathlib import Path
-from typing import List, Collection, Dict, Any
+from typing import List, Dict, Any, Set, Callable
 
-from asset import Asset
-from callbacks import *
-from zip_updater import ZipUpdater, ZipUpdaterBuilder
-from script_set_processor import ScriptSetProcessor, TargetScript
-
-base_path = Path(__file__).parent.parent
-
-
-def update_ods(tdata: Dict[str, Any]) -> Path:
-    ods_source = Path(tdata["source_file"])
-    ods_dest = _get_dest(tdata)
-    return OdsUpdater.create(tdata).update(ods_source, ods_dest)
-
-
-def _get_logger(tdata: Dict[str, Any]) -> logging.Logger:
-    logger = logging.getLogger("py4lo")
-    logger.setLevel(tdata["log_level"])
-    return logger
-
-
-def _get_dest(tdata: Dict[str, Any]) -> Path:
-    if "dest_name" in tdata:
-        if "suffix" in tdata:
-            _get_logger(tdata).debug(
-                "Property dest_name set to {}; ignore suffix {}".format(
-                    tdata["dest_name"], tdata["suffix"]))
-        ods_dest = Path(tdata["dest_name"])
-    else:
-        suffix = tdata["suffix"]
-        ods_source = Path(tdata["source_file"])
-        ods_dest = ods_source.parent.joinpath(
-            ods_source.stem + "-" + suffix + ods_source.suffix)
-    return ods_dest
-
-
-def get_assets(assets_dir: Path, assets_ignore: List[str],
-               assets_dest_dir: Path) -> List[Asset]:
-    assets = []
-    for p in get_paths(assets_dir, assets_ignore):
-        dest = assets_dest_dir.joinpath(p.relative_to(assets_dir))
-        with dest.open('rb') as source:
-            assets.append(Asset(dest, source.read()))
-
-    return assets
-
-
-def get_paths(source_dir: Path, ignore: List[str], glob="*") -> Collection[
-    Path]:
-    paths = set(source_dir.rglob(glob))
+def get_paths(source_dir: Path, ignore: List[str], glob="*") -> Set[Path]:
+    paths: Set[Path] = set(source_dir.rglob(glob))
     for pattern in ignore:
-        paths -= set(source_dir.rglob(pattern))
+        exclude: Set[Path] = set(source_dir.rglob(pattern))
+        paths -= exclude
     return set(p for p in paths if p.is_file())
-
-
-class OdsUpdater:
-    @staticmethod
-    def create(tdata: Dict[str, Any]) -> "OdsUpdater":
-        logger = logging.getLogger("py4lo")
-        logger.setLevel(tdata["log_level"])
-        add_readme = tdata.get("add_readme", False)
-        if add_readme:
-            readme_contact = tdata["readme_contact"]
-            add_readme_callback = AddReadmeWith(base_path.joinpath("inc"),
-                                                readme_contact)
-        else:
-            add_readme_callback = None
-
-        src_dir = Path(tdata["src_dir"])
-        src_ignore = tdata["src_ignore"]
-        assets_dir = Path(tdata["assets_dir"])
-        assets_ignore = tdata["assets_ignore"]
-        assets_dest_dir = Path(tdata["assets_dest_dir"])
-        target_dir = Path(tdata["target_dir"])
-        python_version = tdata["python_version"]
-
-        return OdsUpdater(logger, src_dir, src_ignore, assets_dir,
-                          assets_ignore, target_dir,
-                          assets_dest_dir, python_version,
-                          add_readme_callback)
-
-    def __init__(self, logger: logging.Logger, src_dir: Path,
-                 src_ignore: List[str], assets_dir: Path,
-                 assets_ignore: List[str],
-                 target_dir: Path, assets_dest_dir: Path,
-                 python_version: str, add_readme_callback: AddReadmeWith):
-        self._logger = logger
-        self._src_dir = src_dir
-        self._src_ignore = src_ignore
-        self._assets_dir = assets_dir
-        self._assets_ignore = assets_ignore
-        self._assets_dest_dir = assets_dest_dir
-        self._target_dir = target_dir
-        self._python_version = python_version
-        self._add_readme_callback = add_readme_callback
-
-    def update(self, ods_source: Path, ods_dest: Path) -> Path:
-        self._logger.info("Debug or init. Generating %s for Python %s",
-                          ods_dest, self._python_version)
-
-        scripts = self._get_scripts()
-        assets = get_assets(self._assets_dir, self._assets_ignore,
-                            self._assets_dest_dir)
-
-        zip_updater = self._create_updater(scripts, assets)
-        zip_updater.update(ods_source, ods_dest)
-        return ods_dest
-
-    def _get_scripts(self) -> List[TargetScript]:
-        script_paths = get_paths(self._src_dir, self._src_ignore, "*.py")
-        scripts_processor = ScriptSetProcessor(self._logger, self._src_dir,
-                                               self._target_dir,
-                                               self._python_version,
-                                               script_paths)
-        return scripts_processor.process()
-
-    def _create_updater(self, scripts: List[TargetScript],
-                        assets: List[Asset]) -> ZipUpdater:
-        zip_updater_builder = ZipUpdaterBuilder()
-        (
-            zip_updater_builder.item(IgnoreItem(ARC_SCRIPTS_PATH))
-                .item(RewriteManifest(scripts, assets))
-                .after(AddScripts(scripts))
-                .after(AddAssets(assets))
-        )
-        if self._add_readme_callback is not None:
-            zip_updater_builder.after(self._add_readme_callback)
-
-        return zip_updater_builder.build()
 
 
 def open_with_calc(ods_path: Path, calc_exe: str):
     """Open a file with calc"""
     _r = subprocess.call([calc_exe, str(ods_path)])
+
+
+def nested_merge(d1: Dict[str, Any], d2: Dict[str, Any],
+                 apply: Callable[[Any], Any]) -> Dict[str, Any]:
+    for k, v in d2.items():
+        if isinstance(v, Dict):
+            d1[k] = nested_merge(d1.get(k, {}), v, apply)
+        elif isinstance(v, List):
+            d1[k] = [apply(w) for w in d1.get(k, []) + v]
+        else:
+            d1[k] = apply(v)
+
+    return d1

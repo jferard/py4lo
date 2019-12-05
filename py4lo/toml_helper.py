@@ -1,41 +1,30 @@
-# -*- coding: utf-8 -*-
-"""Py4LO - Python Toolkit For LibreOffice Calc
-      Copyright (C) 2016-2019 J. Férard <https://github.com/jferard>
-
-   This file is part of Py4LO.
-
-   Py4LO is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
-
-   Py4LO is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict
-
+from typing import Dict, Any, Mapping
 import toml
+
+from tools import nested_merge
+
+
+def load_toml(default_py4lo_toml: Path, project_py4lo_toml: Path,
+              kwargs: Mapping[str, Any]) -> Mapping[str, Any]:
+    return TomlLoader(default_py4lo_toml, project_py4lo_toml, kwargs).load()
 
 
 class TomlLoader:
     """Load a toml file and merge values with the default toml file"""
 
-    def __init__(self, base_path: Path, local_py4lo_toml: Path):
-        self._default_py4lo_toml = base_path.joinpath(
-            "default-py4lo.toml")
-        self._local_py4lo_toml = local_py4lo_toml
-        self._data: Dict[str, object] = {"base_path": base_path}
+    def __init__(self, default_py4lo_toml: Path, project_py4lo_toml: Path,
+                 kwargs: Mapping[str, Any]):
+        self._kwargs = kwargs
+        self._default_py4lo_toml = default_py4lo_toml
+        self._project_py4lo_toml = project_py4lo_toml
+        self._data: Dict[str, object] = {}
 
     def load(self) -> Dict[str, object]:
         self._load_toml(self._default_py4lo_toml)
-        self._load_toml(self._local_py4lo_toml)
+        self._load_toml(self._project_py4lo_toml)
         self._check_python_target_version()
         self._check_level()
         return self._data
@@ -48,7 +37,13 @@ class TomlLoader:
         except Exception as e:
             print("Error when loading toml file {}: {}".format(path, e))
         else:
-            self._data.update(data)
+            self._data = nested_merge(self._data, data, self._apply)
+
+    def _apply(self, v: Any) -> Any:
+        try:
+            return v.format(**self._kwargs)
+        except:
+            return v
 
     def _check_python_target_version(self):
         # get version from target executable
@@ -72,8 +67,3 @@ class TomlLoader:
             "CRITICAL", "DEBUG", "ERROR", "FATAL",
             "INFO", "NOTSET", "WARN", "WARNING"]:
             self._data["log_level"] = "INFO"
-
-
-def load_toml(local_py4lo_toml: Path = Path("py4lo.toml")) -> Dict[str, object]:
-    base_path = Path(__file__).parent.parent.resolve()
-    return TomlLoader(base_path, local_py4lo_toml).load()

@@ -16,22 +16,30 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
-import unittest
-from unittest.mock import patch, call
+import uno
+import sys
+import unohelper
+import os
+# py4lo: entry
+# py4lo: embed lib py4lo_helper
+# py4lo: embed lib py4lo_commons
+import py4lo_helper
+import py4lo_commons
+import example_lib
+try:
+    _ = py4lo_helper.Py4LO_helper.create_executor(XSCRIPTCONTEXT)
+    c = py4lo_commons.Commons(XSCRIPTCONTEXT)
+    o = example_lib.O(XSCRIPTCONTEXT)
+except NameError:
+    pass
 
-from tools import *
+def message_example(*_args):
+    from com.sun.star.awt.MessageBoxType import MESSAGEBOX
+    from com.sun.star.awt.MessageBoxButtons import BUTTONS_OK
+    _.message_box(_.parent_win, "A message from main script example.py. Current dir is: "+os.path.abspath("."), "py4lo", MESSAGEBOX, BUTTONS_OK)
 
+def xray_example(*_args):
+    _.xray(_.doc)
 
-class TestTools(unittest.TestCase):
-    @patch('subprocess.call', spec=subprocess.call)
-    def test_open_with_calc(self, subprocess_call_mock):
-        open_with_calc(Path("myfile.ods"), "mycalc.exe")
-        self.assertEqual([call(['mycalc.exe', 'myfile.ods'])],
-                         subprocess_call_mock.mock_calls)
-
-    # def test_get_path(self):
-    #     self.assertEqual(Path("dest.ods"), _get_dest({"dest_name": "dest.ods"}))
-    #     self.assertEqual(Path("dest.ods"), _get_dest(
-    #         {"dest_name": "dest.ods", "suffix": "up", "log_level": 0}))
-    #     self.assertEqual(Path("source-up.ods"), _get_dest(
-    #         {"source_file": "source.ods", "suffix": "up"}))
+def example_from_lib(*_args):
+    o.lib_example()

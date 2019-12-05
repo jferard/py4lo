@@ -21,25 +21,31 @@ from unittest.mock import *
 
 import env
 from directive_processor import *
+from script_set_processor import ScriptProcessor
 
 
 class TestDirectiveProcessor(unittest.TestCase):
     def setUp(self):
-        self._scripts_path = Mock()
-        self._scripts_processor = Mock()
-        self._branch_processor = Mock()
-        self._directive_provider = Mock()
-        self._dp = DirectiveProcessor(self._scripts_path, self._scripts_processor, self._branch_processor,
-                                           self._directive_provider)
+        self._scripts_path: Path = Mock()
+        self._scripts_processor: ScriptProcessor = Mock()
+        self._branch_processor: BranchProcessor = Mock()
+        self._directive_provider: DirectiveProvider = Mock()
+        self._dp = DirectiveProcessor(self._scripts_processor,
+                                      self._branch_processor,
+                                      self._directive_provider)
 
     def test_create(self):
-        dp = DirectiveProcessor.create(Path(""), Path(""), "3.6")
+        script = SourceScript(Path("ok"), Path("."))
+        dp = DirectiveProcessor.create(self._scripts_processor,
+                                       self._directive_provider, "3.6", script)
 
     def test_append_script(self):
-        self._dp.append_script(Path("ok"))
+        script = SourceScript(Path("ok"), Path("."))
+        self._dp.append_script(script)
 
         self.assertEqual([], self._scripts_path.mock_calls)
-        self.assertEqual([call.append_script(Path("ok"))], self._scripts_processor.mock_calls)
+        self.assertEqual([call.append_script(script)],
+                         self._scripts_processor.mock_calls)
         self.assertEqual([], self._branch_processor.mock_calls)
         self.assertEqual([], self._directive_provider.mock_calls)
 
@@ -73,7 +79,8 @@ class TestDirectiveProcessor(unittest.TestCase):
 
         self.assertEqual([], self._scripts_path.mock_calls)
         self.assertEqual([], self._scripts_processor.mock_calls)
-        self.assertEqual([call.handle_directive('ok', [])], self._branch_processor.mock_calls)
+        self.assertEqual([call.handle_directive('ok', [])],
+                         self._branch_processor.mock_calls)
         self.assertEqual([], self._directive_provider.mock_calls)
 
     def test_process_line_branch_directive(self):
@@ -85,7 +92,8 @@ class TestDirectiveProcessor(unittest.TestCase):
 
         self.assertEqual([], self._scripts_path.mock_calls)
         self.assertEqual([], self._scripts_processor.mock_calls)
-        self.assertEqual([call.handle_directive('ok', [])], self._branch_processor.mock_calls)
+        self.assertEqual([call.handle_directive('ok', [])],
+                         self._branch_processor.mock_calls)
         self.assertEqual([], self._directive_provider.mock_calls)
 
     def test_process_line_standard_directive(self):
@@ -99,9 +107,12 @@ class TestDirectiveProcessor(unittest.TestCase):
 
         self.assertEqual([], self._scripts_path.mock_calls)
         self.assertEqual([], self._scripts_processor.mock_calls)
-        self.assertEqual([call.handle_directive('ok', []), call.skip()], self._branch_processor.mock_calls)
-        self.assertEqual([call.get(["ok"])], self._directive_provider.mock_calls)
-        self.assertEqual([call.execute(env.any_object(), "")], directive.mock_calls)
+        self.assertEqual([call.handle_directive('ok', []), call.skip()],
+                         self._branch_processor.mock_calls)
+        self.assertEqual([call.get(["ok"])],
+                         self._directive_provider.mock_calls)
+        self.assertEqual([call.execute(env.any_object(), "")],
+                         directive.mock_calls)
 
     def test_include(self):
         lines = self._dp.include("py4lo_import.py")

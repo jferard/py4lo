@@ -18,7 +18,8 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 from typing import Dict, List
 
-from commands.command import Command, PropertiesProvider
+from commands.command import Command
+from core.properties import PropertiesProvider
 from commands.real_command_factory_by_name import real_command_factory_by_name
 from commands.help_command import HelpCommand
 import logging
@@ -29,16 +30,18 @@ class Commands:
         # assert "help" in command_factory_by_name
         self._command_factory_by_name = command_factory_by_name
 
-    def get(self, command_name: str, args: List[str], provider: PropertiesProvider):
+    def get(self, command_name: str, args: List[str],
+            provider: PropertiesProvider):
         try:
-            return self._command_factory_by_name[command_name].create_executor(args,
-                                                                               provider)
-        except KeyError:
-            logger = logging.getLogger("py4lo")
+            command = self._command_factory_by_name[command_name]
+        except KeyError as e:
+            logger = provider.get_logger()
             logger.warning(
-                "Command `{}` not found. Available commands are {}".format(
-                    command_name, set(self._command_factory_by_name.keys())))
-            return self._command_factory_by_name["help"].create_executor(args, provider)
+                "Command `%s` not found. Available commands are %s",
+                command_name, set(self._command_factory_by_name.keys()))
+            command = self._command_factory_by_name["help"]
+
+        return command.create_executor(args, provider)
 
     def get_help_message(self):
         lines = [

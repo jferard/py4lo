@@ -28,27 +28,29 @@ from toml_helper import load_toml, TomlLoader
 class TestTomlHelper(unittest.TestCase):
     @patch('builtins.open', spec=open)
     def test(self, open_mock):
-        path = Mock()
-        def_toml = Mock()
+        default_toml: Path = Mock()
+        def_toml: Path = Mock()
+        local_toml: Path = Mock()
+        loc_toml: Path = Mock()
+
         handle1 = MagicMock()
         handle1.__enter__.return_value = io.StringIO("a=1")
         handle1.__exit__.return_value = False
-        path.joinpath.return_value = def_toml
-        def_toml.open.return_value = handle1
+        default_toml.open.return_value = handle1
 
-        local_toml = Mock()
         handle2 = MagicMock()
         handle2.__enter__.return_value = io.StringIO("b=2")
         handle2.__exit__.return_value = False
-
         local_toml.open.return_value = handle2
-        tdata = TomlLoader(path, local_toml).load()
-        print(tdata)
+
+        tdata = TomlLoader(default_toml, local_toml, {}).load()
         self.assertTrue({
-            'a': 1,
-            'b': 2,
-            'log_level': 'INFO'}.items() <= tdata.items())
-        self.assertEqual({'a', 'b', 'log_level', 'base_path', 'python_exe', 'python_version'}, set(tdata.keys()))
+                            'a': 1,
+                            'b': 2,
+                            'log_level': 'INFO'}.items() <= tdata.items())
+        self.assertEqual(
+            {'a', 'b', 'log_level', 'python_exe', 'python_version'},
+            set(tdata.keys()))
 
 
 if __name__ == '__main__':

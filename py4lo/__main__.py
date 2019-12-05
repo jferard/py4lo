@@ -19,7 +19,7 @@
 import argparse
 
 from commands import commands
-from commands.command import PropertiesProvider
+from core.properties import PropertiesProviderFactory
 
 parser = argparse.ArgumentParser(description="Python for LibreOffice",
                                  formatter_class=argparse.RawTextHelpFormatter)
@@ -32,5 +32,5 @@ parser.add_argument("parameter", nargs="*",
 args = parser.parse_args()
 
 command = commands.get(args.command, args.parameter,
-                       PropertiesProvider(args.toml))
+                       PropertiesProviderFactory().create(args.toml))
 command.execute()

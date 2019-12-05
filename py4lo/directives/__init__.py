@@ -18,8 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 
 from directives.directive_provider import DirectiveProvider
-from directives.d_import import Import
 from directives.directive import Directive
-from directives.embed import Embed
-from directives.import_lib import ImportLib
+from directives.embed_script import EmbedScript
+from directives.embed_lib import EmbedLib
 from directives.include import Include

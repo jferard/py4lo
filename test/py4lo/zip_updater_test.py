@@ -24,11 +24,12 @@ from zip_updater import *
 class TestZipUpdater(unittest.TestCase):
     @patch('zip_updater.ZipFile', autospec=True)
     def test(self, zf):
-        zub = ZipUpdaterBuilder()
+        logger: Logger = Mock()
+        zub = ZipUpdaterBuilder(logger)
         cbs = []
 
-        b1 = Mock()
-        b2 = Mock()
+        b1: BeforeCallback = Mock()
+        b2: BeforeCallback = Mock()
         i1 = Mock()
         i2 = Mock()
         a1 = Mock()
