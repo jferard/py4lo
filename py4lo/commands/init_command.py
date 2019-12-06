@@ -16,21 +16,19 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
-from pathlib import Path
 from typing import List, Tuple, Optional
 
 from commands import Command
-from commands.ods_updater import OdsUpdaterHelper
-from core.properties import PropertiesProvider
 from commands.command_executor import CommandExecutor
 from commands.debug_command import DebugCommand
+from commands.ods_updater import OdsUpdaterHelper
 from commands.test_command import TestCommand
+from core.properties import PropertiesProvider
 
 
 class InitCommand(Command):
     @staticmethod
     def create_executor(args, provider: PropertiesProvider):
-        tdata = provider.get()
         test_executor = TestCommand.create_executor(args, provider)
         logger = provider.get_logger()
         sources = provider.get_sources()

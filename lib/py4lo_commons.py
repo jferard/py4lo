@@ -123,7 +123,7 @@ class Commons(unohelper.Base):
         See https://docs.python.org/3.7/library/configparser.html
 
         :param args: arguments to be passed to the ConfigParser
-        :param apply: function to modifiy the config
+        :param apply: function to modify the config
         :param encoding: the encoding of the file
 
         Example: `config = commons.read_config("pcrp.ini")`"""

@@ -42,14 +42,13 @@ class DebugCommand(Command):
     @staticmethod
     def create_executor(args, provider: PropertiesProvider):
         test_executor = TestCommand.create_executor(args, provider)
-        tdata = provider.get()
-        logger = logging.getLogger("py4lo")
-        logger.setLevel(tdata["log_level"])
+        logger = provider.get_logger()
         sources = provider.get_sources()
         destinations = provider.get_destinations()
-        debug_command = DebugCommand(logger, Path(tdata["base_path"]), sources,
-                                     tdata["python_version"],
-                                     Path(tdata["debug_file"]))
+        python_version = provider.get("python_version")
+        helper = OdsUpdaterHelper(logger, sources, destinations, python_version)
+        debug_command = DebugCommand(logger, helper, sources, destinations,
+                                     python_version)
         return CommandExecutor(debug_command, test_executor)
 
     def __init__(self, logger: logging.Logger, helper: OdsUpdaterHelper,
@@ -68,8 +67,9 @@ class DebugCommand(Command):
                           self._debug_path, self._python_version)
 
         temp_scripts = self._helper.get_temp_scripts()
-        exported_func_names_by_script = {ts.dest_name: ts.exported_func_names
-                                         for ts in temp_scripts}
+        exported_func_names_by_script = {
+            ts.relative_path: ts.exported_func_names
+            for ts in temp_scripts}
         dest_scripts = [ts.to_destination(self._destinations.dest_dir) for ts in
                         temp_scripts]
         assets = self._helper.get_assets()

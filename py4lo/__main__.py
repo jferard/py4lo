@@ -31,6 +31,7 @@ parser.add_argument("parameter", nargs="*",
                     help="command parameter")
 args = parser.parse_args()
 
+provider = PropertiesProviderFactory().create(args.toml)
 command = commands.get(args.command, args.parameter,
-                       PropertiesProviderFactory().create(args.toml))
+                       provider)
 command.execute()

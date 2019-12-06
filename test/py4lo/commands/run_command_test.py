@@ -29,8 +29,7 @@ class TestRunCommand(unittest.TestCase):
 
     def test_with_empty_tdata(self):
         self.provider.get.return_value = {}
-        self.assertRaises(KeyError,
-                          lambda: RunCommand.create_executor([], self.provider))
+        RunCommand.create_executor([], self.provider)
 
     @patch("subprocess.call", autospec=True)
     def test_create(self, call_mock):

@@ -60,16 +60,15 @@ class _UpdateCommandHelper:
     def create(provider: PropertiesProvider, sources: Sources,
                destinations: Destinations) -> "_UpdateCommandHelper":
         logger = provider.get_logger()
-        tdata = provider.get()
-        add_readme = tdata.get("add_readme", False)
+        add_readme = provider.get("add_readme", False)
         if add_readme:
-            readme_contact = tdata["readme_contact"]
+            readme_contact = provider.get("readme_contact")
             add_readme_callback = AddReadmeWith(provider.get_base_path().joinpath("inc"),
                                                 readme_contact)
         else:
             add_readme_callback = None
 
-        python_version = tdata["python_version"]
+        python_version = provider.get("python_version")
         helper = OdsUpdaterHelper(logger, sources, destinations, python_version)
 
         return _UpdateCommandHelper(logger, helper, destinations,

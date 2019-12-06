@@ -29,9 +29,9 @@ from tools import open_with_calc
 class RunCommand(Command):
     @staticmethod
     def create_executor(args, provider: PropertiesProvider):
-        tdata = provider.get()
+        calc_exe = provider.get("calc_exe")
         update_executor = UpdateCommand.create_executor(args, provider)
-        run_command = RunCommand(tdata["calc_exe"])
+        run_command = RunCommand(calc_exe)
         return CommandExecutor(run_command, update_executor)
 
     def __init__(self, calc_exe: str):

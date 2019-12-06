@@ -18,7 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import xml.dom.minidom
 from pathlib import Path
-from typing import List, Set
+from typing import List
 from zipfile import ZipFile, ZipInfo
 
 from callbacks.callback import ItemCallback
@@ -26,10 +26,13 @@ from core.asset import DestinationAsset
 from core.script import DestinationScript
 
 BASIC_ENTRIES = [
+    """<manifest:file-entry manifest:full-path="Basic" manifest:media-type="application/binary"/>""",
+    """<manifest:file-entry manifest:full-path="Basic/Standard" manifest:media-type="application/binary"/>""",
     """<manifest:file-entry manifest:full-path="Basic/Standard/py4lo.xml" manifest:media-type="text/xml"/>""",
     """<manifest:file-entry manifest:full-path="Basic/Standard/script-lb.xml" manifest:media-type="text/xml"/>""",
-    """<manifest:file-entry manifest:full-path="Basic/script-lc.xml" manifest:media-type="text/xml"/>"""
+    """<manifest:file-entry manifest:full-path="Basic/script-lc.xml" manifest:media-type="text/xml"/>""",
 ]
+
 PYTHON_ENTRY_TPL = """<manifest:file-entry manifest:full-path="{0}" manifest:media-type=""/>"""
 DIR_TPL = """<manifest:file-entry manifest:full-path="{0}" manifest:media-type="application/binary"/>"""
 ASSET_ENTRY_TPL = """<manifest:file-entry manifest:full-path="{0}" manifest:media-type="application/octet-stream"/>"""

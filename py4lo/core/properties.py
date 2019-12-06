@@ -19,7 +19,7 @@
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Any, List, Set, Mapping, AbstractSet
+from typing import Dict, Any, List, Set, Mapping, AbstractSet, Optional
 
 import os
 
@@ -74,6 +74,9 @@ class PropertiesProvider:
 
     def get(self, k: str) -> Any:
         return self._tdata[k]
+
+    def get(self, k: str, default: Optional[Any] = None) -> Any:
+        return self._tdata.get(k, default)
 
     def get_sources(self) -> Sources:
         return self._sources

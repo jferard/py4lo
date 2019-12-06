@@ -33,10 +33,10 @@ class TestCommand(Command):
 
     @staticmethod
     def create_executor(_args, provider: PropertiesProvider):
-        tdata = provider.get()
+        python_exe = provider.get("python_exe")
         logger = provider.get_logger()
         return CommandExecutor(
-            TestCommand(logger, tdata["python_exe"], provider.get_sources()))
+            TestCommand(logger, python_exe, provider.get_sources()))
 
     def __init__(self, logger: Logger, python_exe: str, sources: Sources):
         self._logger = logger
