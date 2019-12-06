@@ -38,7 +38,7 @@ class TestDebugCommand(unittest.TestCase):
         t2: TempScript = Mock()
         helper.get_temp_scripts.side_effect = [[t1, t2]]
         destinations: Destinations = Mock()
-        destinations.target_dir.joinpath.return_value = dest_path
+        destinations.temp_dir.joinpath.return_value = dest_path
         sources: Sources = Mock()
         sources.inc_dir.joinpath.return_value = inc_path
         d = DebugCommand(logger, helper, sources, destinations,

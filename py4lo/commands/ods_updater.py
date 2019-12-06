@@ -26,8 +26,10 @@ class OdsUpdaterHelper:
     def get_temp_scripts(self) -> List[TempScript]:
         script_paths = get_paths(self._sources.src_dir,
                                  self._sources.src_ignore, "*.py")
-        source_scripts = [SourceScript(sp, self._sources.src_dir) for sp in script_paths]
-        directive_provider = DirectiveProvider.create(self._logger, self._sources)
-        return ScriptSetProcessor(self._logger, self._destinations.target_dir,
+        source_scripts = [SourceScript(sp, self._sources.src_dir) for sp in
+                          script_paths]
+        directive_provider = DirectiveProvider.create(self._logger,
+                                                      self._sources)
+        return ScriptSetProcessor(self._logger, self._destinations.temp_dir,
                                   self._python_version, directive_provider,
                                   source_scripts).process()

@@ -49,7 +49,7 @@ class Sources:
 @dataclass
 class Destinations:
     dest_ods_file: Path
-    target_dir: Path
+    temp_dir: Path
     dest_dir: Path
     assets_dest_dir: Path
 

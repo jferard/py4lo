@@ -36,16 +36,18 @@ class UpdateCommand(Command):
     @staticmethod
     def create_executor(args, provider: PropertiesProvider):
         test_executor = TestCommand.create_executor(args, provider)
-        update_command = UpdateCommand(provider)
+        update_command = UpdateCommand(provider.get_logger(), provider)
         return CommandExecutor(update_command, test_executor)
 
-    def __init__(self, provider: PropertiesProvider):
+    def __init__(self, logger: logging.Logger, provider: PropertiesProvider):
+        self._logger = logger
         self._provider = provider
 
     def execute(self, status: int) -> (int, Path):
         sources = self._provider.get_sources()
         destinations = self._provider.get_destinations()
-        dest_name = _UpdateCommandHelper.create(self._provider, sources,
+        dest_name = _UpdateCommandHelper.create(self._logger, self._provider,
+                                                sources,
                                                 destinations).update(
             sources.source_ods_file, destinations.dest_ods_file)
         return status, dest_name
@@ -57,16 +59,9 @@ class UpdateCommand(Command):
 
 class _UpdateCommandHelper:
     @staticmethod
-    def create(provider: PropertiesProvider, sources: Sources,
+    def create(logger: logging.Logger, provider: PropertiesProvider, sources: Sources,
                destinations: Destinations) -> "_UpdateCommandHelper":
-        logger = provider.get_logger()
-        add_readme = provider.get("add_readme", False)
-        if add_readme:
-            readme_contact = provider.get("readme_contact")
-            add_readme_callback = AddReadmeWith(provider.get_base_path().joinpath("inc"),
-                                                readme_contact)
-        else:
-            add_readme_callback = None
+        add_readme_callback = _UpdateCommandHelper.get_readme_callback(provider)
 
         python_version = provider.get("python_version")
         helper = OdsUpdaterHelper(logger, sources, destinations, python_version)
@@ -74,6 +69,19 @@ class _UpdateCommandHelper:
         return _UpdateCommandHelper(logger, helper, destinations,
                                     python_version,
                                     add_readme_callback)
+
+    @staticmethod
+    def get_readme_callback(provider: PropertiesProvider) -> Optional[
+        AddReadmeWith]:
+        add_readme = provider.get("add_readme", False)
+        if add_readme:
+            readme_contact = provider.get("readme_contact")
+            add_readme_callback = AddReadmeWith(
+                provider.get_base_path().joinpath("inc"),
+                readme_contact)
+        else:
+            add_readme_callback = None
+        return add_readme_callback
 
     def __init__(self, logger: logging.Logger, helper: OdsUpdaterHelper,
                  destinations: Destinations, python_version: str,
@@ -85,7 +93,7 @@ class _UpdateCommandHelper:
         self._add_readme_callback = add_readme_callback
 
     def update(self, ods_source: Path, ods_dest: Path) -> Path:
-        self._logger.info("Debug or init. Generating %s for Python %s",
+        self._logger.info("Update. Generating '%s' for Python '%s'",
                           ods_dest, self._python_version)
 
         temp_scripts = self._helper.get_temp_scripts()

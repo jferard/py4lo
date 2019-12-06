@@ -17,8 +17,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import unittest
+from unittest.mock import Mock
+
 import env
 from commands.init_command import *
 
 class TestInitCommand(unittest.TestCase):
-    pass
+    def test(self):
+        provider: PropertiesProvider = Mock()
+        executor = InitCommand.create_executor([], provider)

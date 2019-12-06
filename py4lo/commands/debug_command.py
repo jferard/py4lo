@@ -59,7 +59,7 @@ class DebugCommand(Command):
         self._sources = sources
         self._destinations = destinations
         self._python_version = python_version
-        self._debug_path = destinations.target_dir.joinpath(
+        self._debug_path = destinations.temp_dir.joinpath(
             destinations.dest_ods_file)
 
     def execute(self, *_args: List[str]) -> Tuple[Path]:
