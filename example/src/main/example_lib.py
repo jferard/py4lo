@@ -16,17 +16,18 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
-# py4lo: include license
-
 import sys
 import unohelper
 import os
 
+
 class O(unohelper.Base):
-    def __init__(self, xsc):
-        self._xsc = xsc
+    def __init__(self, h):
+        self._h = h
 
     def lib_example(self):
         from com.sun.star.awt.MessageBoxType import MESSAGEBOX
         from com.sun.star.awt.MessageBoxButtons import BUTTONS_OK
-        self._xsc.message_box(_.parent_win, "A message from imported lib example-lib.py. Current dir is: "+os.abspath("."), "py4lo", MESSAGEBOX, BUTTONS_OK)
+        self._h.message_box(self._h.parent_win,
+                            "A message from imported lib example-lib.py. Current dir is: " + os.path.abspath(
+                                "."), "py4lo", MESSAGEBOX, BUTTONS_OK)

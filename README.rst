@@ -5,18 +5,25 @@ Py4LO (Python For LibreOffice)
 
 Copyright (C) J. Férard 2016-2019
 
-Py4LO is a simple toolkit to help you write and include Python scripts in LibreOffice Calc spreadsheets.
+Py4LO is a simple toolkit to help you write and include Python macros in LibreOffice Calc spreadsheets.
 Under GPL v.3
 
 Overview
 --------
 
-Py4LO helps you to pack your Python scripts in a LibreOffice Calc
-document, with a debug option. It also provides a mechanism to import
-objects from another script, and a small library to ease the use of
-LibreOffice services.
+The LibreOffice Basic is limited and Python is a far more powerful language to write macros.
+Py4LO helps you to pack your Python macros in a LibreOffice Calc document and offers a small but useful
+library to access LibreOffice objects.
 
-NB. The library is still very limited.
+Features
+--------
+* Test Python macros, embed them in an existing LibreOffice document and open this document in one command line;
+* Generate a debug new document from an existing Python macro
+* Interface with Xray/MRI
+* Helpers to access cells, add filters, create new documents, get used rows or data arrays
+* Helpers to convert XNameAccess to dicts and XIndexAccess to lists
+* Access ODS files content without opening them
+* ...
 
 Installation
 ------------
@@ -58,7 +65,9 @@ Create a simple Python script ``myscript.py`` :
 .. code-block:: python
 
     # -*- coding: utf-8 -*-
-    # py4lo: import lib py4lo_helper
+    # py4lo: entry
+    # py4lo: embed lib py4lo_helper
+    import py4lo_helper
     _ = py4lo_helper.Py4LO_helper.create(XSCRIPTCONTEXT)
 
     def test(*args):
@@ -92,6 +101,7 @@ Create the ``py4lo.toml``:
 
 .. code-block:: toml
 
+    [src]
     source_file = "./mydoc.ods"
 
 Step 5
@@ -102,7 +112,9 @@ Edit the Python script ``myscript.py``:
 .. code-block:: python
 
     # -*- coding: utf-8 -*-
-    # py4lo: import lib py4lo_helper
+    # py4lo: entry
+    # py4lo: embed lib py4lo_helper
+    import py4lo_helper
     _ = py4lo_helper.Py4LO_helper.create(XSCRIPTCONTEXT)
 
     def test(*args):
@@ -136,7 +148,7 @@ In ``scriptA.py``:
 
 .. code-block:: python
 
-    # py4lo: import scriptB
+    import scriptB
     o = O()
 
 Import in script A a library
@@ -146,7 +158,9 @@ In ``scriptA.py``:
 
 .. code-block:: python
 
-    # py4lo: import lib py4lo_helper
+    # py4lo: entry
+    # py4lo: embed lib py4lo_helper
+    import py4lo_helper
     _ = py4lo_helper.Py4LO_helper.create(XSCRIPTCONTEXT)
 
 *Warning* The special object ``XSCRIPTCONTEXT`` of type
@@ -157,9 +171,10 @@ modules that need it.
 
 **CAVEAT** If you have the LibreOffice quickstarter, new imports may not be recognized. You might have to kill manually the `soffice` process.
 
-*Note:* `# py4lo: import lib py4lo_helper` is a directive. This directive informs py4lo that the module py4lo_ods is needed. This has two effects:
-* copy py4lo_ods.py in the ODS destination file and declare it as a Script;
-* update the path so that the library is now accessible.
+Notes:
+
+* `# py4lo: entry` is a directive. This directive informs py4lo that the module is called from LibreOffice. This fixes the path so that the scripts are accessible
+* `# py4lo: embed lib py4lo_helper` copies the library py4lo_ods.py in the ODS destination file and declare it as a Script
 
 The library
 -----------

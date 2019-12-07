@@ -85,6 +85,8 @@ class Py4LO_helper(unohelper.Base):
         self.loader = loader
         self._xray_script = None
         self._ignore_xray = False
+        self._oMRI = None
+        self._ignore_mri = False
 
     def use_xray(self, fail_on_error=False):
         """
@@ -116,6 +118,25 @@ class Py4LO_helper(unohelper.Base):
                 return
 
         self._xray_script.invoke((object,), (), ())
+
+    def mri(self, object, fail_on_error=False):
+        """
+        MRI an object
+        @param object: the object
+        """
+        if self._ignore_mri:
+            return
+
+        if self._oMRI is None:
+            try:
+                self._oMRI = self.uno_service("mytools.Mri")
+            except:
+                if fail_on_error:
+                    raise RuntimeException("\nMRI is not installed",
+                                           self.ctxt)
+                else:
+                    self._ignore_mri = True
+        self._oMRI.inspect(object)
 
     # from https://forum.openoffice.org/fr/forum/viewtopic.php?f=15&t=47603# (thanks Bernard !)
     def message_box(self, parent_win, msg_text, msg_title, msg_type=MESSAGEBOX, msg_buttons=BUTTONS_OK):

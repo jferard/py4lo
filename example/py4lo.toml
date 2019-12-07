@@ -1,10 +1,14 @@
 # py4lo.toml file
 
-source_file = "./py4lo-example.ods"
-python_version = "3.0"
+python_version = "3.5"
+calc_exe = "/usr/lib/libreoffice/program/scalc"
+python_exe = "/usr/bin/python3.7"
+log_level = "DEBUG"
+
+[src]
+source_ods_file = "{project}/py4lo-example.ods"
 
 # You can override values from default-py4lo.toml
 # For Linux-Ubuntu
-calc_exe = "/usr/lib/libreoffice/program/scalc"
-python_exe = "/usr/bin/python3.7"
-dest_name = "./example.ods"
+[dst]
+dest_name = "{project}/example.ods"

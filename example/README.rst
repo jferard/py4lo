@@ -1,7 +1,7 @@
 Py4LO (Python For LibreOffice) Example
 ======================================
 
-Py4LO is a simple toolkit to help you write Python scripts for
+Py4LO is a simple toolkit to help you write Python macros for
 LibreOffice.
 
 How to run the example?

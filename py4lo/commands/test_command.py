@@ -98,8 +98,9 @@ class TestCommand(Command):
             env = dict(os.environ)
             src_lib = [str(self._sources.src_dir),
                        str(self._sources.lib_dir), str(self._sources.inc_dir)]
-            env["PYTHONPATH"] = ";".join(sys.path + src_lib)
+            env["PYTHONPATH"] = os.pathsep.join(sys.path + src_lib)
             self._env = env
+            self._logger.debug("Test env: %s", self._env)
         return self._env
 
     @staticmethod

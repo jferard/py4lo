@@ -16,28 +16,42 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
+# py4lo: entry
+# py4lo: embed lib py4lo_helper
+# py4lo: embed lib py4lo_commons
+
 import uno
 import sys
 import unohelper
 import os
 
-# py4lo: import lib py4lo_helper
-# py4lo: import lib py4lo_commons
-# py4lo: import example_lib
+import py4lo_helper
+import py4lo_commons
+import example_lib
+
 try:
-    _ = py4lo_helper.Py4LO_helper.create_executor(XSCRIPTCONTEXT)
+    _ = py4lo_helper.Py4LO_helper.create(XSCRIPTCONTEXT)
     c = py4lo_commons.Commons(XSCRIPTCONTEXT)
-    o = example_lib.O(XSCRIPTCONTEXT)
+    o = example_lib.O(_)
 except NameError:
     pass
 
 def message_example(*_args):
+    """
+    A doc test
+    >>> 1 == 1
+    True
+
+    """
     from com.sun.star.awt.MessageBoxType import MESSAGEBOX
     from com.sun.star.awt.MessageBoxButtons import BUTTONS_OK
     _.message_box(_.parent_win, "A message from main script example.py. Current dir is: "+os.path.abspath("."), "py4lo", MESSAGEBOX, BUTTONS_OK)
 
 def xray_example(*_args):
     _.xray(_.doc)
+
+def mri_example(*_args):
+    _.mri(_.doc)
 
 def example_from_lib(*_args):
     o.lib_example()

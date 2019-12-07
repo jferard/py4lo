@@ -59,8 +59,8 @@ class DebugCommand(Command):
         self._sources = sources
         self._destinations = destinations
         self._python_version = python_version
-        self._debug_path = destinations.temp_dir.joinpath(
-            destinations.dest_ods_file)
+        self._debug_path = destinations.dest_ods_file.parent.joinpath(
+            "py4lo-debug.ods")
 
     def execute(self, *_args: List[str]) -> Tuple[Path]:
         self._logger.info("Debug or init. Generating '%s' for Python '%s'",
