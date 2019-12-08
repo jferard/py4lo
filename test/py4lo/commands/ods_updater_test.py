@@ -18,45 +18,60 @@
 import unittest
 from logging import Logger
 from pathlib import Path
+from typing import List
 from unittest import mock
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import Mock, MagicMock, patch, call
 
 from commands.ods_updater import OdsUpdaterHelper
-from core.asset import SourceAsset
+from core.asset import SourceAsset, DestinationAsset
 from core.properties import Sources, Destinations
-from core.script import TempScript
+from core.script import TempScript, SourceScript, DestinationScript
 
 
 class TestOdsUpdaterHelper(unittest.TestCase):
-    @patch("py_compile.compile", autospec=True)
-    def test(self, compile_mock):
-        compile_mock = MagicMock()
+    def test_assets(self):
+        # mocks
         logger: Logger = Mock()
-        sources: Sources = Mock(src_ignore=["*.pyc"])
+        sources: Sources = Mock()
         destinations: Destinations = Mock()
-        destinations.temp_dir.joinpath.side_effect = [Path("temp.py")]
-        td: Path = Mock()
-        sp: Path = Mock()
-        bound = MagicMock()
+        source_assets: List[SourceAsset] = Mock()
+        destination_asset = DestinationAsset(Path("asset"), bytes())
 
-        sp.relative_to.return_value = Path("reldest")
-        sp.open.side_effect = bound
-        td.joinpath.side_effect = [sp]
-        destinations.temp_dir = td
-        bound.__enter__.return_value = ["print('hello')"]
-        path: Path = Mock()
-
-        path.is_file.return_value = True
-        path.open.side_effect = [bound]
-        sources.src_dir.rglob.side_effect = [[path], []]
-        asset: SourceAsset = Mock()
-        asset.to_dest.return_value = 0
-        sources.get_assets.return_value = [asset]
+        # play
+        sources.get_assets.return_value = source_assets
+        destinations.to_destination_assets.return_value = [destination_asset]
 
         h = OdsUpdaterHelper(logger, sources, destinations, "3.1")
-        actual = h.get_temp_scripts()
-        self.assertEqual([TempScript(sp, b"# parsed by py4lo (https://github.com/jferard/py4lo)\nprint('hello')",
-                                     destinations.temp_dir, [], None)],
-                         actual)
+        assets = h.get_assets()
 
-        self.assertEqual([0], h.get_assets())
+        # verify
+        self.assertEqual([destination_asset], assets)
+        self.assertEqual([], logger.mock_calls)
+        self.assertEqual([call.get_assets()], sources.mock_calls)
+        self.assertEqual([call.to_destination_assets(source_assets)],
+                         destinations.mock_calls)
+
+    @patch("commands.ods_updater.ScriptSetProcessor", autospec=True)
+    def test_destination_scripts(self, SSPMock):
+        # mocks
+        logger: Logger = Mock()
+        sources: Sources = Mock()
+        destinations: Destinations = Mock()
+        source_scripts: List[SourceScript] = Mock()
+        destination_script: DestinationScript = Mock()
+        temp_script: TempScript = Mock()
+
+        # play
+        sources.get_src_scripts.return_value = source_scripts
+        destinations.to_destination_scripts.return_value = [destination_script]
+        SSPMock.return_value.process.return_value = [temp_script]
+        h = OdsUpdaterHelper(logger, sources, destinations, "3.1")
+        scripts = h.get_destination_scripts()
+
+        # verify
+        self.assertEqual([call.debug('Directives tree: %s', mock.ANY)],
+                         logger.mock_calls)
+        self.assertEqual([destination_script], scripts)
+        self.assertEqual([call.get_src_scripts], sources.mock_calls)
+        self.assertEqual([call.to_destination_scripts([temp_script])],
+                         destinations.mock_calls)

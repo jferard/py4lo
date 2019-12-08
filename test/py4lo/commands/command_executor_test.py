@@ -17,23 +17,30 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import unittest
+from logging import Logger
 from unittest.mock import Mock, call
 
+from commands import Command
 from commands.command_executor import CommandExecutor
 
 
 class TestCommandExecutor(unittest.TestCase):
+    def setUp(self):
+        self._logger: Logger = Mock()
+        self._command: Command = Mock()
+
     def test_without_previous(self):
-        c = Mock()
-        ce = CommandExecutor(c, None)
+        ce = CommandExecutor(self._logger, self._command, None)
         ce.execute(["1", "2"])
-        self.assertEqual([call.execute()], c.mock_calls)
+        self.assertEqual([call.execute()], self._command.mock_calls)
 
     def test_with_previous(self):
-        c = Mock()
-        p = Mock()
-        p.execute.return_value = ["3", "4"]
-        ce = CommandExecutor(c, p)
+        previous = Mock()
+
+        previous.execute.return_value = ["3", "4"]
+
+        ce = CommandExecutor(self._logger, self._command, previous)
         ce.execute(["1", "2"])
-        self.assertEqual([call.execute(["1", "2"])], p.mock_calls)
-        self.assertEqual([call.execute("3", "4")], c.mock_calls)
+
+        self.assertEqual([call.execute(["1", "2"])], previous.mock_calls)
+        self.assertEqual([call.execute("3", "4")], self._command.mock_calls)

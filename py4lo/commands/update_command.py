@@ -16,7 +16,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
-import logging
+from logging import Logger
 from pathlib import Path
 from typing import Optional, List
 
@@ -27,85 +27,55 @@ from commands.command_executor import CommandExecutor
 from commands.ods_updater import OdsUpdaterHelper
 from commands.test_command import TestCommand
 from core.asset import DestinationAsset
-from core.properties import PropertiesProvider, Sources, Destinations
+from core.properties import PropertiesProvider
 from core.script import DestinationScript
 from zip_updater import ZipUpdater, ZipUpdaterBuilder
 
 
 class UpdateCommand(Command):
     @staticmethod
-    def create_executor(args, provider: PropertiesProvider):
+    def create_executor(args, provider: PropertiesProvider) -> CommandExecutor:
         test_executor = TestCommand.create_executor(args, provider)
-        update_command = UpdateCommand(provider.get_logger(), provider)
-        return CommandExecutor(update_command, test_executor)
-
-    def __init__(self, logger: logging.Logger, provider: PropertiesProvider):
-        self._logger = logger
-        self._provider = provider
-
-    def execute(self, status: int) -> (int, Path):
-        sources = self._provider.get_sources()
-        destinations = self._provider.get_destinations()
-        dest_name = _UpdateCommandHelper.create(self._logger, self._provider,
-                                                sources,
-                                                destinations).update(
-            sources.source_ods_file, destinations.dest_ods_file)
-        return status, dest_name
+        logger = provider.get_logger()
+        update_command = UpdateCommand.create(logger, provider)
+        return CommandExecutor(logger, update_command, test_executor)
 
     @staticmethod
-    def get_help():
-        return "Update the file with all scripts"
-
-
-class _UpdateCommandHelper:
-    @staticmethod
-    def create(logger: logging.Logger, provider: PropertiesProvider, sources: Sources,
-               destinations: Destinations) -> "_UpdateCommandHelper":
-        add_readme_callback = _UpdateCommandHelper.get_readme_callback(provider)
-
+    def create(logger: Logger,
+               provider: PropertiesProvider) -> Command:
+        sources = provider.get_sources()
+        destinations = provider.get_destinations()
+        add_readme_callback = provider.get_readme_callback()
         python_version = provider.get("python_version")
+        source_ods_file = sources.source_ods_file
+        dest_ods_file = destinations.dest_ods_file
         helper = OdsUpdaterHelper(logger, sources, destinations, python_version)
+        return UpdateCommand(logger, helper, source_ods_file, dest_ods_file,
+                             python_version, add_readme_callback)
 
-        return _UpdateCommandHelper(logger, helper, destinations,
-                                    python_version,
-                                    add_readme_callback)
-
-    @staticmethod
-    def get_readme_callback(provider: PropertiesProvider) -> Optional[
-        AddReadmeWith]:
-        add_readme = provider.get("add_readme", False)
-        if add_readme:
-            readme_contact = provider.get("readme_contact")
-            add_readme_callback = AddReadmeWith(
-                provider.get_base_path().joinpath("inc"),
-                readme_contact)
-        else:
-            add_readme_callback = None
-        return add_readme_callback
-
-    def __init__(self, logger: logging.Logger, helper: OdsUpdaterHelper,
-                 destinations: Destinations, python_version: str,
+    def __init__(self, logger: Logger, helper: OdsUpdaterHelper,
+                 source_ods_file: Path,
+                 dest_ods_file: Path, python_version: str,
                  add_readme_callback: Optional[AddReadmeWith]):
-        self._helper = helper
         self._logger = logger
-        self._destinations = destinations
+        self._helper = helper
+        self._source_ods_file = source_ods_file
+        self._dest_ods_file = dest_ods_file
         self._python_version = python_version
         self._add_readme_callback = add_readme_callback
 
-    def update(self, ods_source: Path, ods_dest: Path) -> Path:
-        self._logger.info("Update. Generating '%s' for Python '%s'",
-                          ods_dest, self._python_version)
-
-        temp_scripts = self._helper.get_temp_scripts()
-        scripts = [ts.to_destination(self._destinations.dest_dir) for ts in
-                   temp_scripts]
+    def execute(self, status: int) -> (int, Path):
+        self._logger.info(
+            "Update. Generating '%s' (source: %s) for Python '%s'",
+            self._dest_ods_file,
+            self._source_ods_file,
+            self._python_version)
+        scripts = self._helper.get_destination_scripts()
         assets = self._helper.get_assets()
-
-        self._logger.info("Updating document %s",
-                          ods_dest)
         zip_updater = self._create_updater(scripts, assets)
-        zip_updater.update(ods_source, ods_dest)
-        return ods_dest
+        zip_updater.update(self._source_ods_file,
+                           self._dest_ods_file)
+        return status, self._dest_ods_file
 
     def _create_updater(self, scripts: List[DestinationScript],
                         assets: List[DestinationAsset]) -> ZipUpdater:
@@ -120,3 +90,7 @@ class _UpdateCommandHelper:
             zip_updater_builder.after(self._add_readme_callback)
 
         return zip_updater_builder.build()
+
+    @staticmethod
+    def get_help():
+        return "Update the file with all scripts"

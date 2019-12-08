@@ -20,6 +20,7 @@
 import subprocess
 import unittest
 from pathlib import Path
+from unittest import mock
 from unittest.mock import *
 
 from commands.test_command import TestCommand
@@ -48,6 +49,7 @@ class TestCommandTest(unittest.TestCase):
 
         self.assertEqual([
             call.info('execute: %s', '"test_py_exe" -m doctest /src_dir/src_a.py'),
+            call.debug('Test env: %s', mock.ANY),
             call.info('output: ok'),
             call.info('execute: "test_py_exe" /test_dir/c_test.py'),
             call.info('output: not ok'),

@@ -3,10 +3,9 @@ from typing import List
 
 from core.asset import DestinationAsset
 from core.properties import Destinations, Sources
+from core.script import TempScript, SourceScript, DestinationScript
 from directives import DirectiveProvider
 from script_set_processor import ScriptSetProcessor
-from core.script import TempScript, SourceScript
-from tools import get_paths
 
 
 class OdsUpdaterHelper:
@@ -19,15 +18,16 @@ class OdsUpdaterHelper:
         self._python_version = python_version
 
     def get_assets(self) -> List[DestinationAsset]:
-        assets_dest_dir = self._destinations.assets_dest_dir
-        return [sa.to_dest(assets_dest_dir) for sa in
-                self._sources.get_assets()]
+        source_assets = self._sources.get_assets()
+        return self._destinations.to_destination_assets(
+            source_assets)
+
+    def get_destination_scripts(self) -> List[DestinationScript]:
+        temp_scripts = self.get_temp_scripts()
+        return self._destinations.to_destination_scripts(temp_scripts)
 
     def get_temp_scripts(self) -> List[TempScript]:
-        script_paths = get_paths(self._sources.src_dir,
-                                 self._sources.src_ignore, "*.py")
-        source_scripts = [SourceScript(sp, self._sources.src_dir) for sp in
-                          script_paths]
+        source_scripts = self._sources.get_src_scripts()
         directive_provider = DirectiveProvider.create(self._logger,
                                                       self._sources)
         return ScriptSetProcessor(self._logger, self._destinations.temp_dir,

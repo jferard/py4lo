@@ -28,7 +28,7 @@ from core.properties import PropertiesProvider
 
 class InitCommand(Command):
     @staticmethod
-    def create_executor(args, provider: PropertiesProvider):
+    def create_executor(args, provider: PropertiesProvider) -> CommandExecutor:
         test_executor = TestCommand.create_executor(args, provider)
         logger = provider.get_logger()
         sources = provider.get_sources()
@@ -40,7 +40,7 @@ class InitCommand(Command):
         init_command = DebugCommand(logger, helper,
                                     sources, destinations,
                                     python_version)
-        return CommandExecutor(init_command, test_executor)
+        return CommandExecutor(logger, init_command, test_executor)
 
     def execute(self, *args: List[str]) -> Optional[Tuple]:
         pass

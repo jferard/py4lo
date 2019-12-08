@@ -16,15 +16,16 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
-import logging
+from logging import Logger
 from typing import List, Tuple, Optional
 
 from commands.command import Command
 
 
 class CommandExecutor:
-    def __init__(self, command: Command,
+    def __init__(self, logger: Logger, command: Command,
                  previous_executor: Optional["CommandExecutor"] = None):
+        self._logger = logger
         self._command = command
         self._previous_executor = previous_executor
 
@@ -34,7 +35,7 @@ class CommandExecutor:
         else:
             cur_args = self._previous_executor.execute(*args)
 
-        logging.warning("%s, args=%s", self._command, cur_args)
+        self._logger.warning("%s, args=%s", self._command, cur_args)
         ret = self._command.execute(*cur_args)
-        logging.warning("%s, args=%s, ret=%s", self._command, cur_args, ret)
+        self._logger.warning("%s, args=%s, ret=%s", self._command, cur_args, ret)
         return ret

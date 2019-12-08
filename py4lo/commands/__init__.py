@@ -19,6 +19,7 @@
 from typing import Dict, List
 
 from commands.command import Command
+from commands.command_executor import CommandExecutor
 from core.properties import PropertiesProvider
 from commands.real_command_factory_by_name import real_command_factory_by_name
 from commands.help_command import HelpCommand
@@ -31,7 +32,7 @@ class Commands:
         self._command_factory_by_name = command_factory_by_name
 
     def get(self, command_name: str, args: List[str],
-            provider: PropertiesProvider):
+            provider: PropertiesProvider) -> CommandExecutor:
         try:
             command = self._command_factory_by_name[command_name]
         except KeyError as e:

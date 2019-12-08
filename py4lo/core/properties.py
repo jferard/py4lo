@@ -17,13 +17,14 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import logging
+import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Any, List, Set, Mapping, AbstractSet, Optional
+from typing import Any, List, Set, Mapping, AbstractSet, Optional
 
-import os
-
-from core.asset import SourceAsset
+from callbacks import AddReadmeWith
+from core.asset import SourceAsset, DestinationAsset
+from core.script import TempScript, DestinationScript, SourceScript
 from toml_helper import load_toml
 
 
@@ -45,6 +46,11 @@ class Sources:
         return [SourceAsset(p, self.assets_dir) for p in
                 _get_paths(self.assets_dir, self.assets_ignore)]
 
+    def get_src_scripts(self) -> List[SourceScript]:
+        script_paths = self.get_src_paths()
+        return [SourceScript(sp, self.src_dir) for sp in
+                          script_paths]
+
 
 @dataclass
 class Destinations:
@@ -52,6 +58,14 @@ class Destinations:
     temp_dir: Path
     dest_dir: Path
     assets_dest_dir: Path
+
+    def to_destination_scripts(self, temp_scripts: List[TempScript]) -> List[
+        DestinationScript]:
+        return [ts.to_destination(self.dest_dir) for ts in
+                temp_scripts]
+
+    def to_destination_assets(self, source_assets) -> List[DestinationAsset]:
+        return [sa.to_dest(self.assets_dest_dir) for sa in source_assets]
 
 
 class PropertiesProvider:
@@ -85,10 +99,21 @@ class PropertiesProvider:
         return self._destinations
 
     def get_src_paths(self) -> Set[Path]:
-        return self.get_sources().get_src_paths()
+        return self._sources.get_src_paths()
 
     def get_assets_paths(self) -> Set[Path]:
-        return self.get_sources().get_assets_paths()
+        return self._sources.get_assets_paths()
+
+    def get_readme_callback(self) -> Optional[AddReadmeWith]:
+        add_readme = self.get("add_readme", False)
+        if add_readme:
+            readme_contact = self.get("readme_contact")
+            add_readme_callback = AddReadmeWith(
+                self.get_base_path().joinpath("inc"),
+                readme_contact)
+        else:
+            add_readme_callback = None
+        return add_readme_callback
 
 
 def _get_paths(source_dir: Path, ignore: List[str], glob="*") -> Set[

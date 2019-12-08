@@ -17,6 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 from commands.command import Command
+from commands.command_executor import CommandExecutor
 from core.properties import PropertiesProvider
 from commands.real_command_factory_by_name import real_command_factory_by_name
 
@@ -37,12 +38,14 @@ command     a command = debug|help|init|test|update
 
 class HelpCommand(Command):
     @staticmethod
-    def create_executor(args, _provider: PropertiesProvider):
+    def create_executor(args, provider: PropertiesProvider) -> CommandExecutor:
         if len(args) == 1:
             command_name = args[0]
         else:
             command_name = None
-        return HelpCommand(real_command_factory_by_name, command_name)
+        return CommandExecutor(provider.get_logger(),
+                               HelpCommand(real_command_factory_by_name,
+                                           command_name))
 
     def __init__(self, command_factory_by_name, command_name=None):
         self._command_factory_by_name = command_factory_by_name

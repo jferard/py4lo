@@ -40,7 +40,7 @@ class DebugCommand(Command):
     """
 
     @staticmethod
-    def create_executor(args, provider: PropertiesProvider):
+    def create_executor(args, provider: PropertiesProvider) -> CommandExecutor:
         test_executor = TestCommand.create_executor(args, provider)
         logger = provider.get_logger()
         sources = provider.get_sources()
@@ -49,7 +49,7 @@ class DebugCommand(Command):
         helper = OdsUpdaterHelper(logger, sources, destinations, python_version)
         debug_command = DebugCommand(logger, helper, sources, destinations,
                                      python_version)
-        return CommandExecutor(debug_command, test_executor)
+        return CommandExecutor(logger, debug_command, test_executor)
 
     def __init__(self, logger: logging.Logger, helper: OdsUpdaterHelper,
                  sources: Sources, destinations: Destinations,

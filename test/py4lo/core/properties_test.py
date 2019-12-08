@@ -38,7 +38,7 @@ class TestProperties(unittest.TestCase):
                                            "assets_dest_dir": "Assets"}}
         p = PropertiesProviderFactory().create()
 
-        self.assertEqual(set(["a", "log_level", "src", "dest"]), p.keys())
+        self.assertEqual({"a", "log_level", "src", "dest"}, p.keys())
         self.assertEqual(1, p.get("a"))
 
 

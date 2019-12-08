@@ -29,17 +29,19 @@ from core.script import TempScript
 class TestDebugCommand(unittest.TestCase):
     @patch('zip_updater.ZipUpdater', autospec=True)
     def test(self, Zupdater):
+        # mocks
         logger: Logger = Mock()
-        dest_path = Path("dest.ods")
-        inc_path = Path("inc/debug.ods")
-        python_version = "3.1"
         helper: OdsUpdaterHelper = Mock()
         t1: TempScript = Mock()
         t2: TempScript = Mock()
-        helper.get_temp_scripts.side_effect = [[t1, t2]]
-        destinations: Destinations = Mock()
-        destinations.temp_dir.joinpath.return_value = dest_path
         sources: Sources = Mock()
+        destinations: Destinations = Mock()
+
+        dest_path = Path("dest.ods")
+        inc_path = Path("inc/debug.ods")
+        python_version = "3.1"
+        helper.get_temp_scripts.side_effect = [[t1, t2]]
+        destinations.dest_ods_file.parent.joinpath.return_value = dest_path
         sources.inc_dir.joinpath.return_value = inc_path
         d = DebugCommand(logger, helper, sources, destinations,
                          python_version)
