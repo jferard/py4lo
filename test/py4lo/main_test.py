@@ -19,12 +19,14 @@
 import unittest
 from unittest.mock import MagicMock
 
-import py4lo.__main__
+import env
+import main
 
-class MyTestCase(unittest.TestCase):
-    def test_something(self):
+
+class MainTest(unittest.TestCase):
+    def test(self):
         factory = MagicMock()
-        py4lo.__main__.main(factory)
+        main.main(factory, ["py4lo", "help"])
 
 
 if __name__ == '__main__':
