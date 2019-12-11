@@ -8,7 +8,6 @@ cache: pip
 
 before_install:
   - sudo apt-get install -y libreoffice libreoffice-script-provider-python python3-uno
-  - dpkg -L python3-uno
   - export PYTHONPATH=${PYTHONPATH}:/usr/lib/python3/dist-packages/
 
 # command to run tests and install dependencies

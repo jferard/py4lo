@@ -24,7 +24,7 @@ from directives import Include
 
 
 class TestInclude(unittest.TestCase):
-    def test(self):
+    def test_without_strip(self):
         proc = Mock()
         path = Mock()
         inc_path = MagicMock()
@@ -37,6 +37,32 @@ class TestInclude(unittest.TestCase):
         d = Include(path)
         self.assertEqual(["include"], d.sig_elements())
         self.assertEqual(True, d.execute(None, proc, ["a.py"]))
+        self.assertEqual([call.append(
+            '# begin py4lo include: [to inc]\nsome line\n# end py4lo include\n')],
+            proc.mock_calls)
+
+        self.assertEqual(
+            [call.__getattr__("__str__"), call.open('r', encoding="utf-8"),
+             call.open().__enter__(),
+             call.open().__exit__(None, None, None)], inc_path.mock_calls)
+        self.assertEqual([call.__enter__(), call.__exit__(None, None, None)],
+                         bound.mock_calls)
+
+    def test_with_strip(self):
+        proc = Mock()
+        path = Mock()
+        inc_path = MagicMock()
+        bound = MagicMock()
+        inc_path.__str__.return_value = "[to inc]"
+        path.joinpath.return_value = inc_path
+        inc_path.open.return_value = bound
+        bound.__enter__.return_value = ['"""docstring"""', "'''",
+                                        "other docstring", "'''", "  #comment",
+                                        "some line"]
+
+        d = Include(path)
+        self.assertEqual(["include"], d.sig_elements())
+        self.assertEqual(True, d.execute(None, proc, ["a.py", "True"]))
         self.assertEqual([call.append(
             '# begin py4lo include: [to inc]\nsome line\n# end py4lo include\n')],
             proc.mock_calls)

@@ -36,7 +36,8 @@ class Include(Directive):
     def __init__(self, inc_dir: Path):
         self._inc_dir = inc_dir
 
-    def execute(self, _processor: "DirectiveProcessor", line_processor: "DirectiveLineProcessor", args: List[str]):
+    def execute(self, _processor: "DirectiveProcessor",
+                line_processor: "DirectiveLineProcessor", args: List[str]):
         path = self._inc_dir.joinpath(args[0])
         if len(args) >= 2:
             strip = bool(args[1])
@@ -58,10 +59,13 @@ class Include(Directive):
 class IncludeStripper:
     """ A simple include stripper: remove docstrings and comments"""
 
-    DOC_STRING_OPEN = "\"\"\""
-    DOC_STRING_CLOSE = "\"\"\""
+    DOC_STRING_OPEN = '"""'
+    DOC_STRING_CLOSE = '"""'
+    DOC_STRING_SINGLE_OPEN = "'''"
+    DOC_STRING_SINGLE_CLOSE = "'''"
     NORMAL = 0
     IN_DOC_STRING = 1
+    IN_DOC_STRING_SINGLE = 2
     END = -1
 
     def __init__(self, path: Path):
@@ -75,7 +79,7 @@ class IncludeStripper:
             raise Exception("Create a new IncludeProcessor")
 
         with self._path.open('r', encoding="utf-8") as b:
-            for line in b.readlines():
+            for line in b:
                 self._process_line(line)
 
         self._state = IncludeStripper.END
@@ -90,9 +94,32 @@ class IncludeStripper:
             if stripped_line.startswith('#'):
                 pass
             elif stripped_line.startswith(IncludeStripper.DOC_STRING_OPEN):
-                self._state = IncludeStripper.IN_DOC_STRING
+                if self.is_open_doc_string(stripped_line,
+                                           IncludeStripper.DOC_STRING_OPEN,
+                                           IncludeStripper.DOC_STRING_CLOSE):
+                    self._state = IncludeStripper.IN_DOC_STRING
+            elif stripped_line.startswith(
+                    IncludeStripper.DOC_STRING_SINGLE_OPEN):
+                if self.is_open_doc_string(stripped_line,
+                                           IncludeStripper.DOC_STRING_SINGLE_OPEN,
+                                           IncludeStripper.DOC_STRING_SINGLE_CLOSE):
+                    self._state = IncludeStripper.IN_DOC_STRING_SINGLE
             else:
                 self._inc_lines.append(line)
-        elif self._state == IncludeStripper.IN_DOC_STRING:
-            if stripped_line.endswith(IncludeStripper.DOC_STRING_CLOSE):
-                self._state = IncludeStripper.NORMAL
+
+        elif (self.is_close_doc_string(stripped_line,
+                                       IncludeStripper.IN_DOC_STRING,
+                                       IncludeStripper.DOC_STRING_CLOSE)
+              or self.is_close_doc_string(stripped_line,
+                                          IncludeStripper.IN_DOC_STRING_SINGLE,
+                                          IncludeStripper.DOC_STRING_SINGLE_CLOSE)):
+            self._state = IncludeStripper.NORMAL
+
+    def is_open_doc_string(self, stripped_line: str, string_open: str,
+                           string_close: str) -> bool:
+        return (not stripped_line.endswith(string_close)
+                or len(stripped_line) == len(string_open))
+
+    def is_close_doc_string(self, stripped_line: str, doc: int,
+                            string_close: str) -> bool:
+        return self._state == doc and stripped_line.endswith(string_close)

@@ -17,29 +17,41 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import argparse
+import sys
 from logging import DEBUG
+from typing import List
 
 from commands import commands
 from core.properties import PropertiesProviderFactory
 
-parser = argparse.ArgumentParser(description="Python for LibreOffice",
-                                 formatter_class=argparse.RawTextHelpFormatter)
-parser.add_argument("-t", "--toml", help="the toml file",
-                    default="py4lo.toml", type=str)
-parser.add_argument("command",
-                    help=commands.get_help_message(), type=str)
-parser.add_argument("parameter", nargs="*",
-                    help="command parameter")
-args = parser.parse_args()
 
-provider = PropertiesProviderFactory().create(args.toml)
-logger = provider.get_logger()
-logger.info("Py4LO (C) Julien Férard 2016-2019")
-logger.debug("Log Level is: %s", logger.getEffectiveLevel())
-logger.debug("Command line arguments are: %s", args)
+def get_args(argv: List[str] = sys.argv[1:]) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Python for LibreOffice",
+                                     formatter_class=argparse.RawTextHelpFormatter)
+    parser.add_argument("-t", "--toml", help="the toml file",
+                        default="py4lo.toml", type=str)
+    parser.add_argument("command",
+                        help=commands.get_help_message(), type=str)
+    parser.add_argument("parameter", nargs="*",
+                        help="command parameter")
+    return parser.parse_args(argv)
 
-command = commands.get(args.command, args.parameter,
-                       provider)
-logger.debug("Command is %s", command)
 
-command.execute()
+def main(factory: PropertiesProviderFactory, argv: List[str] = sys.argv[1:]):
+    args = get_args(argv)
+    provider = factory.create(args.toml)
+    logger = provider.get_logger()
+    logger.info("Py4LO (C) Julien Férard 2016-2019")
+    logger.debug("Log Level is: %s", logger.getEffectiveLevel())
+    logger.debug("Command line arguments are: %s", args)
+
+    command = commands.get(args.command, args.parameter,
+                           provider)
+    logger.debug("Command is %s", command)
+
+    command.execute()
+
+
+if __name__ == "__main__":
+    main_factory = PropertiesProviderFactory()
+    main(main_factory)
