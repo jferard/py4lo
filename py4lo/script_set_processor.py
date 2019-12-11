@@ -41,8 +41,7 @@ class ScriptSetProcessor:
         self._python_version = python_version
         self._directive_provider = directive_provider
         self._source_scripts = source_scripts
-        self._logger.log(logging.DEBUG, "Scripts to process: %s",
-                         source_scripts)
+        self._logger.debug("Scripts to process: %s", source_scripts)
         self._scripts: List[TempScript] = []
         self._cur_source_scripts = list(source_scripts)  # our stack.
         self._visited = set()  # avoid cycles
@@ -76,7 +75,7 @@ class ScriptSetProcessor:
                                            source_script,
                                            self._target_dir)
         temp_script = script_processor.parse_script()
-        self._add_script(temp_script)
+        self.add_script(temp_script)
 
     def _raise_exceptions(self):
         es = [script.exception for script in self._scripts if
@@ -85,14 +84,14 @@ class ScriptSetProcessor:
             return
 
         for e in es:
-            self._logger.log(logging.ERROR, str(e))
+            self._logger.error(str(e))
         raise Exception("Compilation errors: see above")
 
     def append_script(self, source_script: SourceScript):
         """Append a new script. The directive UseLib will call this method"""
         self._cur_source_scripts.append(source_script)
 
-    def _add_script(self, script: TempScript):
+    def add_script(self, script: TempScript):
         self._write_script(script)
         self._scripts.append(script)
 
@@ -102,15 +101,17 @@ class ScriptSetProcessor:
                 in self._scripts}
 
     def _write_script(self, script: TempScript):
-        self._ensure_target_dir_exists()
-        self._logger.log(logging.DEBUG, "Writing temp script: %s (%s)", script.relative_path,
+        self._ensure_dir_exists(script)
+        self._logger.debug("Writing temp script: %s (%s)",
+                         script.relative_path,
                          script.script_path)
         with script.script_path.open('wb') as f:
             f.write(script.script_content)
 
-    def _ensure_target_dir_exists(self):
-        if not self._target_dir.exists():
-            self._target_dir.mkdir(parents=True)
+    def _ensure_dir_exists(self, script: TempScript):
+        target_dir = script.script_path.parent
+        if not target_dir.exists():
+            target_dir.mkdir(parents=True)
 
 
 class ScriptProcessor:
@@ -125,7 +126,7 @@ class ScriptProcessor:
         self._target_dir = target_dir
 
     def parse_script(self) -> TempScript:
-        self._logger.log(logging.DEBUG, "Parsing script: %s (%s)",
+        self._logger.debug("Parsing script: %s (%s)",
                          self._source_script.relative_path,
                          self._source_script.script_path)
         exception = self._get_exception()
@@ -137,7 +138,7 @@ class ScriptProcessor:
         script = TempScript(target_path, parsed_content.text.encode("utf-8"),
                             self._target_dir,
                             parsed_content.exported_func_names, exception)
-        self._logger.log(logging.DEBUG, "Temp output script is: %s (%s)",
+        self._logger.debug("Temp output script is: %s (%s)",
                          script.script_path, script.exported_func_names)
         return script
 

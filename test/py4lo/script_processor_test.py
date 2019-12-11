@@ -38,8 +38,8 @@ class TestScriptsProcessor(unittest.TestCase):
         sp.parse_script()
 
         self.assertEqual(
-            [call.log(10, 'Parsing script: %s (%s)', 'fname',
+            [call.debug('Parsing script: %s (%s)', 'fname',
                       source_script.script_path),
-             call.log(10, 'Temp output script is: %s (%s)', Path('t'), [])],
+             call.debug('Temp output script is: %s (%s)', Path('t'), [])],
             logger.mock_calls)
         self.assertEqual([call.ignore_lines(), call.end()], dp.mock_calls)

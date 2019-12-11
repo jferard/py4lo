@@ -17,6 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 # py4lo: entry
+# py4lo: embed script alib.py
 # py4lo: embed lib py4lo_helper
 # py4lo: embed lib py4lo_commons
 

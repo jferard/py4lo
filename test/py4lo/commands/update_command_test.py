@@ -102,7 +102,7 @@ class TestUpdateCommand(unittest.TestCase):
     #                   Path('dest.ods'),
     #                   '3.1'),
     #         call.debug('Directives tree: %s', mock.ANY),
-    #         call.log(10, 'Scripts to process: %s', []),
+    #         call.debug('Scripts to process: %s', []),
     #         call.info('Updating document %s', Path("dest.ods"))],
     #         logger.mock_calls)
     #     self.assertEqual(call().update(Path('source.ods'), Path('dest.ods')),

@@ -11,6 +11,7 @@ inc_dir = "{py4lo}/inc"
 lib_dir = "{py4lo}/lib"
 src_dir = "{project}/src/main"
 src_ignore = [] # list of glob patterns
+opt_dir = "{project}/src/opt"
 assets_dir = "{project}/src/assets"
 assets_ignore = [] # list of glob patterns
 test_dir = "{project}/src/test"

@@ -18,7 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 from pathlib import Path
 
-from core.script import SourceScript
+from directives.include import Include
 from directives.directive import Directive
 
 
@@ -31,6 +31,8 @@ class Entry(Directive):
     def sig_elements():
         return ["entry"]
 
-    def execute(self, processor: "DirectiveProcessor", args):
-        processor.include("py4lo_import.py")
-        return True
+    def __init__(self, inc_dir: Path):
+        self._include_directive = Include(inc_dir)
+
+    def execute(self, _processor: "DirectiveProcessor", line_processor: "DirectiveLineProcessor", args):
+        return self._include_directive.execute(_processor, line_processor, ["py4lo_import.py", True])

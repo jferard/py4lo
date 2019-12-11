@@ -56,10 +56,10 @@ class TestScriptSetProcessor(unittest.TestCase):
             raise
 
         self.assertEqual([
-            call.log(10, 'Scripts to process: %s', [script]),
-            call.log(10, 'Parsing script: %s (%s)', Path("rel source"), source_path),
-            call.log(10, 'Temp output script is: %s (%s)', target_path, []),
-            call.log(10, 'Writing temp script: %s (%s)', Path('rel target'),
+            call.debug('Scripts to process: %s', [script]),
+            call.debug('Parsing script: %s (%s)', Path("rel source"), source_path),
+            call.debug('Temp output script is: %s (%s)', target_path, []),
+            call.debug('Writing temp script: %s (%s)', Path('rel target'),
                      target_path),
         ], logger.mock_calls)
         self.assertEqual([

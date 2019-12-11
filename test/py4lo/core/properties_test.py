@@ -30,6 +30,7 @@ class TestProperties(unittest.TestCase):
                                   "src": {"source_ods_file": "s.ods",
                                           "inc_dir": "inc", "lib_dir": "lib",
                                           "src_dir": "src", "src_ignore": "",
+                                          "opt_dir": "opt",
                                           "assets_dir": "assets",
                                           "assets_ignore": "",
                                           "test_dir": "test"},

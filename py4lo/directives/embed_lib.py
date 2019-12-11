@@ -26,6 +26,7 @@ class EmbedLib(Directive):
     """
     Embed a py4lo library
     """
+
     @staticmethod
     def sig_elements():
         return ["embed", "lib"]
@@ -33,7 +34,8 @@ class EmbedLib(Directive):
     def __init__(self, lib_dir: Path):
         self._lib_dir = lib_dir
 
-    def execute(self, processor: "DirectiveProcessor", args):
+    def execute(self, processor: "DirectiveProcessor",
+                _line_processor: "DirectiveLineProcessor", args):
         script_ref = args[0]
         script_path = self._lib_dir.joinpath(script_ref + ".py")
         processor.append_script(SourceScript(script_path, self._lib_dir))

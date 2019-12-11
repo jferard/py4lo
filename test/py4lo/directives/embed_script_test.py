@@ -18,25 +18,36 @@
 
 import unittest
 from pathlib import Path
-from unittest.mock import Mock, call
+from unittest.mock import Mock, call, MagicMock
 
-from core.script import SourceScript
+from core.script import SourceScript, TempScript
 from directives import EmbedScript
 
 
 class TestEmbed(unittest.TestCase):
     def setUp(self):
-        self._directive = EmbedScript()
+        self._opt: Path = Mock()
+        self._directive = EmbedScript(self._opt)
 
     def test_sig_elements(self):
         self.assertEqual(["embed", "script"], self._directive.sig_elements())
 
     def test_execute(self):
         proc = Mock()
+        fpath: Path = Mock()
+        bound = MagicMock()
+        f = Mock()
+
+        self._opt.joinpath.return_value = fpath
+        fpath.is_dir.return_value = False
+        fpath.open.return_value = bound
+        bound.__enter__.return_value = f
+        bound.__exit__.return_value = False
+        f.read.return_value = b"content"
         self.assertEqual(True,
-                         self._directive.execute(proc, ["MyDir", "a/b.py"]))
-        self.assertEqual([call.append_script(
-            SourceScript(Path('MyDir/a/b.py'), Path("MyDir")))],
+                         self._directive.execute(proc, None, ["a/b.py"]))
+        self.assertEqual([call.add_script(
+            TempScript(fpath, b"content", self._opt, [], None))],
             proc.mock_calls)
 
         if __name__ == '__main__':

@@ -17,13 +17,13 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import shlex
-from pathlib import Path
 from typing import List, Optional
 
 from branch_processor import BranchProcessor
 from comparator import Comparator
-from core.script import SourceScript
+from core.script import SourceScript, TempScript
 from directives import DirectiveProvider
+from directives.include import IncludeStripper
 
 
 class DirectiveProcessor:
@@ -60,19 +60,15 @@ class DirectiveProcessor:
         """Append a script to the script processor"""
         self._script_set_processor.append_script(source_script)
 
+    def add_script(self, temp_script: TempScript):
+        """Add an opt script"""
+        self._script_set_processor.add_script(temp_script)
+
     def process_line(self, line: str) -> List[str]:
         """Process a line that starts with #"""
-        return _DirectiveProcessorWorker(self, self._branch_processor,
-                                         self._directive_provider,
-                                         line).process_line()
-
-    def include(self, fname: str) -> List[str]:
-        s = [""]
-        if fname not in self._includes:
-            s = _IncludeProcessor(fname).process()
-            self._includes.add(fname)
-
-        return s
+        return DirectiveLineProcessor(self, self._branch_processor,
+                                      self._directive_provider,
+                                      line).process_line()
 
     def end(self):
         """Verify the end of the scripts"""
@@ -82,7 +78,7 @@ class DirectiveProcessor:
         return self._branch_processor.skip()
 
 
-class _DirectiveProcessorWorker:
+class DirectiveLineProcessor:
     """A worker that processes the line"""
 
     def __init__(self, directive_processor: DirectiveProcessor,
@@ -129,7 +125,7 @@ class _DirectiveProcessorWorker:
         else:
             try:
                 directive, args = self._directive_provider.get(args)
-                directive.execute(self, args)
+                directive.execute(self._directive_processor, self, args)
             except KeyError:
                 print("Wrong directive ({})".format(line.strip()))
 
@@ -139,57 +135,8 @@ class _DirectiveProcessorWorker:
         else:
             self.append(self._line)
 
-    def include(self, fname: str):
-        """Called by directives"""
-        self._target_lines.extend(self._directive_processor.include(fname))
-
     def append(self, line: str):
         """Called by directives"""
         self._target_lines.append(line)
 
-    def append_script(self, source_script: SourceScript):
-        """Append a script to the script processor"""
-        self._directive_processor.append_script(source_script)
 
-
-class _IncludeProcessor:
-    """ A simple include stripper: remove docstrings and comments"""
-
-    DOC_STRING_OPEN = "\"\"\""
-    DOC_STRING_CLOSE = "\"\"\""
-    NORMAL = 0
-    IN_DOC_STRING = 1
-    END = -1
-
-    def __init__(self, fname: str):
-        self._fname = fname
-        self._inc_lines = []
-        self._state = _IncludeProcessor.NORMAL
-
-    def process(self) -> List[str]:
-        """Return a list of lines"""
-        if self._state != _IncludeProcessor.NORMAL:
-            raise Exception("Create a new IncludeProcessor")
-
-        path = Path(__file__).parent
-        fpath = path.joinpath("..", "inc", self._fname)
-        with fpath.open('r', encoding="utf-8") as b:
-            for line in b.readlines():
-                self._process_line(line)
-
-        self._state = _IncludeProcessor.END
-        return self._inc_lines
-
-    def _process_line(self, line: str):
-        line = line.rstrip()
-        stripped_line = line.strip()
-        if self._state == _IncludeProcessor.NORMAL:
-            if stripped_line.startswith('#'):
-                pass
-            elif stripped_line.startswith(_IncludeProcessor.DOC_STRING_OPEN):
-                self._state = _IncludeProcessor.IN_DOC_STRING
-            else:
-                self._inc_lines.append(line)
-        elif self._state == _IncludeProcessor.IN_DOC_STRING:
-            if stripped_line.endswith(_IncludeProcessor.DOC_STRING_CLOSE):
-                self._state = _IncludeProcessor.NORMAL

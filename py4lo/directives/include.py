@@ -36,14 +36,63 @@ class Include(Directive):
     def __init__(self, inc_dir: Path):
         self._inc_dir = inc_dir
 
-    def execute(self, processor: "DirectiveProcessor", args: List[str]):
+    def execute(self, _processor: "DirectiveProcessor", line_processor: "DirectiveLineProcessor", args: List[str]):
         path = self._inc_dir.joinpath(args[0])
+        if len(args) >= 2:
+            strip = bool(args[1])
+        else:
+            strip = False
 
-        s = "# begin py4lo include: {}\n".format(path)
-        with path.open('r', encoding='utf-8') as f:
-            for line in f:
-                s += line
-        s += "\n# end py4lo include\n"
+        s = ["# begin py4lo include: {}".format(path)]
+        if strip:
+            s.extend(IncludeStripper(path).process())
+        else:
+            with path.open('r', encoding='utf-8') as f:
+                s.extend(f)
+        s.append("# end py4lo include\n")
 
-        processor.append(s)
+        line_processor.append("\n".join(s))
         return True
+
+
+class IncludeStripper:
+    """ A simple include stripper: remove docstrings and comments"""
+
+    DOC_STRING_OPEN = "\"\"\""
+    DOC_STRING_CLOSE = "\"\"\""
+    NORMAL = 0
+    IN_DOC_STRING = 1
+    END = -1
+
+    def __init__(self, path: Path):
+        self._path = path
+        self._inc_lines = []
+        self._state = IncludeStripper.NORMAL
+
+    def process(self) -> List[str]:
+        """Return a list of lines"""
+        if self._state != IncludeStripper.NORMAL:
+            raise Exception("Create a new IncludeProcessor")
+
+        with self._path.open('r', encoding="utf-8") as b:
+            for line in b.readlines():
+                self._process_line(line)
+
+        self._state = IncludeStripper.END
+        while self._inc_lines and not self._inc_lines[-1]:
+            del self._inc_lines[-1]
+        return self._inc_lines
+
+    def _process_line(self, line: str):
+        line = line.rstrip()
+        stripped_line = line.strip()
+        if self._state == IncludeStripper.NORMAL:
+            if stripped_line.startswith('#'):
+                pass
+            elif stripped_line.startswith(IncludeStripper.DOC_STRING_OPEN):
+                self._state = IncludeStripper.IN_DOC_STRING
+            else:
+                self._inc_lines.append(line)
+        elif self._state == IncludeStripper.IN_DOC_STRING:
+            if stripped_line.endswith(IncludeStripper.DOC_STRING_CLOSE):
+                self._state = IncludeStripper.NORMAL

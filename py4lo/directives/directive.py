@@ -22,7 +22,7 @@ from typing import List
 
 class Directive(ABC):
     @abstractmethod
-    def execute(self, processor: "DirectiveProcessor", args: List[str]):
+    def execute(self, processor: "DirectiveProcessor", line_processor: "DirectiveLineProcessor", args: List[str]):
         pass
 
     @abstractmethod

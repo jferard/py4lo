@@ -17,6 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import unittest
+from pathlib import Path
+from unittest import mock
 from unittest.mock import *
 
 import env
@@ -100,7 +102,7 @@ class TestDirectiveProcessor(unittest.TestCase):
         self._branch_processor.skip.return_value = False
         self._branch_processor.handle_directive.return_value = False
         directive = Mock()
-        self._directive_provider.get.return_value = (directive, "")
+        self._directive_provider.get.return_value = (directive, [""])
 
         l = self._dp.process_line("# py4lo: ok")
         self.assertEqual([], l)
@@ -111,24 +113,24 @@ class TestDirectiveProcessor(unittest.TestCase):
                          self._branch_processor.mock_calls)
         self.assertEqual([call.get(["ok"])],
                          self._directive_provider.mock_calls)
-        self.assertEqual([call.execute(env.any_object(), "")],
+        self.assertEqual([call.execute(self._dp, mock.ANY, [""])],
                          directive.mock_calls)
 
-    def test_include(self):
-        lines = self._dp.include("py4lo_import.py")
-        self.assertEqual(['try:',
-                          '    XSCRIPTCONTEXT',
-                          'except:',
-                          '    pass',
-                          'else:',
-                          '    import unohelper',
-                          '    import sys',
-                          '    doc = XSCRIPTCONTEXT.getDocument()',
-                          "    spath = unohelper.fileUrlToSystemPath(doc.URL+'/Scripts/python')",
-                          '    if spath not in sys.path:',
-                          '        sys.path.insert(0, spath)'], lines)
-
-        self.assertEqual([], self._scripts_path.mock_calls)
-        self.assertEqual([], self._scripts_processor.mock_calls)
-        self.assertEqual([], self._branch_processor.mock_calls)
-        self.assertEqual([], self._directive_provider.mock_calls)
+    # def test_include(self):
+    #     lines = self._dp.include("py4lo_import.py")
+    #     self.assertEqual(['try:',
+    #                       '    XSCRIPTCONTEXT',
+    #                       'except:',
+    #                       '    pass',
+    #                       'else:',
+    #                       '    import unohelper',
+    #                       '    import sys',
+    #                       '    doc = XSCRIPTCONTEXT.getDocument()',
+    #                       "    spath = unohelper.fileUrlToSystemPath(doc.URL+'/Scripts/python')",
+    #                       '    if spath not in sys.path:',
+    #                       '        sys.path.insert(0, spath)'], lines)
+    #
+    #     self.assertEqual([], self._scripts_path.mock_calls)
+    #     self.assertEqual([], self._scripts_processor.mock_calls)
+    #     self.assertEqual([], self._branch_processor.mock_calls)
+    #     self.assertEqual([], self._directive_provider.mock_calls)

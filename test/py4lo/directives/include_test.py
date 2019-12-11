@@ -36,7 +36,7 @@ class TestInclude(unittest.TestCase):
 
         d = Include(path)
         self.assertEqual(["include"], d.sig_elements())
-        self.assertEqual(True, d.execute(proc, ["a.py"]))
+        self.assertEqual(True, d.execute(None, proc, ["a.py"]))
         self.assertEqual([call.append(
             '# begin py4lo include: [to inc]\nsome line\n# end py4lo include\n')],
             proc.mock_calls)

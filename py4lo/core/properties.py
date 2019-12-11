@@ -35,12 +35,13 @@ class Sources:
     lib_dir: Path
     src_dir: Path
     src_ignore: List[str]
+    opt_dir: Path
     assets_dir: Path
     assets_ignore: List[str]
     test_dir: Path
 
     def get_src_paths(self) -> Set[Path]:
-        return _get_paths(self.src_dir, self.src_ignore, ".*py")
+        return _get_paths(self.src_dir, self.src_ignore, "*.py")
 
     def get_assets(self) -> List[SourceAsset]:
         return [SourceAsset(p, self.assets_dir) for p in
@@ -48,8 +49,7 @@ class Sources:
 
     def get_src_scripts(self) -> List[SourceScript]:
         script_paths = self.get_src_paths()
-        return [SourceScript(sp, self.src_dir) for sp in
-                          script_paths]
+        return [SourceScript(sp, self.src_dir) for sp in script_paths]
 
 
 @dataclass
@@ -116,8 +116,7 @@ class PropertiesProvider:
         return add_readme_callback
 
 
-def _get_paths(source_dir: Path, ignore: List[str], glob="*") -> Set[
-    Path]:
+def _get_paths(source_dir: Path, ignore: List[str], glob="*") -> Set[Path]:
     paths = set(source_dir.rglob(glob))
     for pattern in ignore:
         paths -= set(source_dir.rglob(pattern))
@@ -144,6 +143,7 @@ class PropertiesProviderFactory:
             Path(src["lib_dir"]),
             Path(src["src_dir"]),
             src["src_ignore"],
+            Path(src["opt_dir"]),
             Path(src["assets_dir"]),
             src["assets_ignore"],
             Path(src["test_dir"]))
@@ -173,6 +173,7 @@ class PropertiesProviderFactory:
         return dest_ods_file
 
     def get_logger(self) -> logging.Logger:
+        logging.basicConfig(level=logging.DEBUG)
         logger = logging.getLogger("py4lo")
         logger.setLevel(self._tdata["log_level"])
         return logger

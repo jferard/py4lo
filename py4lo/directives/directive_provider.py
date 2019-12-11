@@ -64,8 +64,11 @@ class DirectiveProvider:
     @staticmethod
     def create(logger: Logger, sources: Sources):
         return _DirectiveProviderFactory(logger,
-            Entry(), Include(sources.inc_dir), EmbedLib(sources.lib_dir),
-            EmbedScript()).create_provider()
+                                         Entry(sources.inc_dir),
+                                         Include(sources.inc_dir),
+                                         EmbedLib(sources.lib_dir),
+                                         EmbedScript(
+                                             sources.opt_dir)).create_provider()
 
     def __init__(self, logger: Logger, directives_tree: T):
         self._logger = logger
