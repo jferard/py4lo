@@ -15,24 +15,23 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+import io
 import unittest
-from pathlib import Path
 from unittest.mock import Mock, call, MagicMock
 
 from directives import Include
+
+from env import file_path_mock, verify_open_path
 
 
 class TestInclude(unittest.TestCase):
     def test_without_strip(self):
         proc = Mock()
         path = Mock()
-        inc_path = MagicMock()
-        bound = MagicMock()
-        inc_path.__str__.return_value = "[to inc]"
+        inc_path = file_path_mock(io.StringIO("some line"))
+
         path.joinpath.return_value = inc_path
-        inc_path.open.return_value = bound
-        bound.__enter__.return_value = ["some line"]
+        inc_path.__str__.return_value = "[to inc]"
 
         d = Include(path)
         self.assertEqual(["include"], d.sig_elements())
@@ -41,24 +40,15 @@ class TestInclude(unittest.TestCase):
             '# begin py4lo include: [to inc]\nsome line\n# end py4lo include\n')],
             proc.mock_calls)
 
-        self.assertEqual(
-            [call.__getattr__("__str__"), call.open('r', encoding="utf-8"),
-             call.open().__enter__(),
-             call.open().__exit__(None, None, None)], inc_path.mock_calls)
-        self.assertEqual([call.__enter__(), call.__exit__(None, None, None)],
-                         bound.mock_calls)
+        verify_open_path(self, inc_path, 'r', encoding="utf-8")
 
     def test_with_strip(self):
         proc = Mock()
         path = Mock()
-        inc_path = MagicMock()
-        bound = MagicMock()
-        inc_path.__str__.return_value = "[to inc]"
+        inc_path = file_path_mock(io.StringIO('"""docstring"""\n\'\'\'\nother docstring\'\'\'\n  #comment\nsome line'))
+
         path.joinpath.return_value = inc_path
-        inc_path.open.return_value = bound
-        bound.__enter__.return_value = ['"""docstring"""', "'''",
-                                        "other docstring", "'''", "  #comment",
-                                        "some line"]
+        inc_path.__str__.return_value = "[to inc]"
 
         d = Include(path)
         self.assertEqual(["include"], d.sig_elements())
@@ -67,12 +57,7 @@ class TestInclude(unittest.TestCase):
             '# begin py4lo include: [to inc]\nsome line\n# end py4lo include\n')],
             proc.mock_calls)
 
-        self.assertEqual(
-            [call.__getattr__("__str__"), call.open('r', encoding="utf-8"),
-             call.open().__enter__(),
-             call.open().__exit__(None, None, None)], inc_path.mock_calls)
-        self.assertEqual([call.__enter__(), call.__exit__(None, None, None)],
-                         bound.mock_calls)
+        verify_open_path(self, inc_path, 'r', encoding="utf-8")
 
 
 if __name__ == '__main__':

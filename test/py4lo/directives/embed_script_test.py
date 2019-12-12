@@ -15,13 +15,15 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+import io
 import unittest
 from pathlib import Path
 from unittest.mock import Mock, call, MagicMock
 
-from core.script import SourceScript, TempScript
+from core.script import TempScript
 from directives import EmbedScript
+
+from env import file_path_mock, verify_open_path
 
 
 class TestEmbed(unittest.TestCase):
@@ -34,21 +36,17 @@ class TestEmbed(unittest.TestCase):
 
     def test_execute(self):
         proc = Mock()
-        fpath: Path = Mock()
-        bound = MagicMock()
-        f = Mock()
+        fpath = file_path_mock(io.BytesIO(b"content"))
 
         self._opt.joinpath.return_value = fpath
         fpath.is_dir.return_value = False
-        fpath.open.return_value = bound
-        bound.__enter__.return_value = f
-        bound.__exit__.return_value = False
-        f.read.return_value = b"content"
+
         self.assertEqual(True,
                          self._directive.execute(proc, None, ["a/b.py"]))
         self.assertEqual([call.add_script(
             TempScript(fpath, b"content", self._opt, [], None))],
             proc.mock_calls)
+        verify_open_path(self, fpath, 'rb')
 
-        if __name__ == '__main__':
-            unittest.main()
+if __name__ == '__main__':
+    unittest.main()

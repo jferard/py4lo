@@ -16,30 +16,33 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
+import io
 import unittest
 from logging import Logger
-from unittest.mock import Mock, patch, call, MagicMock
+from unittest.mock import Mock, call, MagicMock
 
 from script_set_processor import *
+
+from env import file_path_mock, verify_open_path
 
 
 class TestScriptsProcessor(unittest.TestCase):
     def test(self):
         logger: Logger = Mock()
         dp: DirectiveProcessor = Mock()
-        source_script: SourceScript = Mock(relative_path="fname")
+        source_script: SourceScript = Mock(relative_path="fname",
+                                           script_path=file_path_mock(
+                                               io.StringIO("some line")))
         target_dir: Path = Mock()
         target_dir.joinpath.side_effect = [Path('t')]
-        bound = MagicMock()
-        source_script.script_path.open.return_value = bound
-        bound.__enter__.return_value = ["some line"]
 
         sp = ScriptProcessor(logger, dp, source_script, target_dir)
         sp.parse_script()
 
         self.assertEqual(
             [call.debug('Parsing script: %s (%s)', 'fname',
-                      source_script.script_path),
+                        source_script.script_path),
              call.debug('Temp output script is: %s (%s)', Path('t'), [])],
             logger.mock_calls)
         self.assertEqual([call.ignore_lines(), call.end()], dp.mock_calls)
+        verify_open_path(self, source_script.script_path, 'r', encoding='utf-8')

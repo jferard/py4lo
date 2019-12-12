@@ -20,6 +20,7 @@ import unittest
 from unittest.mock import *
 import env
 from zip_updater import *
+from env import file_path_mock, verify_open_path
 
 class TestZipUpdater(unittest.TestCase):
     @patch('zip_updater.ZipFile', autospec=True)

@@ -16,12 +16,15 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
+import io
 import unittest
 from logging import Logger
 from unittest.mock import *
 import env
 from script_set_processor import *
 import script_set_processor
+
+from env import file_path_mock, verify_open_path
 
 
 class TestScriptSetProcessor(unittest.TestCase):
@@ -31,20 +34,15 @@ class TestScriptSetProcessor(unittest.TestCase):
     @patch("py_compile.compile")
     def test_scripts_processor(self, mock_compile):
         logger: Logger = Mock()
-        source_path: Path = Mock(stem='script_fname')
-        src = MagicMock()
-        target = MagicMock()
-        source_path.open.return_value = src
+        source_path = file_path_mock(io.StringIO("some line"),
+                                     stem='script_fname')
 
-        target_path: Path = Mock()
+        dest = io.BytesIO()
+        target_path = file_path_mock(dest)
         target_dir: Path = Mock()
         target_dir.joinpath.return_value = target_path
-        target_path.open.return_value = target
-        dest = MagicMock()
-
-        src.__enter__.return_value = ["some line"]
-        target.__enter__.return_value = dest
-        script: SourceScript = MagicMock(relative_path=Path("rel source"), script_path=source_path)
+        script: SourceScript = MagicMock(relative_path=Path("rel source"),
+                                         script_path=source_path)
         dp: DirectiveProvider = Mock()
         target_path.relative_to.side_effect = [Path("rel target")]
 
@@ -57,19 +55,15 @@ class TestScriptSetProcessor(unittest.TestCase):
 
         self.assertEqual([
             call.debug('Scripts to process: %s', [script]),
-            call.debug('Parsing script: %s (%s)', Path("rel source"), source_path),
+            call.debug('Parsing script: %s (%s)', Path("rel source"),
+                       source_path),
             call.debug('Temp output script is: %s (%s)', target_path, []),
             call.debug('Writing temp script: %s (%s)', Path('rel target'),
-                     target_path),
+                       target_path),
         ], logger.mock_calls)
-        self.assertEqual([
-            call.open('r', encoding='utf-8'),
-            call.open().__enter__(),
-            call.open().__exit__(None, None, None),
-        ], source_path.mock_calls)
         self.assertEqual([call(source_path, doraise=True)],
                          mock_compile.mock_calls)
         self.assertEqual(
-            [call.write(
-                b'# parsed by py4lo (https://github.com/jferard/py4lo)\nsome line')],
-            dest.mock_calls)
+            b'# parsed by py4lo (https://github.com/jferard/py4lo)\nsome line',
+            dest.getbuffer())
+        verify_open_path(self, source_path, 'r', encoding='utf-8')

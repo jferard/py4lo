@@ -19,14 +19,17 @@
 
 # see http://stackoverflow.com/questions/61151/where-do-the-python-unit-tests-go
 import sys
+import unittest
 from pathlib import Path
-from unittest.mock import Mock, MagicMock
+from typing import IO
+from unittest.mock import Mock, MagicMock, call
 
 
 def any_object():
     class AnyObject:
         def __eq__(self, other):
             return True
+
     return AnyObject()
 
 
@@ -42,9 +45,15 @@ for p in map(str, [py4lo_dir, lib_dir, inc_dir]):
         sys.path.insert(0, p)
 
 
-def file_path_mock(content):
-    s = Mock()
+def file_path_mock(content: IO, **kwargs) -> Path:
+    s = MagicMock(**kwargs)
     manager = MagicMock()
     s.open.return_value = manager
     manager.__enter__.return_value = content
     return s
+
+
+def verify_open_path(tc: unittest.TestCase, s: Path, *args, **kwargs):
+    tc.assertTrue(
+        all(x in s.mock_calls for x in [call.open(*args, **kwargs), call.open().__enter__(),
+         call.open().__exit__(None, None, None)]))

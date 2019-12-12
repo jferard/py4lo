@@ -23,25 +23,13 @@ from pathlib import Path
 from unittest.mock import *
 
 from toml_helper import load_toml, TomlLoader
+from env import file_path_mock, verify_open_path
 
 
 class TestTomlHelper(unittest.TestCase):
-    @patch('builtins.open', spec=open)
-    def test(self, open_mock):
-        default_toml: Path = Mock()
-        def_toml: Path = Mock()
-        local_toml: Path = Mock()
-        loc_toml: Path = Mock()
-
-        handle1 = MagicMock()
-        handle1.__enter__.return_value = io.StringIO("a=1")
-        handle1.__exit__.return_value = False
-        default_toml.open.return_value = handle1
-
-        handle2 = MagicMock()
-        handle2.__enter__.return_value = io.StringIO("b=2")
-        handle2.__exit__.return_value = False
-        local_toml.open.return_value = handle2
+    def test(self):
+        default_toml = file_path_mock(io.StringIO("a=1"))
+        local_toml = file_path_mock(io.StringIO("b=2"))
 
         tdata = TomlLoader(default_toml, local_toml, {}).load()
         self.assertTrue({
@@ -51,6 +39,8 @@ class TestTomlHelper(unittest.TestCase):
         self.assertEqual(
             {'a', 'b', 'log_level', 'python_exe', 'python_version'},
             set(tdata.keys()))
+        verify_open_path(self, default_toml, 'r', encoding="utf-8")
+        verify_open_path(self, local_toml, 'r', encoding="utf-8")
 
 
 if __name__ == '__main__':
