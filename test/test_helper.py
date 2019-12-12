@@ -20,6 +20,8 @@
 # see http://stackoverflow.com/questions/61151/where-do-the-python-unit-tests-go
 import sys
 from pathlib import Path
+from unittest.mock import Mock, MagicMock
+
 
 def any_object():
     class AnyObject:
@@ -38,3 +40,11 @@ inc_dir = root_dir.joinpath("inc")
 for p in map(str, [py4lo_dir, lib_dir, inc_dir]):
     if p not in sys.path:
         sys.path.insert(0, p)
+
+
+def file_path_mock(content):
+    s = Mock()
+    manager = MagicMock()
+    s.open.return_value = manager
+    manager.__enter__.return_value = content
+    return s

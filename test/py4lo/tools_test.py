@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import unittest
-from unittest.mock import patch, call
+from unittest.mock import patch, call, Mock
 
 from tools import *
 
@@ -28,10 +28,3 @@ class TestTools(unittest.TestCase):
         open_with_calc(Path("myfile.ods"), "mycalc.exe")
         self.assertEqual([call(['mycalc.exe', 'myfile.ods'])],
                          subprocess_call_mock.mock_calls)
-
-    # def test_get_path(self):
-    #     self.assertEqual(Path("dest.ods"), _get_dest({"dest_name": "dest.ods"}))
-    #     self.assertEqual(Path("dest.ods"), _get_dest(
-    #         {"dest_name": "dest.ods", "suffix": "up", "log_level": 0}))
-    #     self.assertEqual(Path("source-up.ods"), _get_dest(
-    #         {"source_file": "source.ods", "suffix": "up"}))

@@ -20,14 +20,6 @@ import subprocess
 from pathlib import Path
 from typing import List, Dict, Any, Set, Callable
 
-def get_paths(source_dir: Path, ignore: List[str], glob="*") -> Set[Path]:
-    paths: Set[Path] = set(source_dir.rglob(glob))
-    for pattern in ignore:
-        exclude: Set[Path] = set(source_dir.rglob(pattern))
-        paths -= exclude
-    return set(p for p in paths if p.is_file())
-
-
 def open_with_calc(ods_path: Path, calc_exe: str):
     """Open a file with calc"""
     _r = subprocess.call([calc_exe, str(ods_path)])

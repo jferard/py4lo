@@ -47,6 +47,7 @@ class TestBus(unittest.TestCase):
     def _handle_y(self, data):
         self.v = "ok" + data
 
+
 class TestCommons(unittest.TestCase):
     def setUp(self):
         self.c = Commons("file:///temp/")
@@ -68,6 +69,10 @@ class TestCommons(unittest.TestCase):
         res = subprocess.getoutput("cat {}".format(t.name))
         self.assertEqual("DEBUG - é", res)
         os.unlink(t.name)
+
+
+class TestOther(unittest.TestCase):
+    pass
 
 if __name__ == '__main__':
     unittest.main()

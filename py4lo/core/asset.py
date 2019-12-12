@@ -19,10 +19,12 @@
 from dataclasses import dataclass
 from pathlib import Path
 
+
 @dataclass
 class DestinationAsset:
     path: Path
     content: bytes
+
 
 @dataclass
 class SourceAsset:
@@ -30,8 +32,7 @@ class SourceAsset:
     assets_dir: Path
 
     def to_dest(self, assets_dest_dir) -> DestinationAsset:
-        dest_path = assets_dest_dir.joinpath(self.path.relative_to(self.assets_dir))
+        dest_path = assets_dest_dir.joinpath(
+            self.path.relative_to(self.assets_dir))
         with self.path.open('rb') as source:
             return DestinationAsset(dest_path, source.read())
-
-
