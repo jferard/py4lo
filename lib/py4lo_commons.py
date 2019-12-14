@@ -28,10 +28,11 @@ try:
 except ImportError:
     import unotools.unohelper
 
-import uno
-import os
-import logging
 import datetime
+import logging
+import os
+
+import uno
 
 ORIGIN = datetime.datetime(1899, 12, 30)
 
@@ -122,22 +123,25 @@ class Commons(unohelper.Base):
                             filename)
 
     def read_internal_config(self, filenames, args={},
-                             apply=lambda config: None, encoding='utf-8',
-                             assets_dir="Assets"):
+                             apply=lambda config: None, encoding='utf-8'):
         """Read an internal config, in the assets directory of the document.
         See https://docs.python.org/3.7/library/configparser.html
 
-        :param filenames: one filename or a list of filenames
+        :param filenames: one filename or a list of filenames. Full path
+                          *inside* the archive
         :param args: arguments to be passed to the ConfigParser
         :param apply: function to modify the config
         :param encoding: the encoding of the file
         :param assets_dir: dir of the assets in the zip file
 
         Example: `config = commons.read_config("pcrp.ini")`"""
+        import configparser
+        import zipfile
+        import codecs
+
         if isinstance(filenames, (str, bytes)):
             filenames = [filenames]
 
-        import configparser, zipfile, codecs
         config = configparser.ConfigParser(**args)
         apply(config)
         reader = codecs.getreader(encoding)
@@ -145,8 +149,12 @@ class Commons(unohelper.Base):
         with zipfile.ZipFile(unohelper.fileUrlToSystemPath(self._url),
                              'r') as z:
             for filename in filenames:
-                file = z.open(assets_dir + "/" + filename)
-                config.read_file(reader(file))
+                try:
+                    file = z.open(filename)
+                    config.read_file(reader(file))
+                except KeyError:  # ignore non existing files
+                    pass
+
         return config
 
 
