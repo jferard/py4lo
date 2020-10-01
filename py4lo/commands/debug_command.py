@@ -22,8 +22,8 @@ from pathlib import Path
 from typing import List, Tuple, Dict
 
 import zip_updater
-from callbacks import IgnoreItem, RewriteManifest, AddScripts, AddAssets, \
-    AddDebugContent
+from callbacks import (IgnoreItem, RewriteManifest, AddScripts, AddAssets,
+                       AddDebugContent)
 from commands.command import Command
 from commands.command_executor import CommandExecutor
 from commands.ods_updater import OdsUpdaterHelper

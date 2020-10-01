@@ -22,7 +22,7 @@ from typing import List
 from zipfile import ZipFile
 
 from callbacks.callback import AfterCallback
-from core.script import TempScript, DestinationScript
+from core.script import DestinationScript
 
 # TODO: here
 ARC_SCRIPTS_PATH = Path("Scripts/python")
