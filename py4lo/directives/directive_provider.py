@@ -64,7 +64,7 @@ class DirectiveProvider:
     @staticmethod
     def create(logger: Logger, sources: Sources):
         return _DirectiveProviderFactory(logger,
-                                         Entry(sources.inc_dir),
+                                         Entry(sources.inc_dir, sources.get_module_names()),
                                          Include(sources.inc_dir),
                                          EmbedLib(sources.lib_dir),
                                          EmbedScript(

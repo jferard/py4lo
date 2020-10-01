@@ -59,6 +59,7 @@ class ItemCallback(ABC):
         :param zin: read from this file
         :param zout: write to this file
         :param item: the item to process
-        :return: True if the item was processed and copied
+        :return: True if the item was processed and copied. Else, return false.
+        It's the responsibility of the updater to copy the file.
         """
         pass

@@ -15,7 +15,7 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Set
@@ -38,6 +38,14 @@ class Sources:
 
     def get_src_paths(self) -> Set[Path]:
         return _get_paths(self.src_dir, self.src_ignore, "*.py")
+
+    def get_module_names(self) -> Set[str]:
+        return _get_module_names(self.src_dir, self.src_ignore, "*.py")
+
+    def get_all_module_names(self) -> Set[str]:
+        return {*_get_module_names(self.src_dir, self.src_ignore, "*.py"),
+                *_get_module_names(self.lib_dir, self.src_ignore),
+                *_get_module_names(self.opt_dir, self.src_ignore)}
 
     def get_assets(self) -> List[SourceAsset]:
         return [SourceAsset(p, self.assets_dir) for p in
@@ -69,3 +77,19 @@ def _get_paths(source_dir: Path, ignore: List[str], glob="*") -> Set[Path]:
     for pattern in ignore:
         paths -= set(source_dir.rglob(pattern))
     return set(p for p in paths if p.is_file())
+
+
+def _get_module_names(source_dir: Path, ignore: List[str], glob="*"
+                      ) -> Set[str]:
+    paths = _get_paths(source_dir, ignore, glob)
+    module_names = set()
+    for p in paths:
+        p = p.relative_to(source_dir).with_suffix("")
+        if p.parts[0] == "__pycache__":
+            continue
+
+        if p.name in ("__main__", "__init__"):
+            p = p.parent
+
+        module_names.add(str(p).replace(os.path.sep, "."))
+    return module_names

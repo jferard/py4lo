@@ -19,7 +19,7 @@
 from logging import Logger
 from pathlib import Path
 from typing import List
-from zipfile import ZipFile
+from zipfile import ZipFile, ZipInfo
 
 from callbacks.callback import AfterCallback, BeforeCallback, ItemCallback
 
@@ -88,12 +88,19 @@ class ZipUpdater:
 
     def _do_items(self, zin: ZipFile, zout: ZipFile):
         for item in zin.infolist():
-            self._do_item(zin, zout, item)
+            if not self._do_item(zin, zout, item):
+                self._logger.debug("Copy %s to archive", item.filename)
+                bs = zin.read(item.filename)
+                zout.writestr(item.filename, bs)  # copy
 
-    def _do_item(self, zin: ZipFile, zout: ZipFile, item):
+    def _do_item(self, zin: ZipFile, zout: ZipFile, item: ZipInfo) -> bool:
+        touched = False
+        # don't use `any` because... don't use à LC
         for item_callback in self._item_callbacks:
-            if not item_callback.call(zin, zout, item):
-                break
+            if item_callback.call(zin, zout, item):
+                touched = True
+
+        return touched
 
     def _do_after(self, zout):
         for after_callback in self._after_callbacks:

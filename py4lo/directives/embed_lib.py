@@ -37,6 +37,7 @@ class EmbedLib(Directive):
     def execute(self, processor: "DirectiveProcessor",
                 _line_processor: "DirectiveLineProcessor", args):
         script_ref = args[0]
+        # TODO : sript_ref might be a dir (script_ref/__init__.py)
         script_path = self._lib_dir.joinpath(script_ref + ".py")
         processor.append_script(SourceScript(script_path, self._lib_dir))
         return True
