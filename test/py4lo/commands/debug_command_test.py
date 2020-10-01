@@ -22,7 +22,7 @@ from unittest.mock import Mock, patch, call
 
 from commands.debug_command import *
 from commands.debug_command import DebugCommand
-from core.properties import Sources
+from core.source_dest import Sources, Destinations
 from core.script import TempScript
 
 

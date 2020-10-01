@@ -18,7 +18,7 @@
 from logging import Logger
 from typing import List, Dict, Union, TypeVar
 
-from core.properties import Sources
+from core.source_dest import Sources
 from directives.directive import Directive
 from directives.embed_script import EmbedScript
 from directives.embed_lib import EmbedLib

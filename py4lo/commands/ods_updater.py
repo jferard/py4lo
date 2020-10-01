@@ -2,7 +2,7 @@ import logging
 from typing import List
 
 from core.asset import DestinationAsset
-from core.properties import Destinations, Sources
+from core.source_dest import Sources, Destinations
 from core.script import TempScript, SourceScript, DestinationScript
 from directives import DirectiveProvider
 from script_set_processor import ScriptSetProcessor

@@ -19,9 +19,8 @@ import io
 import unittest
 from unittest.mock import patch, call, Mock
 
-import env
 from core.properties import *
-from core.properties import _get_paths
+from core.source_dest import Sources, Destinations, _get_paths
 from env import file_path_mock
 
 

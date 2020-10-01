@@ -29,7 +29,8 @@ from commands.command_executor import CommandExecutor
 from commands.ods_updater import OdsUpdaterHelper
 from commands.test_command import TestCommand
 from core.asset import DestinationAsset
-from core.properties import PropertiesProvider, Destinations, Sources
+from core.properties import PropertiesProvider
+from core.source_dest import Sources, Destinations
 from core.script import DestinationScript
 
 

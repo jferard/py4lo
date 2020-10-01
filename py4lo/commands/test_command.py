@@ -25,7 +25,8 @@ from typing import Dict, Callable, Iterator
 
 from commands.command import Command
 from commands.command_executor import CommandExecutor
-from core.properties import PropertiesProvider, Sources
+from core.properties import PropertiesProvider
+from core.source_dest import Sources
 
 
 class TestCommand(Command):

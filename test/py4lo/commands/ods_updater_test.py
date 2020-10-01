@@ -24,7 +24,7 @@ from unittest.mock import Mock, MagicMock, patch, call
 
 from commands.ods_updater import OdsUpdaterHelper
 from core.asset import SourceAsset, DestinationAsset
-from core.properties import Sources, Destinations
+from core.source_dest import Sources, Destinations
 from core.script import TempScript, SourceScript, DestinationScript
 
 
