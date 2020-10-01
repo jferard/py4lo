@@ -48,11 +48,10 @@ class RewriteManifest(ItemCallback):
     def call(self, zin: ZipFile, zout: ZipFile, item: ZipInfo) -> bool:
         if item.filename == "META-INF/manifest.xml":
             data = self._rewrite_manifest(zin, item)
+            zout.writestr(item.filename, data)
+            return True
         else:
-            data = zin.read(item.filename)  # copy
-
-        zout.writestr(item.filename, data)
-        return True
+            return False
 
     def _rewrite_manifest(self, zin: ZipFile, manifest_item: ZipInfo):
         pretty_manifest = RewriteManifest._prettyfy_xml(zin,
