@@ -25,8 +25,10 @@ py4lo_commons deals with ordinary Python objects (POPOs ?).
 """
 try:
     import unohelper
-except ImportError:
-    import unotools.unohelper
+    import uno
+except ModuleNotFoundError:
+    class unohelper:
+        Base = object
 
 import datetime
 import logging
