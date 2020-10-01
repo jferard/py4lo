@@ -51,7 +51,7 @@ class AfterCallback(ABC):
 
 class ItemCallback(ABC):
     """
-    Cald on each item of the source. Use a ItemCallback to ignore a script.
+    Called on each item of the source. Use a ItemCallback to ignore a script.
     """
     @abstractmethod
     def call(self, zin: ZipFile, zout: ZipFile, item: ZipInfo) -> bool:
@@ -59,6 +59,6 @@ class ItemCallback(ABC):
         :param zin: read from this file
         :param zout: write to this file
         :param item: the item to process
-        :return: False to prevent the execution of nextcallbacks
+        :return: True if the item was processed and copied
         """
         pass
