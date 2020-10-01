@@ -126,7 +126,8 @@ class Commons(unohelper.Base):
 
     def read_internal_config(self, filenames, args={},
                              apply=lambda config: None, encoding='utf-8'):
-        """Read an internal config, in the assets directory of the document.
+        """
+        Read an internal config, in the assets directory of the document.
         See https://docs.python.org/3.7/library/configparser.html
 
         :param filenames: one filename or a list of filenames. Full path
@@ -158,6 +159,17 @@ class Commons(unohelper.Base):
                     pass
 
         return config
+
+    def get_asset(self, filename):
+        """
+        Read the content of an asset.
+        @param filename: name of the asset
+        @return: file content as bytes
+        """
+        import zipfile
+        with zipfile.ZipFile(unohelper.fileUrlToSystemPath(self._url),
+                             'r') as z:
+            return z.open(filename).read()
 
 
 def create_bus():
