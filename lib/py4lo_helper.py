@@ -402,3 +402,16 @@ def copy_row_at_index(oSheet, row, r):
             oSheet.getCellByPosition(c, r).String = value
         else:
             oSheet.getCellByPosition(c, r).Value = float(value)
+
+
+def get_range_size(oRange):
+    """
+    Useful for `oRange.getRangeCellByPosition(...)`.
+
+    :param oRange: a SheetCellRange object
+    :return: width and height of the range.
+    """
+    oAddress = oRange.RangeAddress
+    width = oAddress.EndColumn - oAddress.StartColumn + 1
+    height = oAddress.EndRow - oAddress.StartRow + 1
+    return width, height
