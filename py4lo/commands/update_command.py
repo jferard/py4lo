@@ -20,8 +20,8 @@ from logging import Logger
 from pathlib import Path
 from typing import Optional, List
 
-from callbacks import AddReadmeWith, IgnoreItem, ARC_SCRIPTS_PATH, \
-    RewriteManifest, AddScripts, AddAssets
+from callbacks import (AddReadmeWith, IgnoreItem, ARC_SCRIPTS_PATH,
+                       RewriteManifest, AddScripts, AddAssets)
 from commands.command import Command
 from commands.command_executor import CommandExecutor
 from commands.ods_updater import OdsUpdaterHelper
