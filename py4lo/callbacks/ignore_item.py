@@ -24,11 +24,17 @@ from callbacks import ItemCallback
 
 class IgnoreItem(ItemCallback):
     """
-    Item callback. Ignore all existing scripts in source file
+    Item callback. Ignore all existing scripts in source file.
     """
 
     def __init__(self, arc_scripts_path: Path):
         self._arc_scripts_path = arc_scripts_path
 
     def call(self, _zin: ZipFile, _zout: ZipFile, item: ZipInfo) -> bool:
-        return self._arc_scripts_path not in Path(item.filename).parents
+        """
+        @param _zin:
+        @param _zout:
+        @param item: the item to process
+        @return: True if the item is in "Scripts/python"
+        """
+        return self._arc_scripts_path in Path(item.filename).parents
