@@ -18,7 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import unittest
 from unittest.mock import *
-import env
+import tst_env
 import sys, os
 
 print("commons", sys.path)

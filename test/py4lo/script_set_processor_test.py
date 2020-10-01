@@ -20,11 +20,11 @@ import io
 import unittest
 from logging import Logger
 from unittest.mock import *
-import env
+import tst_env
 from script_set_processor import *
 import script_set_processor
 
-from env import file_path_mock, verify_open_path
+from tst_env import file_path_mock, verify_open_path
 
 
 class TestScriptSetProcessor(unittest.TestCase):

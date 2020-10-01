@@ -22,7 +22,7 @@ from unittest.mock import *
 
 import script_set_processor
 from core.script import ParsedScriptContent
-from env import file_path_mock, verify_open_path
+from tst_env import file_path_mock, verify_open_path
 
 
 class TestScriptParser(unittest.TestCase):

@@ -33,7 +33,7 @@ class TestIgnoreScripts(unittest.TestCase):
         item.filename = "Scripts/a"
         path = Path("Scripts")
         a = IgnoreItem(path)
-        self.assertFalse(a.call(self.zin, self.zout, item))
+        self.assertTrue(a.call(self.zin, self.zout, item))
         self.assertEqual([],
                          self.zin.mock_calls + self.zout.mock_calls + item.mock_calls)
 
@@ -42,7 +42,7 @@ class TestIgnoreScripts(unittest.TestCase):
         item.filename = "manifest"
         path = Path("Scripts")
         a = IgnoreItem(path)
-        self.assertTrue(a.call(self.zin, self.zout, item))
+        self.assertFalse(a.call(self.zin, self.zout, item))
         self.assertEqual([],
                          self.zin.mock_calls + self.zout.mock_calls + item.mock_calls)
 

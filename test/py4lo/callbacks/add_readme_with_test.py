@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import unittest
-import env
+import tst_env
 from callbacks import *
 import io
 import zipfile
@@ -29,8 +29,8 @@ class TestAddReadmeWith(unittest.TestCase):
     def test_add_readme_with(self):
         out = io.BytesIO()
         zout = zipfile.ZipFile(out, 'w')
-        print(env.inc_dir, type(env.inc_dir))
-        AddReadmeWith(env.inc_dir, "contact").call(zout)
+        print(tst_env.inc_dir, type(tst_env.inc_dir))
+        AddReadmeWith(tst_env.inc_dir, "contact").call(zout)
         self.assertEqual("""<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE library:libraries PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "libraries.dtd">
 <library:libraries xmlns:library="http://openoffice.org/2000/library" xmlns:xlink="http://www.w3.org/1999/xlink">

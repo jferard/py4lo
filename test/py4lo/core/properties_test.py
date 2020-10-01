@@ -15,23 +15,14 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import io
 import unittest
 from unittest.mock import patch, call, Mock
 
 from core.properties import *
-from core.source_dest import Sources, Destinations, _get_paths
-from env import file_path_mock
+from core.source_dest import _get_paths
 
 
 class TestProperties(unittest.TestCase):
-    def setUp(self):
-        self._sources = Sources(Path("ods_file"), Path("inc"), Path("lib"),
-                                Path("src"), [], Path("opt"), Path("asset"), [],
-                                Path("test"))
-        self._destinations = Destinations(Path("ods_file"), Path("temp"),
-                                          Path("dest"), Mock())
-
     @patch("core.properties.load_toml", autospec=True)
     def test_provider(self, toml_mock):
         toml_mock.return_value = {"a": 1, "log_level": -1,
@@ -64,49 +55,6 @@ class TestProperties(unittest.TestCase):
                          _get_paths(source_dir, ["c"], "*"))
         self.assertEqual([call.rglob('*'), call.rglob('c')],
                          source_dir.mock_calls)
-
-    @patch("core.properties._get_paths", autospec=True)
-    def test_sources_src(self, gp_mock):
-        gp_mock.return_value = [Path("a")]
-
-        self.assertEqual([Path("a")], self._sources.get_src_paths())
-        self.assertEqual([call(Path('src'), [], '*.py')], gp_mock.mock_calls)
-
-    @patch("core.properties._get_paths", autospec=True)
-    def test_sources_assets(self, gp_mock):
-        gp_mock.return_value = [Path("b")]
-
-        self.assertEqual(
-            [SourceAsset(path=Path('b'), assets_dir=Path('asset'))],
-            self._sources.get_assets())
-        self.assertEqual([call(Path('asset'), [])], gp_mock.mock_calls)
-
-    @patch("core.properties._get_paths", autospec=True)
-    def test_sources_scripts(self, gp_mock):
-        gp_mock.return_value = [Path("c")]
-
-        self.assertEqual(
-            [SourceScript(script_path=Path('c'), source_dir=Path('src'))],
-            self._sources.get_src_scripts())
-        self.assertEqual([call(Path('src'), [], '*.py')], gp_mock.mock_calls)
-
-    def test_destinations_scripts(self):
-        dscript = DestinationScript(Path('dest/scr'), b'abc', Path('dest'),
-                                    [], None)
-        self.assertEqual([dscript],
-                         self._destinations.to_destination_scripts(
-                             [TempScript(Path('temp/scr'), b'abc', Path('temp'),
-                                         [], None)]))
-
-    def test_destinations_assets(self):
-        path = file_path_mock(io.BytesIO(b'asset content'))
-        assets_dir: Path = Mock()
-
-        self._destinations.assets_dest_dir.joinpath.return_value = Path("dest_s")
-
-        self.assertEqual([DestinationAsset(path=Path('dest_s'), content=b'asset content')],
-                         self._destinations.to_destination_assets(
-                             [SourceAsset(path, assets_dir)]))
 
 
 if __name__ == '__main__':

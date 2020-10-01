@@ -72,6 +72,7 @@ class TestOdsUpdaterHelper(unittest.TestCase):
         self.assertEqual([call.debug('Directives tree: %s', mock.ANY)],
                          logger.mock_calls)
         self.assertEqual([destination_script], scripts)
-        self.assertEqual([call.get_src_scripts], sources.mock_calls)
+        self.assertEqual([call.get_src_scripts(), call.get_module_names()],
+                         sources.mock_calls)
         self.assertEqual([call.to_destination_scripts([temp_script])],
                          destinations.mock_calls)

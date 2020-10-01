@@ -39,11 +39,14 @@ class TestRewriteManifest(unittest.TestCase):
 
     def test_rewrite_manifest_empty(self):
         zin = zipfile.ZipFile(self._temp, 'r')
+        self.assertEqual(['x', 'META-INF/manifest.xml'], zin.namelist())
         out = io.BytesIO()
         zout = zipfile.ZipFile(out, 'w')
 
         RewriteManifest([], []).call(zin, zout, zin.getinfo("x"))
-        self.assertEqual(b"y", zout.read("x"))
+        with self.assertRaises(KeyError):
+            zout.read("x")
+
         RewriteManifest([], []).call(zin, zout,
                                      zin.getinfo("META-INF/manifest.xml"))
         self.assertEqual("""<?xml version="1.0" ?><manifest:manifest manifest:version="1.2" xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0">

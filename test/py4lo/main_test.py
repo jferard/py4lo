@@ -19,7 +19,7 @@
 import unittest
 from unittest.mock import MagicMock
 
-import env
+import tst_env
 import main
 
 

@@ -23,7 +23,7 @@ from pathlib import Path
 from unittest.mock import *
 
 from toml_helper import load_toml, TomlLoader
-from env import file_path_mock, verify_open_path
+from tst_env import file_path_mock, verify_open_path
 
 
 class TestTomlHelper(unittest.TestCase):

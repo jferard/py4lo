@@ -21,7 +21,7 @@ from pathlib import Path
 from unittest import mock
 from unittest.mock import *
 
-import env
+import tst_env
 from directive_processor import *
 from script_set_processor import ScriptProcessor
 

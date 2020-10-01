@@ -21,7 +21,7 @@ from unittest.mock import Mock, call, MagicMock
 
 from directives import Include
 
-from env import file_path_mock, verify_open_path
+from tst_env import file_path_mock, verify_open_path
 
 
 class TestInclude(unittest.TestCase):

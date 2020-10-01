@@ -19,7 +19,7 @@
 import unittest
 from unittest.mock import Mock
 
-import env
+import tst_env
 from commands.init_command import *
 
 class TestInitCommand(unittest.TestCase):

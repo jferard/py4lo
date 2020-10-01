@@ -23,7 +23,7 @@ from unittest.mock import Mock, call, MagicMock
 
 from script_set_processor import *
 
-from env import file_path_mock, verify_open_path
+from tst_env import file_path_mock, verify_open_path
 
 
 class TestScriptsProcessor(unittest.TestCase):

@@ -18,9 +18,9 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import unittest
 from unittest.mock import *
-import env
+import tst_env
 from zip_updater import *
-from env import file_path_mock, verify_open_path
+from tst_env import file_path_mock, verify_open_path
 
 class TestZipUpdater(unittest.TestCase):
     @patch('zip_updater.ZipFile', autospec=True)

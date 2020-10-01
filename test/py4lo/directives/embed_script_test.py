@@ -23,7 +23,7 @@ from unittest.mock import Mock, call, MagicMock
 from core.script import TempScript
 from directives import EmbedScript
 
-from env import file_path_mock, verify_open_path
+from tst_env import file_path_mock, verify_open_path
 
 
 class TestEmbed(unittest.TestCase):
