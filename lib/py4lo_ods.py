@@ -40,7 +40,8 @@ class NameSpace:
     def attrib(self, attr):
         try:
             i = attr.index(":")
-            attr = "{{{}}}{}".format(self._ns_dict.get(attr[:i], attr[:i]), attr[i + 1:])
+            attr = "{{{}}}{}".format(self._ns_dict.get(attr[:i], attr[:i]),
+                                     attr[i + 1:])
         except ValueError:
             pass
 
@@ -63,7 +64,8 @@ class OdsTables:
         self._ns = ns
 
     def __iter__(self):
-        tables = self._ns.findall(self._root, "./office:body/office:spreadsheet/table:table")
+        tables = self._ns.findall(self._root,
+                                  "./office:body/office:spreadsheet/table:table")
         tables = self._sort_func(tables)
         for table in tables:
             yield table
@@ -149,8 +151,13 @@ class OdsRows:
                 continue
 
             count = int(row.get(self._ns.attrib("table:number-rows-repeated"),
-                                row.get(self._ns.attrib("table:number-rows-spanned"), "1")))
-            cell_elements = self._ns.findall(row, "./table:table-cell")
+                                row.get(self._ns.attrib(
+                                    "table:number-rows-spanned"), "1")))
+            cell_tags = (
+                self._ns.attrib("table:table-cell"),
+                self._ns.attrib("table:covered-table-cell")
+            )
+            cell_elements = [e for e in row if e.tag in cell_tags]
             cells = [v for c in cell_elements for v in self._values(c)]
             cells = self._trim_list(cells)
             for _ in range(count):
@@ -168,7 +175,8 @@ class OdsRows:
                 return all_rows[index]
         elif isinstance(index, slice):
             # use itertools.islice to avoid a list creation
-            return list(itertools.islice(self, index.start, index.stop, index.step))
+            return list(
+                itertools.islice(self, index.start, index.stop, index.step))
         else:
             raise TypeError("index must be int or slice")
 
