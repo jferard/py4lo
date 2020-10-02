@@ -98,7 +98,8 @@ class TestCommand(Command):
     def _get_env(self) -> Dict[str, str]:
         if self._env is None:
             env = dict(os.environ)
-            src_lib = [str(self._sources.src_dir), str(self._sources.opt_dir),
+            src_lib = [str(self._sources.src_dir), str(self._sources.test_dir),
+                       str(self._sources.opt_dir),
                        str(self._sources.lib_dir), str(self._sources.inc_dir)]
             env["PYTHONPATH"] = os.pathsep.join(src_lib + sys.path)
             self._env = env
