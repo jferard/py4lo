@@ -85,7 +85,9 @@ CONTENT_XML = """<?xml version="1.0" encoding="UTF-8"?>
                         <text:p>B2:D3</text:p>
                     </table:table-cell><table:covered-table-cell table:number-columns-repeated="2"/>
                 </table:table-row><table:table-row table:style-name="ro1">
-                    <table:covered-table-cell table:number-columns-repeated="4"/>
+                    <table:covered-table-cell table:number-columns-repeated="4"/><table:table-cell office:value-type="string">
+                        <text:p>E3</text:p>
+                    </table:table-cell>
                 </table:table-row><table:table-row table:style-name="ro1">
                     <table:table-cell office:value-type="string">
                         <text:p>A4</text:p>
@@ -132,8 +134,64 @@ CONTENT_XML = """<?xml version="1.0" encoding="UTF-8"?>
     </office:body>
 </office:document-content>"""
 
+CONTENT_XML2 = """<?xml version="1.0" encoding="UTF-8"?>
+<office:document-content
+    xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
+    xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0"
+    xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"
+    xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0"
+    office:version="1.2"><office:scripts/>
+    <office:font-face-decls/>
+    <office:automatic-styles/>
+    <office:body>
+        <office:spreadsheet>
+            <table:table table:name="Test"><table:table-column  table:number-columns-repeated="4" table:default-cell-style-name="Default"/>
+                <table:table-row table:style-name="ro1">
+                    <table:table-cell office:value-type="string" table:number-columns-spanned="4" table:number-rows-spanned="4">
+                        <text:p>A1:D4</text:p>
+                    </table:table-cell>
+                    <table:covered-table-cell table:number-columns-repeated="3"/>
+                    <table:table-cell office:value-type="string">
+                        <text:p>E1</text:p>
+                    </table:table-cell>
+                </table:table-row><table:table-row table:style-name="ro1">
+                    <table:covered-table-cell table:number-columns-repeated="4"/>
+                    <table:table-cell office:value-type="string">
+                        <text:p>E2</text:p>
+                    </table:table-cell>
+                </table:table-row><table:table-row table:style-name="ro1">
+                    <table:covered-table-cell table:number-columns-repeated="4"/>
+                    <table:table-cell office:value-type="string">
+                        <text:p>E3</text:p>
+                    </table:table-cell>
+                </table:table-row><table:table-row table:style-name="ro1">
+                    <table:covered-table-cell table:number-columns-repeated="4"/>
+                    <table:table-cell office:value-type="string">
+                        <text:p>E4</text:p>
+                    </table:table-cell>
+                </table:table-row><table:table-row table:style-name="ro1">
+                    <table:table-cell office:value-type="string">
+                        <text:p>A5</text:p>
+                    </table:table-cell>
+                    <table:table-cell office:value-type="string">
+                        <text:p>B5</text:p>
+                    </table:table-cell>
+                    <table:table-cell office:value-type="string">
+                        <text:p>C5</text:p>
+                    </table:table-cell>
+                    <table:table-cell office:value-type="string">
+                        <text:p>D5</text:p>
+                    </table:table-cell>
+                    <table:table-cell office:value-type="string">
+                        <text:p>E5</text:p>
+                    </table:table-cell>
+                </table:table-row>
+            </table:table><table:named-expressions/></office:spreadsheet>
+    </office:body>
+</office:document-content>"""
 
-class TestOds(unittest.TestCase):
+
+class TestOds1(unittest.TestCase):
     def setUp(self):
         root = ET.fromstring(CONTENT_XML)
         table = root.find("./office:body/office:spreadsheet/table:table", OFFICE_NS_DICT)
@@ -143,7 +201,7 @@ class TestOds(unittest.TestCase):
         self.assertEqual([
             ["A1:B1", "A1:B1", "C1", "D1"],
             ["A2:A3", "B2:D3", "B2:D3", "B2:D3"],
-            [],
+            ["", "", "", "", "E3"],
             ["A4", "B4", "C4", "D4"],
             ["A5", "B5", "C5", "D5"],
             ["A6", "B6", "C6", "D6"],
@@ -166,6 +224,23 @@ class TestOds(unittest.TestCase):
         import io
         settings = io.BytesIO(SETTINGS_XML.encode("utf-8"))
         self.assertEqual("Sheet2", py4lo_ods._find_active_table_name(settings))
+
+
+class TestOds2(unittest.TestCase):
+    def setUp(self):
+        root = ET.fromstring(CONTENT_XML2)
+        table = root.find("./office:body/office:spreadsheet/table:table", OFFICE_NS_DICT)
+        self.ods_rows = OdsRows(table)
+
+    def test_list(self):
+        self.assertEqual([
+            ["A1:D4", "A1:D4", "A1:D4", "A1:D4", "E1"],
+            ["", "", "", "", "E2"],
+            ["", "", "", "", "E3"],
+            ["", "", "", "", "E4"],
+            ["A5", "B5", "C5", "D5", "E5"]
+        ], list(self.ods_rows))
+
 
 if __name__ == '__main__':
     unittest.main()

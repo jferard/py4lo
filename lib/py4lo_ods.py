@@ -137,8 +137,14 @@ def _find_active_table_name(settings, ns=OFFICE_NS):
 
 
 class OdsRows:
-    """An iterator over rows in a table.
-    The table must be simple (no spanned rows or repeated rows)"""
+    """
+    An iterator over rows in a table.
+    The table must be simple (no spanned rows or repeated rows)
+
+    * A cell spanned on multiple columns is duplicated on these columns
+    * A cell spanned on multple rows is written on the first row, and empty
+    below.
+    """
 
     def __init__(self, table, omit=None, ns=OFFICE_NS):
         self._table = table
@@ -153,15 +159,38 @@ class OdsRows:
             count = int(row.get(self._ns.attrib("table:number-rows-repeated"),
                                 row.get(self._ns.attrib(
                                     "table:number-rows-spanned"), "1")))
-            cell_tags = (
-                self._ns.attrib("table:table-cell"),
-                self._ns.attrib("table:covered-table-cell")
-            )
-            cell_elements = [e for e in row if e.tag in cell_tags]
-            cells = [v for c in cell_elements for v in self._values(c)]
-            cells = self._trim_list(cells)
+            cells = self._get_cells(row)
             for _ in range(count):
                 yield cells
+
+    def _get_cells(self, row):
+        cell_tag = self._ns.attrib("table:table-cell")
+        covered_cell_tag = self._ns.attrib("table:covered-table-cell")
+        spanned_attr = self._ns.attrib("table:number-columns-spanned")
+        repeated_attr = self._ns.attrib("table:number-columns-repeated")
+        cells = []
+        span_count = 0
+        for e in row:
+            if e.tag not in (cell_tag, covered_cell_tag):
+                continue
+
+            v1 = '\n'.join(
+                p.text for p in self._ns.findall(e, "./text:p") if p.text)
+            repeat_count = int(e.get(repeated_attr, "1"))
+            if e.tag == cell_tag:
+                span_count = int(e.get(spanned_attr, "1"))
+                count = max(repeat_count, span_count)
+                cells.extend([v1] * count)
+            elif e.tag == covered_cell_tag:
+                # expect span_count-1 covered cells
+                # other cells are empty cells (row-span).
+                repeat_count = int(e.get(repeated_attr, "1"))
+                span_count -= repeat_count
+                if span_count < 0:  # not covered on this line
+                    cells.extend([v1] * -span_count)
+
+        cells = self._trim_list(cells)
+        return cells
 
     def __getitem__(self, index):
         if isinstance(index, int):
@@ -187,13 +216,6 @@ class OdsRows:
             if len(l[i]):
                 return l[:i + 1]
         return []
-
-    def _values(self, c):
-        spanned = self._ns.attrib("table:number-columns-spanned")
-        repeated = self._ns.attrib("table:number-columns-repeated")
-        count = int(c.get(repeated, c.get(spanned, "1")))
-        v = '\n'.join(p.text for p in self._ns.findall(c, "./text:p") if p.text)
-        return [v] * count
 
 
 def omit_filtered(row, ns):
