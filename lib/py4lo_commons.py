@@ -162,14 +162,19 @@ class Commons(unohelper.Base):
 
     def get_asset(self, filename):
         """
-        Read the content of an asset.
+        Read the content of an asset. To convert it to a reader, use :
+
+            bs = commons.get_asset("foo.csv")
+            reader = TextIOWrapper(BytesIO(bs), <encoding>))
+
         @param filename: name of the asset
         @return: file content as bytes
         """
         import zipfile
         with zipfile.ZipFile(unohelper.fileUrlToSystemPath(self._url),
                              'r') as z:
-            return z.open(filename).read()
+            with z.open(filename) as f:
+                return f.read()
 
 
 def create_bus():
