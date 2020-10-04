@@ -28,3 +28,15 @@ class TestTools(unittest.TestCase):
         open_with_calc(Path("myfile.ods"), "mycalc.exe")
         self.assertEqual([call(['mycalc.exe', 'myfile.ods'])],
                          subprocess_call_mock.mock_calls)
+
+    def test_merge(self):
+        for expected, d1, d2, func in [
+            ({'a': 4}, {'a': 1}, {'a': 2}, lambda x: x * 2),
+            ({'a': 1, 'b': 4}, {'a': 1}, {'b': 2}, lambda x: x * 2),
+            ({'a': 1, 'b': [4, 6, 8]}, {'a': 1}, {'b': [2, 3, 4]},
+             lambda x: x * 2),
+            ({'a': {'b': [2, 4, 6, 8]}}, {'a': {'b': [1]}},
+             {'a': {'b': [2, 3, 4]}},
+             lambda x: x * 2)
+        ]:
+            self.assertEqual(expected, nested_merge(d1, d2, func))

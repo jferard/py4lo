@@ -1,5 +1,6 @@
 import subprocess
 import sys
+import traceback
 from pathlib import Path
 from typing import Dict, Any, Mapping
 import toml
@@ -35,14 +36,16 @@ class TomlLoader:
                 content = s.read()
                 data = toml.loads(content)
         except Exception as e:
-            print("Error when loading toml file {}: {}".format(path, e))
+            print("Error when loading toml file {}: {}".format(path, e),
+                  file=sys.stderr)
+            traceback.print_exc(file=sys.stdout)
         else:
             self._data = nested_merge(self._data, data, self._apply)
 
     def _apply(self, v: Any) -> Any:
         try:
             return v.format(**self._kwargs)
-        except:
+        except (AttributeError, TypeError, ValueError):
             return v
 
     def _check_python_target_version(self):

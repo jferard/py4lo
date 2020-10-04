@@ -53,6 +53,17 @@ def file_path_mock(content: IO, **kwargs) -> Path:
     return s
 
 
+def file_path_error_mock(**kwargs):
+    def mock_enter(*_args, **_kwargs):
+        raise FileNotFoundError("")
+
+    s = MagicMock(**kwargs)
+    manager = MagicMock()
+    s.open.return_value = manager
+    manager.__enter__ = mock_enter
+    return s
+
+
 def verify_open_path(tc: unittest.TestCase, s: Path, *args, **kwargs):
     tc.assertTrue(
         all(x in s.mock_calls for x in [call.open(*args, **kwargs), call.open().__enter__(),

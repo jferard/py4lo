@@ -27,6 +27,14 @@ def open_with_calc(ods_path: Path, calc_exe: str):
 
 def nested_merge(d1: Dict[str, Any], d2: Dict[str, Any],
                  apply: Callable[[Any], Any]) -> Dict[str, Any]:
+    """
+    Merge two dicts.
+
+    @param d1: the first dict.
+    @param d2: the second dict.
+    @param apply: a function to apply to the dict
+    @return: a merged dict
+    """
     for k, v in d2.items():
         if isinstance(v, Dict):
             d1[k] = nested_merge(d1.get(k, {}), v, apply)

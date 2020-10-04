@@ -27,7 +27,7 @@ install:
 
 # script
 script:
-  - pytest --cov=py4lo test
+  - py.test --ignore=example --cov-report term-missing --cov=py4lo --cov=lib && py.test --ignore=example --ignore=test --ignore=py4lo/__main__.py --cov-report term-missing --cov-append --doctest-modules --cov=lib
 
 
 after_success:
