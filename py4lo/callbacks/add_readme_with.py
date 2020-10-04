@@ -32,7 +32,8 @@ class AddReadmeWith(AfterCallback):
         self._contact = contact
 
     def call(self, zout: ZipFile) -> bool:
-        zout.write(self._inc_path.joinpath("script-lc.xml"),
+        lc = self._inc_path.joinpath("script-lc.xml")
+        zout.write(lc,
                    "Basic/script-lc.xml")
         zout.write(self._inc_path.joinpath("script-lb.xml"),
                    "Basic/Standard/script-lb.xml")

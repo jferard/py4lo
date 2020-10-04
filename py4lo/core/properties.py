@@ -44,9 +44,6 @@ class PropertiesProvider:
     def keys(self) -> AbstractSet[str]:
         return self._tdata.keys()
 
-    def get(self, k: str) -> Any:
-        return self._tdata[k]
-
     def get(self, k: str, default: Optional[Any] = None) -> Any:
         return self._tdata.get(k, default)
 
