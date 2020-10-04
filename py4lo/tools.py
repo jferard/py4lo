@@ -29,6 +29,8 @@ def nested_merge(d1: Dict[str, Any], d2: Dict[str, Any],
                  apply: Callable[[Any], Any]) -> Dict[str, Any]:
     """
     Merge two dicts.
+    >>> nested_merge({'a': 1}, {'b': 2}, lambda x: x*2)
+    {'a': 1, 'b': 4}
 
     @param d1: the first dict.
     @param d2: the second dict.
