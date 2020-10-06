@@ -32,6 +32,7 @@ for module_name in {}:
 
 LIB_SET = {"pylo_commons", "pylo_helper", "py4lo_ods"}
 
+
 class Entry(Directive):
     """
     This is an entry point. This will fix the python path.
@@ -50,5 +51,6 @@ class Entry(Directive):
                 line_processor: "DirectiveLineProcessor", args):
         execute = self._include_directive.execute(_processor, line_processor,
                                                   ["py4lo_import.py", True])
-        line_processor.append(UNLOAD_MODULES_FORMAT.format(self._module_names | LIB_SET))
+        line_processor.append(
+            UNLOAD_MODULES_FORMAT.format(self._module_names | LIB_SET))
         return execute
