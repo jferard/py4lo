@@ -17,10 +17,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 from pathlib import Path
-from typing import Iterable
+from typing import Set
 
-from directives.include import Include
 from directives.directive import Directive
+from directives.include import Include
 
 UNLOAD_MODULES_FORMAT = """
 # begin py4lo: unload modules
@@ -29,6 +29,8 @@ for module_name in {}:
         del sys.modules[module_name]
 # end py4lo: unload modules
 """
+
+LIB_SET = {"pylo_commons", "pylo_helper", "py4lo_ods"}
 
 class Entry(Directive):
     """
@@ -40,7 +42,7 @@ class Entry(Directive):
     def sig_elements():
         return ["entry"]
 
-    def __init__(self, inc_dir: Path, module_names: Iterable[str]):
+    def __init__(self, inc_dir: Path, module_names: Set[str]):
         self._include_directive = Include(inc_dir)
         self._module_names = module_names
 
@@ -48,5 +50,5 @@ class Entry(Directive):
                 line_processor: "DirectiveLineProcessor", args):
         execute = self._include_directive.execute(_processor, line_processor,
                                                   ["py4lo_import.py", True])
-        line_processor.append(UNLOAD_MODULES_FORMAT.format(self._module_names))
+        line_processor.append(UNLOAD_MODULES_FORMAT.format(self._module_names | LIB_SET))
         return execute
