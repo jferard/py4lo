@@ -37,6 +37,7 @@ try:
 except NameError:
     pass
 
+
 def message_example(*_args):
     """
     A doc test
@@ -48,11 +49,20 @@ def message_example(*_args):
     from com.sun.star.awt.MessageBoxButtons import BUTTONS_OK
     _.message_box(_.parent_win, "A message from main script example.py. Current dir is: "+os.path.abspath("."), "py4lo", MESSAGEBOX, BUTTONS_OK)
 
+
 def xray_example(*_args):
     _.xray(_.doc)
+
 
 def mri_example(*_args):
     _.mri(_.doc)
 
+
 def example_from_lib(*_args):
     o.lib_example()
+
+
+def reader_example(*_args):
+    r = py4lo_helper.reader(_.doc.getCurrentController().getActiveSheet())
+    for row in r:
+        _.xray(str(row))

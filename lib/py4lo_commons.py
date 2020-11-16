@@ -220,5 +220,13 @@ def date_to_int(a_date):
     return (a_date - ORIGIN).days
 
 
+def date_to_float(a_date):
+    return (a_date - ORIGIN).total_seconds() / 86400
+
+
 def int_to_date(days):
+    return ORIGIN + datetime.timedelta(days)
+
+
+def float_to_date(days):
     return ORIGIN + datetime.timedelta(days)

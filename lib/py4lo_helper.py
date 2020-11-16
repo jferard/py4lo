@@ -23,6 +23,7 @@
 
 import os
 import uno
+
 try:
     import unohelper
 except ImportError:
@@ -33,9 +34,11 @@ except ImportError:
 import io
 # py4lo: endif
 # py4lo: endif
+from py4lo_commons import float_to_date
 from com.sun.star.uno import RuntimeException
 from com.sun.star.awt.MessageBoxButtons import BUTTONS_OK
 from com.sun.star.sheet.ConditionOperator import FORMULA
+from com.sun.star.util import NumberFormat
 # py4lo: if $python_version >= 3.0
 from com.sun.star.awt.MessageBoxType import MESSAGEBOX
 
@@ -62,15 +65,18 @@ class Py4LO_helper(unohelper.Base):
         sm = ctxt.getServiceManager()
         dsp = doc.getScriptProvider()
 
-        mspf = sm.createInstanceWithContext("com.sun.star.script.provider.MasterScriptProviderFactory", ctxt)
+        mspf = sm.createInstanceWithContext(
+            "com.sun.star.script.provider.MasterScriptProviderFactory", ctxt)
         msp = mspf.createScriptProvider("")
 
         reflect = sm.createInstance("com.sun.star.reflection.CoreReflection")
         dispatcher = sm.createInstance("com.sun.star.frame.DispatchHelper")
         loader = sm.createInstance("com.sun.star.frame.Desktop")
-        return Py4LO_helper(doc, ctxt, ctrl, frame, parent_win, sm, dsp, mspf, msp, reflect, dispatcher, loader)
+        return Py4LO_helper(doc, ctxt, ctrl, frame, parent_win, sm, dsp, mspf,
+                            msp, reflect, dispatcher, loader)
 
-    def __init__(self, doc, ctxt, ctrl, frame, parent_win, sm, dsp, mspf, msp, reflect, dispatcher, loader):
+    def __init__(self, doc, ctxt, ctrl, frame, parent_win, sm, dsp, mspf, msp,
+                 reflect, dispatcher, loader):
         self.doc = doc
         self.ctxt = ctxt
         self.ctrl = ctrl
@@ -99,7 +105,8 @@ class Py4LO_helper(unohelper.Base):
                 "vnd.sun.star.script:XrayTool._Main.Xray?language=Basic&location=application")
         except:
             if fail_on_error:
-                raise RuntimeException("\nBasic library Xray is not installed", self.ctxt)
+                raise RuntimeException("\nBasic library Xray is not installed",
+                                       self.ctxt)
             else:
                 self._ignore_xray = True
 
@@ -139,9 +146,11 @@ class Py4LO_helper(unohelper.Base):
         self._oMRI.inspect(object)
 
     # from https://forum.openoffice.org/fr/forum/viewtopic.php?f=15&t=47603# (thanks Bernard !)
-    def message_box(self, parent_win, msg_text, msg_title, msg_type=MESSAGEBOX, msg_buttons=BUTTONS_OK):
+    def message_box(self, parent_win, msg_text, msg_title, msg_type=MESSAGEBOX,
+                    msg_buttons=BUTTONS_OK):
         sv = self.uno_service_ctxt("com.sun.star.awt.Toolkit")
-        mb = sv.createMessageBox(parent_win, msg_type, msg_buttons, msg_title, msg_text)
+        mb = sv.createMessageBox(parent_win, msg_type, msg_buttons, msg_title,
+                                 msg_text)
         return mb.execute()
 
     def uno_service_ctxt(self, sname, args=None):
@@ -154,7 +163,8 @@ class Py4LO_helper(unohelper.Base):
             if args is None:
                 return self.sm.createInstanceWithContext(sname, ctxt)
             else:
-                return self.sm.createInstanceWithArgumentsAndContext(sname, args, ctxt)
+                return self.sm.createInstanceWithArgumentsAndContext(sname,
+                                                                     args, ctxt)
 
     def open_in_calc(self, filename):
         """
@@ -189,9 +199,11 @@ class Py4LO_helper(unohelper.Base):
         oAll = oSheet.getCellRangeByName(range_name)
         oController.select(oAll)
         oFrame = oController.Frame
-        self.dispatcher.executeDispatch(oFrame, ".uno:DataFilterAutoFilter", "", 0, ())
+        self.dispatcher.executeDispatch(oFrame, ".uno:DataFilterAutoFilter", "",
+                                        0, ())
 
-    def set_validation_list_by_name(self, cell_name, fields, default_string=None, allow_blank=False):
+    def set_validation_list_by_name(self, cell_name, fields,
+                                    default_string=None, allow_blank=False):
         oCell = self.get_named_cell(cell_name)
         set_validation_list_by_cell(oCell, fields, default_string, allow_blank)
 
@@ -208,7 +220,8 @@ class DocBuilder:
         self._oDoc.unlockControllers()
         return self._oDoc
 
-    def sheet_names(self, sheet_names, expand_if_necessary=True, trunc_if_necessary=True):
+    def sheet_names(self, sheet_names, expand_if_necessary=True,
+                    trunc_if_necessary=True):
         oSheets = self._oDoc.Sheets
         it = iter(sheet_names)
         s = 0
@@ -220,7 +233,8 @@ class DocBuilder:
                 oSheet.setName(next(it))  # may raise a StopIteration
                 s += 1
 
-            assert s == oSheets.getCount(), "s={} vs oSheets.getCount()={}".format(s, oSheets.getCount())
+            assert s == oSheets.getCount(), "s={} vs oSheets.getCount()={}".format(
+                s, oSheets.getCount())
 
             if expand_if_necessary:
                 # add
@@ -228,7 +242,8 @@ class DocBuilder:
                     oSheets.insertNewByName(sheet_name, s)
                     s += 1
         except StopIteration:  # it
-            assert s <= oSheets.getCount(), "s={} vs oSheets.getCount()={}".format(s, oSheets.getCount())
+            assert s <= oSheets.getCount(), "s={} vs oSheets.getCount()={}".format(
+                s, oSheets.getCount())
             if trunc_if_necessary:
                 self.trunc_to_count(s)
 
@@ -303,7 +318,9 @@ def get_used_range_address(oSheet):
 
 def get_used_range(oSheet):
     oRangeAddress = get_used_range_address(oSheet)
-    return oSheet.getCellRangeByPosition(oRangeAddress.StartColumn, oRangeAddress.StartRow, oRangeAddress.EndColumn,
+    return oSheet.getCellRangeByPosition(oRangeAddress.StartColumn,
+                                         oRangeAddress.StartRow,
+                                         oRangeAddress.EndColumn,
                                          oRangeAddress.EndRow)
 
 
@@ -313,7 +330,7 @@ def data_array(oSheet):
 
 def to_iter(oXIndexAccess):
     for i in range(0, oXIndexAccess.getCount()):
-        yield (oXIndexAccess.getByIndex(i))
+        yield oXIndexAccess.getByIndex(i)
 
 
 def to_dict(oXNameAccess):
@@ -330,17 +347,20 @@ def read_options(oSheet, aAddress, l=lambda s: s):
     for r in range(aAddress.StartRow, aAddress.EndRow + 1):
         k = oSheet.getCellByPosition(aAddress.StartColumn, r).String.strip()
         if width <= 1:
-            v = oSheet.getCellByPosition(aAddress.StartColumn + 1, r).String.strip()
+            v = oSheet.getCellByPosition(aAddress.StartColumn + 1,
+                                         r).String.strip()
         else:
             # from aAddress.StartColumn+1 to aAddress.EndColumn
-            v = [oSheet.getCellByPosition(aAddress.StartColumn + 1 + c, r).String.strip() for c in range(width)]
+            v = [oSheet.getCellByPosition(aAddress.StartColumn + 1 + c,
+                                          r).String.strip() for c in
+                 range(width)]
         if k and v:
             options[l(k)] = l(v)
     return options
 
 
-
-def set_validation_list_by_cell(oCell, fields, default_string=None, allow_blank=False):
+def set_validation_list_by_cell(oCell, fields, default_string=None,
+                                allow_blank=False):
     oValidation = oCell.Validation
     oValidation.Type = uno.getConstantByName(
         "com.sun.star.sheet.ValidationType.LIST")
@@ -362,7 +382,8 @@ def clear_conditional_format(oSheet, range_name):
     oConditionalFormat.clear()
 
 
-def conditional_format_on_formulas(oSheet, range_name, style_by_formula, source_position=(0, 0)):
+def conditional_format_on_formulas(oSheet, range_name, style_by_formula,
+                                   source_position=(0, 0)):
     oColoredColumns = oSheet.getCellRangeByName(range_name)
     oConditionalFormat = oColoredColumns.ConditionalFormat
     oSrc = oColoredColumns.getCellByPosition(*source_position).CellAddress
@@ -380,8 +401,10 @@ def get_formula_conditional_entry(formula, style_name, oSrc):
 
 def get_conditional_entry(formula1, formula2, operator, style_name, oSrc):
     return (
-        make_pvs({"Formula1": formula1, "Formula2": formula2, "Operator": operator, "StyleName": style_name,
-                  "SourcePosition": oSrc})
+        make_pvs(
+            {"Formula1": formula1, "Formula2": formula2, "Operator": operator,
+             "StyleName": style_name,
+             "SourcePosition": oSrc})
     )
 
 
@@ -415,3 +438,54 @@ def get_range_size(oRange):
     width = oAddress.EndColumn - oAddress.StartColumn + 1
     height = oAddress.EndRow - oAddress.StartRow + 1
     return width, height
+
+
+def get_doc(oCell):
+    """
+    Find the document that owns this cell.
+
+    @param oCell: a cell
+    @return: the document
+    """
+    return oCell.Spreadsheet.DrawPage.Forms.Parent
+
+
+def type_cell(oCell, oFormats=None):
+    """
+    Type a cell value
+    @param oCell: the cell
+    @return: the cell value as int or text
+    """
+    if oFormats is None:
+        oFormats = get_doc(oCell).NumberFormats
+    key = oCell.NumberFormat
+    cell_type = oCell.getType()
+    if cell_type.value == 'EMPTY':
+        return None
+    elif cell_type.value == 'TEXT':
+        return oCell.String
+    else:
+        if cell_type.value == 'FORMULA':
+            cell_data_type = oCell.FormulaResultType
+        else:
+            cell_data_type = oFormats.getByKey(key).Type
+        if cell_data_type in {NumberFormat.DATE, NumberFormat.DATETIME,
+                              NumberFormat.TIME}:
+            return float_to_date(oCell.Value)
+        elif cell_data_type in {NumberFormat.CURRENCY, NumberFormat.FRACTION,
+                                NumberFormat.NUMBER, NumberFormat.PERCENT,
+                                NumberFormat.SCIENTIFIC}:
+            return oCell.Value
+        elif cell_data_type == NumberFormat.LOGICAL:
+            return bool(oCell.Value)
+        else:
+            return oCell.String
+
+
+def reader(oSheet):
+    oFormats = oSheet.DrawPage.Forms.Parent.NumberFormats
+    oRangeAddress = get_used_range_address(oSheet)
+    for i in range(oRangeAddress.StartRow, oRangeAddress.EndRow + 1):
+        yield [type_cell(oSheet.getCellByPosition(j, i), oFormats)
+               for j in range(oRangeAddress.StartColumn,
+                              oRangeAddress.EndColumn + 1)]
