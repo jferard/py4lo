@@ -63,6 +63,7 @@ def example_from_lib(*_args):
 
 
 def reader_example(*_args):
-    r = py4lo_helper.reader(_.doc.getCurrentController().getActiveSheet())
+    r = py4lo_helper.dict_reader(_.doc.getCurrentController().getActiveSheet(), restval="x", restkey="t")
     for row in r:
+        _.xray(r.line_num)
         _.xray(str(row))
