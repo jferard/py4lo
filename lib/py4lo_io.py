@@ -271,3 +271,26 @@ class writer:
     def writerows(self, rows):
         for row in rows:
             self.writerow(row)
+
+
+class dict_writer:
+    def __init__(self, oSheet, fieldnames, restval='', extrasaction='raise',
+                 type_cell=TYPE_MINIMAL, oFormats=None, write_cell=None):
+        self.writer = writer(oSheet, type_cell, oFormats, write_cell)
+        self.fieldnames = fieldnames
+        self._set_fieldnames = set(fieldnames)
+        self.restval = restval
+        self.extrasaction = extrasaction
+
+    def writeheader(self):
+        self.writer.writerow(self.fieldnames)
+
+    def writerow(self, row):
+        if self.extrasaction == 'raise' and set(row) - self._set_fieldnames:
+            raise ValueError()
+        flat_row = [row.get(name, self.restval) for name in self.fieldnames]
+        self.writer.writerow(flat_row)
+
+    def writerows(self, rows):
+        for row in rows:
+            self.writerow(row)

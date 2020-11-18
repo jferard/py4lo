@@ -77,8 +77,13 @@ def reader_example(*_args):
 
 
 def writer_example(*_args):
-    w = py4lo_io.writer(_.doc.getCurrentController().getActiveSheet(),
-                        type_cell=py4lo_io.TYPE_ALL)
-    for row in [("a", "b", "c", "d"),
-                ("value", 1, True, datetime(2020, 11, 21, 12, 36, 50))]:
+    w = py4lo_io.dict_writer(_.doc.getCurrentController().getActiveSheet(),
+                             ("a", "b", "c", "d", "e"),
+                             type_cell=py4lo_io.TYPE_ALL)
+    w.writeheader()
+    # second row after header raises an exception
+    for row in [{"a": "value", "b": 1, "c": True,
+                 "d": datetime(2020, 11, 21, 12, 36, 50)},
+                {"a": "other value", "b": 2, "c": False,
+                 "f": datetime(2020, 11, 21, 12, 36, 50)}]:
         w.writerow(row)

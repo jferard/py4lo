@@ -227,7 +227,7 @@ def date_to_float(a_date):
         elif isinstance(a_date, datetime.time):
             a_date = datetime.datetime(0, 0, 0, a_date.hour, a_date.minute,
                                        a_date.second, a_date.microsecond)
-            
+
     return (a_date - ORIGIN).total_seconds() / 86400
 
 
