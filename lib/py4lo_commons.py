@@ -221,6 +221,13 @@ def date_to_int(a_date):
 
 
 def date_to_float(a_date):
+    if not isinstance(a_date, datetime.datetime):
+        if isinstance(a_date, datetime.date):
+            a_date = datetime.datetime(a_date.year, a_date.month, a_date.day)
+        elif isinstance(a_date, datetime.time):
+            a_date = datetime.datetime(0, 0, 0, a_date.hour, a_date.minute,
+                                       a_date.second, a_date.microsecond)
+            
     return (a_date - ORIGIN).total_seconds() / 86400
 
 

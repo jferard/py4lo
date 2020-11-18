@@ -38,7 +38,6 @@ from py4lo_commons import float_to_date
 from com.sun.star.uno import RuntimeException
 from com.sun.star.awt.MessageBoxButtons import BUTTONS_OK
 from com.sun.star.sheet.ConditionOperator import FORMULA
-from com.sun.star.util import NumberFormat
 # py4lo: if $python_version >= 3.0
 from com.sun.star.awt.MessageBoxType import MESSAGEBOX
 
@@ -450,100 +449,13 @@ def get_doc(oCell):
     return oCell.Spreadsheet.DrawPage.Forms.Parent
 
 
-def type_cell(oCell, oFormats=None):
+def get_cell_type(oCell):
     """
-    Type a cell value
     @param oCell: the cell
-    @return: the cell value as int or text
+    @return: 'EMPTY', 'TEXT', 'VALUE'
     """
-    if oFormats is None:
-        oFormats = get_doc(oCell).NumberFormats
-    key = oCell.NumberFormat
     cell_type = oCell.getType().value
     if cell_type == 'FORMULA':
         cell_type = oCell.FormulaResultType.value
 
-    if cell_type == 'EMPTY':
-        return None
-    elif cell_type == 'TEXT':
-        return oCell.String
-    else:
-        cell_data_type = oFormats.getByKey(key).Type
-        if cell_data_type in {NumberFormat.DATE, NumberFormat.DATETIME,
-                              NumberFormat.TIME}:
-            return float_to_date(oCell.Value)
-        elif cell_data_type in {NumberFormat.CURRENCY, NumberFormat.FRACTION,
-                                NumberFormat.NUMBER, NumberFormat.PERCENT,
-                                NumberFormat.SCIENTIFIC}:
-            return oCell.Value
-        elif cell_data_type == NumberFormat.LOGICAL:
-            return bool(oCell.Value)
-        else:
-            return oCell.String
-
-
-class reader:
-    def __init__(self, oSheet, type_cell=type_cell):
-        self._oSheet = oSheet
-        self._type_cell = type_cell
-        self.line_num = 0
-        self._oFormats = oSheet.DrawPage.Forms.Parent.NumberFormats
-        self._oRangeAddress = get_used_range_address(oSheet)
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        i = self._oRangeAddress.StartRow + self.line_num
-        if i > self._oRangeAddress.EndRow:
-            raise StopIteration
-
-        self.line_num += 1
-        if self._type_cell is None:
-            row = [self._oSheet.getCellByPosition(j, i).String
-                   for j in range(self._oRangeAddress.StartColumn,
-                                  self._oRangeAddress.EndColumn + 1)]
-        else:
-            row = [self._type_cell(self._oSheet.getCellByPosition(j, i), self._oFormats)
-                   for j in range(self._oRangeAddress.StartColumn,
-                                  self._oRangeAddress.EndColumn + 1)]
-
-        # left strip the row
-        i = len(row) - 1
-        while row[i] is None and i > 0:
-            i -= 1
-        return row[:i + 1]
-
-
-class dict_reader:
-    def __init__(self, oSheet, fieldnames=None, restkey=None, restval=None):
-        self._reader = reader(oSheet)
-        if fieldnames is None:
-            self.fieldnames = next(self._reader)
-        else:
-            self.fieldnames = fieldnames
-        self._width = len(self.fieldnames)
-        self.restkey = restkey
-        self.restval = restval
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        row = next(self._reader)
-        row_width = len(row)
-        if row_width == self._width:
-            return dict(zip(self.fieldnames, row))
-        elif row_width < self._width:
-            row += [self.restval] * (self._width - row_width)
-            return dict(zip(self.fieldnames, row))
-        elif self.restkey is None:
-            return dict(zip(self.fieldnames, row))
-        else:
-            d = dict(zip(self.fieldnames, row))
-            d[self.restkey] = row[self._width:]
-            return d
-
-    @property
-    def line_num(self):
-        return self._reader.line_num
+    return cell_type

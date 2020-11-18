@@ -20,6 +20,8 @@
 # py4lo: embed script alib.py
 # py4lo: embed lib py4lo_helper
 # py4lo: embed lib py4lo_commons
+# py4lo: embed lib py4lo_io
+from datetime import date, datetime
 
 import uno
 import sys
@@ -28,6 +30,7 @@ import os
 
 import py4lo_helper
 import py4lo_commons
+import py4lo_io
 import example_lib
 
 try:
@@ -47,7 +50,9 @@ def message_example(*_args):
     """
     from com.sun.star.awt.MessageBoxType import MESSAGEBOX
     from com.sun.star.awt.MessageBoxButtons import BUTTONS_OK
-    _.message_box(_.parent_win, "A message from main script example.py. Current dir is: "+os.path.abspath("."), "py4lo", MESSAGEBOX, BUTTONS_OK)
+    _.message_box(_.parent_win,
+                  "A message from main script example.py. Current dir is: " + os.path.abspath(
+                      "."), "py4lo", MESSAGEBOX, BUTTONS_OK)
 
 
 def xray_example(*_args):
@@ -63,7 +68,17 @@ def example_from_lib(*_args):
 
 
 def reader_example(*_args):
-    r = py4lo_helper.dict_reader(_.doc.getCurrentController().getActiveSheet(), restval="x", restkey="t")
+    r = py4lo_io.dict_reader(_.doc.getCurrentController().getActiveSheet(),
+                             restval="x", restkey="t",
+                             type_cell=py4lo_io.TYPE_ALL)
     for row in r:
         _.xray(r.line_num)
         _.xray(str(row))
+
+
+def writer_example(*_args):
+    w = py4lo_io.writer(_.doc.getCurrentController().getActiveSheet(),
+                        type_cell=py4lo_io.TYPE_ALL)
+    for row in [("a", "b", "c", "d"),
+                ("value", 1, True, datetime(2020, 11, 21, 12, 36, 50))]:
+        w.writerow(row)
