@@ -87,3 +87,12 @@ def writer_example(*_args):
                 {"a": "other value", "b": 2, "c": False,
                  "f": datetime(2020, 11, 21, 12, 36, 50)}]:
         w.writerow(row)
+
+
+def export_example(*_args):
+    py4lo_io.export_to_csv(_.doc.getCurrentController().getActiveSheet(),
+                           "./temp.csv")
+
+
+def import_example(*_args):
+    py4lo_io.import_from_csv(_.desktop, _.doc, "csv sheet", 0, "./temp.csv")
