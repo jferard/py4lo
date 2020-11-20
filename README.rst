@@ -68,12 +68,13 @@ Create a simple Python script ``myscript.py`` :
     # py4lo: entry
     # py4lo: embed lib py4lo_helper
     import py4lo_helper
-    _ = py4lo_helper.Py4LO_helper.create(XSCRIPTCONTEXT)
+    py4lo_helper.init(XSCRIPTCONTEXT)
+    from py4lo_helper import message_box
 
     def test(*args):
         from com.sun.star.awt.MessageBoxType import MESSAGEBOX
         from com.sun.star.awt.MessageBoxButtons import BUTTONS_OK
-        _.message_box(_.parent_win, "A message", "py4lo", MESSAGEBOX, BUTTONS_OK)
+        message_box("A message", "py4lo", MESSAGEBOX, BUTTONS_OK)
 
 Step 2
 ~~~~~~
@@ -115,12 +116,13 @@ Edit the Python script ``myscript.py``:
     # py4lo: entry
     # py4lo: embed lib py4lo_helper
     import py4lo_helper
-    _ = py4lo_helper.Py4LO_helper.create(XSCRIPTCONTEXT)
+    py4lo_helper.init(XSCRIPTCONTEXT)
+    from py4lo_helper import message_box
 
     def test(*args):
         from com.sun.star.awt.MessageBoxType import MESSAGEBOX
         from com.sun.star.awt.MessageBoxButtons import BUTTONS_OK
-        _.message_box(_.parent_win, "Another message", "py4lo", MESSAGEBOX, BUTTONS_OK)
+        message_box("Another message", "py4lo", MESSAGEBOX, BUTTONS_OK)
 
 Step 6
 ~~~~~~

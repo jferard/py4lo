@@ -35,9 +35,10 @@ import io
 # py4lo: endif
 # py4lo: endif
 from py4lo_commons import float_to_date
-from com.sun.star.uno import RuntimeException
+from com.sun.star.uno import RuntimeException, Exception as UnoException
 from com.sun.star.awt.MessageBoxButtons import BUTTONS_OK
 from com.sun.star.sheet.ConditionOperator import FORMULA
+from com.sun.star.script.provider import ScriptFrameworkErrorException
 # py4lo: if $python_version >= 3.0
 from com.sun.star.awt.MessageBoxType import MESSAGEBOX
 
@@ -47,47 +48,106 @@ MESSAGEBOX = 0
 
 from com.sun.star.lang import Locale
 
+provider = None
+_inspect = None
+xray = None
+mri = None
+
 
 def init(xsc):
-    Py4LO_helper.instance = Py4LO_helper.create(xsc)
+    """
+    Mandatory call from entry with XSCRIPTCONTEXT as argument.
+    @param xsc: XSCRIPTCONTEXT
+    """
+    global provider, _inspect, xray, mri
+    provider = _ObjectProvider.create(xsc)
+    _inspect = _Inspector(provider)
+    xray = _inspect.xray
+    mri = _inspect.mri
 
 
-class Py4LO_helper(unohelper.Base):
+class _ObjectProvider:
+    """
+    Lazy object provider.
+    """
+
     @staticmethod
     def create(xsc):
         doc = xsc.getDocument()
-        ctxt = uno.getComponentContext()
-
-        ctrl = doc.CurrentController
-        frame = ctrl.Frame
+        controller = doc.CurrentController
+        frame = controller.Frame
         parent_win = frame.ContainerWindow
-        sm = ctxt.getServiceManager()
-        dsp = doc.getScriptProvider()
+        script_provider = doc.getScriptProvider()
+        ctxt = xsc.getComponentContext()
+        service_manager = ctxt.getServiceManager()
+        desktop = xsc.getDesktop()
+        return _ObjectProvider(doc, controller, frame, parent_win,
+                               script_provider, ctxt, service_manager, desktop)
 
-        mspf = sm.createInstanceWithContext(
-            "com.sun.star.script.provider.MasterScriptProviderFactory", ctxt)
-        msp = mspf.createScriptProvider("")
-
-        reflect = sm.createInstance("com.sun.star.reflection.CoreReflection")
-        dispatcher = sm.createInstance("com.sun.star.frame.DispatchHelper")
-        loader = sm.createInstance("com.sun.star.frame.Desktop")
-        return Py4LO_helper(doc, ctxt, ctrl, frame, parent_win, sm, dsp, mspf,
-                            msp, reflect, dispatcher, loader)
-
-    def __init__(self, doc, ctxt, ctrl, frame, parent_win, sm, dsp, mspf, msp,
-                 reflect, dispatcher, loader):
+    def __init__(self, doc, controller, frame, parent_win, script_provider,
+                 ctxt, service_manager, desktop):
         self.doc = doc
-        self.ctxt = ctxt
-        self.ctrl = ctrl
+        self.controller = controller
         self.frame = frame
         self.parent_win = parent_win
-        self.sm = sm
-        self.dsp = dsp
-        self.mspf = mspf
-        self.msp = msp
-        self.reflect = reflect
-        self.dispatcher = dispatcher
-        self.loader = loader
+        self.script_provider = script_provider
+        self.ctxt = ctxt
+        self.service_manager = service_manager
+        self.desktop = desktop
+        self._script_provider_factory = None
+        self._script_provider = None
+        self._reflect = None
+        self._dispatcher = None
+
+    def get_script_provider_factory(self):
+        """
+        > This service is used to create MasterScriptProviders
+        @return:
+        """
+        if self._script_provider_factory is None:
+            self._script_provider_factory = self.service_manager.createInstanceWithContext(
+                "com.sun.star.script.provider.MasterScriptProviderFactory",
+                self.ctxt)
+        return self._script_provider_factory
+
+    def get_script_provider(self):
+        """
+        > This interface provides a factory for obtaining objects implementing the XScript interface
+
+        @return:
+        """
+        if self._script_provider is None:
+            self._script_provider = self.get_script_provider_factory().createScriptProvider(
+                "")
+        return self._script_provider
+
+    @property
+    def reflect(self):
+        """
+        > This service is the implementation of the reflection API
+
+        @return:
+        """
+        if self._reflect is None:
+            self._reflect = self.service_manager.createInstance(
+                "com.sun.star.reflection.CoreReflection")
+        return self._reflect
+
+    @property
+    def dispatcher(self):
+        """
+        > provides an easy way to dispatch a URL using one call instead of multiple ones.
+        @return:
+        """
+        if self._dispatcher is None:
+            self._dispatcher = self.service_manager.createInstance(
+                "com.sun.star.frame.DispatchHelper")
+        return self._dispatcher
+
+
+class _Inspector:
+    def __init__(self, provider):
+        self._provider = provider
         self._xray_script = None
         self._ignore_xray = False
         self._oMRI = None
@@ -100,20 +160,22 @@ class Py4LO_helper(unohelper.Base):
         :raises RuntimeException: if Xray is not avaliable and `fail_on_error` is True.
         """
         try:
-            self._xray_script = self.msp.getScript(
-                "vnd.sun.star.script:XrayTool._Main.Xray?language=Basic&location=application")
-        except:
+            self._xray_script = self._provider.script_provider.getScript(
+                "vnd.sun.star.script:XrayTool._Main.Xray?"
+                "language=Basic&location=application")
+        except ScriptFrameworkErrorException:
             if fail_on_error:
                 raise RuntimeException("\nBasic library Xray is not installed",
-                                       self.ctxt)
+                                       self._provider.ctxt)
             else:
                 self._ignore_xray = True
 
-    def xray(self, object, fail_on_error=False):
+    def xray(self, obj, fail_on_error=False):
         """
-        Xray an object. Loads dynamically the lib if possible.
-        :param fail_on_error: Should this function fail on error
-        :raises RuntimeException: if Xray is not avaliable and `fail_on_error` is True.
+        Xray an obj. Loads dynamically the lib if possible.
+        :@param obj: the obj
+        :@param fail_on_error: Should this function fail on error
+        :@raises RuntimeException: if Xray is not avaliable and `fail_on_error` is True.
         """
         if self._ignore_xray:
             return
@@ -123,95 +185,107 @@ class Py4LO_helper(unohelper.Base):
             if self._ignore_xray:
                 return
 
-        self._xray_script.invoke((object,), (), ())
+        self._xray_script.invoke((obj,), (), ())
 
-    def mri(self, object, fail_on_error=False):
+    def mri(self, obj, fail_on_error=False):
         """
         MRI an object
-        @param object: the object
+        @param obj: the object
         """
         if self._ignore_mri:
             return
 
         if self._oMRI is None:
             try:
-                self._oMRI = self.uno_service("mytools.Mri")
-            except:
+                self._oMRI = uno_service("mytools.Mri")
+            except UnoException:
                 if fail_on_error:
                     raise RuntimeException("\nMRI is not installed",
-                                           self.ctxt)
+                                           self._provider.ctxt)
                 else:
                     self._ignore_mri = True
-        self._oMRI.inspect(object)
+        self._oMRI.inspect(obj)
 
-    # from https://forum.openoffice.org/fr/forum/viewtopic.php?f=15&t=47603# (thanks Bernard !)
-    def message_box(self, parent_win, msg_text, msg_title, msg_type=MESSAGEBOX,
-                    msg_buttons=BUTTONS_OK):
-        sv = self.uno_service_ctxt("com.sun.star.awt.Toolkit")
-        mb = sv.createMessageBox(parent_win, msg_type, msg_buttons, msg_title,
-                                 msg_text)
-        return mb.execute()
 
-    def uno_service_ctxt(self, sname, args=None):
-        return self.uno_service(sname, args, self.ctxt)
-
-    def uno_service(self, sname, args=None, ctxt=None):
-        if ctxt is None:
-            return self.sm.createInstance(sname)
+def uno_service(sname, args=None, ctxt=None):
+    sm = provider.service_manager
+    if ctxt is None:
+        return sm.createInstance(sname)
+    else:
+        if args is None:
+            return sm.createInstanceWithContext(sname, ctxt)
         else:
-            if args is None:
-                return self.sm.createInstanceWithContext(sname, ctxt)
-            else:
-                return self.sm.createInstanceWithArgumentsAndContext(sname,
-                                                                     args, ctxt)
+            return sm.createInstanceWithArgumentsAndContext(sname, args, ctxt)
 
-    def open_in_calc(self, filename):
-        """
-        Open a document in calc
-        :param filename: the name of the file to open
-        :return: a reference on the doc
-        """
-        return self.loader.loadComponentFromURL(
-            uno.systemPathToFileUrl(filename), "_blank", 0, ())
 
-    def new_doc(self, t="calc"):
-        """Create a blank new doc"""
-        return self.doc_builder(t).build()
+def uno_service_ctxt(sname, args=None):
+    return uno_service(sname, args, provider.ctxt)
 
-    def doc_builder(self, t="calc"):
-        return DocBuilder(self, t)
 
-    # l is deprecated
-    def read_options_from_sheet_name(self, sheet_name, l=lambda s: s):
-        oSheet = self.doc.Sheets.getByName(sheet_name)
-        oRangeAddress = get_used_range_address(oSheet)
-        return read_options(oSheet, oRangeAddress, l)
+def message_box(msg_text, msg_title, msg_type=MESSAGEBOX,
+                msg_buttons=BUTTONS_OK, parent_win=None):
+    # from https://forum.openoffice.org/fr/forum/viewtopic.php?f=15&t=47603#
+    # (thanks Bernard !)
+    sv = uno_service_ctxt("com.sun.star.awt.Toolkit")
+    if parent_win is None:
+        parent_win = provider.parent_win
+    mb = sv.createMessageBox(parent_win, msg_type, msg_buttons, msg_title,
+                             msg_text)
+    return mb.execute()
 
-    def get_named_cells(self, name):
-        return self.doc.NamedRanges.getByName(name).ReferredCells
 
-    def get_named_cell(self, name):
-        return self.get_named_cells(name).getCellByPosition(0, 0)
+def open_in_calc(filename):
+    """
+    Open a document in calc
+    :param filename: the name of the file to open
+    :return: a reference on the doc
+    """
+    url = uno.systemPathToFileUrl(os.path.realpath(filename))
+    return provider.desktop.loadComponentFromURL(url, "_blank", 0, ())
 
-    def add_filter(self, oDoc, oSheet, range_name):
-        oController = oDoc.CurrentController
-        oAll = oSheet.getCellRangeByName(range_name)
-        oController.select(oAll)
-        oFrame = oController.Frame
-        self.dispatcher.executeDispatch(oFrame, ".uno:DataFilterAutoFilter", "",
+
+def doc_builder(t="calc"):
+    return DocBuilder(t)
+
+
+def new_doc(t="calc"):
+    """Create a blank new doc"""
+    return doc_builder(t).build()
+
+
+def add_filter(oDoc, oSheet, range_name):
+    oController = oDoc.CurrentController
+    oAll = oSheet.getCellRangeByName(range_name)
+    oController.select(oAll)
+    oFrame = oController.Frame
+    provider.dispatcher.executeDispatch(oFrame, ".uno:DataFilterAutoFilter", "",
                                         0, ())
 
-    def set_validation_list_by_name(self, cell_name, fields,
-                                    default_string=None, allow_blank=False):
-        oCell = self.get_named_cell(cell_name)
-        set_validation_list_by_cell(oCell, fields, default_string, allow_blank)
+
+def read_options_from_sheet_name(oDoc, sheet_name, l=lambda s: s):
+    oSheet = oDoc.Sheets.getByName(sheet_name)
+    oRangeAddress = get_used_range_address(oSheet)
+    return read_options(oSheet, oRangeAddress, l)
+
+
+def get_named_cells(oDoc, name):
+    return oDoc.NamedRanges.getByName(name).ReferredCells
+
+
+def get_named_cell(oDoc, name):
+    return get_named_cells(oDoc, name).getCellByPosition(0, 0)
+
+
+def set_validation_list_by_name(oDoc, cell_name, fields,
+                                default_string=None, allow_blank=False):
+    oCell = get_named_cell(oDoc, cell_name)
+    set_validation_list_by_cell(oCell, fields, default_string, allow_blank)
 
 
 class DocBuilder:
-    def __init__(self, helper, t):
+    def __init__(self, t):
         """Create a blank new doc"""
-        self._helper = helper
-        self._oDoc = self._helper.loader.loadComponentFromURL(
+        self._oDoc = provider.desktop.loadComponentFromURL(
             "private:factory/s" + t, "_blank", 0, ())
         self._oDoc.lockControllers()
 
@@ -430,7 +504,7 @@ def get_range_size(oRange):
     """
     Useful for `oRange.getRangeCellByPosition(...)`.
 
-    :param oRange: a SheetCellRange object
+    :param oRange: a SheetCellRange obj
     :return: width and height of the range.
     """
     oAddress = oRange.RangeAddress

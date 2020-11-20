@@ -19,26 +19,28 @@
 # py4lo: entry
 # py4lo: embed script alib.py
 # py4lo: embed lib py4lo_helper
-# py4lo: embed lib py4lo_commons
-# py4lo: embed lib py4lo_io
-from datetime import date, datetime
-
-import uno
-import sys
-import unohelper
-import os
-
+# to add automatically
 import py4lo_helper
-import py4lo_commons
-import py4lo_io
-import example_lib
 
 try:
-    _ = py4lo_helper.Py4LO_helper.create(XSCRIPTCONTEXT)
-    c = py4lo_commons.Commons(XSCRIPTCONTEXT)
-    o = example_lib.O(_)
+    py4lo_helper.init(XSCRIPTCONTEXT)
 except NameError:
     pass
+finally:
+    del py4lo_helper  # does wipe cache, but remove the access.
+# /to add automatically
+# py4lo: embed lib py4lo_commons
+# py4lo: embed lib py4lo_io
+from datetime import datetime
+
+import os
+
+import example_lib
+from py4lo_helper import provider as pr, xray, mri, message_box
+from py4lo_io import (dict_reader, TYPE_ALL, dict_writer, export_to_csv,
+                      import_from_csv)
+
+o = example_lib.O(pr)
 
 
 def message_example(*_args):
@@ -50,17 +52,17 @@ def message_example(*_args):
     """
     from com.sun.star.awt.MessageBoxType import MESSAGEBOX
     from com.sun.star.awt.MessageBoxButtons import BUTTONS_OK
-    _.message_box(_.parent_win,
-                  "A message from main script example.py. Current dir is: " + os.path.abspath(
-                      "."), "py4lo", MESSAGEBOX, BUTTONS_OK)
+    message_box("A message from main script example.py. "
+                "Current dir is: " + os.path.abspath(
+                    "."), "py4lo", MESSAGEBOX, BUTTONS_OK)
 
 
 def xray_example(*_args):
-    _.xray(_.doc)
+    xray(pr.doc)
 
 
 def mri_example(*_args):
-    _.mri(_.doc)
+    mri(pr.doc)
 
 
 def example_from_lib(*_args):
@@ -68,18 +70,18 @@ def example_from_lib(*_args):
 
 
 def reader_example(*_args):
-    r = py4lo_io.dict_reader(_.doc.getCurrentController().getActiveSheet(),
-                             restval="x", restkey="t",
-                             type_cell=py4lo_io.TYPE_ALL)
+    r = dict_reader(pr.controller.getActiveSheet(),
+                    restval="x", restkey="t",
+                    type_cell=TYPE_ALL)
     for row in r:
-        _.xray(r.line_num)
-        _.xray(str(row))
+        xray(r.line_num)
+        xray(str(row))
 
 
 def writer_example(*_args):
-    w = py4lo_io.dict_writer(_.doc.getCurrentController().getActiveSheet(),
-                             ("a", "b", "c", "d", "e"),
-                             type_cell=py4lo_io.TYPE_ALL)
+    w = dict_writer(pr.controller.getActiveSheet(),
+                    ("a", "b", "c", "d", "e"),
+                    type_cell=TYPE_ALL)
     w.writeheader()
     # second row after header raises an exception
     for row in [{"a": "value", "b": 1, "c": True,
@@ -90,9 +92,9 @@ def writer_example(*_args):
 
 
 def export_example(*_args):
-    py4lo_io.export_to_csv(_.doc.getCurrentController().getActiveSheet(),
-                           "./temp.csv")
+    export_to_csv(pr.controller.getActiveSheet(),
+                  "./temp.csv")
 
 
 def import_example(*_args):
-    py4lo_io.import_from_csv(_.desktop, _.doc, "csv sheet", 0, "./temp.csv")
+    import_from_csv(pr.doc, "csv sheet", 0, "./temp.csv")

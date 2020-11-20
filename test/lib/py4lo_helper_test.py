@@ -22,33 +22,38 @@ import tst_env
 import sys, os
 
 from py4lo_helper import *
+import py4lo_helper
+from py4lo_helper import provider, _ObjectProvider, _Inspector
+
 
 class TestHelper(unittest.TestCase):
     def setUp(self):
         self.xsc = Mock()
         self.doc = Mock()
-        self.ctxt = Mock()
         self.ctrl = Mock()
         self.frame = Mock()
         self.parent_win = Mock()
-        self.sm = Mock()
-        self.dsp = Mock()
-        self.mspf = Mock()
         self.msp = Mock()
-        self.reflect = Mock()
-        self.dispatcher = Mock()
-        self.loader = Mock()
-        self.p = Py4LO_helper(self.doc, self.ctxt, self.ctrl, self.frame, self.parent_win, self.sm, self.dsp, self.mspf, self.msp, self.reflect, self.dispatcher, self.loader)
+        self.ctxt = Mock()
+        self.sm = Mock()
+        self.desktop = Mock()
+        py4lo_helper.provider = _ObjectProvider(self.doc, self.ctrl, self.frame,
+                                 self.parent_win, self.msp, self.ctxt, self.sm,
+                                 self.desktop)
+        py4lo_helper._inspect = _Inspector(py4lo_helper.provider)
 
     def testXray(self):
-        self.p.use_xray()
-        self.msp.getScript.assert_called_once_with('vnd.sun.star.script:XrayTool._Main.Xray?language=Basic&location=application')
+        py4lo_helper._inspect.use_xray()
+        self.msp.getScript.assert_called_once_with(
+            'vnd.sun.star.script:XrayTool._Main.Xray?language=Basic&location=application')
 
     def testXray2(self):
-        self.p.xray(1)
-        self.p.xray(2)
-        self.msp.getScript.assert_called_once_with('vnd.sun.star.script:XrayTool._Main.Xray?language=Basic&location=application')
-        self.msp.getScript.return_value.invoke.assert_has_calls([call((1,), (), ()), call((2,), (), ())])
+        py4lo_helper._inspect.xray(1)
+        py4lo_helper._inspect.xray(2)
+        self.msp.getScript.assert_called_once_with(
+            'vnd.sun.star.script:XrayTool._Main.Xray?language=Basic&location=application')
+        self.msp.getScript.return_value.invoke.assert_has_calls(
+            [call((1,), (), ()), call((2,), (), ())])
 
     def testPv(self):
         pv = make_pv("name", "value")
@@ -65,21 +70,24 @@ class TestHelper(unittest.TestCase):
         self.assertEqual("value2", pvs[1].Value)
 
     def testMessageBox(self):
-        self.p.message_box(None, "text", "title")
-        self.sm.createInstanceWithContext.assert_called_once_with("com.sun.star.awt.Toolkit", self.ctxt)
+        message_box(None, "text", "title")
+        self.sm.createInstanceWithContext.assert_called_once_with(
+            "com.sun.star.awt.Toolkit", self.ctxt)
         sv = self.sm.createInstanceWithContext.return_value
         sv.createMessageBox.assert_called_once()
         mb = sv.createMessageBox.return_value
         mb.execute.assert_called_once()
 
     def testUnoService(self):
-        self.p.uno_service_ctxt("x")
-        self.sm.createInstanceWithContext.assert_called_once_with("x", self.ctxt)
+        uno_service_ctxt("x")
+        self.sm.createInstanceWithContext.assert_called_once_with("x",
+                                                                  self.ctxt)
 
-        self.p.uno_service_ctxt("y", [1,2,3])
-        self.sm.createInstanceWithArgumentsAndContext.assert_called_once_with("y", [1,2,3], self.ctxt)
+        uno_service_ctxt("y", [1, 2, 3])
+        self.sm.createInstanceWithArgumentsAndContext.assert_called_once_with(
+            "y", [1, 2, 3], self.ctxt)
 
-        self.p.uno_service("z")
+        uno_service("z")
         self.sm.createInstance.assert_called_once_with("z")
 
     def test_read_options(self):
@@ -94,62 +102,66 @@ class TestHelper(unittest.TestCase):
     def test_set_validation_list(self):
         oCell = Mock()
         try:
-            self.p.set_validation_list_by_cell(oCell, ["a", "b", "c"])
+            py4lo_helper.provider.set_validation_list_by_cell(oCell, ["a", "b", "c"])
         except Exception as e:
             pass
 
     def testDocBuilder(self):
-        d = DocBuilder(self.p, "calc")
+
+        d = DocBuilder("calc")
         d.build()
-        self.p.loader.loadComponentFromURL.assert_called_once_with(
-             "private:factory/scalc", "_blank", 0, ())
-        oDoc = self.p.loader.loadComponentFromURL.return_value
+        py4lo_helper.provider.desktop.loadComponentFromURL.assert_called_once_with(
+            "private:factory/scalc", "_blank", 0, ())
+        oDoc = py4lo_helper.provider.desktop.loadComponentFromURL.return_value
         oDoc.lockControllers.assert_called_once()
         oDoc.unlockControllers.assert_called_once()
 
     def testDocBuilderSheetNames(self):
-        oDoc = self.p.loader.loadComponentFromURL.return_value
-        oDoc.Sheets.getCount.side_effect = [3,3,3,3,3]
+        oDoc = py4lo_helper.provider.desktop.loadComponentFromURL.return_value
+        oDoc.Sheets.getCount.side_effect = [3, 3, 3, 3, 3]
         s1, s2, s3 = MagicMock(), MagicMock(), MagicMock()
         oDoc.Sheets.getByIndex.side_effect = [s1, s2, s3]
 
-        d = DocBuilder(self.p, "calc")
+        d = DocBuilder("calc")
         d.sheet_names("abcdef", expand_if_necessary=True)
         d.build()
-        self.p.loader.loadComponentFromURL.assert_called_once_with(
-             "private:factory/scalc", "_blank", 0, ())
+        py4lo_helper.provider.desktop.loadComponentFromURL.assert_called_once_with(
+            "private:factory/scalc", "_blank", 0, ())
         oDoc.lockControllers.assert_called_once()
         oDoc.Sheets.getCount.assert_called()
 
-        oDoc.Sheets.getByIndex.assert_has_calls([call(0),call(1),call(2)])
+        oDoc.Sheets.getByIndex.assert_has_calls([call(0), call(1), call(2)])
         s1.setName.assert_called_once_with("a")
         s2.setName.assert_called_once_with("b")
         s3.setName.assert_called_once_with("c")
-        oDoc.Sheets.insertNewByName.assert_has_calls([call("d", 3),call("e", 4),call("f", 5)])
+        oDoc.Sheets.insertNewByName.assert_has_calls(
+            [call("d", 3), call("e", 4), call("f", 5)])
 
         oDoc.unlockControllers.assert_called_once()
 
     def testDocBuilderSheetNames2(self):
-        oDoc = self.p.loader.loadComponentFromURL.return_value
-        oDoc.Sheets.getCount.side_effect = [3,3,3,3,3,2]
+        oDoc = py4lo_helper.provider.desktop.loadComponentFromURL.return_value
+        oDoc.Sheets.getCount.side_effect = [3, 3, 3, 3, 3, 2]
         s1, s2, s3 = MagicMock(), MagicMock(), MagicMock()
         oDoc.Sheets.getByIndex.side_effect = [s1, s2, s3, s3]
 
-        d = DocBuilder(self.p, "calc")
+        d = DocBuilder("calc")
         d.sheet_names("ab", trunc_if_necessary=True)
         d.build()
-        self.p.loader.loadComponentFromURL.assert_called_once_with(
-             "private:factory/scalc", "_blank", 0, ())
+        py4lo_helper.provider.desktop.loadComponentFromURL.assert_called_once_with(
+            "private:factory/scalc", "_blank", 0, ())
         oDoc.lockControllers.assert_called_once()
         oDoc.Sheets.getCount.assert_called()
 
-        oDoc.Sheets.getByIndex.assert_has_calls([call(0),call(1),call(2)])
+        oDoc.Sheets.getByIndex.assert_has_calls([call(0), call(1), call(2)])
         s1.setName.assert_called_once_with("a")
         s2.setName.assert_called_once_with("b")
         s3.getName.assert_called_once()
-        oDoc.Sheets.removeByName.assert_called_once_with(s3.getName.return_value)
+        oDoc.Sheets.removeByName.assert_called_once_with(
+            s3.getName.return_value)
 
         oDoc.unlockControllers.assert_called_once()
+
 
 if __name__ == '__main__':
     unittest.main()
