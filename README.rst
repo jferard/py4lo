@@ -67,8 +67,6 @@ Create a simple Python script ``myscript.py`` :
     # -*- coding: utf-8 -*-
     # py4lo: entry
     # py4lo: embed lib py4lo_helper
-    import py4lo_helper
-    py4lo_helper.init(XSCRIPTCONTEXT)
     from py4lo_helper import message_box
 
     def test(*args):
@@ -115,8 +113,6 @@ Edit the Python script ``myscript.py``:
     # -*- coding: utf-8 -*-
     # py4lo: entry
     # py4lo: embed lib py4lo_helper
-    import py4lo_helper
-    py4lo_helper.init(XSCRIPTCONTEXT)
     from py4lo_helper import message_box
 
     def test(*args):
@@ -162,8 +158,6 @@ In ``scriptA.py``:
 
     # py4lo: entry
     # py4lo: embed lib py4lo_helper
-    import py4lo_helper
-    _ = py4lo_helper.Py4LO_helper.create(XSCRIPTCONTEXT)
 
 *Warning* The special object ``XSCRIPTCONTEXT`` of type
 `\`com.sun.star.script.provider.XScriptContext <https://api.libreoffice.org/docs/idl/ref/interfacecom_1_1sun_1_1star_1_1script_1_1provider_1_1XScriptContext.html>`__

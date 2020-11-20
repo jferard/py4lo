@@ -19,16 +19,6 @@
 # py4lo: entry
 # py4lo: embed script alib.py
 # py4lo: embed lib py4lo_helper
-# to add automatically
-import py4lo_helper
-
-try:
-    py4lo_helper.init(XSCRIPTCONTEXT)
-except NameError:
-    pass
-finally:
-    del py4lo_helper  # does wipe cache, but remove the access.
-# /to add automatically
 # py4lo: embed lib py4lo_commons
 # py4lo: embed lib py4lo_io
 from datetime import datetime
