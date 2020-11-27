@@ -92,7 +92,7 @@ class TestCommand(Command):
 
     def _src_paths(self) -> Iterator[Path]:
         for path in self._sources.src_dir.rglob("*.py"):
-            if path.name != "main.py":
+            if path != self._sources.src_dir / "main.py":
                 yield path
 
     def _get_env(self) -> Dict[str, str]:
