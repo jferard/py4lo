@@ -43,6 +43,14 @@ TYPE_ALL = 2
 ##########
 
 def create_read_cell(type_cell=TYPE_MINIMAL, oFormats=None):
+    """
+    Create a function to read a cell
+    @param type_cell: one of `TYPE_NONE` (return the String value),
+                      `TYPE_MINIMAL` (String or Value), `TYPE_ALL` (the most
+                      accurate type)
+    @param oFormats: the container for NumberFormats.
+    @return: a function to read the cell value
+    """
     def read_cell_none(oCell):
         """
         Read a cell value
@@ -103,10 +111,8 @@ def create_read_cell(type_cell=TYPE_MINIMAL, oFormats=None):
 
 class reader:
     """
-    A reader
-
+    A reader that returns rows as lists of values.
     """
-
     def __init__(self, oSheet, type_cell=TYPE_MINIMAL, oFormats=None,
                  read_cell=None):
         if read_cell is not None:
@@ -140,6 +146,9 @@ class reader:
 
 
 class dict_reader:
+    """
+    A reader that returns rows as dicts.
+    """
     def __init__(self, oSheet, fieldnames=None, restkey=None, restval=None,
                  type_cell=TYPE_MINIMAL, oFormats=None, read_cell=None):
         self._reader = reader(oSheet, type_cell, oFormats, read_cell)
@@ -189,6 +198,12 @@ def find_number_format_style(oFormats, format_id, oLocale=Locale()):
 
 
 def create_write_cell(type_cell=TYPE_MINIMAL, oFormats=None):
+    """
+    Create a cell writer
+    @param type_cell: see `create_read_cell`
+    @param oFormats: the NumberFormats
+    @return: a function
+    """
     def write_cell_none(oCell, value):
         """
         Write a cell value
@@ -256,7 +271,7 @@ def create_write_cell(type_cell=TYPE_MINIMAL, oFormats=None):
 
 class writer:
     """
-    A writer
+    A writer that takes lists
     """
 
     def __init__(self, oSheet, type_cell=TYPE_MINIMAL, oFormats=None,
@@ -283,6 +298,9 @@ class writer:
 
 
 class dict_writer:
+    """
+    A writer that takes dicts
+    """
     def __init__(self, oSheet, fieldnames, restval='', extrasaction='raise',
                  type_cell=TYPE_MINIMAL, oFormats=None, write_cell=None):
         self.writer = writer(oSheet, type_cell, oFormats, write_cell)
