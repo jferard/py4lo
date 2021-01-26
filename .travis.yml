@@ -15,7 +15,7 @@ install:
   - pip install --upgrade pip
   - pip install --upgrade setuptools
   - pip install https://files.pythonhosted.org/packages/a2/12/ced7105d2de62fa7c8fb5fce92cc4ce66b57c95fb875e9318dba7f8c5db0/toml-0.10.0-py2.py3-none-any.whl
-  - python3 -c "import uno"
+  - pip install https://files.pythonhosted.org/packages/12/35/443632cfa43f82efd363bc8104b3ae67a887a248c6c6baec34c7b9edbcb5/unotools-0.3.3.tar.gz
   # for coverage
   - pip install --upgrade pytest py codecov pytest-cov
   - pytest --version # pytest-cov
