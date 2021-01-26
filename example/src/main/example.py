@@ -16,16 +16,18 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
+import os
 # py4lo: entry
 # py4lo: embed script alib.py
 # py4lo: embed lib py4lo_helper
 # py4lo: embed lib py4lo_commons
 # py4lo: embed lib py4lo_io
+# py4lo: embed lib py4lo_dialogs
+import time
 from datetime import datetime
 
-import os
-
 import example_lib
+from py4lo_dialogs import ProgressExecutorBuilder
 from py4lo_helper import provider as pr, xray, mri, message_box
 from py4lo_io import (dict_reader, TYPE_ALL, dict_writer, export_to_csv,
                       import_from_csv)
@@ -88,3 +90,15 @@ def export_example(*_args):
 
 def import_example(*_args):
     import_from_csv(pr.doc, "csv sheet", 0, "./temp.csv")
+
+
+def progress_example(*_args):
+    def test(oBar):
+        """The test function"""
+        for i in range(1, 101):
+            time.sleep(0.1)
+            oBar.ProgressValue = i
+
+    executor = ProgressExecutorBuilder().build()
+    executor.execute(test)
+
