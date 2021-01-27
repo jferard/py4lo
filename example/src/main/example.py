@@ -92,13 +92,21 @@ def import_example(*_args):
     import_from_csv(pr.doc, "csv sheet", 0, "./temp.csv")
 
 
-def progress_example(*_args):
-    def test(oBar):
-        """The test function"""
-        for i in range(1, 101):
-            time.sleep(0.1)
-            oBar.ProgressValue = i
+executor = ProgressExecutorBuilder().build()
 
-    executor = ProgressExecutorBuilder().build()
+def progress_example(*_args):
+    def test(progress_handler):
+        """The test function"""
+        progress_handler.message("a message")
+        for i in range(1, 101):
+            time.sleep(0.2)
+            progress_handler.progress(1)
+            if i > 50:
+                progress_handler.message("another message")
+        progress_handler.response = 5
+
     executor.execute(test)
 
+
+def after_progress(*_args):
+    message_box("The return value was: {}".format(executor.response), "Title")
