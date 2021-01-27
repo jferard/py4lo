@@ -27,7 +27,7 @@ import time
 from datetime import datetime
 
 import example_lib
-from py4lo_dialogs import ProgressExecutorBuilder
+from py4lo_dialogs import ProgressExecutorBuilder, ConsoleExecutorBuilder
 from py4lo_helper import provider as pr, xray, mri, message_box
 from py4lo_io import (dict_reader, TYPE_ALL, dict_writer, export_to_csv,
                       import_from_csv)
@@ -92,7 +92,7 @@ def import_example(*_args):
     import_from_csv(pr.doc, "csv sheet", 0, "./temp.csv")
 
 
-executor = ProgressExecutorBuilder().build()
+progress_executor = ProgressExecutorBuilder().build()
 
 def progress_example(*_args):
     def test(progress_handler):
@@ -105,8 +105,22 @@ def progress_example(*_args):
                 progress_handler.message("another message")
         progress_handler.response = 5
 
-    executor.execute(test)
+    progress_executor.execute(test)
 
 
 def after_progress(*_args):
-    message_box("The return value was: {}".format(executor.response), "Title")
+    message_box("The return value was: {}".format(progress_executor.response), "Title")
+
+
+console_executor = ConsoleExecutorBuilder().build()
+
+
+def console_example(*_args):
+    def test(console_handler):
+        """The test function"""
+        console_handler.message("a message")
+        for i in range(1, 15):
+            time.sleep(0.1)
+            console_handler.message("next message: {}".format(i))
+
+    console_executor.execute(test)

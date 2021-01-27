@@ -28,11 +28,11 @@ class TestCommands(unittest.TestCase):
 
     def test(self):
         executor = commands.get("run", ["arg1", "arg2"], self.provider)
-        # print(executor.execute(["arg1", "arg2"]))
+        # print(progress_executor.execute(["arg1", "arg2"]))
 
     def test_non_existing(self):
         executor = commands.get("foo", ["arg1", "arg2"], self.provider)
-        # print(executor.execute([["arg1", "arg2"]]))
+        # print(progress_executor.execute([["arg1", "arg2"]]))
 
     def test_help(self):
         self.assertEqual("""a command = debug | init | test | run | update | help
