@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Py4LO - Python Toolkit For LibreOffice Calc
-      Copyright (C) 2016-2020 J. Férard <https://github.com/jferard>
+      Copyright (C) 2016-2021 J. Férard <https://github.com/jferard>
 
    This file is part of Py4LO.
 
@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 #  Py4LO - Python Toolkit For LibreOffice Calc
-#     Copyright (C) 2016-2020 J. Férard <https://github.com/jferard>
+#     Copyright (C) 2016-2021 J. Férard <https://github.com/jferard>
 #
 #     This file is part of Py4LO.
 #
