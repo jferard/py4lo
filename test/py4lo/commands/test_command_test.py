@@ -40,9 +40,10 @@ class TestCommandTest(unittest.TestCase):
                                             completed_process2,
                                             completed_process3]
         logger = MagicMock()
-        sources = Mock()
+        sources = MagicMock()
         sources.test_dir.rglob.side_effect = [[Path("/test_dir/c_test.py"),
                                        Path("/test_dir/b/d_test.py")]]
+        sources.src_dir.__truediv__.side_effect = [[Path("/src_dir/main.py")]]
         sources.src_dir.rglob.side_effect = [[Path("/src_dir/src_a.py")]]
         tc = TestCommand(logger, "test_py_exe", sources)
         status = tc.execute()
