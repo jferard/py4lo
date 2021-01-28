@@ -99,7 +99,7 @@ def progress_example(*_args):
         """The test function"""
         progress_handler.message("a message")
         for i in range(1, 101):
-            time.sleep(0.2)
+            time.sleep(0.1)
             progress_handler.progress(1)
             if i > 50:
                 progress_handler.message("another message")
