@@ -233,15 +233,45 @@ def message_box(msg_text, msg_title, msg_type=MESSAGEBOX,
                              msg_text)
     return mb.execute()
 
+###
+# Open a document
+###
+NEW_CALC_DOCUMENT = "private:factory/scalc"
+NEW_WRITER_DOCUMENT = "private:factory/swriter"
 
-def open_in_calc(filename):
+# special targets
+TARGET_BLANK = "_blank" # always creates a new frame
+TARGET_DEFAULT = "_default" # special UI functionality (e.g. detecting of already loaded documents, using of empty frames of creating of new top frames as fallback)
+TARGET_SELF = "_self" # means frame himself
+TARGET_PARENT = "_parent" # address direct parent of frame
+TARGET_TOP = "_top" # indicates top frame of current path in tree
+TARGET_BEAMER = "_beamer" # means special sub frame
+
+FRAME_FLAG_AUTO = 0 # no longer supported
+FRAME_FLAG_PARENT = 1 # allows search on the parent frames
+FRAME_FLAG_SELF = 2 # includes the start frame himself
+FRAME_FLAG_CHILDREN = 4 # includes all child frames of the start frame
+FRAME_FLAG_CREATE = 8 # frame will be created if not found
+FRAME_FLAG_SIBLINGS = 16 # includes the direct siblings of the start frame
+FRAME_FLAG_TASKS = 32 # allow the search outside the current sub task tree of the whole possible frame tree
+FRAME_FLAG_ALL = 23 # includes all frames except frames in other tasks sub trees but doesn't create any new frame
+FRAME_FLAG_GLOBAL = 55 # searches in the whole hierarchy of frames but doesn't create any new frame
+
+def open_in_calc(filename, target=TARGET_BLANK, frame_flags=FRAME_FLAG_AUTO, **kwargs):
     """
     Open a document in calc
     :param filename: the name of the file to open
+    :param target: "the name of the frame to view the document in" or a special target
+    :param frame_flags: where to search the frame
+    :param kwargs: les paramètres d'ouverture
     :return: a reference on the doc
     """
     url = uno.systemPathToFileUrl(os.path.realpath(filename))
-    return provider.desktop.loadComponentFromURL(url, "_blank", 0, ())
+    if kwargs:
+        params = make_pvs(kwargs)
+    else:
+        params = ()
+    return provider.desktop.loadComponentFromURL(url, target, frame_flags, params)
 
 
 def doc_builder(t="calc"):
