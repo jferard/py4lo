@@ -49,7 +49,7 @@ class TestRewriteManifest(unittest.TestCase):
 
         RewriteManifest([], []).call(zin, zout,
                                      zin.getinfo("META-INF/manifest.xml"))
-        self.assertEqual("""<?xml version="1.0" ?><manifest:manifest manifest:version="1.2" xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0">
+        self.assertEqual("""<?xml version="1.0" ?><manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.2">
     <manifest:file-entry manifest:full-path="Basic" manifest:media-type="application/binary"/>
     <manifest:file-entry manifest:full-path="Basic/Standard" manifest:media-type="application/binary"/>
     <manifest:file-entry manifest:full-path="Basic/Standard/py4lo.xml" manifest:media-type="text/xml"/>
@@ -67,7 +67,7 @@ class TestRewriteManifest(unittest.TestCase):
             [DestinationAsset(Path("a/asset"), bytes())]).call(zin, zout,
                                                                zin.getinfo(
                                                                    "META-INF/manifest.xml"))
-        self.assertEqual("""<?xml version="1.0" ?><manifest:manifest manifest:version="1.2" xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0">
+        self.assertEqual("""<?xml version="1.0" ?><manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.2">
     <manifest:file-entry manifest:full-path="Basic" manifest:media-type="application/binary"/>
     <manifest:file-entry manifest:full-path="Basic/Standard" manifest:media-type="application/binary"/>
     <manifest:file-entry manifest:full-path="Basic/Standard/py4lo.xml" manifest:media-type="text/xml"/>
