@@ -22,6 +22,7 @@
 """py4lo_helper deals with LO objects."""
 
 import os
+import encodings
 import uno
 
 try:
@@ -190,6 +191,7 @@ class _Inspector:
     def mri(self, obj, fail_on_error=False):
         """
         MRI an object
+        @param fail_on_error:
         @param obj: the object
         """
         if self._ignore_mri:
@@ -233,6 +235,7 @@ def message_box(msg_text, msg_title, msg_type=MESSAGEBOX,
                              msg_text)
     return mb.execute()
 
+
 ###
 # Open a document
 ###
@@ -240,24 +243,26 @@ NEW_CALC_DOCUMENT = "private:factory/scalc"
 NEW_WRITER_DOCUMENT = "private:factory/swriter"
 
 # special targets
-TARGET_BLANK = "_blank" # always creates a new frame
-TARGET_DEFAULT = "_default" # special UI functionality (e.g. detecting of already loaded documents, using of empty frames of creating of new top frames as fallback)
-TARGET_SELF = "_self" # means frame himself
-TARGET_PARENT = "_parent" # address direct parent of frame
-TARGET_TOP = "_top" # indicates top frame of current path in tree
-TARGET_BEAMER = "_beamer" # means special sub frame
+TARGET_BLANK = "_blank"  # always creates a new frame
+TARGET_DEFAULT = "_default"  # special UI functionality (e.g. detecting of already loaded documents, using of empty frames of creating of new top frames as fallback)
+TARGET_SELF = "_self"  # means frame himself
+TARGET_PARENT = "_parent"  # address direct parent of frame
+TARGET_TOP = "_top"  # indicates top frame of current path in tree
+TARGET_BEAMER = "_beamer"  # means special sub frame
 
-FRAME_FLAG_AUTO = 0 # no longer supported
-FRAME_FLAG_PARENT = 1 # allows search on the parent frames
-FRAME_FLAG_SELF = 2 # includes the start frame himself
-FRAME_FLAG_CHILDREN = 4 # includes all child frames of the start frame
-FRAME_FLAG_CREATE = 8 # frame will be created if not found
-FRAME_FLAG_SIBLINGS = 16 # includes the direct siblings of the start frame
-FRAME_FLAG_TASKS = 32 # allow the search outside the current sub task tree of the whole possible frame tree
-FRAME_FLAG_ALL = 23 # includes all frames except frames in other tasks sub trees but doesn't create any new frame
-FRAME_FLAG_GLOBAL = 55 # searches in the whole hierarchy of frames but doesn't create any new frame
+FRAME_FLAG_AUTO = 0  # no longer supported
+FRAME_FLAG_PARENT = 1  # allows search on the parent frames
+FRAME_FLAG_SELF = 2  # includes the start frame himself
+FRAME_FLAG_CHILDREN = 4  # includes all child frames of the start frame
+FRAME_FLAG_CREATE = 8  # frame will be created if not found
+FRAME_FLAG_SIBLINGS = 16  # includes the direct siblings of the start frame
+FRAME_FLAG_TASKS = 32  # allow the search outside the current sub task tree of the whole possible frame tree
+FRAME_FLAG_ALL = 23  # includes all frames except frames in other tasks sub trees but doesn't create any new frame
+FRAME_FLAG_GLOBAL = 55  # searches in the whole hierarchy of frames but doesn't create any new frame
 
-def open_in_calc(filename, target=TARGET_BLANK, frame_flags=FRAME_FLAG_AUTO, **kwargs):
+
+def open_in_calc(filename, target=TARGET_BLANK, frame_flags=FRAME_FLAG_AUTO,
+                 **kwargs):
     """
     Open a document in calc
     :param filename: the name of the file to open
@@ -271,9 +276,217 @@ def open_in_calc(filename, target=TARGET_BLANK, frame_flags=FRAME_FLAG_AUTO, **k
         params = make_pvs(kwargs)
     else:
         params = ()
-    return provider.desktop.loadComponentFromURL(url, target, frame_flags, params)
+    return provider.desktop.loadComponentFromURL(url, target, frame_flags,
+                                                 params)
 
 
+###
+# Filters
+###
+FILTER_XML = "StarOffice XML (Calc)"  # Standard XML filter
+FILTER_XML_TEMPLATE = "calc_StarOffice_XML_Calc_Template"  # XML filter for templates
+FILTER_STARCALC_5 = "StarCalc 5.0"  # The binary format of StarOffice Calc 5.x
+FILTER_STARCALC_5_TEMPLATE = "StarCalc 5.0 Vorlage/Template"  # StarOffice Calc 5.x templates
+FILTER_STARCALC_4 = "StarCalc 4.0"  # The binary format of StarCalc 4.x
+FILTER_STARCALC_4_TEMPLATE = "StarCalc 4.0 Vorlage/Template"  # StarCalc 4.x templates
+FILTER_STARCALC_3 = "StarCalc 3.0"  # The binary format of StarCalc 3.x
+FILTER_STARCALC_3_TEMPLATE = "StarCalc 3.0 Vorlage/Template"  # StarCalc 3.x templates
+FILTER_HTML = "HTML (StarCalc)"  # HTML filter
+FILTER_HTML_WEBQUERY = "calc_HTML_WebQuery"  # HTML filter for external data queries
+FILTER_EXCEL_97 = "MS Excel 97"  # Microsoft Excel 97/2000/XP
+FILTER_EXCEL_97_TEMPLATE = "MS Excel 97 Vorlage/Template"  # Microsoft Excel 97/2000/XP templates
+FILTER_EXCEL_95 = "MS Excel 95"  # Microsoft Excel 5.0/95
+FILTER_EXCEL_95_TEMPLATE = "MS Excel 95 Vorlage/Template"  # Microsoft Excel 5.0/95 templates
+FILTER_EXCEL_2_3_4 = "MS Excel 4.0"  # Microsoft Excel 2.1/3.0/4.0
+FILTER_EXCEL_2_3_4_TEMPLATE = "MS Excel 4.0 Vorlage/Template"  # Microsoft Excel 2.1/3.0/4.0 templates
+FILTER_LOTUS = "Lotus"  # Lotus 1-2-3
+FILTER_CSV = "Text - txt - csv (StarCalc)"  # Comma separated values
+FILTER_RTF = "Rich Text Format (StarCalc)"  #
+FILTER_DBASE = "dBase"  # dBase
+FILTER_SYLK = "SYLK"  # Symbolic Link
+FILTER_DIF = "DIF"  # Data Interchange Format
+
+INDEX_BY_ENCODING = {"unknown": 0,
+                     "cp1252": 1,
+                     "mac_roman": 2,
+                     "cp437": 3,
+                     "cp850": 4,
+                     "cp860": 5,
+                     "cp861": 6,
+                     "cp863": 7,
+                     "cp865": 8,
+                     "default": 9,
+                     "cp1038": 10,
+                     "ascii": 11,
+                     "latin_1": 12,
+                     "iso8859_2": 13,
+                     "iso8859_3": 14,
+                     "iso8859_4": 15,
+                     "iso8859_5": 16,
+                     "iso8859_6": 17,
+                     "iso8859_7": 18,
+                     "iso8859_8": 19,
+                     "iso8859_9": 20,
+                     "iso8859_14": 21,
+                     "iso8859_15": 22,
+                     "cp737": 23,
+                     "cp775": 24,
+                     "cp852": 25,
+                     "cp855": 26,
+                     "cp857": 27,
+                     "cp862": 28,
+                     "cp864": 29,
+                     "cp866": 30,
+                     "cp869": 31,
+                     "cp874": 32,
+                     "cp1250": 33,
+                     "cp1251": 34,
+                     "cp1253": 35,
+                     "cp1254": 36,
+                     "cp1255": 37,
+                     "cp1256": 38,
+                     "cp1257": 39,
+                     "cp1258": 40,
+                     "mac_arabic": 41,
+                     "mac-ce": 42,
+                     "mac_croatian": 43,
+                     "mac_cyrillic": 44,
+                     "mac_devanagari": 45,
+                     "mac_farsi": 46,
+                     "mac_greek": 47,
+                     "mac_gujarati": 48,
+                     "mac_gurmukhi": 49,
+                     "mac_hebrew": 50,
+                     "mac_iceland": 51,
+                     "mac_latin2": 52,
+                     "mac_thai": 53,
+                     "mac_turkish": 54,
+                     "mac_ukrainian": 55,
+                     "mac_chinesesimp": 56,
+                     "mac_": 57,
+                     "mac_japanese": 58,
+                     "mac_korean": 59,
+                     "cp932": 60,
+                     "cp936": 61,
+                     "cp949": 62,
+                     "cp950": 63,
+                     "shift_jis": 64,
+                     "gb2312": 65,
+                     "gb12345": 66,
+                     "gbk": 67,
+                     "big5": 68,
+                     "euc_jp": 69,
+                     "g2312": 70,
+                     "euc_tw": 71,
+                     "iso2022_jp": 72,
+                     "is_2022": 73,
+                     "koi8_r": 74,
+                     "utf_7": 75,
+                     "utf_8": 76,
+                     "iso8859_10": 77,
+                     "iso8859_13": 78,
+                     "euc_kr": 79,
+                     "iso2022_kr": 80,
+                     "jis_x0201": 81,
+                     "jis_x0208": 82,
+                     "jis_x0212": 83,
+                     "johab": 84,
+                     "gb18030": 85,
+                     "big5hkscs": 86,
+                     "tis_620": 87,
+                     "koi8_u": 88,
+                     "iscii": 89,
+                     "java_utf_8": 90,
+                     "cp1276": 91,
+                     "adobe_symbol": 92,
+                     "ptcp154": 93,
+                     "utf_32": 65534,
+                     "utf_16": 65535}
+
+FORMAT_STANDARD = 1  # Standard
+FORMAT_TEXT = 2  # Text
+FORMAT_MM_DD_YY = 3  # MM/DD/YY
+FORMAT_DD_MM_YY = 4  # DD/MM/YY
+FORMAT_YY_MM_DD = 5  # YY/MM/DD
+FORMAT_IGNORE = 9  # IGNORE FIELD (do not import)
+FORMAT_US = 10  # US-English
+
+
+def import_filter_options(delimiter=",", quotechar='"', encoding="utf-8",
+                          first_line=1, format_by_idx=None,
+                          quoted_field_as_text=False,
+                          detect_special_numbers=False):
+    """
+    See: https://wiki.openoffice.org/wiki/Documentation/DevGuide/Spreadsheets/Filter_Options
+    @param delimiter: the delimiter
+    @param quotechar: the quotechar
+    @param encoding: the encoding
+    @param first_line: the first line
+    @param format_by_idx: a mapping field index (starting at 1) -> field format
+    @param quoted_field_as_text: see checkbox
+    @param detect_special_numbers: see checkbox
+    @return: a CSV filter options string
+    """
+    options = _base_filter_options(
+        delimiter, quotechar, encoding, first_line, format_by_idx
+    ) + ["", str(quoted_field_as_text).lower(),
+         str(detect_special_numbers).lower()]
+    return ",".join(options)
+
+
+def export_filter_options(delimiter=",", quotechar='"', encoding="utf-8",
+                          first_line=1, format_by_idx=None,
+                          quote_all_text_cells=False,
+                          store_as_numbers=True,
+                          save_cell_contents_as_shown=True):
+    """
+    See: https://wiki.openoffice.org/wiki/Documentation/DevGuide/Spreadsheets/Filter_Options
+    @param delimiter: the delimiter
+    @param quotechar: the quotechar
+    @param encoding: the encoding
+    @param first_line: the first line
+    @param format_by_idx: a mapping field index (starting at 1) -> field format
+    @param quote_all_text_cells: see checkbox
+    @param store_as_numbers: if false, quote numbers (?)
+    @param save_cell_contents_as_shown: see checkbox
+    @return: a CSV filter options string
+    """
+    options = _base_filter_options(
+        delimiter, quotechar, encoding, first_line, format_by_idx
+    ) + ["", str(quote_all_text_cells).lower(), str(store_as_numbers).lower(),
+         str(save_cell_contents_as_shown).lower()]
+    return ",".join(options)
+
+
+def _base_filter_options(delimiter, quotechar, encoding, first_line,
+                         format_by_idx):
+    """
+    See: https://wiki.openoffice.org/wiki/Documentation/DevGuide/Spreadsheets/Filter_Options
+    @param delimiter: the delimiter
+    @param quotechar: the quotechar
+    @param encoding: the encoding
+    @param first_line: the first line
+    @param format_by_idx: a mapping field index (starting at 1) -> field format
+    @return: a list of options
+    """
+    norm_encoding = encodings.normalize_encoding(encoding)
+    norm_encoding = encodings.aliases.aliases.get(
+        norm_encoding.lower(), norm_encoding)
+    encoding_index = INDEX_BY_ENCODING.get(norm_encoding, 0)
+
+    if format_by_idx is None:
+        field_formats = ""
+    else:
+        field_formats = "/".join(["{}/{}".format(idx, format)
+                                  for idx, format in format_by_idx.items()])
+
+    return [str(ord(delimiter)), str(ord(quotechar)), str(encoding_index),
+            str(first_line),
+            field_formats]
+
+
+# Create a document
+###
 def doc_builder(t="calc"):
     return DocBuilder(t)
 

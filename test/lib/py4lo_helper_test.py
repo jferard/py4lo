@@ -38,8 +38,9 @@ class TestHelper(unittest.TestCase):
         self.sm = Mock()
         self.desktop = Mock()
         py4lo_helper.provider = _ObjectProvider(self.doc, self.ctrl, self.frame,
-                                 self.parent_win, self.msp, self.ctxt, self.sm,
-                                 self.desktop)
+                                                self.parent_win, self.msp,
+                                                self.ctxt, self.sm,
+                                                self.desktop)
         py4lo_helper._inspect = _Inspector(py4lo_helper.provider)
 
     def testXray(self):
@@ -102,7 +103,8 @@ class TestHelper(unittest.TestCase):
     def test_set_validation_list(self):
         oCell = Mock()
         try:
-            py4lo_helper.provider.set_validation_list_by_cell(oCell, ["a", "b", "c"])
+            py4lo_helper.provider.set_validation_list_by_cell(oCell,
+                                                              ["a", "b", "c"])
         except Exception as e:
             pass
 
@@ -161,6 +163,17 @@ class TestHelper(unittest.TestCase):
             s3.getName.return_value)
 
         oDoc.unlockControllers.assert_called_once()
+
+    def test_empty_import_options(self):
+        self.assertEqual('44,34,76,1,,,false,false', import_filter_options())
+
+    def test_import_options(self):
+        self.assertEqual('44,34,76,1,1/2,,false,false',
+                         import_filter_options(format_by_idx={1: FORMAT_TEXT}))
+
+    def test_empty_export_options(self):
+        self.assertEqual('44,34,76,1,,,false,true,true',
+                         export_filter_options())
 
 
 if __name__ == '__main__':
