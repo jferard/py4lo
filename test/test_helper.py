@@ -66,5 +66,42 @@ def file_path_error_mock(**kwargs):
 
 def verify_open_path(tc: unittest.TestCase, s: Path, *args, **kwargs):
     tc.assertTrue(
-        all(x in s.mock_calls for x in [call.open(*args, **kwargs), call.open().__enter__(),
-         call.open().__exit__(None, None, None)]))
+        all(x in s.mock_calls for x in
+            [call.open(*args, **kwargs), call.open().__enter__(),
+             call.open().__exit__(None, None, None)]))
+
+
+def compare_xml_strings(s1, s2):
+    """
+    >>> compare_xml_strings('<root a="1" b="2">A</root>', '<root b="2" a="1">A</root>')
+
+    @param s1:
+    @param s2:
+    @return:
+    """
+    import xml.etree.ElementTree as ET
+    dom1 = ET.fromstring(s1)
+    dom2 = ET.fromstring(s2)
+    stack = [(dom1, dom2)]
+    while stack:
+        dom1, dom2 = stack.pop()
+        if dom1.tag != dom2.tag:
+            return False
+        if dom1.attrib != dom2.attrib:
+            return False
+        if dom1.text != dom2.text:
+            return False
+        c1s = dom1.getchildren()
+        c2s = dom2.getchildren()
+        if len(c1s) != len(c2s):
+            return False
+        for c1, c2 in zip(c1s, c2s):
+            stack.append((c1, c2))
+
+    return True
+
+
+if __name__ == "__main__":
+    import doctest
+
+    doctest.testmod()

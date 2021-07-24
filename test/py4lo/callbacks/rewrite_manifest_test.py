@@ -25,6 +25,8 @@ from callbacks import *
 from core.asset import DestinationAsset
 from core.script import DestinationScript
 
+from tst_env import *
+
 
 class TestRewriteManifest(unittest.TestCase):
     def setUp(self):
@@ -49,13 +51,13 @@ class TestRewriteManifest(unittest.TestCase):
 
         RewriteManifest([], []).call(zin, zout,
                                      zin.getinfo("META-INF/manifest.xml"))
-        self.assertEqual("""<?xml version="1.0" ?><manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.2">
+        self.assertTrue(compare_xml_strings("""<?xml version="1.0" ?><manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.2">
     <manifest:file-entry manifest:full-path="Basic" manifest:media-type="application/binary"/>
     <manifest:file-entry manifest:full-path="Basic/Standard" manifest:media-type="application/binary"/>
     <manifest:file-entry manifest:full-path="Basic/Standard/py4lo.xml" manifest:media-type="text/xml"/>
     <manifest:file-entry manifest:full-path="Basic/Standard/script-lb.xml" manifest:media-type="text/xml"/>
     <manifest:file-entry manifest:full-path="Basic/script-lc.xml" manifest:media-type="text/xml"/>
-</manifest:manifest>""", zout.read("META-INF/manifest.xml").decode("utf-8"))
+</manifest:manifest>""", zout.read("META-INF/manifest.xml").decode("utf-8")))
 
     def test_rewrite_manifest_one_script(self):
         zin = zipfile.ZipFile(self._temp, 'r')
