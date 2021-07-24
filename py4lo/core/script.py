@@ -7,6 +7,7 @@ from typing import List, Optional
 class SourceScript:
     script_path: Path
     source_dir: Path
+    export_funcs: bool
 
     @property
     def relative_path(self):

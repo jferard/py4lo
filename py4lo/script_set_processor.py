@@ -67,10 +67,8 @@ class ScriptSetProcessor:
         self._visited.add(next_script)
 
     def _process_script(self, source_script: SourceScript):
-        directive_processor = DirectiveProcessor.create(self,
-                                                        self._directive_provider,
-                                                        self._python_version,
-                                                        source_script)
+        directive_processor = DirectiveProcessor.create(
+            self, self._directive_provider, self._python_version, source_script)
         script_processor = ScriptProcessor(self._logger, directive_processor,
                                            source_script,
                                            self._target_dir)
@@ -92,19 +90,15 @@ class ScriptSetProcessor:
         self._cur_source_scripts.append(source_script)
 
     def add_script(self, script: TempScript):
+        """Add but do not process this script"""
         self._write_script(script)
         self._scripts.append(script)
-
-    def get_exported_func_names_by_script_name(self) -> Dict[str, List[str]]:
-        """Return a dict: script name -> exported functions"""
-        return {script.dest_name: script.exported_func_names for script
-                in self._scripts}
 
     def _write_script(self, script: TempScript):
         self._ensure_dir_exists(script)
         self._logger.debug("Writing temp script: %s (%s)",
-                         script.relative_path,
-                         script.script_path)
+                           script.relative_path,
+                           script.script_path)
         with script.script_path.open('wb') as f:
             f.write(script.script_content)
 
@@ -127,24 +121,25 @@ class ScriptProcessor:
 
     def parse_script(self) -> TempScript:
         self._logger.debug("Parsing script: %s (%s)",
-                         self._source_script.relative_path,
-                         self._source_script.script_path)
+                           self._source_script.relative_path,
+                           self._source_script)
         exception = self._get_exception()
         parser = _ContentParser(self._logger, self._directive_processor,
                                 self._source_script.script_path)
-        parsed_content = parser.parse()
+        parsed_content = parser.parse(self._source_script.export_funcs)
         target_path = self._target_dir.joinpath(
             self._source_script.relative_path)
         script = TempScript(target_path, parsed_content.text.encode("utf-8"),
                             self._target_dir,
                             parsed_content.exported_func_names, exception)
         self._logger.debug("Temp output script is: %s (%s)",
-                         script.script_path, script.exported_func_names)
+                           script.script_path, script.exported_func_names)
         return script
 
     def _get_exception(self) -> Optional[Exception]:
         try:
-            py_compile.compile(self._source_script.script_path, doraise=True)
+            py_compile.compile(str(self._source_script.script_path),
+                               doraise=True)
         except Exception as e:
             return e
         else:
@@ -166,7 +161,7 @@ class _ContentParser:
         self._exported_func_names = []
         self._lines = ["# parsed by py4lo (https://github.com/jferard/py4lo)"]
 
-    def parse(self) -> ParsedScriptContent:
+    def parse(self, export_funcs: bool) -> ParsedScriptContent:
         if self._script:
             return self._script
 
@@ -174,9 +169,12 @@ class _ContentParser:
             self._process_lines(f)
 
         self._directive_processor.end()
-        self._add_exported_func_names()
-        return ParsedScriptContent("\n".join(self._lines),
-                                   self._exported_func_names)
+        if export_funcs:
+            exported_func_names = self._exported_func_names
+            self._add_exported_func_names()
+        else:
+            exported_func_names = []
+        return ParsedScriptContent("\n".join(self._lines), exported_func_names)
 
     def _process_lines(self, f):
         line = None

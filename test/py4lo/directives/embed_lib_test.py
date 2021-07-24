@@ -35,7 +35,7 @@ class TestEmbedLib(unittest.TestCase):
         proc = Mock()
         self.assertEqual(True, self._directive.execute(proc, None, ["a"]))
         self.assertEqual([call.append_script(
-            SourceScript(Path('LIB/a.py'), Path("LIB")))],
+            SourceScript(Path('LIB/a.py'), Path("LIB"), False))],
             proc.mock_calls)
 
         if __name__ == '__main__':

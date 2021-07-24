@@ -37,12 +37,12 @@ class TestDirectiveProcessor(unittest.TestCase):
                                       self._directive_provider)
 
     def test_create(self):
-        script = SourceScript(Path("ok"), Path("."))
+        script = SourceScript(Path("ok"), Path("."), True)
         dp = DirectiveProcessor.create(self._scripts_processor,
                                        self._directive_provider, "3.6", script)
 
     def test_append_script(self):
-        script = SourceScript(Path("ok"), Path("."))
+        script = SourceScript(Path("ok"), Path("."), True)
         self._dp.append_script(script)
 
         self.assertEqual([], self._scripts_path.mock_calls)

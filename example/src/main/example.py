@@ -92,9 +92,14 @@ def import_example(*_args):
     import_from_csv(pr.doc, "csv sheet", 0, "./temp.csv")
 
 
-progress_executor = ProgressExecutorBuilder().build()
+progress_executor = None
+
 
 def progress_example(*_args):
+    global progress_executor
+    if progress_executor is None:
+        progress_executor = ProgressExecutorBuilder().build()
+
     def test(progress_handler):
         """The test function"""
         progress_handler.message("a message")
@@ -112,10 +117,14 @@ def after_progress(*_args):
     message_box("The return value was: {}".format(progress_executor.response), "Title")
 
 
-console_executor = ConsoleExecutorBuilder().build()
+console_executor = None
 
 
 def console_example(*_args):
+    global console_executor
+    if console_executor is None:
+        console_executor = ConsoleExecutorBuilder().build()
+
     def test(console_handler):
         """The test function"""
         console_handler.message("a message")

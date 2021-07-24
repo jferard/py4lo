@@ -55,7 +55,8 @@ class TestSourcesDests(unittest.TestCase):
         gp_mock.return_value = [Path("c")]
 
         self.assertEqual(
-            [SourceScript(script_path=Path('c'), source_dir=Path('src'))],
+            [SourceScript(script_path=Path('c'), source_dir=Path('src'),
+                          export_funcs=True)],
             self._sources.get_src_scripts())
         self.assertEqual([call(Path('src'), [], '*.py')], gp_mock.mock_calls)
 

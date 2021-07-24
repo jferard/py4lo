@@ -39,7 +39,7 @@ class TestScriptParser(unittest.TestCase):
         self.assertEqual(
             ParsedScriptContent(
                 '# parsed by py4lo (https://github.com/jferard/py4lo)\nsome line',
-                []), sp.parse())
+                []), sp.parse(True))
 
         self.assertEqual([], self._logger.mock_calls)
         self.assertEqual([call.ignore_lines(), call.end()], self._dp.mock_calls)
@@ -55,7 +55,7 @@ class TestScriptParser(unittest.TestCase):
         sp = script_set_processor._ContentParser(self._logger, self._dp, path)
         self.assertEqual(ParsedScriptContent(
             '# parsed by py4lo (https://github.com/jferard/py4lo)\n### py4lo ignore: some line',
-            []), sp.parse())
+            []), sp.parse(True))
 
         self.assertEqual([], self._logger.mock_calls)
         self.assertEqual([call.ignore_lines(), call.end()], self._dp.mock_calls)
@@ -68,7 +68,7 @@ class TestScriptParser(unittest.TestCase):
         sp = script_set_processor._ContentParser(self._logger, self._dp, path)
         self.assertEqual(ParsedScriptContent(
             '# parsed by py4lo (https://github.com/jferard/py4lo)\nline1\nline2',
-            []), sp.parse())
+            []), sp.parse(True))
 
         self.assertEqual([], self._logger.mock_calls)
         self.assertEqual([call.process_line('#some line'), call.end()],
@@ -84,7 +84,7 @@ class TestScriptParser(unittest.TestCase):
 def f(x): return x
 
 
-g_exportedScripts = (f,)""", ["f"]), sp.parse())
+g_exportedScripts = (f,)""", ["f"]), sp.parse(True))
         self.verify_open(path)
 
     def test_one_public_function(self):
@@ -97,5 +97,5 @@ def f(x):
     return x
 
 
-g_exportedScripts = (f,)""", ["f"]), sp.parse())
+g_exportedScripts = (f,)""", ["f"]), sp.parse(True))
         self.verify_open(path)

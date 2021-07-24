@@ -1,3 +1,5 @@
 toml==0.10.0
 pytest==3.7.0
-# unotools==0.3.3
+pytest-cov==2.9.0
+wheel==0.36.2
+unotools==0.3.3

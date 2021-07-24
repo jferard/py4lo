@@ -32,7 +32,8 @@ class TestScriptsProcessor(unittest.TestCase):
         dp: DirectiveProcessor = Mock()
         source_script: SourceScript = Mock(relative_path="fname",
                                            script_path=file_path_mock(
-                                               io.StringIO("some line")))
+                                               io.StringIO("some line")),
+                                           export_funcs=True)
         target_dir: Path = Mock()
         target_dir.joinpath.side_effect = [Path('t')]
 
@@ -41,7 +42,7 @@ class TestScriptsProcessor(unittest.TestCase):
 
         self.assertEqual(
             [call.debug('Parsing script: %s (%s)', 'fname',
-                        source_script.script_path),
+                        source_script),
              call.debug('Temp output script is: %s (%s)', Path('t'), [])],
             logger.mock_calls)
         self.assertEqual([call.ignore_lines(), call.end()], dp.mock_calls)

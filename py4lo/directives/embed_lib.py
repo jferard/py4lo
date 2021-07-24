@@ -39,7 +39,7 @@ class EmbedLib(Directive):
         script_ref = args[0]
         # TODO : sript_ref might be a dir (script_ref/__init__.py)
         script_path = self._lib_dir.joinpath(script_ref + ".py")
-        processor.append_script(SourceScript(script_path, self._lib_dir))
+        processor.append_script(SourceScript(script_path, self._lib_dir, False))
 
         if script_ref == "py4lo_helper":
             line_processor.append(

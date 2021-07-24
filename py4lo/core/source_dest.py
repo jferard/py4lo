@@ -53,7 +53,7 @@ class Sources:
 
     def get_src_scripts(self) -> List[SourceScript]:
         script_paths = self.get_src_paths()
-        return [SourceScript(sp, self.src_dir) for sp in script_paths]
+        return [SourceScript(sp, self.src_dir, True) for sp in script_paths]
 
 
 @dataclass

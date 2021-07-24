@@ -56,12 +56,12 @@ class TestScriptSetProcessor(unittest.TestCase):
         self.assertEqual([
             call.debug('Scripts to process: %s', [script]),
             call.debug('Parsing script: %s (%s)', Path("rel source"),
-                       source_path),
+                       script),
             call.debug('Temp output script is: %s (%s)', target_path, []),
             call.debug('Writing temp script: %s (%s)', Path('rel target'),
                        target_path),
         ], logger.mock_calls)
-        self.assertEqual([call(source_path, doraise=True)],
+        self.assertEqual([call(str(source_path), doraise=True)],
                          mock_compile.mock_calls)
         self.assertEqual(
             b'# parsed by py4lo (https://github.com/jferard/py4lo)\nsome line',
