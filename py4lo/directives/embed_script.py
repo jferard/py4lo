@@ -30,7 +30,7 @@ class EmbedScript(Directive):
     """
 
     @staticmethod
-    def sig_elements():
+    def sig_elements() -> List[str]:
         return ["embed", "script"]
 
     def __init__(self, opt_dir: Path):

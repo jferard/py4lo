@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 from pathlib import Path
-from typing import Set
+from typing import Set, List
 
 from directives.directive import Directive
 from directives.include import Include
@@ -40,7 +40,7 @@ class Entry(Directive):
     """
 
     @staticmethod
-    def sig_elements():
+    def sig_elements() -> List[str]:
         return ["entry"]
 
     def __init__(self, inc_dir: Path, module_names: Set[str]):

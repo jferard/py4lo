@@ -30,7 +30,7 @@ class Include(Directive):
     """
 
     @staticmethod
-    def sig_elements():
+    def sig_elements() -> List[str]:
         return ["include"]
 
     def __init__(self, inc_dir: Path):

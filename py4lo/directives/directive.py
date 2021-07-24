@@ -23,8 +23,11 @@ from typing import List
 class Directive(ABC):
     @abstractmethod
     def execute(self, processor: "DirectiveProcessor", line_processor: "DirectiveLineProcessor", args: List[str]):
+        """Execute the directive. May append a script to process"""
         pass
 
+    @staticmethod
     @abstractmethod
-    def sig_elements(self):
+    def sig_elements() -> List[str]:
+        """List of tokens that identify the directive"""
         pass
