@@ -244,24 +244,26 @@ class ConsoleExecutorBuilder:
         _set_rectangle(self._oTextModel, Rectangle(MARGIN, MARGIN,
                                                    self._console_rectangle.w - MARGIN * 2,
                                                    self._console_rectangle.h - MARGIN * 2))
-        return ConsoleExecutor(self._oDialog, self._autoclose, self._oDialog.getControl("text"))
+        return ConsoleExecutor(self._oDialog, self._autoclose,
+                               self._oDialog.getControl("text"))
 
 
 class ConsoleHandler:
     def __init__(self, oText):
         self._oText = oText
         self.response = None
-        self.response = None
+        self._cur_pos = 0
         self._selection = uno.createUnoStruct('com.sun.star.awt.Selection')
-        self._selection.Min = 100000000
-        self._selection.Max = 100000000
 
     def message(self, text):
         """
         Add a message to the console
         @param text: the text of the message
         """
+        self._selection.Min = self._cur_pos
+        self._selection.Max = self._cur_pos
         self._oText.insertText(self._selection, text + "\n")
+        self._cur_pos += len(text) + 1
 
 
 class ConsoleExecutor:
