@@ -36,18 +36,23 @@ class _DirectiveProviderFactory:
         self._directives = directives
         self._directives_tree = {}
 
-    def create_provider(self):
+    def create_provider(self) -> "DirectiveProvider":
+        """
+        Create a new provider. Build the tree (embed lib & embed script ->
+        embed -> (lib, script))
+        @return: the provider
+        """
         for directive in self._directives:
             sig_elements = directive.sig_elements()
             assert len(sig_elements)
 
-            self._put_directive_class(sig_elements, directive)
+            self._insert_directive_class(sig_elements, directive)
 
         self._logger.debug("Directives tree: %s", self._directives_tree)
         return DirectiveProvider(self._logger, self._directives_tree)
 
-    def _put_directive_class(self, sig_elements: List[str],
-                             directive: Directive):
+    def _insert_directive_class(self, sig_elements: List[str],
+                                directive: Directive):
         cur_directives_tree = self._directives_tree
         for fst in sig_elements:
             if fst not in cur_directives_tree:
@@ -61,6 +66,10 @@ T = Dict[str, Union["T", Directive]]
 
 
 class DirectiveProvider:
+    """
+    Takes a full directive line (as shlex args) and splits between the
+    directive id and the args. Then return the directive and the args.
+    """
     @staticmethod
     def create(logger: Logger, sources: Sources):
         return _DirectiveProviderFactory(logger,
@@ -78,6 +87,7 @@ class DirectiveProvider:
     def get(self, args: List[str]) -> (Directive, List[str]):
         """
         args are the shlex result
+        @return the directive + the list of args.
         """
         self._logger.debug("Lookup directive: %s", args)
         cur_directives_tree = self._directives_tree
