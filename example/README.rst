@@ -26,4 +26,12 @@ Type in your command line interface:
 
 Open the py4lo-debug.ods file.
 
-It will update the ods file, run the tests and launch LibreOffice.
+Or:
+
+.. code-block:: bash
+
+    > python ../py4lo debug && libreoffice py4lo-debug.ods
+
+All functions defined in example.py are available. This provides a base
+document: move buttons, add styles, etc. (You might also find that some
+functions are interesting.)

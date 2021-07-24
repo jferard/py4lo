@@ -44,7 +44,7 @@ def message_example(*_args):
     """
     message_box("A message from main script example.py. "
                 "Current dir is: {}".format(os.path.abspath(
-                    ".")))
+                    ".")), "py4lo")
 
 
 def xray_example(*_args):
@@ -59,26 +59,24 @@ def example_from_lib(*_args):
     o.lib_example()
 
 
-def reader_example(*_args):
-    r = dict_reader(pr.controller.getActiveSheet(),
-                    restval="x", restkey="t",
-                    type_cell=TYPE_ALL)
-    for row in r:
-        xray(r.line_num)
-        xray(str(row))
-
-
 def writer_example(*_args):
     w = dict_writer(pr.controller.getActiveSheet(),
                     ("a", "b", "c", "d", "e"),
                     type_cell=TYPE_ALL)
     w.writeheader()
-    # second row after header raises an exception
     for row in [{"a": "value", "b": 1, "c": True,
                  "d": datetime(2020, 11, 21, 12, 36, 50)},
                 {"a": "other value", "b": 2, "c": False,
-                 "f": datetime(2020, 11, 21, 12, 36, 50)}]:
+                 "d": datetime(2020, 11, 21, 12, 36, 50)}]:
         w.writerow(row)
+
+
+def reader_example(*_args):
+    r = dict_reader(pr.controller.getActiveSheet(),
+                    restval="x", restkey="t",
+                    type_cell=TYPE_ALL)
+    for row in r:
+        message_box("{}: {}".format(r.line_num, row), "py4lo")
 
 
 def export_example(*_args):
