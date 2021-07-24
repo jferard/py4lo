@@ -42,11 +42,9 @@ def message_example(*_args):
     True
 
     """
-    from com.sun.star.awt.MessageBoxType import MESSAGEBOX
-    from com.sun.star.awt.MessageBoxButtons import BUTTONS_OK
     message_box("A message from main script example.py. "
-                "Current dir is: " + os.path.abspath(
-                    "."), "py4lo", MESSAGEBOX, BUTTONS_OK)
+                "Current dir is: {}".format(os.path.abspath(
+                    ".")))
 
 
 def xray_example(*_args):

@@ -38,6 +38,7 @@ import unohelper
 import os
 
 from alib import TEXT
+from py4lo_helper import message_box
 
 
 class O(unohelper.Base):
@@ -45,9 +46,5 @@ class O(unohelper.Base):
         self._provider = provider
 
     def lib_example(self):
-        from com.sun.star.awt.MessageBoxType import MESSAGEBOX
-        from com.sun.star.awt.MessageBoxButtons import BUTTONS_OK
-        self._h.message_box(self._provider.parent_win,
-                            TEXT.format(os.path.abspath(
-                                "../../../../py4lo")), "py4lo", MESSAGEBOX,
-                            BUTTONS_OK)
+        message_box(TEXT.format(os.path.abspath(
+                                "../../../../py4lo")), "py4lo")
