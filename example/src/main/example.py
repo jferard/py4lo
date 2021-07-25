@@ -28,7 +28,7 @@ from datetime import datetime
 
 import example_lib
 from py4lo_dialogs import ProgressExecutorBuilder, ConsoleExecutorBuilder
-from py4lo_helper import provider as pr, xray, mri, message_box
+from py4lo_helper import provider as pr, xray, mri, message_box, parent_doc
 from py4lo_io import (dict_reader, TYPE_ALL, dict_writer, export_to_csv,
                       import_from_csv)
 
@@ -42,9 +42,16 @@ def message_example(*_args):
     True
 
     """
-    message_box("A message from main script example.py. "
-                "Current dir is: {}".format(os.path.abspath(
-                    ".")), "py4lo")
+    oSheet = pr.controller.getActiveSheet()
+    oDoc = parent_doc(oSheet) # could be pr.doc
+    lines = [
+        "A message from main script example.py. ",
+        "Current dir is: {}".format(os.path.abspath(".")),
+        "Current doc name is: {}".format(oDoc.Title),
+        "Current sheet name is: {}".format(oSheet.Name),
+    ]
+
+    message_box("\n".join(lines), "py4lo")
 
 
 def xray_example(*_args):
@@ -110,7 +117,8 @@ def progress_example(*_args):
 
 
 def after_progress(*_args):
-    message_box("The return value was: {}".format(progress_executor.response), "Title")
+    message_box("The return value was: {}".format(progress_executor.response),
+                "Title")
 
 
 console_executor = None

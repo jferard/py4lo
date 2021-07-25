@@ -776,3 +776,11 @@ def get_cell_type(oCell):
         cell_type = oCell.FormulaResultType.value
 
     return cell_type
+
+
+def parent_doc(oSheet):
+    """
+    @param oSheet: the sheet
+    @return: the document to which this sheet belongs
+    """
+    return oSheet.DrawPage.Forms.Parent
