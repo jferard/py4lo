@@ -39,7 +39,7 @@ class InitCommand(Command):
                                   python_version)
         init_command = DebugCommand(logger, helper,
                                     sources, destinations,
-                                    python_version)
+                                    python_version, "new-project.ods")
         return CommandExecutor(logger, init_command, test_executor)
 
     def execute(self, *args: List[str]) -> Optional[Tuple]:

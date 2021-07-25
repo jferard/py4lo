@@ -43,8 +43,7 @@ class TestDebugCommand(unittest.TestCase):
         helper.get_temp_scripts.side_effect = [[t1, t2]]
         destinations.dest_ods_file.parent.joinpath.return_value = dest_path
         sources.inc_dir.joinpath.return_value = inc_path
-        d = DebugCommand(logger, helper, sources, destinations,
-                         python_version)
+        d = DebugCommand(logger, helper, sources, destinations, python_version)
 
         d.execute([])
 

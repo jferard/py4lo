@@ -70,9 +70,7 @@ Create a simple Python script ``myscript.py`` :
     from py4lo_helper import message_box
 
     def test(*args):
-        from com.sun.star.awt.MessageBoxType import MESSAGEBOX
-        from com.sun.star.awt.MessageBoxButtons import BUTTONS_OK
-        message_box("A message", "py4lo", MESSAGEBOX, BUTTONS_OK)
+        message_box("A message", "py4lo")
 
 Step 2
 ~~~~~~
@@ -91,7 +89,7 @@ Step 3
 ~~~~~~
 
 Rename ``new-project.ods`` to ``mydoc.ods`` and edit the document if you
-want.
+want. Add a title, move the buttons, change styles, etc.
 
 Step 4
 ~~~~~~
@@ -116,9 +114,7 @@ Edit the Python script ``myscript.py``:
     from py4lo_helper import message_box
 
     def test(*args):
-        from com.sun.star.awt.MessageBoxType import MESSAGEBOX
-        from com.sun.star.awt.MessageBoxButtons import BUTTONS_OK
-        message_box("Another message", "py4lo", MESSAGEBOX, BUTTONS_OK)
+        message_box("Another message", "py4lo")
 
 Step 6
 ~~~~~~
@@ -128,6 +124,20 @@ Update and test the new script:
 .. code-block:: bash
 
     > python <py4lo dir>/py4lo test
+
+
+The library
+-----------
+The library is still limited:
+
+- `py4lo_helper` manipulate LO objects (cells, rows, sheets, ...).
+- `py4lo_commons` provides some helpful methods and classes (a simple bus, access to a config file, ...) for Python objects (strs, lists, ...).
+- `py4lo_io` read and write documents.
+- `py4lo_ods` is useful to manipulate ods documents in pure Python. Document content is parsed as XML, and never opened with LO.
+- `py4lo_dialogs` create some useful dialogs.
+
+The lib modules are subject to the "classpath" exception of the GPLv3 (see https://www.gnu.org/software/classpath/license.html).
+
 
 How to
 ------
@@ -149,10 +159,17 @@ In ``scriptA.py``:
     import scriptB
     o = O()
 
-Import in script A a library
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Import a library
+~~~~~~~~~~~~~~~~
 
-In ``scriptA.py``:
+Py4LO provides several functions to ease the manipulation of LibreOffice
+data structures. See below.
+
+If you want to use those functions, you have to create an "entry" script:
+* this script contains all the functions that are exposed through buttons
+* this script uses some directives to tell Py4LO to do some initialization.
+
+Example. In ``main.py`` (this is the "entry" script):
 
 .. code-block:: python
 
@@ -170,17 +187,7 @@ modules that need it.
 Notes:
 
 * `# py4lo: entry` is a directive. This directive informs py4lo that the module is called from LibreOffice. This fixes the path so that the scripts are accessible
-* `# py4lo: embed lib py4lo_helper` copies the library py4lo_ods.py in the ODS destination file and declare it as a Script
-
-The library
------------
-The library is still limited:
-
-- `py4lo_ods` is useful to manipulate ods documents in pure Python. Document content is parsed as XML, and never opened with LO.
-- `py4lo_helper` manipulate LO objects (cells, rows, sheets, ...)
-- `py4lo_commons` provides some helpful methods and classes (a simple bus, access to a config file, ...) for Python objects (strs, lists, ...).
-
-The lib modules are subject to the "classpath" exception of the GPLv3 (see https://www.gnu.org/software/classpath/license.html).
+* `# py4lo: embed lib py4lo_helper` copies the library py4lo_ods.py in the ODS destination file and declare it as a script
 
 Test
 ----
