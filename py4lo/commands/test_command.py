@@ -87,7 +87,7 @@ class TestCommand(Command):
 
     def _test_paths(self) -> Iterator[Path]:
         for path in self._sources.test_dir.rglob("*.py"):
-            if path.name.endswith("_test.py"):
+            if path.name.endswith("_test.py") or path.name.startswith("test_"):
                 yield path
 
     def _src_paths(self) -> Iterator[Path]:
