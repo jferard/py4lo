@@ -49,13 +49,13 @@ class TestCommandTest(unittest.TestCase):
         status = tc.execute()
 
         self.assertEqual([
-            call.info('execute: %s', '"test_py_exe" -m doctest /src_dir/src_a.py'),
+            call.info('execute doctests: %s', '"test_py_exe" -m doctest /src_dir/src_a.py'),
             call.debug('PYTHONPATH = %s', mock.ANY),
             call.info('output: ok'),
-            call.info('execute: "test_py_exe" /test_dir/c_test.py'),
+            call.info('execute unittests: "test_py_exe" /test_dir/c_test.py'),
             call.info('output: not ok'),
             call.error('error: err'),
-            call.info('execute: "test_py_exe" /test_dir/b/d_test.py'),
+            call.info('execute unittests: "test_py_exe" /test_dir/b/d_test.py'),
             call.info('output: s ok'),
         ], logger.mock_calls)
         self.assertEqual([
