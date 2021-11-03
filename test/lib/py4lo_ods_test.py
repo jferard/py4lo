@@ -190,11 +190,71 @@ CONTENT_XML2 = """<?xml version="1.0" encoding="UTF-8"?>
     </office:body>
 </office:document-content>"""
 
+CONTENT_XML3 = """<?xml version="1.0" encoding="UTF-8"?>
+<office:document-content
+    xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
+    xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0"
+    xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"
+    xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0"
+    office:version="1.2"><office:scripts/>
+    <office:font-face-decls/>
+    <office:automatic-styles/>
+    <office:body>
+        <office:spreadsheet>
+            <table:table table:name="Test"><table:table-column  table:number-columns-repeated="4" table:default-cell-style-name="Default"/>
+                <table:table-row table:style-name="ro1">
+                    <table:table-cell office:value-type="string" table:number-columns-spanned="4" table:number-rows-spanned="2">
+                        <text:p>A1:D2</text:p>
+                    </table:table-cell>
+                    <table:covered-table-cell table:number-columns-repeated="3"/>
+                    <table:table-cell office:value-type="string" table:number-rows-spanned="3">
+                        <text:p>E1:E3</text:p>
+                    </table:table-cell>
+                    <table:table-cell office:value-type="string" table:number-columns-spanned="4" table:number-rows-spanned="2">
+                        <text:p>F1:I2</text:p>
+                    </table:table-cell>
+                    <table:covered-table-cell table:number-columns-repeated="3"/>
+                </table:table-row><table:table-row table:style-name="ro1">
+                    <table:covered-table-cell table:number-columns-repeated="4"/>
+                    <table:covered-table-cell/>
+                    <table:covered-table-cell table:number-columns-repeated="4"/>
+                </table:table-row><table:table-row table:style-name="ro1">
+                    <table:table-cell office:value-type="string">
+                        <text:p>A3</text:p>
+                    </table:table-cell>
+                    <table:table-cell office:value-type="string">
+                        <text:p>B3</text:p>
+                    </table:table-cell>
+                    <table:table-cell office:value-type="string">
+                        <text:p>C3</text:p>
+                    </table:table-cell>
+                    <table:table-cell office:value-type="string">
+                        <text:p>D3</text:p>
+                    </table:table-cell>
+                    <table:covered-table-cell/>
+                    <table:table-cell office:value-type="string">
+                        <text:p>F3</text:p>
+                    </table:table-cell>
+                    <table:table-cell office:value-type="string">
+                        <text:p>G3</text:p>
+                    </table:table-cell>
+                    <table:table-cell office:value-type="string">
+                        <text:p>H3</text:p>
+                    </table:table-cell>
+                    <table:table-cell office:value-type="string">
+                        <text:p>I3</text:p>
+                    </table:table-cell>
+                </table:table-row>
+            </table:table><table:named-expressions/></office:spreadsheet>
+    </office:body>
+</office:document-content>"""
+
 
 class TestOds1(unittest.TestCase):
     def setUp(self):
         root = ET.fromstring(CONTENT_XML)
-        table = root.find("./office:body/office:spreadsheet/table:table", OFFICE_NS_DICT)
+        table = root.find("./office:body/office:spreadsheet/table:table",
+                          OFFICE_NS_DICT)
         self.ods_rows = OdsRows(table)
 
     def test_list(self):
@@ -229,7 +289,8 @@ class TestOds1(unittest.TestCase):
 class TestOds2(unittest.TestCase):
     def setUp(self):
         root = ET.fromstring(CONTENT_XML2)
-        table = root.find("./office:body/office:spreadsheet/table:table", OFFICE_NS_DICT)
+        table = root.find("./office:body/office:spreadsheet/table:table",
+                          OFFICE_NS_DICT)
         self.ods_rows = OdsRows(table)
 
     def test_list(self):
@@ -239,6 +300,23 @@ class TestOds2(unittest.TestCase):
             ["", "", "", "", "E3"],
             ["", "", "", "", "E4"],
             ["A5", "B5", "C5", "D5", "E5"]
+        ], list(self.ods_rows))
+
+
+class TestOds3(unittest.TestCase):
+    def setUp(self):
+        root = ET.fromstring(CONTENT_XML3)
+        table = root.find("./office:body/office:spreadsheet/table:table",
+                          OFFICE_NS_DICT)
+        self.ods_rows = OdsRows(table)
+
+    def test_list(self):
+        self.assertEqual([
+            ['A1:D2', 'A1:D2', 'A1:D2', 'A1:D2',
+             'E1:E3',
+             'F1:I2', 'F1:I2', 'F1:I2', 'F1:I2'],
+            [],
+            ['A3', 'B3', 'C3', 'D3', '', 'F3', 'G3', 'H3', 'I3']
         ], list(self.ods_rows))
 
 

@@ -184,10 +184,13 @@ class OdsRows:
             elif e.tag == covered_cell_tag:
                 # expect span_count-1 covered cells
                 # other cells are empty cells (row-span).
-                repeat_count = int(e.get(repeated_attr, "1"))
-                span_count -= repeat_count
-                if span_count < 0:  # not covered on this line
-                    cells.extend([v1] * -span_count)
+                if cells:
+                    if repeat_count + 1 > span_count:
+                        cells.extend([''] * (repeat_count + 1 - span_count))
+                    else:  # span_count >= repeat_count + 1
+                        span_count -= repeat_count  # span_count >= 1
+                else:  # beginning of line
+                    cells.extend([''] * repeat_count)
 
         cells = self._trim_list(cells)
         return cells
