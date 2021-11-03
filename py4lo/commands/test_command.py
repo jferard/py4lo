@@ -73,14 +73,14 @@ class TestCommand(Command):
 
     def _execute_unittests(self, path: Path) -> subprocess.CompletedProcess:
         cmd = "\"{}\" {}".format(self._python_exe, path)
-        self._logger.info("execute: {0}".format(cmd))
+        self._logger.info("execute unittests: {0}".format(cmd))
         return subprocess.run([self._python_exe, str(path)],
                               stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                               env=self._get_env())
 
     def _execute_doctests(self, path: Path) -> subprocess.CompletedProcess:
         cmd = "\"{}\" -m doctest {}".format(self._python_exe, path)
-        self._logger.info("execute: %s", cmd)
+        self._logger.info("execute doctests: %s", cmd)
         return subprocess.run([self._python_exe, "-m", "doctest", str(path)],
                               stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                               env=self._get_env())
