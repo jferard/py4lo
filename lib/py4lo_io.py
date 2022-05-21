@@ -1,5 +1,5 @@
 #  Py4LO - Python Toolkit For LibreOffice Calc
-#     Copyright (C) 2016-2019 J. Férard <https://github.com/jferard>
+#     Copyright (C) 2016-2022 J. Férard <https://github.com/jferard>
 #
 #     This file is part of Py4LO.
 #
