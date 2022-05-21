@@ -325,7 +325,7 @@ class Filter(str, Enum):
     SYLK = "SYLK"  # Symbolic Link
     DIF = "DIF"  # Data Interchange Format
 
-
+# see py4lo_io.CHARSET_ID_BY_NAME
 INDEX_BY_ENCODING = {"unknown": 0,
                      "cp1252": 1,
                      "mac_roman": 2,

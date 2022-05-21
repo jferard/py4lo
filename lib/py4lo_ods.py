@@ -16,9 +16,12 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import zipfile
-import xml.etree.ElementTree as ET
 import itertools
+import xml.etree.ElementTree as ET
+import zipfile
+
+from typing import (List, cast, Dict, Callable, IO, Iterator,
+                    Optional, Union)
 
 ACTIVE_TABLE_XPATH = "./office:settings/config:config-item-set[@config:name='ooo:view-settings']/config:config-item-map-indexed[@config:name='Views']/config:config-item-map-entry/config:config-item[@config:name='ActiveTable']"
 
@@ -31,13 +34,13 @@ OFFICE_NS_DICT = {
 
 
 class NameSpace:
-    def __init__(self, ns_dict=OFFICE_NS_DICT):
+    def __init__(self, ns_dict: Dict[str, str] = OFFICE_NS_DICT):
         self._ns_dict = ns_dict
 
-    def findall(self, element, match):
-        return element.findall(match, self._ns_dict)
+    def findall(self, element: ET.Element, path: str) -> List[ET.Element]:
+        return element.findall(path, self._ns_dict)
 
-    def attrib(self, attr):
+    def attrib(self, attr: str) -> str:
         try:
             i = attr.index(":")
             attr = "{{{}}}{}".format(self._ns_dict.get(attr[:i], attr[:i]),
@@ -50,20 +53,23 @@ class NameSpace:
 
 OFFICE_NS = NameSpace(OFFICE_NS_DICT)
 
+SortFunc = Callable[[List[ET.Element]], List[ET.Element]]
+
 
 class OdsTables:
     """An iterator over tables in an ods file"""
 
     @staticmethod
-    def create(fullpath, ns=OFFICE_NS):
+    def create(fullpath: str, ns: NameSpace = OFFICE_NS):
         return OdsTablesBuilder(fullpath).ns(ns).build()
 
-    def __init__(self, root, sort_func, ns=OFFICE_NS):
+    def __init__(self, root: ET.Element, sort_func: SortFunc,
+                 ns: NameSpace = OFFICE_NS):
         self._root = root
         self._sort_func = sort_func
         self._ns = ns
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[ET.Element]:
         tables = self._ns.findall(self._root,
                                   "./office:body/office:spreadsheet/table:table")
         tables = self._sort_func(tables)
@@ -72,19 +78,20 @@ class OdsTables:
 
 
 class OdsTablesBuilder:
-    def __init__(self, fullpath):
+    def __init__(self, fullpath: str):
         self._fullpath = fullpath
         self._ns = OFFICE_NS
         self._sort_func_creator = dont_sort
 
-    def ns(self, ns):
+    def ns(self, ns: NameSpace) -> "OdsTablesBuilder":
         self._ns = ns
         return self
 
-    def sort_func_creator(self, sort_func_creator):
+    def sort_func_creator(self, sort_func_creator: Callable[
+        [zipfile.ZipFile, NameSpace], SortFunc]):
         self._sort_func_creator = sort_func_creator
 
-    def build(self):
+    def build(self) -> "OdsTables":
         with zipfile.ZipFile(self._fullpath) as z:
             sort_func = self._sort_func_creator(z, self._ns)
             with z.open('content.xml') as content:
@@ -93,14 +100,14 @@ class OdsTablesBuilder:
                 return OdsTables(root, sort_func, self._ns)
 
 
-def dont_sort(*_args, **_kwargs):
+def dont_sort(*_args, **_kwargs) -> SortFunc:
     def sort_func(tables):
         return tables
 
     return sort_func
 
 
-def put_active_first(z, ns=OFFICE_NS):
+def put_active_first(z: zipfile.ZipFile, ns: NameSpace = OFFICE_NS) -> SortFunc:
     """
     :param z: the zip file
     :param ns: the name space
@@ -108,7 +115,7 @@ def put_active_first(z, ns=OFFICE_NS):
     """
     active_table_name = _find_active_table_name_in_zip(z, ns)
 
-    def sort_func(tables):
+    def sort_func(tables: List[ET.Element]) -> List[ET.Element]:
         for i, table in enumerate(tables):
             if table.get(ns.attrib("table:name")) == active_table_name:
                 return [tables[i]] + tables[:i] + tables[i + 1:]
@@ -118,14 +125,15 @@ def put_active_first(z, ns=OFFICE_NS):
     return sort_func
 
 
-def _find_active_table_name_in_zip(z, ns=OFFICE_NS):
+def _find_active_table_name_in_zip(z: zipfile.ZipFile,
+                                   ns: NameSpace = OFFICE_NS) -> str:
     with z.open('settings.xml') as settings:
         active_table_name = _find_active_table_name(settings, ns)
 
     return active_table_name
 
 
-def _find_active_table_name(settings, ns=OFFICE_NS):
+def _find_active_table_name(settings: IO[bytes], ns=OFFICE_NS) -> str:
     data = settings.read().decode("utf-8")
     root = ET.fromstring(data)
     active_tables = ns.findall(root, ACTIVE_TABLE_XPATH)
@@ -146,29 +154,31 @@ class OdsRows:
     below.
     """
 
-    def __init__(self, table, omit=None, ns=OFFICE_NS):
+    def __init__(self, table: ET.Element,
+                 omit: Optional[Callable[[ET.Element, NameSpace], bool]] = None,
+                 ns: NameSpace = OFFICE_NS):
         self._table = table
         self._ns = ns
         self._omit = omit
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[List[str]]:
         for row in self._ns.findall(self._table, ".//table:table-row"):
             if self._omit is not None and self._omit(row, self._ns):
                 continue
 
             count = int(row.get(self._ns.attrib("table:number-rows-repeated"),
-                                row.get(self._ns.attrib(
+                                row.attrib.get(self._ns.attrib(
                                     "table:number-rows-spanned"), "1")))
             cells = self._get_cells(row)
             for _ in range(count):
                 yield cells
 
-    def _get_cells(self, row):
+    def _get_cells(self, row: ET.Element) -> List[str]:
         cell_tag = self._ns.attrib("table:table-cell")
         covered_cell_tag = self._ns.attrib("table:covered-table-cell")
         spanned_attr = self._ns.attrib("table:number-columns-spanned")
         repeated_attr = self._ns.attrib("table:number-columns-repeated")
-        cells = []
+        cells = cast(List[str], [])
         span_count = 0
         for e in row:
             if e.tag not in (cell_tag, covered_cell_tag):
@@ -176,9 +186,9 @@ class OdsRows:
 
             v1 = '\n'.join(
                 p.text for p in self._ns.findall(e, "./text:p") if p.text)
-            repeat_count = int(e.get(repeated_attr, "1"))
+            repeat_count = int(e.attrib.get(repeated_attr, "1"))
             if e.tag == cell_tag:
-                span_count = int(e.get(spanned_attr, "1"))
+                span_count = int(e.attrib.get(spanned_attr, "1"))
                 count = max(repeat_count, span_count)
                 cells.extend([v1] * count)
             elif e.tag == covered_cell_tag:
@@ -195,7 +205,8 @@ class OdsRows:
         cells = self._trim_list(cells)
         return cells
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: Union[int, slice]) -> Union[
+        List[str], List[List[str]]]:
         if isinstance(index, int):
             if index >= 0:
                 for i, row in enumerate(self):
@@ -212,7 +223,7 @@ class OdsRows:
         else:
             raise TypeError("index must be int or slice")
 
-    def _trim_list(self, l):
+    def _trim_list(self, l: List[str]) -> List[str]:
         if not l:
             return l
         for i in range(len(l) - 1, -1, -1):
@@ -221,5 +232,5 @@ class OdsRows:
         return []
 
 
-def omit_filtered(row, ns):
-    return row.get(ns.attrib("table:visibility"), "") == "filter"
+def omit_filtered(row: ET.Element, ns: NameSpace) -> bool:
+    return row.attrib.get(ns.attrib("table:visibility"), "") == "filter"

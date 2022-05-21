@@ -20,6 +20,8 @@ import locale
 import os
 from datetime import (date, datetime, time)
 import encodings
+from typing import Any, Callable, List, Iterator
+
 from encodings.aliases import aliases as enc_aliases
 import itertools
 import sys
@@ -32,6 +34,7 @@ from com.sun.star.lang import Locale
 from py4lo_commons import float_to_date, date_to_float
 from py4lo_helper import (provider as pr, make_pvs, get_doc, get_cell_type,
                           get_used_range_address)
+from py4lo_typing import UnoCell, UnoSheet
 
 TYPE_NONE = 0
 TYPE_MINIMAL = 1
@@ -42,7 +45,7 @@ TYPE_ALL = 2
 # Reader #
 ##########
 
-def create_read_cell(type_cell=TYPE_MINIMAL, oFormats=None):
+def create_read_cell(type_cell=TYPE_MINIMAL, oFormats=None) -> Callable[[UnoCell], Any]:
     """
     Create a function to read a cell
     @param type_cell: one of `TYPE_NONE` (return the String value),
@@ -51,7 +54,7 @@ def create_read_cell(type_cell=TYPE_MINIMAL, oFormats=None):
     @param oFormats: the container for NumberFormats.
     @return: a function to read the cell value
     """
-    def read_cell_none(oCell):
+    def read_cell_none(oCell: UnoCell) -> str:
         """
         Read a cell value
         @param oCell: the cell
@@ -59,7 +62,7 @@ def create_read_cell(type_cell=TYPE_MINIMAL, oFormats=None):
         """
         return oCell.String
 
-    def read_cell_minimal(oCell):
+    def read_cell_minimal(oCell: UnoCell) -> Any:
         """
         Read a cell value
         @param oCell: the cell
@@ -74,7 +77,7 @@ def create_read_cell(type_cell=TYPE_MINIMAL, oFormats=None):
         elif cell_type == 'VALUE':
             return oCell.Value
 
-    def read_cell_all(oCell):
+    def read_cell_all(oCell: UnoCell) -> Any:
         """
         Read a cell value
         @param oCell: the cell
@@ -109,11 +112,11 @@ def create_read_cell(type_cell=TYPE_MINIMAL, oFormats=None):
         raise ValueError("type_cell must be one of TYPE_* values")
 
 
-class reader:
+class reader(Iterator[List[Any]]):
     """
     A reader that returns rows as lists of values.
     """
-    def __init__(self, oSheet, type_cell=TYPE_MINIMAL, oFormats=None,
+    def __init__(self, oSheet: UnoSheet, type_cell=TYPE_MINIMAL, oFormats=None,
                  read_cell=None):
         if read_cell is not None:
             self._read_cell = read_cell
@@ -125,10 +128,10 @@ class reader:
         self.line_num = 0
         self._oRangeAddress = get_used_range_address(oSheet)
 
-    def __iter__(self):
+    def __iter__(self) -> "reader":
         return self
 
-    def __next__(self):
+    def __next__(self) -> List[Any]:
         i = self._oRangeAddress.StartRow + self.line_num
         if i > self._oRangeAddress.EndRow:
             raise StopIteration
@@ -149,7 +152,7 @@ class dict_reader:
     """
     A reader that returns rows as dicts.
     """
-    def __init__(self, oSheet, fieldnames=None, restkey=None, restval=None,
+    def __init__(self, oSheet: UnoSheet, fieldnames=None, restkey=None, restval=None,
                  type_cell=TYPE_MINIMAL, oFormats=None, read_cell=None):
         self._reader = reader(oSheet, type_cell, oFormats, read_cell)
         if fieldnames is None:
@@ -664,7 +667,7 @@ LANGUAGE_ID_BY_CODE = {
 }
 
 
-def _get_charset_id(encoding):
+def _get_charset_id(encoding: str) -> int:
     encoding = encodings.normalize_encoding(encoding)
     encoding = enc_aliases.get(encoding, encoding)
     return CHARSET_ID_BY_NAME.get(encoding, encoding)
@@ -698,6 +701,7 @@ def create_import_filter_options(dialect=csv.unix_dialect, encoding="utf-8",
     return tokens
 
 
+# merge with helper
 def import_from_csv(oDoc, sheet_name, position, path,
                     dialect=csv.unix_dialect,
                     encoding="utf-8", first_line=1, type_by_col=None,
