@@ -196,13 +196,7 @@ From the py4lo directory:
 
 .. code-block:: bash
 
-   py.test --ignore=example --cov-report term-missing --cov=py4lo --cov=lib && py.test --ignore=example --ignore=test --ignore=py4lo/__main__.py --cov-report term-missing --cov-append --doctest-modules --cov=py4lo --cov=lib
-
-Or:
-
-.. code-block:: bash
-
-   python3 -m pytest --ignore=example --cov-report term-missing --cov=py4lo --cov=lib && py.test --ignore=example --ignore=test --ignore=py4lo/__main__.py --cov-report term-missing --cov-append --doctest-modules --cov=py4lo --cov=lib
+   python3 -m pytest --cov-report term-missing --ignore=example --cov=py4lo --cov=lib && python3 -m pytest --cov-report term-missing --ignore=example --ignore=test --ignore=py4lo/__main__.py --cov-append --doctest-modules --cov=lib
 
 
 .. |Build Status| image:: https://travis-ci.com/jferard/py4lo.svg?branch=master
