@@ -6,6 +6,7 @@ py4lo/__pycache__/*
 .cache
 .idea
 venv
+history
 
 # generated files
 example/*.ods
