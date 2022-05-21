@@ -21,6 +21,8 @@ Basic support for uno types out of the LibreOffice engine.
 
 from typing import (NewType, Any, Union, Tuple, List)
 
+UnoXScriptContext = NewType("UnoXScriptContext", Any)
+
 UnoObject = NewType("UnoObject", Any)
 UnoStruct = NewType("UnoStruct", Any)
 

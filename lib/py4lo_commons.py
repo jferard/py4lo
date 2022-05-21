@@ -1,31 +1,34 @@
 # -*- coding: utf-8 -*-
-"""Py4LO - Python Toolkit For LibreOffice Calc
-      Copyright (C) 2016-2022 J. Férard <https://github.com/jferard>
-
-   This file is part of Py4LO.
-
-   Py4LO is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
-
-   THIS FILE IS SUBJECT TO THE "CLASSPATH" EXCEPTION.
-
-   Py4LO is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-py4lo_commons deals with ordinary Python objects (POPOs ?).
-"""
+# Py4LO - Python Toolkit For LibreOffice Calc
+#       Copyright (C) 2016-2022 J. Férard <https://github.com/jferard>
+#
+#    This file is part of Py4LO.
+#
+#    Py4LO is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    THIS FILE IS SUBJECT TO THE "CLASSPATH" EXCEPTION.
+#
+#    Py4LO is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""py4lo_commons deals with ordinary Python objects (POPOs ?)."""
 from pathlib import Path
 import logging
 import configparser
 import datetime as dt
-from typing import Union
+from typing import Union, Any, cast, List, Optional, TextIO, Iterable, Mapping, \
+    Callable
+
+from py4lo_typing import UnoXScriptContext
+
+StrPath = Union[str, Path]
 
 try:
     # noinspection PyUnresolvedReferences
@@ -33,6 +36,8 @@ try:
 except ModuleNotFoundError:
     import os
     from urllib.parse import urlparse
+
+
     class uno:
         @staticmethod
         def fileUrlToSystemPath(url: str) -> str:
@@ -55,12 +60,12 @@ class Bus:
     """
 
     def __init__(self):
-        self._subscribers = []
+        self._subscribers = cast(List[Any], [])
 
-    def subscribe(self, s):
+    def subscribe(self, s: Any):
         self._subscribers.append(s)
 
-    def post(self, event_type, event_data):
+    def post(self, event_type: str, event_data: Any):
         for s in self._subscribers:
             m_name = "_handle_" + event_type.lower()
             if hasattr(s, m_name):
@@ -70,13 +75,13 @@ class Bus:
 
 class Commons:
     @staticmethod
-    def create(xsc=None):
+    def create(xsc: Optional[UnoXScriptContext] = None):
         if xsc is None:
             xsc = Commons.xsc
         doc = xsc.getDocument()
         return Commons(doc.URL)
 
-    def __init__(self, url):
+    def __init__(self, url: str):
         self._url = url
         self._logger = None
 
@@ -101,13 +106,14 @@ class Commons:
         self._logger = self.get_logger(file, mode, level, format)
 
     def get_logger(
-            self, file=None, mode="a", level=logging.DEBUG,
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+            self, file: Optional[Union[StrPath, TextIO]] = None,
+            mode: str = "a", level: int = logging.DEBUG,
+            fmt: str = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     ) -> logging.Logger:
         if file is None:
             file = self.join_current_dir("py4lo.log")
 
-        fh = Commons._get_handler(file, mode, level, format)
+        fh = Commons._get_handler(file, mode, level, fmt)
 
         logger = logging.getLogger()
         logger.addHandler(fh)
@@ -115,12 +121,13 @@ class Commons:
         return logger
 
     @staticmethod
-    def _get_handler(file, mode, level, format):
-        if isinstance(file, (str, Path)):
+    def _get_handler(file: Union[StrPath, TextIO], mode: str, level: int,
+                     fmt: str):
+        if isinstance(file, StrPath):
             fh = logging.FileHandler(file, mode)
         else:
             fh = logging.StreamHandler(file)
-        formatter = logging.Formatter(format)
+        formatter = logging.Formatter(fmt)
         fh.setFormatter(formatter)
         fh.setLevel(level)
         return fh
@@ -133,7 +140,8 @@ class Commons:
     def join_current_dir(self, filename: str) -> Path:
         return self.cur_dir() / filename
 
-    def read_internal_config(self, filenames, args=None,
+    def read_internal_config(self, filenames: Union[
+        StrPath, Iterable[StrPath]], args=None,
                              apply=lambda config: None, encoding='utf-8'):
         """
         Read an internal config, in the assets directory of the document.
@@ -150,7 +158,7 @@ class Commons:
         import zipfile
         import codecs
 
-        if isinstance(filenames, (str, bytes)):
+        if isinstance(filenames, StrPath):
             filenames = [filenames]
 
         config = _get_config(args)
@@ -189,8 +197,11 @@ def create_bus() -> Bus:
     return Bus()
 
 
-def read_config(filenames, args=None, apply=lambda config: None,
-                encoding='utf-8') -> configparser.ConfigParser:
+def read_config(filenames: Union[StrPath, Iterable[StrPath]],
+                args: Optional[Mapping] = None,
+                apply: Callable[[configparser.ConfigParser], None] = lambda
+                        config: None,
+                encoding: str='utf-8') -> configparser.ConfigParser:
     """
     Read a config. See https://docs.python.org/3.7/library/configparser.html
 
@@ -207,7 +218,7 @@ def read_config(filenames, args=None, apply=lambda config: None,
     return config
 
 
-def _get_config(args) -> configparser.ConfigParser:
+def _get_config(args: Optional[Mapping]) -> configparser.ConfigParser:
     if args is None:
         config = configparser.ConfigParser()
     else:
@@ -224,7 +235,7 @@ def sanitize(s: str) -> str:
     """
     import unicodedata
     s = unicodedata.normalize('NFKD', s).encode('ascii', 'ignore').decode(
-            'ascii')
+        'ascii')
     return s
 
 

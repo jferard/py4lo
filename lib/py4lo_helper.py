@@ -28,7 +28,7 @@ from typing import (Any, Optional, List, cast, Callable, Mapping, Tuple,
 from py4lo_typing import (UnoSpreadsheet, UnoController, UnoContext, UnoService,
                           UnoSheet, UnoRangeAddress, UnoRange, UnoCell,
                           UnoObject, DATA_ARRAY, UnoCellAddress,
-                          UnoPropertyValue, DATA_ROW)
+                          UnoPropertyValue, DATA_ROW, UnoXScriptContext)
 
 import os
 import encodings
@@ -75,7 +75,7 @@ xray = cast(Optional[Callable], None)
 mri = cast(Optional[Callable], None)
 
 
-def init(xsc):
+def init(xsc: UnoXScriptContext):
     """
     Mandatory call from entry with XSCRIPTCONTEXT as argument.
     @param xsc: XSCRIPTCONTEXT
@@ -93,7 +93,7 @@ class _ObjectProvider:
     """
 
     @staticmethod
-    def create(xsc):
+    def create(xsc: UnoXScriptContext):
         doc = xsc.getDocument()
         controller = doc.CurrentController
         frame = controller.Frame
