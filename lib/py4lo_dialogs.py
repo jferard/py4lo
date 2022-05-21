@@ -16,10 +16,13 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from threading import Thread
+from typing import Any, Callable
 
 import py4lo_helper
 from collections import namedtuple
 import uno
+
+from py4lo_typing import UnoObject
 
 MARGIN = 5
 Rectangle = namedtuple('Rectangle', ['x', 'y', 'w', 'h'])
@@ -44,7 +47,7 @@ class ProgressExecutorBuilder:
         self._message = None
         self._autoclose = True
 
-    def build(self):
+    def build(self) -> "ProgressExecutor":
         self._oDialogModel.insertByName("bar", self._oBarModel)
         self._oDialogModel.insertByName("text", self._oTextModel)
         _set_rectangle(self._oDialogModel, self._dialog_rectangle)
@@ -67,13 +70,13 @@ class ProgressExecutorBuilder:
                                 self._oDialog.getControl("bar"),
                                 self._oDialog.getControl("text"))
 
-    def _centered(self, outer_w, inner_w):
+    def _centered(self, outer_w: int, inner_w: int) -> int:
         if outer_w <= inner_w:
             return 0
         else:
             return (outer_w - inner_w) // 2
 
-    def title(self, title):
+    def title(self, title: str) -> "ProgressExecutorBuilder":
         """
         Set the title
         @param title: the title
@@ -83,7 +86,7 @@ class ProgressExecutorBuilder:
         self._oDialogModel.Title = title
         return self
 
-    def autoclose(self, b):
+    def autoclose(self, b: bool) -> "ProgressExecutorBuilder":
         """
         Set the autoclose value : if False, don't close
         @param b: the value of autoclose
@@ -92,7 +95,8 @@ class ProgressExecutorBuilder:
         self._autoclose = b
         return self
 
-    def dialog_rectangle(self, x, y, w, h):
+    def dialog_rectangle(self, x: int, y: int, w: int,
+                         h: int) -> "ProgressExecutorBuilder":
         """
         Set the dialog rectangle
 
@@ -116,7 +120,8 @@ class ProgressExecutorBuilder:
         self._bar_dimensions = Size(w, h)
         return self
 
-    def bar_progress(self, progress_min, progress_max):
+    def bar_progress(self, progress_min: int,
+                     progress_max: int) -> "ProgressExecutorBuilder":
         """
         Set the dialog rectangle
 
@@ -127,7 +132,7 @@ class ProgressExecutorBuilder:
         self._bar_progress = Progress(progress_min, progress_max)
         return self
 
-    def message(self, message):
+    def message(self, message: str) -> "ProgressExecutorBuilder":
         """
         Set the message
         @param message: the message
@@ -137,7 +142,7 @@ class ProgressExecutorBuilder:
         return self
 
 
-def _set_rectangle(o, rectangle):
+def _set_rectangle(o: Any, rectangle: Rectangle):
     o.PositionX = rectangle.x
     o.PositionY = rectangle.y
     o.Width = rectangle.w
@@ -145,26 +150,26 @@ def _set_rectangle(o, rectangle):
 
 
 class ProgressHandler:
-    def __init__(self, oBar, oText):
+    def __init__(self, oBar: UnoObject, oText: UnoObject):
         self._oBar = oBar
         self._oBar.setValue(0)
         self._oText = oText
         self.response = None
 
-    def progress(self, n=1):
+    def progress(self, n: int = 1):
         self._oBar.setValue(self._oBar.getValue() + n)
 
-    def message(self, text):
+    def message(self, text: str):
         self._oText.setText(text)
 
 
 class ProgressExecutor:
-    def __init__(self, oDialog, autoclose, oBar, oText):
+    def __init__(self, oDialog, autoclose: bool, oBar, oText):
         self._oDialog = oDialog
         self._autoclose = autoclose
         self._progress_handler = ProgressHandler(oBar, oText)
 
-    def execute(self, func):
+    def execute(self, func: Callable[[ProgressHandler], None]):
         """
         Execute the function with a progress bar
         @param func: a function that takes a `ProgressDialog` object.
@@ -182,7 +187,7 @@ class ProgressExecutor:
         t.start()
 
     @property
-    def response(self):
+    def response(self) -> Any:
         """
         @return: the response
         """
@@ -205,7 +210,7 @@ class ConsoleExecutorBuilder:
         self._console_rectangle = Rectangle(100, 150, 250, 100)
         self.title("Console")
 
-    def title(self, title):
+    def title(self, title: str) -> "ConsoleExecutorBuilder":
         """
         Set the title
         @param title: the title
@@ -215,7 +220,7 @@ class ConsoleExecutorBuilder:
         self._oDialogModel.Title = title
         return self
 
-    def autoclose(self, b):
+    def autoclose(self, b: bool) -> "ConsoleExecutorBuilder":
         """
         Set the autoclose value : if False, don't close
         @param b: the value of autoclose
@@ -224,7 +229,8 @@ class ConsoleExecutorBuilder:
         self._autoclose = b
         return self
 
-    def console_rectangle(self, x, y, w, h):
+    def console_rectangle(self, x: int, y: int, w: int,
+                          h: int) -> "ConsoleExecutorBuilder":
         """
         Set the dialog rectangle
 
@@ -237,7 +243,7 @@ class ConsoleExecutorBuilder:
         self._console_rectangle = Rectangle(x, y, w, h)
         return self
 
-    def build(self):
+    def build(self) -> "ConsoleExecutor":
         self._oDialog.setModel(self._oDialogModel)
         self._oDialogModel.insertByName("text", self._oTextModel)
         _set_rectangle(self._oDialogModel, self._console_rectangle)
@@ -255,7 +261,7 @@ class ConsoleHandler:
         self._cur_pos = 0
         self._selection = uno.createUnoStruct('com.sun.star.awt.Selection')
 
-    def message(self, text):
+    def message(self, text: str):
         """
         Add a message to the console
         @param text: the text of the message
