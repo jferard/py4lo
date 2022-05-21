@@ -784,3 +784,15 @@ def parent_doc(oSheet):
     @return: the document to which this sheet belongs
     """
     return oSheet.DrawPage.Forms.Parent
+
+
+def create_filter(oRange):
+    """
+    Create a new filter
+    @param oRange: the range to filter
+    """
+    oDoc = parent_doc(oRange.Spreadsheet)
+    oDoc.CurrentController.select(oRange)
+    oDispatchHelper = uno_service("com.sun.star.frame.DispatchHelper")
+    oDispatchHelper.executeDispatch(oDoc.CurrentController.Frame,
+                                    ".uno:DataFilterAutoFilter", "", 0, [])
