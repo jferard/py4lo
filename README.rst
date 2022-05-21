@@ -15,6 +15,8 @@ The LibreOffice Basic is limited and Python is a far more powerful language to w
 Py4LO helps you to pack your Python macros in a LibreOffice Calc document and offers a small but useful
 library to access LibreOffice objects.
 
+Py4LO requires Python >= 3.5.
+
 Features
 --------
 * Test Python macros, embed them in an existing LibreOffice document and open this document in one command line;

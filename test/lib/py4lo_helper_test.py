@@ -169,7 +169,7 @@ class TestHelper(unittest.TestCase):
 
     def test_import_options(self):
         self.assertEqual('44,34,76,1,1/2,,false,false',
-                         import_filter_options(format_by_idx={1: FORMAT_TEXT}))
+                         import_filter_options(format_by_idx={1: Format.TEXT}))
 
     def test_empty_export_options(self):
         self.assertEqual('44,34,76,1,,,false,true,true',
