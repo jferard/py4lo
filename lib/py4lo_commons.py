@@ -17,33 +17,39 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>."""
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
 py4lo_commons deals with ordinary Python objects (POPOs ?).
-
 """
+from pathlib import Path
+import logging
+import configparser
+import datetime as dt
+from typing import Union
+
 try:
-    import unohelper
+    # noinspection PyUnresolvedReferences
     import uno
 except ModuleNotFoundError:
-    class unohelper:
-        Base = object
+    import os
+    from urllib.parse import urlparse
+    class uno:
+        @staticmethod
+        def fileUrlToSystemPath(url: str) -> str:
+            result = urlparse(url)
+            if result.netloc:
+                return os.path.join(result.netloc, result.path.lstrip("/"))
+            else:
+                return result.path
 
-import datetime
-import logging
-import os
-
-import uno
-
-ORIGIN = datetime.datetime(1899, 12, 30)
+ORIGIN = dt.datetime(1899, 12, 30)
 
 
 def init(xsc):
     Commons.xsc = xsc
 
 
-class Bus(unohelper.Base):
+class Bus:
     """
     A minimal bus minimal to communicate with front end
     """
@@ -62,7 +68,7 @@ class Bus(unohelper.Base):
                 m(event_data)
 
 
-class Commons(unohelper.Base):
+class Commons:
     @staticmethod
     def create(xsc=None):
         if xsc is None:
@@ -80,20 +86,24 @@ class Commons(unohelper.Base):
                 h.flush()
                 h.close()
 
-    def cur_dir(self):
+    def cur_dir(self) -> Path:
         """return the directory of the current document"""
-        path = uno.fileUrlToSystemPath(self._url)
-        return os.path.dirname(path)
+        system_path = uno.fileUrlToSystemPath(self._url)
+        path = Path(system_path)
+        return path.parent
 
-    def init_logger(self, file=None, mode="a", level=logging.DEBUG,
-                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
+    def init_logger(
+            self, file=None, mode="a", level=logging.DEBUG,
+            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
         if self._logger is not None:
             raise Exception("use init_logger ONCE")
 
         self._logger = self.get_logger(file, mode, level, format)
 
-    def get_logger(self, file=None, mode="a", level=logging.DEBUG,
-                   format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
+    def get_logger(
+            self, file=None, mode="a", level=logging.DEBUG,
+            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    ) -> logging.Logger:
         if file is None:
             file = self.join_current_dir("py4lo.log")
 
@@ -106,7 +116,7 @@ class Commons(unohelper.Base):
 
     @staticmethod
     def _get_handler(file, mode, level, format):
-        if type(file) == str:
+        if isinstance(file, (str, Path)):
             fh = logging.FileHandler(file, mode)
         else:
             fh = logging.StreamHandler(file)
@@ -115,16 +125,15 @@ class Commons(unohelper.Base):
         fh.setLevel(level)
         return fh
 
-    def logger(self):
+    def logger(self) -> logging.Logger:
         if self._logger is None:
             raise Exception("use init_logger")
         return self._logger
 
-    def join_current_dir(self, filename):
-        return os.path.join(unohelper.fileUrlToSystemPath(self._url), "..",
-                            filename)
+    def join_current_dir(self, filename: str) -> Path:
+        return self.cur_dir() / filename
 
-    def read_internal_config(self, filenames, args={},
+    def read_internal_config(self, filenames, args=None,
                              apply=lambda config: None, encoding='utf-8'):
         """
         Read an internal config, in the assets directory of the document.
@@ -135,9 +144,8 @@ class Commons(unohelper.Base):
         :param args: arguments to be passed to the ConfigParser
         :param apply: function to modify the config
         :param encoding: the encoding of the file
-        :param assets_dir: dir of the assets in the zip file
 
-        Example: `config = commons.read_config("pcrp.ini")`"""
+        Example: `config = commons.read_config("test.ini")`"""
         import configparser
         import zipfile
         import codecs
@@ -145,11 +153,11 @@ class Commons(unohelper.Base):
         if isinstance(filenames, (str, bytes)):
             filenames = [filenames]
 
-        config = configparser.ConfigParser(**args)
+        config = _get_config(args)
         apply(config)
         reader = codecs.getreader(encoding)
 
-        with zipfile.ZipFile(unohelper.fileUrlToSystemPath(self._url),
+        with zipfile.ZipFile(uno.fileUrlToSystemPath(self._url),
                              'r') as z:
             for filename in filenames:
                 try:
@@ -160,7 +168,7 @@ class Commons(unohelper.Base):
 
         return config
 
-    def get_asset(self, filename):
+    def get_asset(self, filename: str) -> bytes:
         """
         Read the content of an asset. To convert it to a reader, use :
 
@@ -171,18 +179,18 @@ class Commons(unohelper.Base):
         @return: file content as bytes
         """
         import zipfile
-        with zipfile.ZipFile(unohelper.fileUrlToSystemPath(self._url),
+        with zipfile.ZipFile(uno.fileUrlToSystemPath(self._url),
                              'r') as z:
             with z.open(filename) as f:
                 return f.read()
 
 
-def create_bus():
+def create_bus() -> Bus:
     return Bus()
 
 
-def read_config(filenames, args={}, apply=lambda config: None,
-                encoding='utf-8'):
+def read_config(filenames, args=None, apply=lambda config: None,
+                encoding='utf-8') -> configparser.ConfigParser:
     """
     Read a config. See https://docs.python.org/3.7/library/configparser.html
 
@@ -193,14 +201,21 @@ def read_config(filenames, args={}, apply=lambda config: None,
 
     Example: `config = commons.read_config(commons.join_current_dir("pcrp.ini"))`
     """
-    import configparser
-    config = configparser.ConfigParser(**args)
+    config = _get_config(args)
     apply(config)
     config.read(filenames, encoding)
     return config
 
 
-def sanitize(s):
+def _get_config(args) -> configparser.ConfigParser:
+    if args is None:
+        config = configparser.ConfigParser()
+    else:
+        config = configparser.ConfigParser(**args)
+    return config
+
+
+def sanitize(s: str) -> str:
     """
     Remove accents and special chars from a string
 
@@ -208,32 +223,31 @@ def sanitize(s):
     @return: the ascii string
     """
     import unicodedata
-    try:
-        s = unicodedata.normalize('NFKD', s).encode('ascii', 'ignore').decode(
+    s = unicodedata.normalize('NFKD', s).encode('ascii', 'ignore').decode(
             'ascii')
-    except Exception:
-        pass
     return s
 
 
-def date_to_int(a_date):
+def date_to_int(a_date: Union[dt.date, dt.datetime]) -> int:
+    if isinstance(a_date, dt.date):
+        a_date = dt.datetime(a_date.year, a_date.month, a_date.day)
     return (a_date - ORIGIN).days
 
 
-def date_to_float(a_date):
-    if not isinstance(a_date, datetime.datetime):
-        if isinstance(a_date, datetime.date):
-            a_date = datetime.datetime(a_date.year, a_date.month, a_date.day)
-        elif isinstance(a_date, datetime.time):
-            a_date = datetime.datetime(0, 0, 0, a_date.hour, a_date.minute,
-                                       a_date.second, a_date.microsecond)
+def date_to_float(a_date: Union[dt.date, dt.datetime, dt.time]) -> float:
+    if not isinstance(a_date, dt.datetime):
+        if isinstance(a_date, dt.date):
+            a_date = dt.datetime(a_date.year, a_date.month, a_date.day)
+        elif isinstance(a_date, dt.time):
+            a_date = dt.datetime(1899, 12, 30, a_date.hour, a_date.minute,
+                                 a_date.second, a_date.microsecond)
 
     return (a_date - ORIGIN).total_seconds() / 86400
 
 
-def int_to_date(days):
-    return ORIGIN + datetime.timedelta(days)
+def int_to_date(days: int) -> dt.datetime:
+    return ORIGIN + dt.timedelta(days)
 
 
-def float_to_date(days):
-    return ORIGIN + datetime.timedelta(days)
+def float_to_date(days: float) -> dt.datetime:
+    return ORIGIN + dt.timedelta(days)

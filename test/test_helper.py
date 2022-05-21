@@ -91,8 +91,8 @@ def compare_xml_strings(s1, s2):
             return False
         if dom1.text != dom2.text:
             return False
-        c1s = dom1.getchildren()
-        c2s = dom2.getchildren()
+        c1s = list(dom1)
+        c2s = list(dom2)
         if len(c1s) != len(c2s):
             return False
         for c1, c2 in zip(c1s, c2s):
