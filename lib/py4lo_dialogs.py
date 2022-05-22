@@ -15,6 +15,7 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+from enum import Enum
 from threading import Thread
 from typing import Any, Callable, Optional, List, Union, NamedTuple
 
@@ -23,7 +24,7 @@ import uno
 
 from py4lo_commons import StrPath
 from py4lo_helper import (uno_service_ctxt, provider, uno_service)
-from py4lo_typing import UnoObject, UnoControlModel
+from py4lo_typing import UnoObject, UnoControlModel, UnoControl
 
 
 class MessageBoxType:
@@ -42,6 +43,144 @@ class ExecutableDialogResults:
     from com.sun.star.ui.dialogs.ExecutableDialogResults import (OK, CANCEL)
 
 
+class ControlModel(str, Enum):
+    AnimatedImages = "AnimatedImagesControlModel"
+    Grid = "UnoControlGridModel"
+    TabPageContainer = "UnoControlTabPageContainerModel"
+    Tree = "TreeControlModel"
+    Button = "UnoControlButtonModel"
+    CheckBox = "UnoControlCheckBoxModel"
+    ComboBox = "UnoControlComboBoxModel"
+    Container = "UnoControlContainerModel"
+    CurrencyField = "UnoControlCurrencyFieldModel"
+    DateField = "UnoControlDateFieldModel"
+    Dialog = "UnoControlDialogModel"
+    Edit = "UnoControlEditModel"
+    FileControl = "UnoControlFileControlModel"
+    FixedHyperlink = "UnoControlFixedHyperlinkModel"
+    FixedLine = "UnoControlFixedLineModel"
+    FixedText = "UnoControlFixedTextModel"
+    FormattedField = "UnoControlFormattedFieldModel"
+    GroupBox = "UnoControlGroupBoxModel"
+    ImageControl = "UnoControlImageControlModel"
+    ListBox = "UnoControlListBoxModel"
+    NumericField = "UnoControlNumericFieldModel"
+    PatternField = "UnoControlPatternFieldModel"
+    ProgressBar = "UnoControlProgressBarModel"
+    RadioButton = "UnoControlRadioButtonModel"
+    Roadmap = "UnoControlRoadmapModel"
+    ScrollBar = "UnoControlScrollBarModel"
+    SpinButton = "UnoControlSpinButtonModel"
+    TimeField = "UnoControlTimeFieldModel"
+    ColumnDescriptor = "ColumnDescriptorControlModel"
+
+
+class Control(str, Enum):
+    AnimatedImages = "AnimatedImagesControl"
+    Grid = "UnoControlGrid"
+    TabPageContainer = "UnoControlTabPageContainer"
+    Tree = "TreeControl"
+    Button = "UnoControlButton"
+    CheckBox = "UnoControlCheckBox"
+    ComboBox = "UnoControlComboBox"
+    Container = "UnoControlContainer"
+    CurrencyField = "UnoControlCurrencyField"
+    DateField = "UnoControlDateField"
+    Dialog = "UnoControlDialog"
+    Edit = "UnoControlEdit"
+    FileControl = "UnoControlFileControl"
+    FixedHyperlink = "UnoControlFixedHyperlink"
+    FixedLine = "UnoControlFixedLine"
+    FixedText = "UnoControlFixedText"
+    FormattedField = "UnoControlFormattedField"
+    GroupBox = "UnoControlGroupBox"
+    ImageControl = "UnoControlImageControl"
+    ListBox = "UnoControlListBox"
+    NumericField = "UnoControlNumericField"
+    PatternField = "UnoControlPatternField"
+    ProgressBar = "UnoControlProgressBar"
+    RadioButton = "UnoControlRadioButton"
+    Roadmap = "UnoControlRoadmap"
+    ScrollBar = "UnoControlScrollBar"
+    SpinButton = "UnoControlSpinButton"
+    TimeField = "UnoControlTimeField"
+    ColumnDescriptor = "ColumnDescriptorControl"
+
+
+###
+# Common functions
+###
+
+def place_widget(
+        oWidgetModel: UnoControlModel, x: int, y: int, width: int, height: int):
+    """Place a widget on the main model"""
+    oWidgetModel.PositionX = x
+    oWidgetModel.PositionY = y
+    oWidgetModel.Width = width
+    oWidgetModel.Height = height
+
+
+def message_box(msg_text: str, msg_title: str,
+                msg_type=MessageBoxType.MESSAGEBOX,
+                msg_buttons=MessageBoxButtons.BUTTONS_OK, parent_win=None):
+    """Create a message box"""
+    # from https://forum.openoffice.org/fr/forum/viewtopic.php?f=15&t=47603#
+    # (thanks Bernard !)
+    toolkit = uno_service_ctxt("com.sun.star.awt.Toolkit")
+    if parent_win is None:
+        parent_win = provider.parent_win
+    mb = toolkit.createMessageBox(parent_win, msg_type, msg_buttons, msg_title,
+                                  msg_text)
+    return mb.execute()
+
+
+FileFilter = NamedTuple("FileFilter", [("title", str), ("filter", str)])
+
+
+def file_dialog(title: str, filters: Optional[List[FileFilter]] = None,
+                display_dir: StrPath = "",
+                single: bool = True) -> Union[Optional[str], List[str]]:
+    """
+    Open a file dialog
+    @return: if single, url or None, else a list of urls
+    """
+    oFilePicker = uno_service("com.sun.star.ui.dialogs.FilePicker")
+    if filters is not None:
+        for flt in filters:
+            oFilePicker.appendFilter(flt.title, flt.filter)
+
+    oFilePicker.Title = title
+    oFilePicker.DisplayDirectory = str(display_dir)
+    if single:
+        oFilePicker.MultiSelectionMode = False
+        if oFilePicker.execute() == ExecutableDialogResults.OK:
+            urls = oFilePicker.getSelectedFiles()
+            return urls[0] if urls else None
+        else:
+            return None
+    else:
+        oFilePicker.MultiSelectionMode = True
+        if oFilePicker.execute() == ExecutableDialogResults.OK:
+            return oFilePicker.getSelectedFiles()
+        else:
+            return []
+
+
+def folder_dialog(title: str,
+                  display_dir: StrPath = "") -> Optional[str]:
+    """
+    Open a file dialog
+    @return: url or None
+    """
+    oFolder = uno_service("com.sun.star.ui.dialogs.FolderPicker")
+    oFolder.Title = title
+    oFolder.DisplayDirectory = str(display_dir)
+    if oFolder.execute() == ExecutableDialogResults.OK:
+        return oFolder.Directory
+    else:
+        return None
+
+
 MARGIN = 5
 Rectangle = namedtuple('Rectangle', ['x', 'y', 'w', 'h'])
 Size = namedtuple('Size', ['w', 'h'])
@@ -50,14 +189,12 @@ Progress = namedtuple('Progress', ['min', 'max'])
 
 class ProgressExecutorBuilder:
     def __init__(self):
-        self._oDialogModel = uno_service(
-            "com.sun.star.awt.UnoControlDialogModel")
+        self._oDialogModel = uno_service(ControlModel.Dialog)
         self._oBarModel = self._oDialogModel.createInstance(
-            "com.sun.star.awt.UnoControlProgressBarModel")
+            ControlModel.ProgressBar)
         self._oTextModel = self._oDialogModel.createInstance(
-            "com.sun.star.awt.UnoControlFixedTextModel")
-        self._oDialog = uno_service(
-            "com.sun.star.awt.UnoControlDialog")
+            ControlModel.FixedText)
+        self._oDialog = uno_service(Control.Dialog)
         self.title("Please wait...")
         self._dialog_rectangle = Rectangle(150, 150, 150, 30)
         self._bar_dimensions = Size(140, 12)
@@ -168,7 +305,7 @@ def _set_rectangle(o: Any, rectangle: Rectangle):
 
 
 class ProgressHandler:
-    def __init__(self, oBar: UnoObject, oText: UnoObject):
+    def __init__(self, oBar: UnoControlModel, oText: UnoControlModel):
         self._oBar = oBar
         self._oBar.setValue(0)
         self._oText = oText
@@ -182,7 +319,8 @@ class ProgressHandler:
 
 
 class ProgressExecutor:
-    def __init__(self, oDialog, autoclose: bool, oBar, oText):
+    def __init__(self, oDialog: UnoControl, autoclose: bool,
+                 oBar: UnoControlModel, oText: UnoControlModel):
         self._oDialog = oDialog
         self._autoclose = autoclose
         self._progress_handler = ProgressHandler(oBar, oText)
@@ -214,13 +352,10 @@ class ProgressExecutor:
 
 class ConsoleExecutorBuilder:
     def __init__(self):
-        self._oDialogModel = uno_service(
-            "com.sun.star.awt.UnoControlDialogModel")
+        self._oDialogModel = uno_service(ControlModel.Dialog)
         self._oDialogModel.Closeable = True
-        self._oDialog = uno_service(
-            "com.sun.star.awt.UnoControlDialog")
-        self._oTextModel = self._oDialogModel.createInstance(
-            "com.sun.star.awt.UnoControlEditModel")
+        self._oDialog = uno_service(Control.Dialog)
+        self._oTextModel = self._oDialogModel.createInstance(ControlModel.Edit)
         self._oTextModel.ReadOnly = True
         self._oTextModel.MultiLine = True
         self._oTextModel.VScroll = True
@@ -273,7 +408,7 @@ class ConsoleExecutorBuilder:
 
 
 class ConsoleHandler:
-    def __init__(self, oText):
+    def __init__(self, oText: UnoControlModel):
         self._oText = oText
         self.response = None
         self._cur_pos = 0
@@ -291,7 +426,8 @@ class ConsoleHandler:
 
 
 class ConsoleExecutor:
-    def __init__(self, oDialog, autoclose, oText):
+    def __init__(self, oDialog: UnoControl, autoclose: bool,
+                 oText: UnoControlModel):
         self._oDialog = oDialog
         self._autoclose = autoclose
         self._console_handler = ConsoleHandler(oText)
@@ -316,77 +452,3 @@ class ConsoleExecutor:
     @property
     def response(self):
         return self._console_handler.response
-
-
-###
-# Common functions
-###
-
-def place_widget(
-        oWidgetModel: UnoControlModel, x: int, y: int, width: int, height: int):
-    """Place a widget on the main model"""
-    oWidgetModel.PositionX = x
-    oWidgetModel.PositionY = y
-    oWidgetModel.Width = width
-    oWidgetModel.Height = height
-
-
-def message_box(msg_text: str, msg_title: str,
-                msg_type=MessageBoxType.MESSAGEBOX,
-                msg_buttons=MessageBoxButtons.BUTTONS_OK, parent_win=None):
-    """Create a message box"""
-    # from https://forum.openoffice.org/fr/forum/viewtopic.php?f=15&t=47603#
-    # (thanks Bernard !)
-    toolkit = uno_service_ctxt("com.sun.star.awt.Toolkit")
-    if parent_win is None:
-        parent_win = provider.parent_win
-    mb = toolkit.createMessageBox(parent_win, msg_type, msg_buttons, msg_title,
-                                  msg_text)
-    return mb.execute()
-
-
-FileFilter = NamedTuple("FileFilter", [("title", str), ("filter", str)])
-
-
-def file_dialog(title: str, filters: Optional[List[FileFilter]] = None,
-                display_dir: StrPath = "",
-                single: bool = True) -> Union[Optional[str], List[str]]:
-    """
-    Open a file dialog
-    @return: if single, url or None, else a list of urls
-    """
-    oFilePicker = uno_service("com.sun.star.ui.dialogs.FilePicker")
-    if filters is not None:
-        for flt in filters:
-            oFilePicker.appendFilter(flt.title, flt.filter)
-
-    oFilePicker.Title = title
-    oFilePicker.DisplayDirectory = str(display_dir)
-    if single:
-        oFilePicker.MultiSelectionMode = False
-        if oFilePicker.execute() == ExecutableDialogResults.OK:
-            urls = oFilePicker.getSelectedFiles()
-            return urls[0] if urls else None
-        else:
-            return None
-    else:
-        oFilePicker.MultiSelectionMode = True
-        if oFilePicker.execute() == ExecutableDialogResults.OK:
-            return oFilePicker.getSelectedFiles()
-        else:
-           return []
-
-
-def folder_dialog(title: str,
-                display_dir: StrPath = "") -> Optional[str]:
-    """
-    Open a file dialog
-    @return: url or None
-    """
-    oFolder = uno_service("com.sun.star.ui.dialogs.FolderPicker")
-    oFolder.Title = title
-    oFolder.DisplayDirectory = str(display_dir)
-    if oFolder.execute() == ExecutableDialogResults.OK:
-        return oFolder.Directory
-    else:
-        return None
