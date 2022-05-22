@@ -22,7 +22,7 @@ import py4lo_helper
 from collections import namedtuple
 import uno
 
-from py4lo_typing import UnoObject
+from py4lo_typing import UnoObject, UnoControlModel
 
 MARGIN = 5
 Rectangle = namedtuple('Rectangle', ['x', 'y', 'w', 'h'])
@@ -298,3 +298,16 @@ class ConsoleExecutor:
     @property
     def response(self):
         return self._console_handler.response
+
+
+###
+# Common functions
+###
+
+def place_widget(
+        oWidgetModel: UnoControlModel, x: int, y: int, width: int, height: int):
+    """Place a widget on the main model"""
+    oWidgetModel.PositionX = x
+    oWidgetModel.PositionY = y
+    oWidgetModel.Width = width
+    oWidgetModel.Height = height

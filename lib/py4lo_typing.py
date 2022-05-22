@@ -25,6 +25,7 @@ UnoXScriptContext = NewType("UnoXScriptContext", Any)
 
 UnoObject = NewType("UnoObject", Any)
 UnoStruct = NewType("UnoStruct", Any)
+UnoService = NewType("UnoService", Any)
 
 UnoSpreadsheet = NewType("UnoSpreadsheet", UnoObject)
 UnoRange = NewType("UnoRange", UnoObject)
@@ -36,9 +37,11 @@ UnoCellAddress = NewType("UnoCellAddress", UnoObject)
 
 UnoController = NewType("UnoController", UnoObject)
 UnoContext = NewType("UnoContext", UnoObject)
-UnoService = NewType("UnoService", UnoObject)
 
 UnoPropertyValue = NewType("UnoPropertyValue", UnoStruct)
+
+UnoControlModel = NewType("UnoControlModel", UnoService)
+UnoControl = NewType("UnoControl", UnoService)
 
 
 DATA_VALUE = Union[str, float]
