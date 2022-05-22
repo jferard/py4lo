@@ -31,33 +31,37 @@ from py4lo_typing import (UnoSpreadsheet, UnoController, UnoContext, UnoService,
                           UnoPropertyValue, DATA_ROW, UnoXScriptContext)
 
 import os
-import uno
 
 try:
+    import uno
     import unohelper
 
 
     class FrameSearchFlag:
         from com.sun.star.frame.FrameSearchFlag import (
             AUTO, PARENT, SELF, CHILDREN, CREATE, SIBLINGS, TASKS, ALL, GLOBAL)
+
+    from com.sun.star.uno import RuntimeException as UnoRuntimeException, \
+        Exception as UnoException
+
+
+    class ConditionOperator:
+        from com.sun.star.sheet.ConditionOperator import (FORMULA, )
+
+
+    from com.sun.star.script.provider import ScriptFrameworkErrorException
+
+    from com.sun.star.lang import Locale
 except ImportError:
-    import unotools.unohelper
+    # import unotools.unohelper
+    class FrameSearchFlag:
+        AUTO = None
+
 
 # py4lo: if $python_version >= 2.6
 # py4lo: if $python_version <= 3.0
 # py4lo: endif
 # py4lo: endif
-from com.sun.star.uno import RuntimeException as UnoRuntimeException, \
-    Exception as UnoException
-
-
-class ConditionOperator:
-    from com.sun.star.sheet.ConditionOperator import (FORMULA, )
-
-
-from com.sun.star.script.provider import ScriptFrameworkErrorException
-
-from com.sun.star.lang import Locale
 
 provider = cast(Optional["_ObjectProvider"], None)
 _inspect = cast(Optional["_Inspector"], None)
@@ -621,7 +625,7 @@ def create_filter(oRange: UnoRange):
                                     ".uno:DataFilterAutoFilter", "", 0, [])
 
 
-def narrow_range(oRange: UnoRange) -> Optional[UnoRange]:
+def narrow_range(oRange: UnoRange, narrow_data: bool = False) -> Optional[UnoRange]:
     """
     Narrow the range to the used range
     @param oRange: the range, usually a row or a column
@@ -640,5 +644,80 @@ def narrow_range(oRange: UnoRange) -> Optional[UnoRange]:
     if start_row > end_row:
         return None
 
-    return oSheet.getCellRangeByPosition(
-        start_column, start_row, end_column, end_row)
+    oNarrowedRange = oSheet.getCellRangeByPosition(start_column, start_row,
+                                             end_column, end_row)
+
+    if narrow_data:
+        data_array = oNarrowedRange.DataArray
+        r0, row_count = top_void_row_count(data_array)
+        start_row += r0
+        r1 = row_count - 1
+        while r1 >= r0 and all(v.strip() == "" for v in data_array[r1]):
+            r1 -= 1
+
+
+    return oNarrowedRange
+
+
+def top_void_row_count(data_array: DATA_ARRAY) -> int:
+    """
+    @param data_array: a data array
+    @return: the number of void row at the top
+    """
+    r0 = 0
+    row_count = len(data_array)
+    while r0 < row_count and all(v.strip() == "" for v in data_array[r0]):
+        r0 += 1
+    return r0
+
+
+def bottom_void_row_count(data_array: DATA_ARRAY) -> int:
+    """
+    @param data_array: a data array
+    @return: the number of void row at the top
+    """
+    row_count = len(data_array)
+    r1 = 0
+    # r1 < row_count => row_count - r1 > 0 => row_count - r1 - 1 >= 0
+    while r1 < row_count and all(v.strip() == "" for v in data_array[row_count - r1 - 1]):
+        r1 += 1
+    return r1
+
+
+def left_void_row_count(data_array: DATA_ARRAY) -> int:
+    """
+    @param data_array: a data array
+    @return: the number of void row at the top
+    """
+    row_count = len(data_array)
+    if row_count == 0:
+        return 0
+
+    c0 = len(data_array[0])
+    for row in data_array:
+        c = 0
+        while c < c0 and row[c].strip() == "":
+            c += 1
+        if c < c0:
+            c0 = c
+    return c0
+
+
+def right_void_row_count(data_array: DATA_ARRAY) -> int:
+    """
+    @param data_array: a data array
+    @return: the number of void row at the top
+    """
+    row_count = len(data_array)
+    if row_count == 0:
+        return 0
+
+    width = len(data_array[0])
+    c1 = width
+    for row in data_array:
+        c = 0
+        while c < c1 and row[width - c - 1].strip() == "":
+            c += 1
+        if c < c1:
+            c1 = c
+    return c1

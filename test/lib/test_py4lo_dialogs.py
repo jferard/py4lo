@@ -16,38 +16,32 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest
-
-import py4lo_helper
-from py4lo_dialogs import message_box
-from py4lo_io import (create_import_filter_options,
-                      create_export_filter_options, Format)
 from unittest import mock
+
+from py4lo_dialogs import message_box, MessageBoxType
 
 
 class Py4LODialogsTestCase(unittest.TestCase):
-    def setUp(self):
-        self.xsc = mock.Mock()
-        self.doc = mock.Mock()
-        self.ctrl = mock.Mock()
-        self.frame = mock.Mock()
-        self.parent_win = mock.Mock()
-        self.msp = mock.Mock()
-        self.ctxt = mock.Mock()
-        self.sm = mock.Mock()
-        self.desktop = mock.Mock()
-        py4lo_helper.provider = py4lo_helper._ObjectProvider(
-            self.doc, self.ctrl, self.frame, self.parent_win, self.msp,
-            self.ctxt, self.sm, self.desktop)
-        py4lo_helper._inspect = py4lo_helper._Inspector(py4lo_helper.provider)
+    @mock.patch("py4lo_dialogs.uno_service_ctxt")
+    @mock.patch("py4lo_dialogs.provider")
+    def test_message_box(self, provider, uno_service_ctxt):
+        self.maxDiff = None
+        sm = mock.Mock()
 
-    def test_message_box(self):
+        # prepare
+        toolkit = mock.Mock()
+        uno_service_ctxt.return_value = toolkit
+
+        # replay
         message_box("text", "title")
-        self.sm.createInstanceWithContext.assert_called_once_with(
-            "com.sun.star.awt.Toolkit", self.ctxt)
-        sv = self.sm.createInstanceWithContext.return_value
-        sv.createMessageBox.assert_called_once()
-        mb = sv.createMessageBox.return_value
-        mb.execute.assert_called_once()
+
+        self.assertEqual([
+            mock.call('com.sun.star.awt.Toolkit'),
+            mock.call().createMessageBox(provider.parent_win,
+                                         MessageBoxType.MESSAGEBOX, 1,
+                                         'title', 'text'),
+            mock.call().createMessageBox().execute()
+        ], uno_service_ctxt.mock_calls)
 
 
 if __name__ == '__main__':

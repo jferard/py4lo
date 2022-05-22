@@ -20,27 +20,36 @@ from threading import Thread
 from typing import Any, Callable, Optional, List, Union, NamedTuple
 
 from collections import namedtuple
-import uno
+
 
 from py4lo_commons import StrPath
 from py4lo_helper import (uno_service_ctxt, provider, uno_service)
 from py4lo_typing import UnoObject, UnoControlModel, UnoControl
 
+try:
+    import uno
 
-class MessageBoxType:
-    from com.sun.star.awt.MessageBoxType import (ERRORBOX, MESSAGEBOX)
-
-
-class MessageBoxButtons:
-    from com.sun.star.awt.MessageBoxButtons import (BUTTONS_OK, )
+    class MessageBoxType:
+        from com.sun.star.awt.MessageBoxType import (ERRORBOX, MESSAGEBOX)
 
 
-class FontWeight:
-    from com.sun.star.awt.FontWeight import (BOLD, )
+    class MessageBoxButtons:
+        from com.sun.star.awt.MessageBoxButtons import (BUTTONS_OK, )
 
 
-class ExecutableDialogResults:
-    from com.sun.star.ui.dialogs.ExecutableDialogResults import (OK, CANCEL)
+    class FontWeight:
+        from com.sun.star.awt.FontWeight import (BOLD, )
+
+
+    class ExecutableDialogResults:
+        from com.sun.star.ui.dialogs.ExecutableDialogResults import (OK, CANCEL)
+except ModuleNotFoundError:
+    class MessageBoxType:
+        MESSAGEBOX = None
+
+
+    class MessageBoxButtons:
+        BUTTONS_OK = None
 
 
 class ControlModel(str, Enum):

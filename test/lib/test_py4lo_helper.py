@@ -68,7 +68,6 @@ class TestHelper(unittest.TestCase):
         self.assertEqual("name2", pvs[1].Name)
         self.assertEqual("value2", pvs[1].Value)
 
-
     def testUnoService(self):
         uno_service_ctxt("x")
         self.sm.createInstanceWithContext.assert_called_once_with("x",
@@ -154,6 +153,20 @@ class TestHelper(unittest.TestCase):
 
         oDoc.unlockControllers.assert_called_once()
 
+    def test_data_array(self):
+        data_array = [
+            ("", "", "", "", "", "", "",),
+            ("", "", "a", "", "", "b", "",),
+            ("", "", "", "c", "d", "", "",),
+            ("", "", "", "", "", "", "",),
+            ("", "", "", "", "e", "", "",),
+            ("", "", "", "", "", "", "",),
+            ("", "", "", "", "", "", "", )
+        ]
+        self.assertEqual(1, top_void_row_count(data_array))
+        self.assertEqual(2, bottom_void_row_count(data_array))
+        self.assertEqual(2, left_void_row_count(data_array))
+        self.assertEqual(1, right_void_row_count(data_array))
 
 
 if __name__ == '__main__':
