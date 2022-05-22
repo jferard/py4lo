@@ -332,6 +332,9 @@ class ProgressExecutor:
         """
 
         def aux():
+            # TODO:     oDialogControl.setVisible(True)
+            #     toolkit = uno_service("com.sun.star.awt.Toolkit")
+            #     oDialogControl.createPeer(toolkit, None)
             self._oDialog.setVisible(True)
             func(self._progress_handler)
             if self._autoclose:
@@ -439,6 +442,9 @@ class ConsoleExecutor:
         """
 
         def aux():
+            # TODO:     oDialogControl.setVisible(True)
+            #     toolkit = uno_service("com.sun.star.awt.Toolkit")
+            #     oDialogControl.createPeer(toolkit, None)
             self._oDialog.setVisible(True)
             func(self._console_handler)
             if self._autoclose:
