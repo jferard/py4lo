@@ -16,24 +16,30 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from threading import Thread
-from typing import Any, Callable
+from typing import Any, Callable, Optional, List, Union, NamedTuple
 
-import py4lo_helper
 from collections import namedtuple
 import uno
 
-from py4lo_helper import (uno_service_ctxt, provider)
+from py4lo_commons import StrPath
+from py4lo_helper import (uno_service_ctxt, provider, uno_service)
 from py4lo_typing import UnoObject, UnoControlModel
 
 
 class MessageBoxType:
     from com.sun.star.awt.MessageBoxType import (ERRORBOX, MESSAGEBOX)
 
+
 class MessageBoxButtons:
     from com.sun.star.awt.MessageBoxButtons import (BUTTONS_OK, )
 
+
 class FontWeight:
     from com.sun.star.awt.FontWeight import (BOLD, )
+
+
+class ExecutableDialogResults:
+    from com.sun.star.ui.dialogs.ExecutableDialogResults import (OK, CANCEL)
 
 
 MARGIN = 5
@@ -44,13 +50,13 @@ Progress = namedtuple('Progress', ['min', 'max'])
 
 class ProgressExecutorBuilder:
     def __init__(self):
-        self._oDialogModel = py4lo_helper.uno_service(
+        self._oDialogModel = uno_service(
             "com.sun.star.awt.UnoControlDialogModel")
         self._oBarModel = self._oDialogModel.createInstance(
             "com.sun.star.awt.UnoControlProgressBarModel")
         self._oTextModel = self._oDialogModel.createInstance(
             "com.sun.star.awt.UnoControlFixedTextModel")
-        self._oDialog = py4lo_helper.uno_service(
+        self._oDialog = uno_service(
             "com.sun.star.awt.UnoControlDialog")
         self.title("Please wait...")
         self._dialog_rectangle = Rectangle(150, 150, 150, 30)
@@ -208,10 +214,10 @@ class ProgressExecutor:
 
 class ConsoleExecutorBuilder:
     def __init__(self):
-        self._oDialogModel = py4lo_helper.uno_service(
+        self._oDialogModel = uno_service(
             "com.sun.star.awt.UnoControlDialogModel")
         self._oDialogModel.Closeable = True
-        self._oDialog = py4lo_helper.uno_service(
+        self._oDialog = uno_service(
             "com.sun.star.awt.UnoControlDialog")
         self._oTextModel = self._oDialogModel.createInstance(
             "com.sun.star.awt.UnoControlEditModel")
@@ -333,7 +339,54 @@ def message_box(msg_text: str, msg_title: str,
     # (thanks Bernard !)
     toolkit = uno_service_ctxt("com.sun.star.awt.Toolkit")
     if parent_win is None:
-        parent_win = py4lo_helper.provider.parent_win
+        parent_win = provider.parent_win
     mb = toolkit.createMessageBox(parent_win, msg_type, msg_buttons, msg_title,
                                   msg_text)
     return mb.execute()
+
+
+FileFilter = NamedTuple("FileFilter", [("title", str), ("filter", str)])
+
+
+def file_dialog(title: str, filters: Optional[List[FileFilter]] = None,
+                display_dir: StrPath = "",
+                single: bool = True) -> Union[Optional[str], List[str]]:
+    """
+    Open a file dialog
+    @return: if single, url or None, else a list of urls
+    """
+    oFilePicker = uno_service("com.sun.star.ui.dialogs.FilePicker")
+    if filters is not None:
+        for flt in filters:
+            oFilePicker.appendFilter(flt.title, flt.filter)
+
+    oFilePicker.Title = title
+    oFilePicker.DisplayDirectory = str(display_dir)
+    if single:
+        oFilePicker.MultiSelectionMode = False
+        if oFilePicker.execute() == ExecutableDialogResults.OK:
+            urls = oFilePicker.getSelectedFiles()
+            return urls[0] if urls else None
+        else:
+            return None
+    else:
+        oFilePicker.MultiSelectionMode = True
+        if oFilePicker.execute() == ExecutableDialogResults.OK:
+            return oFilePicker.getSelectedFiles()
+        else:
+           return []
+
+
+def folder_dialog(title: str,
+                display_dir: StrPath = "") -> Optional[str]:
+    """
+    Open a file dialog
+    @return: url or None
+    """
+    oFolder = uno_service("com.sun.star.ui.dialogs.FolderPicker")
+    oFolder.Title = title
+    oFolder.DisplayDirectory = str(display_dir)
+    if oFolder.execute() == ExecutableDialogResults.OK:
+        return oFolder.Directory
+    else:
+        return None
