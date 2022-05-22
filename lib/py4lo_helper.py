@@ -36,6 +36,7 @@ import uno
 try:
     import unohelper
 
+
     class FrameSearchFlag:
         from com.sun.star.frame.FrameSearchFlag import (
             AUTO, PARENT, SELF, CHILDREN, CREATE, SIBLINGS, TASKS, ALL, GLOBAL)
@@ -455,10 +456,20 @@ def get_used_range_address(oSheet: UnoSheet) -> UnoRangeAddress:
 
 def get_used_range(oSheet: UnoSheet) -> UnoRange:
     oRangeAddress = get_used_range_address(oSheet)
-    return oSheet.getCellRangeByPosition(oRangeAddress.StartColumn,
-                                         oRangeAddress.StartRow,
-                                         oRangeAddress.EndColumn,
-                                         oRangeAddress.EndRow)
+    return narrow_range_to_address(oSheet, oRangeAddress)
+
+
+def narrow_range_to_address(
+        oSheet: UnoSheet, oRangeAddress: UnoRangeAddress) -> UnoRange:
+    """
+    Useful to copy a data array from one sheet to another
+    @param oSheet:
+    @param oRangeAddress:
+    @return:
+    """
+    return oSheet.getCellRangeByPosition(
+        oRangeAddress.StartColumn, oRangeAddress.StartRow,
+        oRangeAddress.EndColumn, oRangeAddress.EndRow)
 
 
 def data_array(oSheet: UnoSheet) -> DATA_ARRAY:
