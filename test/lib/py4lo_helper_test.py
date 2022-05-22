@@ -68,14 +68,6 @@ class TestHelper(unittest.TestCase):
         self.assertEqual("name2", pvs[1].Name)
         self.assertEqual("value2", pvs[1].Value)
 
-    def testMessageBox(self):
-        message_box(None, "text", "title")
-        self.sm.createInstanceWithContext.assert_called_once_with(
-            "com.sun.star.awt.Toolkit", self.ctxt)
-        sv = self.sm.createInstanceWithContext.return_value
-        sv.createMessageBox.assert_called_once()
-        mb = sv.createMessageBox.return_value
-        mb.execute.assert_called_once()
 
     def testUnoService(self):
         uno_service_ctxt("x")

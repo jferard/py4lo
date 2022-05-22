@@ -57,15 +57,6 @@ class ConditionOperator:
 
 from com.sun.star.script.provider import ScriptFrameworkErrorException
 
-
-class MessageBoxButtons:
-    from com.sun.star.awt.MessageBoxButtons import (BUTTONS_OK, )
-
-
-class MessageBoxType:
-    from com.sun.star.awt.MessageBoxType import (MESSAGEBOX, )
-
-
 from com.sun.star.lang import Locale
 
 provider = cast(Optional["_ObjectProvider"], None)
@@ -245,19 +236,6 @@ def uno_service(sname: str, args: Optional[List[Any]] = None,
 def uno_service_ctxt(sname: str,
                      args: Optional[List[Any]] = None) -> UnoService:
     return uno_service(sname, args, provider.ctxt)
-
-
-def message_box(msg_text: str, msg_title: str,
-                msg_type=MessageBoxType.MESSAGEBOX,
-                msg_buttons=MessageBoxButtons.BUTTONS_OK, parent_win=None):
-    # from https://forum.openoffice.org/fr/forum/viewtopic.php?f=15&t=47603#
-    # (thanks Bernard !)
-    toolkit = uno_service_ctxt("com.sun.star.awt.Toolkit")
-    if parent_win is None:
-        parent_win = provider.parent_win
-    mb = toolkit.createMessageBox(parent_win, msg_type, msg_buttons, msg_title,
-                                  msg_text)
-    return mb.execute()
 
 
 ###

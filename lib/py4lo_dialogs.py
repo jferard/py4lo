@@ -22,7 +22,19 @@ import py4lo_helper
 from collections import namedtuple
 import uno
 
+from py4lo_helper import (uno_service_ctxt, provider)
 from py4lo_typing import UnoObject, UnoControlModel
+
+
+class MessageBoxType:
+    from com.sun.star.awt.MessageBoxType import (ERRORBOX, MESSAGEBOX)
+
+class MessageBoxButtons:
+    from com.sun.star.awt.MessageBoxButtons import (BUTTONS_OK, )
+
+class FontWeight:
+    from com.sun.star.awt.FontWeight import (BOLD, )
+
 
 MARGIN = 5
 Rectangle = namedtuple('Rectangle', ['x', 'y', 'w', 'h'])
@@ -311,3 +323,17 @@ def place_widget(
     oWidgetModel.PositionY = y
     oWidgetModel.Width = width
     oWidgetModel.Height = height
+
+
+def message_box(msg_text: str, msg_title: str,
+                msg_type=MessageBoxType.MESSAGEBOX,
+                msg_buttons=MessageBoxButtons.BUTTONS_OK, parent_win=None):
+    """Create a message box"""
+    # from https://forum.openoffice.org/fr/forum/viewtopic.php?f=15&t=47603#
+    # (thanks Bernard !)
+    toolkit = uno_service_ctxt("com.sun.star.awt.Toolkit")
+    if parent_win is None:
+        parent_win = py4lo_helper.provider.parent_win
+    mb = toolkit.createMessageBox(parent_win, msg_type, msg_buttons, msg_title,
+                                  msg_text)
+    return mb.execute()

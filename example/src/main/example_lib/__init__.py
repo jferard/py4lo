@@ -38,7 +38,7 @@ import unohelper
 import os
 
 from alib import TEXT
-from py4lo_helper import message_box
+from py4lo_dialogs import message_box
 
 
 class O(unohelper.Base):

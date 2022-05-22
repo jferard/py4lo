@@ -27,8 +27,9 @@ import time
 from datetime import datetime
 
 import example_lib
-from py4lo_dialogs import ProgressExecutorBuilder, ConsoleExecutorBuilder
-from py4lo_helper import provider as pr, xray, mri, message_box, parent_doc
+from py4lo_dialogs import ProgressExecutorBuilder, ConsoleExecutorBuilder, \
+    message_box
+from py4lo_helper import provider as pr, xray, mri, parent_doc
 from py4lo_io import (dict_reader, TYPE_ALL, dict_writer, export_to_csv,
                       import_from_csv)
 
