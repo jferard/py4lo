@@ -426,8 +426,12 @@ def get_last_used_row(oSheet: UnoSheet) -> int:
 
 
 def get_used_range_address(oSheet: UnoSheet) -> UnoRangeAddress:
-    oCell = oSheet.getCellByPosition(0, 0)
-    oCursor = oSheet.createCursorByRange(oCell)
+    """
+    @param oSheet: the sheet
+    @return: the used range address
+    """
+    oCursor = oSheet.createCursor()
+    oCursor.gotoStartOfUsedArea(True)
     oCursor.gotoEndOfUsedArea(True)
     return oCursor.RangeAddress
 
