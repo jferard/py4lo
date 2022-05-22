@@ -20,7 +20,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """py4lo_helper deals with LO objects."""
 
-from enum import Enum, IntEnum
+from enum import Enum
 
 from typing import (Any, Optional, List, cast, Callable, Mapping, Tuple,
                     Iterator, Union)
@@ -31,7 +31,6 @@ from py4lo_typing import (UnoSpreadsheet, UnoController, UnoContext, UnoService,
                           UnoPropertyValue, DATA_ROW, UnoXScriptContext)
 
 import os
-import encodings
 import uno
 
 try:
@@ -45,7 +44,6 @@ except ImportError:
 
 # py4lo: if $python_version >= 2.6
 # py4lo: if $python_version <= 3.0
-import io
 # py4lo: endif
 # py4lo: endif
 from com.sun.star.uno import RuntimeException as UnoRuntimeException, \
@@ -296,220 +294,6 @@ def open_in_calc(filename: str, target: str = Target.BLANK,
         params = ()
     return provider.desktop.loadComponentFromURL(url, target, frame_flags,
                                                  params)
-
-
-###
-# Filters
-###
-class Filter(str, Enum):
-    XML = "StarOffice XML (Calc)"  # Standard XML filter
-    XML_TEMPLATE = "calc_StarOffice_XML_Calc_Template"  # XML filter for templates
-    STARCALC_5 = "StarCalc 5.0"  # The binary format of StarOffice Calc 5.x
-    STARCALC_5_TEMPLATE = "StarCalc 5.0 Vorlage/Template"  # StarOffice Calc 5.x templates
-    STARCALC_4 = "StarCalc 4.0"  # The binary format of StarCalc 4.x
-    STARCALC_4_TEMPLATE = "StarCalc 4.0 Vorlage/Template"  # StarCalc 4.x templates
-    STARCALC_3 = "StarCalc 3.0"  # The binary format of StarCalc 3.x
-    STARCALC_3_TEMPLATE = "StarCalc 3.0 Vorlage/Template"  # StarCalc 3.x templates
-    HTML = "HTML (StarCalc)"  # HTML filter
-    HTML_WEBQUERY = "calc_HTML_WebQuery"  # HTML filter for external data queries
-    EXCEL_97 = "MS Excel 97"  # Microsoft Excel 97/2000/XP
-    EXCEL_97_TEMPLATE = "MS Excel 97 Vorlage/Template"  # Microsoft Excel 97/2000/XP templates
-    EXCEL_95 = "MS Excel 95"  # Microsoft Excel 5.0/95
-    EXCEL_95_TEMPLATE = "MS Excel 95 Vorlage/Template"  # Microsoft Excel 5.0/95 templates
-    EXCEL_2_3_4 = "MS Excel 4.0"  # Microsoft Excel 2.1/3.0/4.0
-    EXCEL_2_3_4_TEMPLATE = "MS Excel 4.0 Vorlage/Template"  # Microsoft Excel 2.1/3.0/4.0 templates
-    LOTUS = "Lotus"  # Lotus 1-2-3
-    CSV = "Text - txt - csv (StarCalc)"  # Comma separated values
-    RTF = "Rich Text Format (StarCalc)"  #
-    DBASE = "dBase"  # dBase
-    SYLK = "SYLK"  # Symbolic Link
-    DIF = "DIF"  # Data Interchange Format
-
-# see py4lo_io.CHARSET_ID_BY_NAME
-INDEX_BY_ENCODING = {"unknown": 0,
-                     "cp1252": 1,
-                     "mac_roman": 2,
-                     "cp437": 3,
-                     "cp850": 4,
-                     "cp860": 5,
-                     "cp861": 6,
-                     "cp863": 7,
-                     "cp865": 8,
-                     "default": 9,
-                     "cp1038": 10,
-                     "ascii": 11,
-                     "latin_1": 12,
-                     "iso8859_2": 13,
-                     "iso8859_3": 14,
-                     "iso8859_4": 15,
-                     "iso8859_5": 16,
-                     "iso8859_6": 17,
-                     "iso8859_7": 18,
-                     "iso8859_8": 19,
-                     "iso8859_9": 20,
-                     "iso8859_14": 21,
-                     "iso8859_15": 22,
-                     "cp737": 23,
-                     "cp775": 24,
-                     "cp852": 25,
-                     "cp855": 26,
-                     "cp857": 27,
-                     "cp862": 28,
-                     "cp864": 29,
-                     "cp866": 30,
-                     "cp869": 31,
-                     "cp874": 32,
-                     "cp1250": 33,
-                     "cp1251": 34,
-                     "cp1253": 35,
-                     "cp1254": 36,
-                     "cp1255": 37,
-                     "cp1256": 38,
-                     "cp1257": 39,
-                     "cp1258": 40,
-                     "mac_arabic": 41,
-                     "mac-ce": 42,
-                     "mac_croatian": 43,
-                     "mac_cyrillic": 44,
-                     "mac_devanagari": 45,
-                     "mac_farsi": 46,
-                     "mac_greek": 47,
-                     "mac_gujarati": 48,
-                     "mac_gurmukhi": 49,
-                     "mac_hebrew": 50,
-                     "mac_iceland": 51,
-                     "mac_latin2": 52,
-                     "mac_thai": 53,
-                     "mac_turkish": 54,
-                     "mac_ukrainian": 55,
-                     "mac_chinesesimp": 56,
-                     "mac_": 57,
-                     "mac_japanese": 58,
-                     "mac_korean": 59,
-                     "cp932": 60,
-                     "cp936": 61,
-                     "cp949": 62,
-                     "cp950": 63,
-                     "shift_jis": 64,
-                     "gb2312": 65,
-                     "gb12345": 66,
-                     "gbk": 67,
-                     "big5": 68,
-                     "euc_jp": 69,
-                     "g2312": 70,
-                     "euc_tw": 71,
-                     "iso2022_jp": 72,
-                     "is_2022": 73,
-                     "koi8_r": 74,
-                     "utf_7": 75,
-                     "utf_8": 76,
-                     "iso8859_10": 77,
-                     "iso8859_13": 78,
-                     "euc_kr": 79,
-                     "iso2022_kr": 80,
-                     "jis_x0201": 81,
-                     "jis_x0208": 82,
-                     "jis_x0212": 83,
-                     "johab": 84,
-                     "gb18030": 85,
-                     "big5hkscs": 86,
-                     "tis_620": 87,
-                     "koi8_u": 88,
-                     "iscii": 89,
-                     "java_utf_8": 90,
-                     "cp1276": 91,
-                     "adobe_symbol": 92,
-                     "ptcp154": 93,
-                     "utf_32": 65534,
-                     "utf_16": 65535}
-
-
-class Format(IntEnum):
-    STANDARD = 1  # Standard
-    TEXT = 2  # Text
-    MM_DD_YY = 3  # MM/DD/YY
-    DD_MM_YY = 4  # DD/MM/YY
-    YY_MM_DD = 5  # YY/MM/DD
-    IGNORE = 9  # IGNORE FIELD (do not import)
-    US = 10  # US-English
-
-
-def import_filter_options(
-        delimiter: str = ",", quotechar: str = '"', encoding: str = "utf-8",
-        first_line: int = 1,
-        format_by_idx: Optional[Mapping[int, Format]] = None,
-        quoted_field_as_text: bool = False,
-        detect_special_numbers: bool = False) -> str:
-    """
-    See: https://wiki.openoffice.org/wiki/Documentation/DevGuide/Spreadsheets/Filter_Options
-    @param delimiter: the delimiter
-    @param quotechar: the quotechar
-    @param encoding: the encoding
-    @param first_line: the first line
-    @param format_by_idx: a mapping field index (starting at 1) -> field format
-    @param quoted_field_as_text: see checkbox
-    @param detect_special_numbers: see checkbox
-    @return: a CSV filter options string
-    """
-    options = _base_filter_options(
-        delimiter, quotechar, encoding, first_line, format_by_idx
-    ) + ["", str(quoted_field_as_text).lower(),
-         str(detect_special_numbers).lower()]
-    return ",".join(options)
-
-
-def export_filter_options(
-        delimiter: str = ",", quotechar: str = '"', encoding: str = "utf-8",
-        first_line: int = 1,
-        format_by_idx: Optional[Mapping[int, Format]] = None,
-        quote_all_text_cells: bool = False,
-        store_as_numbers: bool = True,
-        save_cell_contents_as_shown: bool = True) -> str:
-    """
-    See: https://wiki.openoffice.org/wiki/Documentation/DevGuide/Spreadsheets/Filter_Options
-    @param delimiter: the delimiter
-    @param quotechar: the quotechar
-    @param encoding: the encoding
-    @param first_line: the first line
-    @param format_by_idx: a mapping field index (starting at 1) -> field format
-    @param quote_all_text_cells: see checkbox
-    @param store_as_numbers: if false, quote numbers (?)
-    @param save_cell_contents_as_shown: see checkbox
-    @return: a CSV filter options string
-    """
-    options = _base_filter_options(
-        delimiter, quotechar, encoding, first_line, format_by_idx
-    ) + ["", str(quote_all_text_cells).lower(), str(store_as_numbers).lower(),
-         str(save_cell_contents_as_shown).lower()]
-    return ",".join(options)
-
-
-def _base_filter_options(
-        delimiter: str, quotechar: str, encoding: str, first_line: int,
-        format_by_idx: Mapping[int, int]) -> List[str]:
-    """
-    See: https://wiki.openoffice.org/wiki/Documentation/DevGuide/Spreadsheets/Filter_Options
-    @param delimiter: the delimiter
-    @param quotechar: the quotechar
-    @param encoding: the encoding
-    @param first_line: the first line
-    @param format_by_idx: a mapping field index (starting at 1) -> field format
-    @return: a list of options
-    """
-    norm_encoding = encodings.normalize_encoding(encoding)
-    norm_encoding = encodings.aliases.aliases.get(
-        norm_encoding.lower(), norm_encoding)
-    encoding_index = INDEX_BY_ENCODING.get(norm_encoding, 0)
-
-    if format_by_idx is None:
-        field_formats = ""
-    else:
-        field_formats = "/".join(["{}/{}".format(idx, format)
-                                  for idx, format in format_by_idx.items()])
-
-    return [str(ord(delimiter)), str(ord(quotechar)), str(encoding_index),
-            str(first_line),
-            field_formats]
 
 
 # Create a document

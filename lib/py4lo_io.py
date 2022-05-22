@@ -16,25 +16,24 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import csv
+import encodings
 import locale
 import os
-from datetime import (date, datetime, time)
-import encodings
-from typing import Any, Callable, List, Iterator
-
-from encodings.aliases import aliases as enc_aliases
-import itertools
 import sys
+from datetime import (date, datetime, time)
+from enum import IntEnum, Enum
+from pathlib import Path
 
 import uno
-from com.sun.star.util import NumberFormat
 from com.sun.star.lang import Locale
+from com.sun.star.util import NumberFormat
+from typing import Any, Callable, List, Iterator, Optional, Mapping
 
 # values of type_cell
-from py4lo_commons import float_to_date, date_to_float
+from py4lo_commons import float_to_date, date_to_float, StrPath
 from py4lo_helper import (provider as pr, make_pvs, get_doc, get_cell_type,
                           get_used_range_address)
-from py4lo_typing import UnoCell, UnoSheet
+from py4lo_typing import UnoCell, UnoSheet, UnoSpreadsheet
 
 TYPE_NONE = 0
 TYPE_MINIMAL = 1
@@ -45,7 +44,8 @@ TYPE_ALL = 2
 # Reader #
 ##########
 
-def create_read_cell(type_cell=TYPE_MINIMAL, oFormats=None) -> Callable[[UnoCell], Any]:
+def create_read_cell(type_cell=TYPE_MINIMAL, oFormats=None) -> Callable[
+    [UnoCell], Any]:
     """
     Create a function to read a cell
     @param type_cell: one of `TYPE_NONE` (return the String value),
@@ -54,6 +54,7 @@ def create_read_cell(type_cell=TYPE_MINIMAL, oFormats=None) -> Callable[[UnoCell
     @param oFormats: the container for NumberFormats.
     @return: a function to read the cell value
     """
+
     def read_cell_none(oCell: UnoCell) -> str:
         """
         Read a cell value
@@ -116,6 +117,7 @@ class reader(Iterator[List[Any]]):
     """
     A reader that returns rows as lists of values.
     """
+
     def __init__(self, oSheet: UnoSheet, type_cell=TYPE_MINIMAL, oFormats=None,
                  read_cell=None):
         if read_cell is not None:
@@ -152,7 +154,9 @@ class dict_reader:
     """
     A reader that returns rows as dicts.
     """
-    def __init__(self, oSheet: UnoSheet, fieldnames=None, restkey=None, restval=None,
+
+    def __init__(self, oSheet: UnoSheet, fieldnames=None, restkey=None,
+                 restval=None,
                  type_cell=TYPE_MINIMAL, oFormats=None, read_cell=None):
         self._reader = reader(oSheet, type_cell, oFormats, read_cell)
         if fieldnames is None:
@@ -207,6 +211,7 @@ def create_write_cell(type_cell=TYPE_MINIMAL, oFormats=None):
     @param oFormats: the NumberFormats
     @return: a function
     """
+
     def write_cell_none(oCell, value):
         """
         Write a cell value
@@ -304,6 +309,7 @@ class dict_writer:
     """
     A writer that takes dicts
     """
+
     def __init__(self, oSheet, fieldnames, restval='', extrasaction='raise',
                  type_cell=TYPE_MINIMAL, oFormats=None, write_cell=None):
         self.writer = writer(oSheet, type_cell, oFormats, write_cell)
@@ -329,62 +335,49 @@ class dict_writer:
 #####################
 # Import/Export CSV #
 #####################
+###
+# Filters
+###
+class Filter(str, Enum):
+    XML = "StarOffice XML (Calc)"  # Standard XML filter
+    XML_TEMPLATE = "calc_StarOffice_XML_Calc_Template"  # XML filter for templates
+    STARCALC_5 = "StarCalc 5.0"  # The binary format of StarOffice Calc 5.x
+    STARCALC_5_TEMPLATE = "StarCalc 5.0 Vorlage/Template"  # StarOffice Calc 5.x templates
+    STARCALC_4 = "StarCalc 4.0"  # The binary format of StarCalc 4.x
+    STARCALC_4_TEMPLATE = "StarCalc 4.0 Vorlage/Template"  # StarCalc 4.x templates
+    STARCALC_3 = "StarCalc 3.0"  # The binary format of StarCalc 3.x
+    STARCALC_3_TEMPLATE = "StarCalc 3.0 Vorlage/Template"  # StarCalc 3.x templates
+    HTML = "HTML (StarCalc)"  # HTML filter
+    HTML_WEBQUERY = "calc_HTML_WebQuery"  # HTML filter for external data queries
+    EXCEL_97 = "MS Excel 97"  # Microsoft Excel 97/2000/XP
+    EXCEL_97_TEMPLATE = "MS Excel 97 Vorlage/Template"  # Microsoft Excel 97/2000/XP templates
+    EXCEL_95 = "MS Excel 95"  # Microsoft Excel 5.0/95
+    EXCEL_95_TEMPLATE = "MS Excel 95 Vorlage/Template"  # Microsoft Excel 5.0/95 templates
+    EXCEL_2_3_4 = "MS Excel 4.0"  # Microsoft Excel 2.1/3.0/4.0
+    EXCEL_2_3_4_TEMPLATE = "MS Excel 4.0 Vorlage/Template"  # Microsoft Excel 2.1/3.0/4.0 templates
+    LOTUS = "Lotus"  # Lotus 1-2-3
+    CSV = "Text - txt - csv (StarCalc)"  # Comma separated values
+    RTF = "Rich Text Format (StarCalc)"  #
+    DBASE = "dBase"  # dBase
+    SYLK = "SYLK"  # Symbolic Link
+    DIF = "DIF"  # Data Interchange Format
+
 
 # see https://api.libreoffice.org/docs/cpp/ref/a00391_source.html (rtl/textenc.h)
 CHARSET_ID_BY_NAME = {
-    'adobe_dingbats': 94,
-    'adobe_standard': 91,
-    'adobe_symbol': 92,
-    'ascii': 11,
-    'big5': 68,
-    'big5hkscs': 86,
-    'cp1250': 33,
-    'cp1251': 34,
+    'unknown': 0,
     'cp1252': 1,
-    'cp1253': 35,
-    'cp1254': 36,
-    'cp1255': 37,
-    'cp1256': 38,
-    'cp1257': 39,
-    'cp1258': 40,
-    'cp1361': 84,
+    'mac_roman': 2,
     'cp437': 3,
-    'cp737': 23,
-    'cp775': 24,
     'cp850': 4,
-    'cp852': 25,
-    'cp855': 26,
-    'cp857': 27,
     'cp860': 5,
     'cp861': 6,
-    'cp862': 28,
     'cp863': 7,
-    'cp864': 29,
     'cp865': 8,
-    'cp866': 30,
-    'cp869': 31,
-    'cp874': 32,
-    'cp932': 60,
-    'cp936': 61,
-    'cp949': 62,
-    'cp950': 63,
-    'euc_cn': 70,
-    'euc_jp': 69,
-    'euc_kr': 79,
-    'euc_tw': 71,
-    'gb18030': 85,
-    'gb2312': 65,
-    'gbk': 67,
-    'gbt12345': 66,
-    'iscii_devanagari': 89,
-    'iso2022_cn': 73,
-    'iso2022_jp': 72,
-    'iso2022_kr': 80,
+    sys.getdefaultencoding(): 9,
+    'symbol': 10,
+    'ascii': 11,
     'iso8859_1': 12,
-    'iso8859_10': 77,
-    'iso8859_13': 78,
-    'iso8859_14': 21,
-    'iso8859_15': 22,
     'iso8859_2': 13,
     'iso8859_3': 14,
     'iso8859_4': 15,
@@ -393,16 +386,28 @@ CHARSET_ID_BY_NAME = {
     'iso8859_7': 18,
     'iso8859_8': 19,
     'iso8859_9': 20,
-    'java_utf8': 90,
-    'jis_x_0201': 81,
-    'jis_x_0208': 82,
-    'jis_x_0212': 83,
-    'koi8_r': 74,
-    'koi8_u': 88,
+    'iso8859_14': 21,
+    'iso8859_15': 22,
+    'cp737': 23,
+    'cp775': 24,
+    'cp852': 25,
+    'cp855': 26,
+    'cp857': 27,
+    'cp862': 28,
+    'cp864': 29,
+    'cp866': 30,
+    'cp869': 31,
+    'cp874': 32,
+    'cp1250': 33,
+    'cp1251': 34,
+    'cp1253': 35,
+    'cp1254': 36,
+    'cp1255': 37,
+    'cp1256': 38,
+    'cp1257': 39,
+    'cp1258': 40,
     'mac_arabic': 41,
     'mac_centeuro': 42,
-    'mac_chinsimp': 56,
-    'mac_chintrad': 57,
     'mac_croatian': 43,
     'mac_cyrillic': 44,
     'mac_devanagari': 45,
@@ -412,24 +417,53 @@ CHARSET_ID_BY_NAME = {
     'mac_gurmukhi': 49,
     'mac_hebrew': 50,
     'mac_iceland': 51,
-    'mac_japanese': 58,
-    'mac_korean': 59,
-    'mac_roman': 2,
     'mac_romanian': 52,
     'mac_thai': 53,
     'mac_turkish': 54,
     'mac_ukrainian': 55,
-    'ptcp154': 93,
+    'mac_chinsimp': 56,
+    'mac_chintrad': 57,
+    'mac_japanese': 58,
+    'mac_korean': 59,
+    'cp932': 60,
+    'cp936': 61,
+    'cp949': 62,
+    'cp950': 63,
     'shift_jis': 64,
-    'symbol': 10,
-    'tis_620': 87,
-    'utf_16': 65535,
-    'utf_32': 65534,
-    'user_end': 61439,
-    'user_start': 32768,
-    sys.getdefaultencoding(): 9,
+    'gb2312': 65,
+    'gbt12345': 66,
+    'gbk': 67,
+    'big5': 68,
+    'euc_jp': 69,
+    'euc_cn': 70,
+    'euc_tw': 71,
+    'iso2022_jp': 72,
+    'iso2022_cn': 73,
+    'koi8_r': 74,
     'utf_7': 75,
-    'utf_8': 76
+    'utf_8': 76,
+    'iso8859_10': 77,
+    'iso8859_13': 78,
+    'euc_kr': 79,
+    'iso2022_kr': 80,
+    'jis_x_0201': 81,
+    'jis_x_0208': 82,
+    'jis_x_0212': 83,
+    'cp1361': 84,
+    'gb18030': 85,
+    'big5hkscs': 86,
+    'tis_620': 87,
+    'koi8_u': 88,
+    'iscii_devanagari': 89,
+    'java_utf8': 90,
+    'adobe_standard': 91,
+    'adobe_symbol': 92,
+    'ptcp154': 93,
+    'adobe_dingbats': 94,
+    'user_start': 32768,
+    'user_end': 61439,
+    'utf_32': 65534,
+    'utf_16': 65535,
 }
 
 FORMAT_STANDARD = 1
@@ -667,98 +701,92 @@ LANGUAGE_ID_BY_CODE = {
 }
 
 
-def _get_charset_id(encoding: str) -> int:
-    encoding = encodings.normalize_encoding(encoding)
-    encoding = enc_aliases.get(encoding, encoding)
-    return CHARSET_ID_BY_NAME.get(encoding, encoding)
+class Format(IntEnum):
+    STANDARD = 1  # Standard
+    TEXT = 2  # Text
+    MM_DD_YY = 3  # MM/DD/YY
+    DD_MM_YY = 4  # DD/MM/YY
+    YY_MM_DD = 5  # YY/MM/DD
+    IGNORE = 9  # IGNORE FIELD (do not import)
+    US = 10  # US-English
 
 
-def create_import_filter_options(dialect=csv.unix_dialect, encoding="utf-8",
-                                 first_line=1, type_by_col=None,
-                                 language_code=locale.getlocale()[0],
-                                 detect_numbers=True):
-    """
-    # See https://wiki.openoffice.org/wiki/Documentation/DevGuide/Spreadsheets/Filter_Options
-    @param dialect: the Python csv dialect
-    @param encoding: the source file encoding
-    @param first_line: the first line
-    @param type_by_col: a mappin col -> type (type is FORMAT_MM_DD_YY)
-    @param language_code: en_US
-    @param detect_numbers: if true, detect numbers
-    @return: a filter options string
-    """
-    charset = _get_charset_id(encoding)
-    if type_by_col is None:
-        cols = ""
-    else:
-        cols = "/".join(itertools.chain(*sorted(type_by_col.items())))
-    language_id = LANGUAGE_ID_BY_CODE.get(language_code, 0)
-    quoting = "true" if dialect.quoting == csv.QUOTE_ALL else "false"
-    detect = "true" if detect_numbers else "false"
-    tokens = ",".join(
-        [str(ord(dialect.delimiter)), str(ord(dialect.quotechar)), str(charset),
-         str(first_line), cols, str(language_id), quoting, detect, ""])
-    return tokens
-
-
-# merge with helper
-def import_from_csv(oDoc, sheet_name, position, path,
-                    dialect=csv.unix_dialect,
-                    encoding="utf-8", first_line=1, type_by_col=None,
-                    language_code=locale.getlocale()[0], detect_numbers=True):
+def import_from_csv(oDoc: UnoSpreadsheet, sheet_name: str, dest_position: int,
+                    path: StrPath, *args, **kwargs):
     """
     @param sheet_name: the sheet name
-    @param position: position
+    @param dest_position: position
     @param path: path to the file
     @param dialect: the Python csv dialect
     @param encoding: the source file encoding
     @param first_line: the first line
-    @param type_by_col: a mappin col -> type (type is FORMAT_MM_DD_YY)
+    @param format_by_idx: a mappin col -> type (type is FORMAT_MM_DD_YY)
     @param language_code: en_US
-    @param detect_numbers: if true, detect numbers
+    @param detect_special_numbers: if true, detect numbers
     @return: the sheet
     """
-    filter_options = create_import_filter_options(dialect, encoding, first_line,
-                                                  type_by_col, language_code,
-                                                  detect_numbers)
-    pvs = make_pvs({"FilterName": "Text - txt - csv (StarCalc)",
-                                 "FilterOptions": filter_options,
-                                 "Hidden": "True"})
+    filter_options = create_import_filter_options(*args, **kwargs)
+    pvs = make_pvs({"FilterName": Filter.CSV, "FilterOptions": filter_options,
+                    "Hidden": "True"})
 
     oDoc.lockControllers()
-    url = uno.systemPathToFileUrl(os.path.realpath(path))
+    if isinstance(path, str):
+        path = Path(path)
+    url = uno.systemPathToFileUrl(path.resolve())
     oSource = pr.desktop.loadComponentFromURL(url, "_blank", 0, pvs)
     oSource.Sheets.getByIndex(0).Name = sheet_name
     name = oSource.Sheets.getElementNames()[0]
-    oDoc.Sheets.importSheet(oSource, name, position)
+    oDoc.Sheets.importSheet(oSource, name, dest_position)
     oSource.close(True)
     oDoc.unlockControllers()
 
 
-def create_export_filter_options(dialect=csv.unix_dialect, encoding="utf-8",
-                                 first_line=1,
-                                 language_code=locale.getlocale()[0]):
-    """
-    See https://wiki.openoffice.org/wiki/Documentation/DevGuide/Spreadsheets/Filter_Options
+def create_import_filter_options(*args, **kwargs) -> str:
+    if len(args) == 1:
+        dialect = args[0]
+        delimiter = kwargs.pop("delimiter", dialect.delimiter)
+        quotechar = kwargs.pop("quotechar", dialect.quotechar)
+        quoted_field_as_text = kwargs.pop("quoted_field_as_text",
+                                          dialect.quoting == csv.QUOTE_ALL)
+        return _create_import_filter_options(
+            delimiter=delimiter, quotechar=quotechar,
+            quoted_field_as_text=quoted_field_as_text,
+            **kwargs
+        )
+    elif len(args) == 0:
+        return _create_import_filter_options(**kwargs)
+    else:
+        raise ValueError("At most one positional parameters allowed")
 
-    @param dialect: the Python csv dialect
+
+def _create_import_filter_options(
+        delimiter: str = ",", quotechar: str = '"',
+        quoted_field_as_text: bool = False,
+        encoding: str = "utf-8", language_code=locale.getlocale()[0],
+        first_line: int = 1,
+        format_by_idx: Optional[Mapping[int, Format]] = None,
+        detect_special_numbers: bool = False) -> str:
+    """
+    # See https://wiki.openoffice.org/wiki/Documentation/DevGuide/Spreadsheets/Filter_Options
+    @param delimiter: the delimiter
+    @param quotechar: the quotechar
+    @param quoted_field_as_text: see checkbox
     @param encoding: the source file encoding
-    @param first_line: the first line
     @param language_code: en_US
-    @return: tokens
+    @param first_line: the first line
+    @param format_by_idx: a mappin col -> type (type is FORMAT_MM_DD_YY)
+    @param detect_special_numbers: if true, detect numbers
+    @return: a filter options string
     """
-    charset = _get_charset_id(encoding)
-    language_id = LANGUAGE_ID_BY_CODE.get(language_code, 0)
-    quoting = "true" if dialect.quoting == csv.QUOTE_ALL else "false"
-    tokens = ",".join(
-        [str(ord(dialect.delimiter)), str(ord(dialect.quotechar)), str(charset),
-         str(first_line), "", str(language_id), quoting, "true", "true"])
-    return tokens
+    quoting = "true" if quoted_field_as_text else "false"
+    detect = "true" if detect_special_numbers else "false"
+    tokens = _base_filter_tokens(
+        delimiter, quotechar, encoding, language_code, first_line, format_by_idx
+    ) + [quoting, detect]
+    return ",".join(tokens)
 
 
-def export_to_csv(oSheet, path, dialect=csv.unix_dialect, encoding="utf-8",
-                  first_line=1, language_code=locale.getlocale()[0],
-                  overwrite=True):
+def export_to_csv(oSheet: UnoSheet, path: StrPath, *args, **kwargs):
     """
     save a sheet to a csv file
 
@@ -771,12 +799,10 @@ def export_to_csv(oSheet, path, dialect=csv.unix_dialect, encoding="utf-8",
     @param overwrite:
     @return: tokens
     """
-
-    filter_options = create_export_filter_options(dialect, encoding, first_line,
-                                                  language_code)
-    pvs = make_pvs({"FilterName": "Text - txt - csv (StarCalc)",
-                                 "FilterOptions": filter_options,
-                                 "Overwrite": overwrite})
+    overwrite = kwargs.pop("overwrite", True)
+    filter_options = create_export_filter_options(*args, kwargs)
+    pvs = make_pvs({"FilterName": Filter.CSV, "FilterOptions": filter_options,
+                    "Overwrite": overwrite})
     oDoc = get_doc(oSheet)
     oActive = oDoc.CurrentController.getActiveSheet()
     oDoc.lockControllers()
@@ -785,3 +811,83 @@ def export_to_csv(oSheet, path, dialect=csv.unix_dialect, encoding="utf-8",
     oDoc.storeToURL(url, pvs)
     oDoc.CurrentController.setActiveSheet(oActive)
     oDoc.unlockControllers()
+
+
+def _get_charset_id(encoding: str) -> int:
+    norm_encoding = encodings.normalize_encoding(encoding)
+    norm_encoding = encodings.aliases.aliases.get(
+        norm_encoding.lower(), norm_encoding)
+    return CHARSET_ID_BY_NAME.get(norm_encoding, 0)
+
+
+def _build_field_formats(format_by_idx: Optional[Mapping[int, int]]) -> str:
+    if format_by_idx is None:
+        field_formats = ""
+    else:
+        field_formats = "/".join(["{}/{}".format(idx, fmt)
+                                  for idx, fmt in format_by_idx.items()])
+    return field_formats
+
+
+def _base_filter_tokens(
+        delimiter: str, quotechar: str, encoding: str, language_code: str,
+        first_line: int, format_by_idx: Optional[Mapping[int, int]]) -> List[
+    str]:
+    """
+    See: https://wiki.openoffice.org/wiki/Documentation/DevGuide/Spreadsheets/Filter_Options
+    Common to import/export
+
+    @param delimiter: the delimiter
+    @param quotechar: the quotechar
+    @param encoding: the encoding
+    @param first_line: the first line
+    @param format_by_idx: a mapping field index (starting at 1) -> field format
+    @return: a list of options
+    """
+    encoding_index = _get_charset_id(encoding)
+    language_id = LANGUAGE_ID_BY_CODE.get(language_code, 0)
+    field_formats = _build_field_formats(format_by_idx)
+    return [str(ord(delimiter)), str(ord(quotechar)), str(encoding_index),
+            str(first_line), field_formats, str(language_id)]
+
+
+def create_export_filter_options(*args, **kwargs) -> str:
+    """
+    See https://wiki.openoffice.org/wiki/Documentation/DevGuide/Spreadsheets/Filter_Options
+
+    @param dialect: the Python csv dialect
+    @param encoding: the source file encoding
+    @param first_line: the first line
+    @param language_code: en_US
+    @return: tokens
+    """
+    if len(args) == 1:
+        dialect = args[0]
+        delimiter = kwargs.pop("delimiter", dialect.delimiter)
+        quotechar = kwargs.pop("quotechar", dialect.quotechar)
+        quote_all_text_cells = kwargs.pop("store_numeric_cells_as_text",
+                                          dialect.quoting == csv.QUOTE_ALL)
+        return _create_export_filter_options(
+            delimiter=delimiter, quotechar=quotechar,
+            store_numeric_cells_as_text=quote_all_text_cells,
+            **kwargs
+        )
+    elif len(args) == 0:
+        return _create_export_filter_options(**kwargs)
+    else:
+        raise ValueError("At most one positional parameters allowed")
+
+
+def _create_export_filter_options(
+        delimiter: str = ",", quotechar: str = '"',
+        store_numeric_cells_as_text: bool = False,
+        encoding: str = "utf-8", language_code=locale.getlocale()[0],
+        first_line: int = 1,
+        format_by_idx: Optional[Mapping[int, Format]] = None,
+        save_cell_contents_as_shown: bool = True) -> str:
+    store_as_text = "true" if store_numeric_cells_as_text else "false"
+    save_as_shown = "true" if save_cell_contents_as_shown else "false"
+    tokens = _base_filter_tokens(
+        delimiter, quotechar, encoding, language_code, first_line, format_by_idx
+    ) + [store_as_text, store_as_text, save_as_shown]
+    return ",".join(tokens)

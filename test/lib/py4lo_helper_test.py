@@ -18,12 +18,10 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import unittest
 from unittest.mock import *
-import tst_env
-import sys, os
 
 from py4lo_helper import *
 import py4lo_helper
-from py4lo_helper import provider, _ObjectProvider, _Inspector
+from py4lo_helper import _ObjectProvider, _Inspector
 
 
 class TestHelper(unittest.TestCase):
@@ -164,16 +162,6 @@ class TestHelper(unittest.TestCase):
 
         oDoc.unlockControllers.assert_called_once()
 
-    def test_empty_import_options(self):
-        self.assertEqual('44,34,76,1,,,false,false', import_filter_options())
-
-    def test_import_options(self):
-        self.assertEqual('44,34,76,1,1/2,,false,false',
-                         import_filter_options(format_by_idx={1: Format.TEXT}))
-
-    def test_empty_export_options(self):
-        self.assertEqual('44,34,76,1,,,false,true,true',
-                         export_filter_options())
 
 
 if __name__ == '__main__':
