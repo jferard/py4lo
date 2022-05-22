@@ -619,3 +619,26 @@ def create_filter(oRange: UnoRange):
     oDispatchHelper = uno_service("com.sun.star.frame.DispatchHelper")
     oDispatchHelper.executeDispatch(oDoc.CurrentController.Frame,
                                     ".uno:DataFilterAutoFilter", "", 0, [])
+
+
+def narrow_range(oRange: UnoRange) -> Optional[UnoRange]:
+    """
+    Narrow the range to the used range
+    @param oRange: the range, usually a row or a column
+    @return the narrowed range or None
+    """
+    oSheet = oRange.Spreadsheet
+    oSheetRangeAddress = get_used_range_address(oSheet)
+    oRangeAddress = oRange.RangeAddress
+    start_column = max(oRangeAddress.StartColumn,
+                       oSheetRangeAddress.StartColumn)
+    end_column = min(oRangeAddress.EndColumn, oSheetRangeAddress.EndColumn)
+    if start_column > end_column:
+        return None
+    start_row = max(oRangeAddress.StartRow, oSheetRangeAddress.StartRow)
+    end_row = min(oRangeAddress.EndRow, oSheetRangeAddress.EndRow)
+    if start_row > end_row:
+        return None
+
+    return oSheet.getCellRangeByPosition(
+        start_column, start_row, end_column, end_row)
