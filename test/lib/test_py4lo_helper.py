@@ -17,6 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import unittest
+from unittest import mock
 from unittest.mock import *
 
 from py4lo_helper import *
@@ -161,12 +162,96 @@ class TestHelper(unittest.TestCase):
             ("", "", "", "", "", "", "",),
             ("", "", "", "", "e", "", "",),
             ("", "", "", "", "", "", "",),
-            ("", "", "", "", "", "", "", )
+            ("", "", "", "", "", "", "",)
         ]
         self.assertEqual(1, top_void_row_count(data_array))
         self.assertEqual(2, bottom_void_row_count(data_array))
         self.assertEqual(2, left_void_row_count(data_array))
         self.assertEqual(1, right_void_row_count(data_array))
+
+    def test_data_array2(self):
+        data_array = [
+            ("", "", "", "", "", "", "",),
+            ("", "", "a", "", "", "b", "",),
+            ("", "", "", "c", "d", "", "",),
+            ("", "", "", "", "", "", "",),
+            ("", "", "", "", "e", "", "",),
+            ("", "", "", "", "", "", "",),
+            ("", "", "", "", "", "", "",)
+        ]
+        self.assertEqual(1, top_void_row_count(data_array))
+        self.assertEqual(2, bottom_void_row_count(data_array))
+        self.assertEqual(2, left_void_row_count(data_array))
+        self.assertEqual(1, right_void_row_count(data_array))
+
+    def test_data_array3(self):
+        data_array = [
+            ("", "", "", "", "", "", "",),
+            ("", "", "", "", "", "", "",),
+            ("", "", "", "", "", "", "",),
+            ("", "", "", "", "", "", "",),
+            ("", "", "", "", "", "", "",),
+        ]
+        self.assertEqual(5, top_void_row_count(data_array))
+        self.assertEqual(5, bottom_void_row_count(data_array))
+        self.assertEqual(7, left_void_row_count(data_array))
+        self.assertEqual(7, right_void_row_count(data_array))
+
+    @mock.patch("py4lo_helper.get_used_range_address")
+    def test_narrow_range(self, gura):
+        # prepare
+        data_array = [
+            ("", "", "", "", "", "", "",),
+            ("", "", "", "", "", "", "",),
+            ("", "", "", "", "", "", "",),
+            ("", "", "", "", "", "", "",),
+            ("", "", "", "", "", "", "",),
+        ]
+        oSheet = mock.Mock()
+        oRange = mock.Mock(Spreadsheet=oSheet,
+                           RangeAddress=mock.Mock(StartColumn=1, EndColumn=7,
+                                                  StartRow=1, EndRow=5))
+        gura.side_effect = [mock.Mock(StartColumn=0, EndColumn=60,
+                                      StartRow=0, EndRow=50)]
+        oNRange = mock.Mock(DataArray=data_array)
+        oSheet.getCellRangeByPosition.side_effect = [oNRange]
+
+        # play
+        nr = narrow_range(oRange, True)
+
+        # verify
+        self.assertIsNone(nr)
+        self.assertEqual([mock.call.getCellRangeByPosition(1, 1, 7, 5)],
+                         oSheet.mock_calls)
+
+    @mock.patch("py4lo_helper.get_used_range_address")
+    def test_narrow_range2(self, gura):
+        # prepare
+        data_array = [
+            ("", "", "", "", "", "", "",),
+            ("", "x", "", "", "", "", "",),
+            ("", "", "y", "", "", "", "",),
+            ("", "", "", "z", "", "t", "",),
+            ("", "", "", "", "", "", "",),
+        ]
+        oSheet = mock.Mock()
+        oRange = mock.Mock(Spreadsheet=oSheet,
+                           RangeAddress=mock.Mock(StartColumn=1, EndColumn=7,
+                                                  StartRow=1, EndRow=5))
+        gura.side_effect = [mock.Mock(StartColumn=0, EndColumn=60,
+                                      StartRow=0, EndRow=50)]
+        oNRange = mock.Mock(DataArray=data_array)
+        oNRange2 = mock.Mock()
+        oSheet.getCellRangeByPosition.side_effect = [oNRange, oNRange2]
+
+        # play
+        nr = narrow_range(oRange, True)
+
+        # verify
+        self.assertEqual(oNRange2, nr)
+        self.assertEqual([mock.call.getCellRangeByPosition(1, 1, 7, 5),
+                          mock.call.getCellRangeByPosition(2, 2, 6, 4)],
+                         oSheet.mock_calls)
 
 
 if __name__ == '__main__':

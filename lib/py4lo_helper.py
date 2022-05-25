@@ -41,6 +41,7 @@ try:
         from com.sun.star.frame.FrameSearchFlag import (
             AUTO, PARENT, SELF, CHILDREN, CREATE, SIBLINGS, TASKS, ALL, GLOBAL)
 
+
     from com.sun.star.uno import RuntimeException as UnoRuntimeException, \
         Exception as UnoException
 
@@ -56,7 +57,6 @@ except ImportError:
     # import unotools.unohelper
     class FrameSearchFlag:
         AUTO = None
-
 
 # py4lo: if $python_version >= 2.6
 # py4lo: if $python_version <= 3.0
@@ -625,7 +625,8 @@ def create_filter(oRange: UnoRange):
                                     ".uno:DataFilterAutoFilter", "", 0, [])
 
 
-def narrow_range(oRange: UnoRange, narrow_data: bool = False) -> Optional[UnoRange]:
+def narrow_range(oRange: UnoRange, narrow_data: bool = False) -> Optional[
+    UnoRange]:
     """
     Narrow the range to the used range
     @param oRange: the range, usually a row or a column
@@ -644,17 +645,19 @@ def narrow_range(oRange: UnoRange, narrow_data: bool = False) -> Optional[UnoRan
     if start_row > end_row:
         return None
 
-    oNarrowedRange = oSheet.getCellRangeByPosition(start_column, start_row,
-                                             end_column, end_row)
+    oNarrowedRange = oSheet.getCellRangeByPosition(
+        start_column, start_row, end_column, end_row)
 
     if narrow_data:
         data_array = oNarrowedRange.DataArray
-        r0, row_count = top_void_row_count(data_array)
-        start_row += r0
-        r1 = row_count - 1
-        while r1 >= r0 and all(v.strip() == "" for v in data_array[r1]):
-            r1 -= 1
-
+        start_row += top_void_row_count(data_array)
+        if start_row > end_row:
+            return None
+        end_row -= bottom_void_row_count(data_array)
+        start_column += left_void_row_count(data_array)
+        end_column -= right_void_row_count(data_array)
+        oNarrowedRange = oSheet.getCellRangeByPosition(
+            start_column, start_row, end_column, end_row)
 
     return oNarrowedRange
 
@@ -679,7 +682,8 @@ def bottom_void_row_count(data_array: DATA_ARRAY) -> int:
     row_count = len(data_array)
     r1 = 0
     # r1 < row_count => row_count - r1 > 0 => row_count - r1 - 1 >= 0
-    while r1 < row_count and all(v.strip() == "" for v in data_array[row_count - r1 - 1]):
+    while r1 < row_count and all(
+            v.strip() == "" for v in data_array[row_count - r1 - 1]):
         r1 += 1
     return r1
 
