@@ -32,6 +32,8 @@ UnoRange = NewType("UnoRange", UnoObject)
 UnoRangeAddress = NewType("UnoRangeAddress", UnoStruct)
 UnoSheet = NewType("UnoSheet", UnoRange)
 UnoCell = NewType("UnoCell", UnoRange)
+UnoRow = NewType("UnoRow", UnoRange)
+UnoColumn = NewType("UnoColumn", UnoRange)
 UnoCellAddress = NewType("UnoCellAddress", UnoObject)
 
 

@@ -28,7 +28,8 @@ from typing import (Any, Optional, List, cast, Callable, Mapping, Tuple,
 from py4lo_typing import (UnoSpreadsheet, UnoController, UnoContext, UnoService,
                           UnoSheet, UnoRangeAddress, UnoRange, UnoCell,
                           UnoObject, DATA_ARRAY, UnoCellAddress,
-                          UnoPropertyValue, DATA_ROW, UnoXScriptContext)
+                          UnoPropertyValue, DATA_ROW, UnoXScriptContext,
+                          UnoColumn)
 
 import os
 
@@ -48,6 +49,10 @@ try:
 
     class ConditionOperator:
         from com.sun.star.sheet.ConditionOperator import (FORMULA, )
+
+
+    class FontWeight:
+        from com.sun.star.awt.FontWeight import (BOLD, )
 
 
     from com.sun.star.script.provider import ScriptFrameworkErrorException
@@ -725,3 +730,35 @@ def right_void_row_count(data_array: DATA_ARRAY) -> int:
         if c < c1:
             c1 = c
     return c1
+
+
+def format_first_row(oSheet: UnoSheet):
+    """
+    Format the first row of the sheet
+    @param oSheet:
+    """
+    oFirstRow = oSheet.Rows.getByIndex(0)
+    oFirstRow.CharWeight = FontWeight.BOLD
+    oFirstRow.CharWeightAsian = FontWeight.BOLD
+    oFirstRow.CharWeightComplex = FontWeight.BOLD
+    oFirstRow.IsTextWrapped = True
+    oFirstRow.OptimalHeight = True
+
+
+def column_optimal_width(oColumn: UnoColumn, min_width: int = 2 * 1000,
+                  max_width: int = 10 * 1000):
+    """
+    Sets the width of the column to an optimal value
+    @param oColumn: the column
+    @param min_width: the minimum width
+    @param max_width: the maximum width
+    """
+    if oColumn.Width < min_width:
+        oColumn.OptimalWidth = False
+        oColumn.Width = min_width
+    elif oColumn.Width > max_width:
+        oColumn.OptimalWidth = False
+        oColumn.IsTextWrapped = True
+        oColumn.Width = max_width
+    else:
+        oColumn.OptimalWidth = True
