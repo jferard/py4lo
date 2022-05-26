@@ -121,7 +121,7 @@ class Commons:
     @staticmethod
     def _get_handler(file: Union[StrPath, TextIO], mode: str, level: int,
                      fmt: str):
-        if isinstance(file, StrPath):
+        if isinstance(file, (str, Path)):
             fh = logging.FileHandler(file, mode)
         else:
             fh = logging.StreamHandler(file)
@@ -155,7 +155,7 @@ class Commons:
         import zipfile
         import codecs
 
-        if isinstance(filenames, StrPath):
+        if isinstance(filenames, (str, Path)):
             filenames = [filenames]
 
         config = _get_config(args)
