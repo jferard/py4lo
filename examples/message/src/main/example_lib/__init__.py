@@ -47,4 +47,4 @@ class O(unohelper.Base):
 
     def lib_example(self):
         message_box(TEXT.format(os.path.abspath(
-                                "../../../../py4lo")), "py4lo")
+            "../../../../../py4lo")), "py4lo")

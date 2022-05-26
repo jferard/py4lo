@@ -23,12 +23,10 @@ from pathlib import Path
 import logging
 import configparser
 import datetime as dt
-from typing import Union, Any, cast, List, Optional, TextIO, Iterable, Mapping, \
-    Callable
+from typing import (Union, Any, cast, List, Optional, TextIO, Iterable, Mapping,
+                    Callable)
 
-from py4lo_typing import UnoXScriptContext
-
-StrPath = Union[str, Path]
+from py4lo_typing import UnoXScriptContext, StrPath
 
 try:
     # noinspection PyUnresolvedReferences
@@ -154,7 +152,6 @@ class Commons:
         :param encoding: the encoding of the file
 
         Example: `config = commons.read_config("test.ini")`"""
-        import configparser
         import zipfile
         import codecs
 

@@ -10,10 +10,11 @@ history
 
 # generated files
 example/*.ods
-!example/py4lo-example.ods
+!examples/message/py4lo-example.ods
 example/*.ods#
-example/target
-example/target/*
+examples/message/target
+examples/message/target/*
+examples/quickstart/qs
 **/*.pyc
 .coverage
 

@@ -77,16 +77,23 @@ class PropertiesProviderFactory:
         kwargs = {'py4lo': base_path, 'project': os.getcwd()}
         self._tdata = load_toml(base_path.joinpath(
             "default-py4lo.toml"), Path(toml_filename), kwargs)
+        print("*******", self._tdata)
         logger = self.get_logger()
         sources = self._get_sources()
+        print("****S***", self._get_sources())
         destinations = self._get_destinations(sources.source_ods_file)
         return PropertiesProvider(logger, base_path, sources, destinations,
                                   self._tdata)
 
     def _get_sources(self):
         src: Mapping[str, Any] = self._tdata["src"]
+        print("**************************", src)
+        if "source_ods_file" in src:
+            source_ods_file = Path(src["source_ods_file"])
+        else:
+            source_ods_file = None
         sources = Sources(
-            Path(src["source_ods_file"].format()),
+            source_ods_file,
             Path(src["inc_dir"]),
             Path(src["lib_dir"]),
             Path(src["src_dir"]),
@@ -115,8 +122,11 @@ class PropertiesProviderFactory:
                         dest_ods_file, dest["suffix"]))
         else:
             suffix = dest["suffix"]
-            dest_ods_file = source_ods_file.parent.joinpath(
-                source_ods_file.stem + "-" + suffix + source_ods_file.suffix)
+            if source_ods_file is None:
+                dest_ods_file = Path("new-project.ods")
+            else:
+                dest_ods_file = source_ods_file.parent.joinpath(
+                    source_ods_file.stem + "-" + suffix + source_ods_file.suffix)
 
         return dest_ods_file
 

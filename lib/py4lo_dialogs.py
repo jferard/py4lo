@@ -21,10 +21,8 @@ from typing import Any, Callable, Optional, List, Union, NamedTuple
 
 from collections import namedtuple
 
-
-from py4lo_commons import StrPath
 from py4lo_helper import (uno_service_ctxt, provider, uno_service)
-from py4lo_typing import UnoObject, UnoControlModel, UnoControl
+from py4lo_typing import UnoControlModel, UnoControl, StrPath
 
 try:
     import uno

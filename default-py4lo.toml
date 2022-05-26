@@ -1,7 +1,7 @@
 # default py4lo.toml file
 
-calc_exe = "C:/Program Files (x86)/LibreOffice 5/program/scalc.exe"
-python_exe = "C:/Program Files (x86)/LibreOffice 5/program/python.exe"
+calc_exe = "C:/Program Files (x86)/LibreOffice 6/program/scalc.exe"
+python_exe = "C:/Program Files (x86)/LibreOffice 6/program/python.exe"
 debug_file = "{py4lo}/py4lo-debug.ods"
 init_file = "{py4lo}/new-project.ods"
 log_level = "DEBUG"

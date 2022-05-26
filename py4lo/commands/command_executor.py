@@ -39,3 +39,6 @@ class CommandExecutor:
         ret = self._command.execute(*cur_args)
         self._logger.warning("%s, args=%s, ret=%s", self._command, cur_args, ret)
         return ret
+
+    def __repr__(self) -> str:
+        return repr(self._command)

@@ -30,10 +30,10 @@ from com.sun.star.util import NumberFormat
 from typing import Any, Callable, List, Iterator, Optional, Mapping
 
 # values of type_cell
-from py4lo_commons import float_to_date, date_to_float, StrPath
+from py4lo_commons import float_to_date, date_to_float
 from py4lo_helper import (provider as pr, make_pvs, parent_doc, get_cell_type,
                           get_used_range_address)
-from py4lo_typing import UnoCell, UnoSheet, UnoSpreadsheet
+from py4lo_typing import UnoCell, UnoSheet, UnoSpreadsheet, StrPath
 
 TYPE_NONE = 0
 TYPE_MINIMAL = 1

@@ -30,6 +30,7 @@ class RunCommand(Command):
     @staticmethod
     def create_executor(args, provider: PropertiesProvider) -> CommandExecutor:
         calc_exe = provider.get("calc_exe")
+        print("****", provider.get_sources())
         update_executor = UpdateCommand.create_executor(args, provider)
         run_command = RunCommand(calc_exe)
         return CommandExecutor(provider.get_logger(), run_command,

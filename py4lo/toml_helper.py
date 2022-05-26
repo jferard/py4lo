@@ -1,3 +1,4 @@
+import logging
 import subprocess
 import sys
 import traceback
@@ -14,6 +15,8 @@ def load_toml(default_py4lo_toml: Path, project_py4lo_toml: Path,
 
 
 class TomlLoader:
+    _logger = logging.getLogger(__name__)
+
     """Load a toml file and merge values with the default toml file"""
 
     def __init__(self, default_py4lo_toml: Path, project_py4lo_toml: Path,
@@ -24,21 +27,26 @@ class TomlLoader:
         self._data: Dict[str, object] = {}
 
     def load(self) -> Dict[str, object]:
+        TomlLoader._logger.debug("Load TOML : %s (default=%s)", self._project_py4lo_toml, self._default_py4lo_toml)
+        print("*** Load TOML : %s (default=%s)", self._project_py4lo_toml, self._default_py4lo_toml)
         self._load_toml(self._default_py4lo_toml)
-        self._load_toml(self._project_py4lo_toml)
+        self._load_toml(self._project_py4lo_toml, skip_on_error=True)
         self._check_python_target_version()
         self._check_level()
+        print("****", self._data)
         return self._data
 
-    def _load_toml(self, path: Path):
+    def _load_toml(self, path: Path, skip_on_error: bool=False):
+        print("****", path)
         try:
             with path.open('r', encoding="utf-8") as s:
                 content = s.read()
                 data = toml.loads(content)
         except Exception as e:
-            print("Error when loading toml file {}: {}".format(path, e),
-                  file=sys.stderr)
-            traceback.print_exc(file=sys.stdout)
+            if not skip_on_error:
+                print("Error when loading toml file {}: {}".format(path, e),
+                      file=sys.stderr)
+                traceback.print_exc(file=sys.stdout)
         else:
             self._data = nested_merge(self._data, data, self._apply)
 

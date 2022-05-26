@@ -47,7 +47,7 @@ def message_example(*_args):
     oDoc = parent_doc(oSheet) # could be pr.doc
     lines = [
         "A message from main script example.py. ",
-        "Current dir is: {}".format(os.path.abspath(".")),
+        "Current dir is: {}".format(os.path.abspath("../../../../py4lo")),
         "Current doc name is: {}".format(oDoc.Title),
         "Current sheet name is: {}".format(oSheet.Name),
     ]

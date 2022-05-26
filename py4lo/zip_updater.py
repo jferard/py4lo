@@ -16,6 +16,7 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import logging
 from logging import Logger
 from pathlib import Path
 from typing import List
@@ -53,6 +54,7 @@ class ZipUpdaterBuilder:
 
 
 class ZipUpdater:
+    _logger = logging.getLogger(__name__)
     """
     A zip file updater. Applies callbacks before, after and to each item.
     """
@@ -72,6 +74,8 @@ class ZipUpdater:
         :param zip_source: a source zip archive
         :param zip_dest: a dest path
         """
+        ZipUpdater._logger.debug("Update zip: input %s, output %s", zip_source, zip_dest)
+        print("Update zip: input %s, output %s", zip_source, zip_dest)
         with ZipFile(zip_dest, 'w') as zout:
             self._do_before(zout)
 
