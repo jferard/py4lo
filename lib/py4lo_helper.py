@@ -30,7 +30,7 @@ from py4lo_typing import (UnoSpreadsheet, UnoController, UnoContext, UnoService,
                           UnoSheet, UnoRangeAddress, UnoRange, UnoCell,
                           UnoObject, DATA_ARRAY, UnoCellAddress,
                           UnoPropertyValue, DATA_ROW, UnoXScriptContext,
-                          UnoColumn, UnoStruct, UnoEnum)
+                          UnoColumn, UnoStruct, UnoEnum, UnoRow)
 
 try:
     import uno
@@ -763,17 +763,16 @@ def create_filter(oRange: UnoRange):
                                     ".uno:DataFilterAutoFilter", "", 0, [])
 
 
-def format_first_row(oSheet: UnoSheet):
+def row_as_header(oHeaderRow: UnoRow):
     """
     Format the first row of the sheet
     @param oSheet:
     """
-    oFirstRow = oSheet.Rows.getByIndex(0)
-    oFirstRow.CharWeight = FontWeight.BOLD
-    oFirstRow.CharWeightAsian = FontWeight.BOLD
-    oFirstRow.CharWeightComplex = FontWeight.BOLD
-    oFirstRow.IsTextWrapped = True
-    oFirstRow.OptimalHeight = True
+    oHeaderRow.CharWeight = FontWeight.BOLD
+    oHeaderRow.CharWeightAsian = FontWeight.BOLD
+    oHeaderRow.CharWeightComplex = FontWeight.BOLD
+    oHeaderRow.IsTextWrapped = True
+    oHeaderRow.OptimalHeight = True
 
 
 def column_optimal_width(oColumn: UnoColumn, min_width: int = 2 * 1000,
