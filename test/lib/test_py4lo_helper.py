@@ -98,27 +98,26 @@ class TestHelper(unittest.TestCase):
         except Exception as e:
             pass
 
-    def testDocBuilder(self):
-
-        d = DocBuilder("calc")
+    def test_doc_builder(self):
+        d = doc_builder(NewDocumentUrl.Calc)
         d.build()
         py4lo_helper.provider.desktop.loadComponentFromURL.assert_called_once_with(
-            "private:factory/scalc", "_blank", 0, ())
+            NewDocumentUrl.Calc, Target.BLANK, 0, ())
         oDoc = py4lo_helper.provider.desktop.loadComponentFromURL.return_value
         oDoc.lockControllers.assert_called_once()
         oDoc.unlockControllers.assert_called_once()
 
-    def testDocBuilderSheetNames(self):
+    def test_doc_builder_sheet_names(self):
         oDoc = py4lo_helper.provider.desktop.loadComponentFromURL.return_value
         oDoc.Sheets.getCount.side_effect = [3, 3, 3, 3, 3]
         s1, s2, s3 = MagicMock(), MagicMock(), MagicMock()
         oDoc.Sheets.getByIndex.side_effect = [s1, s2, s3]
 
-        d = DocBuilder("calc")
-        d.sheet_names("abcdef", expand_if_necessary=True)
+        d = doc_builder(NewDocumentUrl.Calc)
+        d.sheet_names(list("abcdef"), expand_if_necessary=True)
         d.build()
         py4lo_helper.provider.desktop.loadComponentFromURL.assert_called_once_with(
-            "private:factory/scalc", "_blank", 0, ())
+            NewDocumentUrl.Calc, Target.BLANK, 0, ())
         oDoc.lockControllers.assert_called_once()
         oDoc.Sheets.getCount.assert_called()
 
@@ -131,17 +130,17 @@ class TestHelper(unittest.TestCase):
 
         oDoc.unlockControllers.assert_called_once()
 
-    def testDocBuilderSheetNames2(self):
+    def test_doc_builder_sheet_names2(self):
         oDoc = py4lo_helper.provider.desktop.loadComponentFromURL.return_value
         oDoc.Sheets.getCount.side_effect = [3, 3, 3, 3, 3, 2]
         s1, s2, s3 = MagicMock(), MagicMock(), MagicMock()
         oDoc.Sheets.getByIndex.side_effect = [s1, s2, s3, s3]
 
-        d = DocBuilder("calc")
-        d.sheet_names("ab", trunc_if_necessary=True)
+        d = doc_builder(NewDocumentUrl.Calc)
+        d.sheet_names(list("ab"), trunc_if_necessary=True)
         d.build()
         py4lo_helper.provider.desktop.loadComponentFromURL.assert_called_once_with(
-            "private:factory/scalc", "_blank", 0, ())
+            NewDocumentUrl.Calc, Target.BLANK, 0, ())
         oDoc.lockControllers.assert_called_once()
         oDoc.Sheets.getCount.assert_called()
 

@@ -43,10 +43,6 @@ try:
             AUTO, PARENT, SELF, CHILDREN, CREATE, SIBLINGS, TASKS, ALL, GLOBAL)
 
 
-    from com.sun.star.uno import RuntimeException as UnoRuntimeException, \
-        Exception as UnoException
-
-
     class ConditionOperator:
         from com.sun.star.sheet.ConditionOperator import (FORMULA, )
 
@@ -60,17 +56,12 @@ try:
 
 
     from com.sun.star.script.provider import ScriptFrameworkErrorException
+    from com.sun.star.uno import (RuntimeException as UnoRuntimeException,
+                                  Exception as UnoException)
 
-    from com.sun.star.lang import Locale
 except ImportError:
-    # import unotools.unohelper
     class FrameSearchFlag:
         AUTO = None
-
-# py4lo: if $python_version >= 2.6
-# py4lo: if $python_version <= 3.0
-# py4lo: endif
-# py4lo: endif
 
 provider = cast(Optional["_ObjectProvider"], None)
 _inspect = cast(Optional["_Inspector"], None)
@@ -251,11 +242,16 @@ def uno_service_ctxt(sname: str,
     return uno_service(sname, args, provider.ctxt)
 
 
-###
-# Open a document
-###
-NEW_CALC_DOCUMENT = "private:factory/scalc"
-NEW_WRITER_DOCUMENT = "private:factory/swriter"
+###############################################################################
+# OPEN A DOCUMENT
+###############################################################################
+
+class NewDocumentUrl(str, Enum):
+    Calc = "private:factory/scalc"
+    Writer = "private:factory/swriter"
+    Draw = "private:factory/sdraw"
+    Impress = "private:factory/simpress"
+    Math = "private:factory/smath"
 
 
 # special targets
@@ -289,60 +285,40 @@ def open_in_calc(filename: str, target: str = Target.BLANK,
 
 
 # Create a document
-###
-def doc_builder(t: str = "calc") -> "DocBuilder":
-    return DocBuilder(t)
+####
+def doc_builder(
+        url: NewDocumentUrl = NewDocumentUrl.Calc,
+        taget_frame_name: Target = Target.BLANK,
+        search_flags: FrameSearchFlag = FrameSearchFlag.AUTO,
+        pvs: List[UnoPropertyValue] = None
+) -> "DocBuilder":
+    if pvs is None:
+        pvs = tuple()
+    return DocBuilder(url, taget_frame_name, search_flags, pvs)
 
 
-def new_doc(t: str = "calc") -> UnoSpreadsheet:
+def new_doc(url: NewDocumentUrl = NewDocumentUrl.Calc,
+            taget_frame_name: Target = Target.BLANK,
+            search_flags: FrameSearchFlag = FrameSearchFlag.AUTO,
+            pvs: List[UnoPropertyValue] = None) -> UnoSpreadsheet:
     """Create a blank new doc"""
-    return doc_builder(t).build()
-
-
-def add_filter(oDoc: UnoSpreadsheet, oSheet: UnoSheet, range_name: str):
-    oController = oDoc.CurrentController
-    oAll = oSheet.getCellRangeByName(range_name)
-    oController.select(oAll)
-    oFrame = oController.Frame
-    provider.dispatcher.executeDispatch(
-        oFrame, ".uno:DataFilterAutoFilter", "", 0, tuple())
-
-
-def read_options_from_sheet_name(
-        oDoc: UnoSpreadsheet, sheet_name: str,
-        apply: Callable[[Tuple[str, str]], Tuple[str, str]] = lambda k_v: k_v):
-    oSheet = oDoc.Sheets.getByName(sheet_name)
-    oRangeAddress = get_used_range_address(oSheet)
-    return read_options(oSheet, oRangeAddress, apply)
-
-
-def get_named_cells(oDoc: UnoSpreadsheet, name: str) -> UnoRange:
-    return oDoc.NamedRanges.getByName(name).ReferredCells
-
-
-def get_named_cell(oDoc: UnoSpreadsheet, name: str) -> UnoCell:
-    return get_named_cells(oDoc, name).getCellByPosition(0, 0)
-
-
-def set_validation_list_by_name(
-        oDoc: UnoSpreadsheet, cell_name: str, fields: List[str],
-        default_string: Optional[str] = None, allow_blank: bool = False):
-    oCell = get_named_cell(oDoc, cell_name)
-    set_validation_list_by_cell(oCell, fields, default_string, allow_blank)
+    return doc_builder(url, taget_frame_name, search_flags, pvs).build()
 
 
 class DocBuilder:
-    def __init__(self, t: str):
+    def __init__(self, url: NewDocumentUrl, taget_frame_name: Target,
+                 search_flags: FrameSearchFlag, pvs: List[UnoPropertyValue]):
         """Create a blank new doc"""
         self._oDoc = provider.desktop.loadComponentFromURL(
-            "private:factory/s" + t, "_blank", 0, ())
+            url, taget_frame_name, search_flags, pvs)
         self._oDoc.lockControllers()
 
     def build(self) -> UnoSpreadsheet:
         self._oDoc.unlockControllers()
         return self._oDoc
 
-    def sheet_names(self, sheet_names: str, expand_if_necessary: bool = True,
+    def sheet_names(self, sheet_names: List[str],
+                    expand_if_necessary: bool = True,
                     trunc_if_necessary: bool = True) -> "DocBuilder":
         oSheets = self._oDoc.Sheets
         it = iter(sheet_names)
@@ -419,9 +395,9 @@ class DocBuilder:
         return self
 
 
-#####
-# Structs
-#####
+##############################################################################
+# STRUCTS
+##############################################################################
 
 def make_struct(struct_id: str, **kwargs):
     struct = uno.createUnoStruct(struct_id)
@@ -505,10 +481,9 @@ def make_border(color: int, width: int,
     return border
 
 
-#####
-#
-#####
-
+##############################################################################
+# RANGES
+##############################################################################
 
 def get_last_used_row(oSheet: UnoSheet) -> int:
     return get_used_range_address(oSheet).EndRow
@@ -543,8 +518,132 @@ def narrow_range_to_address(
         oRangeAddress.EndColumn, oRangeAddress.EndRow)
 
 
+def get_range_size(oRange: UnoRange) -> Tuple[int, int]:
+    """
+    Useful for `oRange.getRangeCellByPosition(...)`.
+
+    :param oRange: a SheetCellRange obj
+    :return: width and height of the range.
+    """
+    oAddress = oRange.RangeAddress
+    width = oAddress.EndColumn - oAddress.StartColumn + 1
+    height = oAddress.EndRow - oAddress.StartRow + 1
+    return width, height
+
+
+def narrow_range(oRange: UnoRange, narrow_data: bool = False) -> Optional[
+    UnoRange]:
+    """
+    Narrow the range to the used range
+    @param oRange: the range, usually a row or a column
+    @return the narrowed range or None
+    """
+    oSheet = oRange.Spreadsheet
+    oSheetRangeAddress = get_used_range_address(oSheet)
+    oRangeAddress = oRange.RangeAddress
+    start_column = max(oRangeAddress.StartColumn,
+                       oSheetRangeAddress.StartColumn)
+    end_column = min(oRangeAddress.EndColumn, oSheetRangeAddress.EndColumn)
+    if start_column > end_column:
+        return None
+    start_row = max(oRangeAddress.StartRow, oSheetRangeAddress.StartRow)
+    end_row = min(oRangeAddress.EndRow, oSheetRangeAddress.EndRow)
+    if start_row > end_row:
+        return None
+
+    oNarrowedRange = oSheet.getCellRangeByPosition(
+        start_column, start_row, end_column, end_row)
+
+    if narrow_data:
+        data_array = oNarrowedRange.DataArray
+        start_row += top_void_row_count(data_array)
+        if start_row > end_row:
+            return None
+        end_row -= bottom_void_row_count(data_array)
+        start_column += left_void_row_count(data_array)
+        end_column -= right_void_row_count(data_array)
+        oNarrowedRange = oSheet.getCellRangeByPosition(
+            start_column, start_row, end_column, end_row)
+
+    return oNarrowedRange
+
+
+##############################################################################
+# DATA ARRAY
+##############################################################################
 def data_array(oSheet: UnoSheet) -> DATA_ARRAY:
     return get_used_range(oSheet).DataArray
+
+
+def top_void_row_count(data_array: DATA_ARRAY) -> int:
+    """
+    @param data_array: a data array
+    @return: the number of void row at the top
+    """
+    r0 = 0
+    row_count = len(data_array)
+    while r0 < row_count and all(v.strip() == "" for v in data_array[r0]):
+        r0 += 1
+    return r0
+
+
+def bottom_void_row_count(data_array: DATA_ARRAY) -> int:
+    """
+    @param data_array: a data array
+    @return: the number of void row at the top
+    """
+    row_count = len(data_array)
+    r1 = 0
+    # r1 < row_count => row_count - r1 > 0 => row_count - r1 - 1 >= 0
+    while r1 < row_count and all(
+            v.strip() == "" for v in data_array[row_count - r1 - 1]):
+        r1 += 1
+    return r1
+
+
+def left_void_row_count(data_array: DATA_ARRAY) -> int:
+    """
+    @param data_array: a data array
+    @return: the number of void row at the top
+    """
+    row_count = len(data_array)
+    if row_count == 0:
+        return 0
+
+    c0 = len(data_array[0])
+    for row in data_array:
+        c = 0
+        while c < c0 and row[c].strip() == "":
+            c += 1
+        if c < c0:
+            c0 = c
+    return c0
+
+
+def right_void_row_count(data_array: DATA_ARRAY) -> int:
+    """
+    @param data_array: a data array
+    @return: the number of void row at the top
+    """
+    row_count = len(data_array)
+    if row_count == 0:
+        return 0
+
+    width = len(data_array[0])
+    c1 = width
+    for row in data_array:
+        c = 0
+        while c < c1 and row[width - c - 1].strip() == "":
+            c += 1
+        if c < c1:
+            c1 = c
+    return c1
+
+
+
+###############################################################################
+# MISC
+###############################################################################
 
 
 def to_iter(oXIndexAccess: UnoObject) -> Iterator[UnoObject]:
@@ -639,10 +738,12 @@ def get_conditional_entry(
 
 
 # from Andrew Pitonyak 5.14 www.openoffice.org/documentation/HOW_TO/various_topics/AndrewMacro.odt
-def find_or_create_number_format_style(oDoc: UnoSpreadsheet, format: str
+def find_or_create_number_format_style(oDoc: UnoSpreadsheet, format: str,
+                                       locale: Optional[UnoStruct] = None
                                        ) -> int:
     oFormats = oDoc.getNumberFormats()
-    oLocale = Locale()
+    if locale is None:
+        oLocale = make_locale()
     formatNum = oFormats.queryKey(format, oLocale, True)
     if formatNum == -1:
         formatNum = oFormats.addNew(format, oLocale)
@@ -653,19 +754,6 @@ def find_or_create_number_format_style(oDoc: UnoSpreadsheet, format: str
 def copy_row_at_index(oSheet: UnoSheet, row: DATA_ROW, r: int):
     oRange = oSheet.getCellRangeByPosition(0, 0, len(row) - 1, 0)
     oRange.DataArray = row
-
-
-def get_range_size(oRange: UnoRange) -> Tuple[int, int]:
-    """
-    Useful for `oRange.getRangeCellByPosition(...)`.
-
-    :param oRange: a SheetCellRange obj
-    :return: width and height of the range.
-    """
-    oAddress = oRange.RangeAddress
-    width = oAddress.EndColumn - oAddress.StartColumn + 1
-    height = oAddress.EndRow - oAddress.StartRow + 1
-    return width, height
 
 
 def get_doc(oRange: Union[UnoCell, UnoRange]) -> UnoSpreadsheet:
@@ -710,107 +798,6 @@ def create_filter(oRange: UnoRange):
                                     ".uno:DataFilterAutoFilter", "", 0, [])
 
 
-def narrow_range(oRange: UnoRange, narrow_data: bool = False) -> Optional[
-    UnoRange]:
-    """
-    Narrow the range to the used range
-    @param oRange: the range, usually a row or a column
-    @return the narrowed range or None
-    """
-    oSheet = oRange.Spreadsheet
-    oSheetRangeAddress = get_used_range_address(oSheet)
-    oRangeAddress = oRange.RangeAddress
-    start_column = max(oRangeAddress.StartColumn,
-                       oSheetRangeAddress.StartColumn)
-    end_column = min(oRangeAddress.EndColumn, oSheetRangeAddress.EndColumn)
-    if start_column > end_column:
-        return None
-    start_row = max(oRangeAddress.StartRow, oSheetRangeAddress.StartRow)
-    end_row = min(oRangeAddress.EndRow, oSheetRangeAddress.EndRow)
-    if start_row > end_row:
-        return None
-
-    oNarrowedRange = oSheet.getCellRangeByPosition(
-        start_column, start_row, end_column, end_row)
-
-    if narrow_data:
-        data_array = oNarrowedRange.DataArray
-        start_row += top_void_row_count(data_array)
-        if start_row > end_row:
-            return None
-        end_row -= bottom_void_row_count(data_array)
-        start_column += left_void_row_count(data_array)
-        end_column -= right_void_row_count(data_array)
-        oNarrowedRange = oSheet.getCellRangeByPosition(
-            start_column, start_row, end_column, end_row)
-
-    return oNarrowedRange
-
-
-def top_void_row_count(data_array: DATA_ARRAY) -> int:
-    """
-    @param data_array: a data array
-    @return: the number of void row at the top
-    """
-    r0 = 0
-    row_count = len(data_array)
-    while r0 < row_count and all(v.strip() == "" for v in data_array[r0]):
-        r0 += 1
-    return r0
-
-
-def bottom_void_row_count(data_array: DATA_ARRAY) -> int:
-    """
-    @param data_array: a data array
-    @return: the number of void row at the top
-    """
-    row_count = len(data_array)
-    r1 = 0
-    # r1 < row_count => row_count - r1 > 0 => row_count - r1 - 1 >= 0
-    while r1 < row_count and all(
-            v.strip() == "" for v in data_array[row_count - r1 - 1]):
-        r1 += 1
-    return r1
-
-
-def left_void_row_count(data_array: DATA_ARRAY) -> int:
-    """
-    @param data_array: a data array
-    @return: the number of void row at the top
-    """
-    row_count = len(data_array)
-    if row_count == 0:
-        return 0
-
-    c0 = len(data_array[0])
-    for row in data_array:
-        c = 0
-        while c < c0 and row[c].strip() == "":
-            c += 1
-        if c < c0:
-            c0 = c
-    return c0
-
-
-def right_void_row_count(data_array: DATA_ARRAY) -> int:
-    """
-    @param data_array: a data array
-    @return: the number of void row at the top
-    """
-    row_count = len(data_array)
-    if row_count == 0:
-        return 0
-
-    width = len(data_array[0])
-    c1 = width
-    for row in data_array:
-        c = 0
-        while c < c1 and row[width - c - 1].strip() == "":
-            c += 1
-        if c < c1:
-            c1 = c
-    return c1
-
 
 def format_first_row(oSheet: UnoSheet):
     """
@@ -842,3 +829,39 @@ def column_optimal_width(oColumn: UnoColumn, min_width: int = 2 * 1000,
         oColumn.Width = max_width
     else:
         oColumn.OptimalWidth = True
+
+
+#####
+# other
+#####
+
+def add_filter(oDoc: UnoSpreadsheet, oSheet: UnoSheet, range_name: str):
+    oController = oDoc.CurrentController
+    oAll = oSheet.getCellRangeByName(range_name)
+    oController.select(oAll)
+    oFrame = oController.Frame
+    provider.dispatcher.executeDispatch(
+        oFrame, ".uno:DataFilterAutoFilter", "", 0, tuple())
+
+
+def read_options_from_sheet_name(
+        oDoc: UnoSpreadsheet, sheet_name: str,
+        apply: Callable[[Tuple[str, str]], Tuple[str, str]] = lambda k_v: k_v):
+    oSheet = oDoc.Sheets.getByName(sheet_name)
+    oRangeAddress = get_used_range_address(oSheet)
+    return read_options(oSheet, oRangeAddress, apply)
+
+
+def get_named_cells(oDoc: UnoSpreadsheet, name: str) -> UnoRange:
+    return oDoc.NamedRanges.getByName(name).ReferredCells
+
+
+def get_named_cell(oDoc: UnoSpreadsheet, name: str) -> UnoCell:
+    return get_named_cells(oDoc, name).getCellByPosition(0, 0)
+
+
+def set_validation_list_by_name(
+        oDoc: UnoSpreadsheet, cell_name: str, fields: List[str],
+        default_string: Optional[str] = None, allow_blank: bool = False):
+    oCell = get_named_cell(oDoc, cell_name)
+    set_validation_list_by_cell(oCell, fields, default_string, allow_blank)
