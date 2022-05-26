@@ -259,6 +259,19 @@ def get_named_cell(oDoc: UnoSpreadsheet, name: str) -> UnoCell:
     return get_named_cells(oDoc, name).getCellByPosition(0, 0)
 
 
+def get_main_cell(oCell: UnoCell) -> UnoCell:
+    """
+    Return the main cell.
+    :param oCell: a cell inside a merged cells group
+    :return: the main cell
+    """
+    oSheet = oCell.Spreadsheet
+    oCursor = oSheet.createCursorByRange(oCell)
+    oCursor.collapseToMergedArea()
+    return oSheet.getCellByPosition(oCursor.RangeAddress.StartColumn,
+                                    oCursor.RangeAddress.StartRow)
+
+
 ###############################################################################
 # OPEN A DOCUMENT
 ###############################################################################
