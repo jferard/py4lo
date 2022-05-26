@@ -20,10 +20,10 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """py4lo_helper deals with LO objects."""
 
+import os
 from enum import Enum
-
 from typing import (Any, Optional, List, cast, Callable, Mapping, Tuple,
-                    Iterator, Union)
+                    Iterator)
 
 from py4lo_typing import (UnoSpreadsheet, UnoController, UnoContext, UnoService,
                           UnoSheet, UnoRangeAddress, UnoRange, UnoCell,
@@ -31,11 +31,8 @@ from py4lo_typing import (UnoSpreadsheet, UnoController, UnoContext, UnoService,
                           UnoPropertyValue, DATA_ROW, UnoXScriptContext,
                           UnoColumn, UnoStruct, UnoEnum)
 
-import os
-
 try:
     import uno
-    import unohelper
 
 
     class FrameSearchFlag:
@@ -55,6 +52,15 @@ try:
         from com.sun.star.table.BorderLineStyle import (SOLID, )
 
 
+    class ValidationType:
+        from com.sun.star.sheet.ValidationType import (LIST, )
+
+
+    class TableValidationVisibility:
+        from com.sun.star.sheet.TableValidationVisibility import (
+            SORTEDASCENDING, UNSORTED)
+
+
     from com.sun.star.script.provider import ScriptFrameworkErrorException
     from com.sun.star.uno import (RuntimeException as UnoRuntimeException,
                                   Exception as UnoException)
@@ -62,6 +68,10 @@ try:
 except ImportError:
     class FrameSearchFlag:
         AUTO = None
+
+
+    class BorderLineStyle:
+        SOLID = None
 
 ###############################################################################
 # BASE
@@ -124,20 +134,22 @@ class _ObjectProvider:
         @return:
         """
         if self._script_provider_factory is None:
-            self._script_provider_factory = self.service_manager.createInstanceWithContext(
-                "com.sun.star.script.provider.MasterScriptProviderFactory",
-                self.ctxt)
+            self._script_provider_factory = \
+                self.service_manager.createInstanceWithContext(
+                    "com.sun.star.script.provider.MasterScriptProviderFactory",
+                    self.ctxt)
         return self._script_provider_factory
 
     def get_script_provider(self):
         """
-        > This interface provides a factory for obtaining objects implementing the XScript interface
+        > This interface provides a factory for obtaining objects implementing
+        > the XScript interface
 
         @return:
         """
         if self._script_provider is None:
-            self._script_provider = self.get_script_provider_factory().createScriptProvider(
-                "")
+            self._script_provider = \
+                self.get_script_provider_factory().createScriptProvider("")
         return self._script_provider
 
     @property
@@ -155,7 +167,8 @@ class _ObjectProvider:
     @property
     def dispatcher(self):
         """
-        > provides an easy way to dispatch a URL using one call instead of multiple ones.
+        > provides an easy way to dispatch a URL using one call instead of
+        > multiple ones.
         @return:
         """
         if self._dispatcher is None:
@@ -197,19 +210,19 @@ def parent_doc(oRange: UnoRange) -> UnoSpreadsheet:
     """
     Find the document that owns this range.
 
-    @param oSheet: the range (range, sheet, cell)
+    @param oRange: the range (range, sheet, cell)
     @return: the document to which this range belongs
     """
     oSheet = oRange.Speadsheet
     return oSheet.DrawPage.Forms.Parent
 
 
-def get_cell_type(oCell: str) -> str:
+def get_cell_type(oCell: UnoCell) -> str:
     """
     @param oCell: the cell
     @return: 'EMPTY', 'TEXT', 'VALUE'
     """
-    cell_type = oCell.getType().value
+    cell_type = oCell.Type.value
     if cell_type == 'FORMULA':
         cell_type = oCell.FormulaResultType.value
 
@@ -239,7 +252,9 @@ class NewDocumentUrl(str, Enum):
 # special targets
 class Target(str, Enum):
     BLANK = "_blank"  # always creates a new frame
-    DEFAULT = "_default"  # special UI functionality (e.g. detecting of already loaded documents, using of empty frames of creating of new top frames as fallback)
+    # special UI functionality (e.g. detecting of already loaded documents,
+    # using of empty frames of creating of new top frames as fallback)
+    DEFAULT = "_default"
     SELF = "_self"  # means frame himself
     PARENT = "_parent"  # address direct parent of frame
     TOP = "_top"  # indicates top frame of current path in tree
@@ -252,7 +267,8 @@ def open_in_calc(filename: str, target: str = Target.BLANK,
     """
     Open a document in calc
     :param filename: the name of the file to open
-    :param target: "the name of the frame to view the document in" or a special target
+    :param target: "the name of the frame to view the document in" or a special
+    target
     :param frame_flags: where to search the frame
     :param kwargs: les paramètres d'ouverture
     :return: a reference on the doc
@@ -313,8 +329,9 @@ class DocBuilder:
                 oSheet.setName(next(it))  # may raise a StopIteration
                 s += 1
 
-            assert s == oSheets.getCount(), "s={} vs oSheets.getCount()={}".format(
-                s, oSheets.getCount())
+            if s != oSheets.getCount():
+                raise AssertionError("s={} vs oSheets.getCount()={}".format(
+                    s, oSheets.getCount()))
 
             if expand_if_necessary:
                 # add
@@ -322,8 +339,9 @@ class DocBuilder:
                     oSheets.insertNewByName(sheet_name, s)
                     s += 1
         except StopIteration:  # it
-            assert s <= oSheets.getCount(), "s={} vs oSheets.getCount()={}".format(
-                s, oSheets.getCount())
+            if s > oSheets.getCount():
+                raise AssertionError("s={} vs oSheets.getCount()={}".format(
+                    s, oSheets.getCount()))
             if trunc_if_necessary:
                 self.trunc_to_count(s)
 
@@ -417,8 +435,8 @@ def make_full_pv(name: str, value: str, handle: int = -1,
     return pv
 
 
-def make_pvs(d: Optional[Mapping[str, str]] = None) -> Tuple[
-    UnoPropertyValue, ...]:
+def make_pvs(d: Optional[Mapping[str, str]] = None
+             ) -> Tuple[UnoPropertyValue, ...]:
     if d is None:
         return tuple()
     else:
@@ -513,11 +531,13 @@ def get_range_size(oRange: UnoRange) -> Tuple[int, int]:
     return width, height
 
 
-def narrow_range(oRange: UnoRange, narrow_data: bool = False) -> Optional[
-    UnoRange]:
+def narrow_range(oRange: UnoRange, narrow_data: bool = False
+                 ) -> Optional[UnoRange]:
     """
     Narrow the range to the used range
     @param oRange: the range, usually a row or a column
+    @param narrow_data: if True, remove top/bottom blank lines and left/right
+     blank colmuns
     @return the narrowed range or None
     """
     oSheet = oRange.Spreadsheet
@@ -650,6 +670,7 @@ def set_validation_list_by_name(
     oCell = get_named_cell(oDoc, cell_name)
     set_validation_list_by_cell(oCell, fields, default_string, allow_blank)
 
+
 # CONDITIONAL
 
 def clear_conditional_format(oSheet: UnoSheet, range_name: str):
@@ -691,16 +712,19 @@ def get_conditional_entry(
     )
 
 
-# from Andrew Pitonyak 5.14 www.openoffice.org/documentation/HOW_TO/various_topics/AndrewMacro.odt
-def find_or_create_number_format_style(oDoc: UnoSpreadsheet, format: str,
+# from Andrew Pitonyak 5.14
+# www.openoffice.org/documentation/HOW_TO/various_topics/AndrewMacro.odt
+def find_or_create_number_format_style(oDoc: UnoSpreadsheet, fmt: str,
                                        locale: Optional[UnoStruct] = None
                                        ) -> int:
     oFormats = oDoc.getNumberFormats()
     if locale is None:
         oLocale = make_locale()
-    formatNum = oFormats.queryKey(format, oLocale, True)
+    else:
+        oLocale = locale
+    formatNum = oFormats.queryKey(fmt, oLocale, True)
     if formatNum == -1:
-        formatNum = oFormats.addNew(format, oLocale)
+        formatNum = oFormats.addNew(fmt, oLocale)
 
     return formatNum
 
@@ -799,7 +823,8 @@ class _Inspector:
         """
         Try to load Xray lib.
         :param fail_on_error: Should this function fail on error
-        :raises UnoRuntimeException: if Xray is not avaliable and `fail_on_error` is True.
+        :raises UnoRuntimeException: if Xray is not avaliable and
+        `fail_on_error` is True.
         """
         try:
             self._xray_script = self._provider.script_provider.getScript(
@@ -818,7 +843,8 @@ class _Inspector:
         Xray an obj. Loads dynamically the lib if possible.
         :@param obj: the obj
         :@param fail_on_error: Should this function fail on error
-        :@raises RuntimeException: if Xray is not avaliable and `fail_on_error` is True.
+        :@raises RuntimeException: if Xray is not avaliable and `fail_on_error`
+         is True.
         """
         if self._ignore_xray:
             return

@@ -31,7 +31,7 @@ from typing import Any, Callable, List, Iterator, Optional, Mapping
 
 # values of type_cell
 from py4lo_commons import float_to_date, date_to_float, StrPath
-from py4lo_helper import (provider as pr, make_pvs, get_doc, get_cell_type,
+from py4lo_helper import (provider as pr, make_pvs, parent_doc, get_cell_type,
                           get_used_range_address)
 from py4lo_typing import UnoCell, UnoSheet, UnoSpreadsheet
 
@@ -803,7 +803,7 @@ def export_to_csv(oSheet: UnoSheet, path: StrPath, *args, **kwargs):
     filter_options = create_export_filter_options(*args, kwargs)
     pvs = make_pvs({"FilterName": Filter.CSV, "FilterOptions": filter_options,
                     "Overwrite": overwrite})
-    oDoc = get_doc(oSheet)
+    oDoc = parent_doc(oSheet)
     oActive = oDoc.CurrentController.getActiveSheet()
     oDoc.lockControllers()
     oDoc.CurrentController.setActiveSheet(oSheet)
