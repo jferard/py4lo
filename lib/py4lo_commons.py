@@ -201,7 +201,7 @@ def read_config(filenames: Union[StrPath, Iterable[StrPath]],
                 args: Optional[Mapping] = None,
                 apply: Callable[[configparser.ConfigParser], None] = lambda
                         config: None,
-                encoding: str='utf-8') -> configparser.ConfigParser:
+                encoding: str = 'utf-8') -> configparser.ConfigParser:
     """
     Read a config. See https://docs.python.org/3.7/library/configparser.html
 
@@ -246,14 +246,18 @@ def date_to_int(a_date: Union[dt.date, dt.datetime]) -> int:
 
 
 def date_to_float(a_date: Union[dt.date, dt.datetime, dt.time]) -> float:
-    if not isinstance(a_date, dt.datetime):
-        if isinstance(a_date, dt.date):
-            a_date = dt.datetime(a_date.year, a_date.month, a_date.day)
-        elif isinstance(a_date, dt.time):
-            a_date = dt.datetime(1899, 12, 30, a_date.hour, a_date.minute,
-                                 a_date.second, a_date.microsecond)
-
-    return (a_date - ORIGIN).total_seconds() / 86400
+    if isinstance(a_date, dt.datetime):
+        time_delta = a_date - ORIGIN
+    elif isinstance(a_date, dt.date):
+        a_datetime = dt.datetime(a_date.year, a_date.month, a_date.day)
+        time_delta = a_datetime - ORIGIN
+    elif isinstance(a_date, dt.time):
+        time_delta = dt.timedelta(
+            hours=a_date.hour, minutes=a_date.minute, seconds=a_date.second,
+            microseconds=a_date.microsecond)
+    else:
+        raise ValueError()
+    return time_delta.total_seconds() / 86400
 
 
 def int_to_date(days: int) -> dt.datetime:
