@@ -52,22 +52,26 @@ For Ubuntu:
 
 Quick start
 -----------
+(See the script in examples/quickstart)
 
-Create a new dir:
+Create a new `qs` dir and a `src/main` subdir:
 
 .. code-block:: bash
 
-    > mkdir mydir
+    > mkdir -p qs/src/main
+    > cd qs
 
 Step 1
 ~~~~~~
 
-Create a simple Python script ``myscript.py`` :
+Create a simple Python script ``qs.py`` :
 
 .. code-block:: python
 
     # -*- coding: utf-8 -*-
     # py4lo: entry
+    # py4lo: embed lib py4lo_typing
+    # py4lo: embed lib py4lo_helper
     # py4lo: embed lib py4lo_dialogs
     from py4lo_dialogs import message_box
 
@@ -90,28 +94,30 @@ to a button.
 Step 3
 ~~~~~~
 
-Rename ``new-project.ods`` to ``mydoc.ods`` and edit the document if you
-want. Add a title, move the buttons, change styles, etc.
+Rename ``new-project.ods`` to ``qs.ods`` and edit the document if you
+want. Add a title, move the button, change the styles, etc.
 
 Step 4
 ~~~~~~
 
-Create the ``py4lo.toml``:
+Create the ``qs.toml``:
 
 .. code-block:: toml
 
     [src]
-    source_file = "./mydoc.ods"
+    source_ods_file = "./qs.ods"
 
 Step 5
 ~~~~~~
 
-Edit the Python script ``myscript.py``:
+Edit the Python script ``qs.py``:
 
 .. code-block:: python
 
     # -*- coding: utf-8 -*-
     # py4lo: entry
+    # py4lo: embed lib py4lo_typing
+    # py4lo: embed lib py4lo_helper
     # py4lo: embed lib py4lo_dialogs
     from py4lo_dialogs import message_box
 
@@ -125,13 +131,14 @@ Update and test the new script:
 
 .. code-block:: bash
 
-    > python <py4lo dir>/py4lo test
+    > python <py4lo dir>/py4lo run
 
 
 The library
 -----------
-The library is still limited:
+The library contains the following modules:
 
+- `py4lo_typing` provides basic typing support for UNO objects.
 - `py4lo_helper` manipulate LO objects (cells, rows, sheets, ...).
 - `py4lo_commons` provides some helpful methods and classes (a simple bus, access to a config file, ...) for Python objects (strs, lists, ...).
 - `py4lo_io` read and write documents.
@@ -201,7 +208,7 @@ From the py4lo directory:
    python3 -m pytest --cov-report term-missing --ignore=example --cov=py4lo --cov=lib && python3 -m pytest --cov-report term-missing --ignore=example --ignore=test --ignore=py4lo/__main__.py --cov-append --doctest-modules --cov=lib
 
 
-.. |Build Status| image:: https://travis-ci.com/jferard/py4lo.svg?branch=master
-    :target: https://travis-ci.com/jferard/py4lo
+.. |Build Status| image:: https://app.travis-ci.com/jferard/py4lo.svg?branch=master
+    :target: https://app.travis-ci.com/jferard/py4lo
 .. |Code Coverage| image:: https://img.shields.io/codecov/c/github/jferard/py4lo/master.svg
    :target: https://codecov.io/github/jferard/py4lo?branch=master

@@ -24,3 +24,6 @@ dist
 
 py4lo.egg-info
 py4lo.egg-info/*
+
+# extensions
+*.ods#
