@@ -24,7 +24,7 @@ import os
 from enum import Enum
 from pathlib import Path
 from typing import (Any, Optional, List, cast, Callable, Mapping, Tuple,
-                    Iterator, Union)
+                    Iterator, Union, Iterable)
 
 from py4lo_typing import (UnoSpreadsheet, UnoController, UnoContext, UnoService,
                           UnoSheet, UnoRangeAddress, UnoRange, UnoCell,
@@ -465,6 +465,17 @@ def make_pvs(d: Optional[Mapping[str, str]] = None
         return tuple(make_pv(n, v) for n, v in d.items())
 
 
+def update_pvs(pvs: Iterable[UnoPropertyValue], d: Mapping[str, Any]):
+    """
+    Update in place some of the pvs, based on names
+    @param pvs: the pvs
+    @param d: the mapping name to value
+    """
+    for pv in pvs:
+        if pv.Name in d:
+            pv.Value = d[pv.Name]
+
+
 def make_locale(country: str = "", language: str = "",
                 variant: str = "") -> UnoStruct:
     """
@@ -501,6 +512,13 @@ def make_border(color: int, width: int,
     border.LineWidth = width
     border.LineStyle = style
     return border
+
+
+def make_sort_field(field_position: int, asc: bool = True):
+    sf = uno.createUnoStruct('com.sun.star.table.TableSortField')
+    sf.Field = field_position
+    sf.IsAscending = asc
+    return sf
 
 
 ##############################################################################
@@ -691,6 +709,20 @@ def set_validation_list_by_name(
         default_string: Optional[str] = None, allow_blank: bool = False):
     oCell = get_named_cell(oDoc, cell_name)
     set_validation_list_by_cell(oCell, fields, default_string, allow_blank)
+
+
+def sort_range(oRange: UnoRange, sort_fields: Tuple[UnoStruct, ...]):
+    """
+    @param oRange:
+    @param sort_fields:
+    @return:
+    """
+    typed_sort_fields = uno.Any('[]com.sun.star.table.TableSortField',
+                                sort_fields)
+    sort_descriptor = oRange.createSortDescriptor()
+    update_pvs(sort_descriptor,
+               {'ContainsHeader': True, 'SortFields': typed_sort_fields})
+    oRange.sort(sort_descriptor)
 
 
 # CONDITIONAL
