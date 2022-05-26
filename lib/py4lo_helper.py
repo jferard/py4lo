@@ -22,8 +22,9 @@
 
 import os
 from enum import Enum
+from pathlib import Path
 from typing import (Any, Optional, List, cast, Callable, Mapping, Tuple,
-                    Iterator)
+                    Iterator, Union)
 
 from py4lo_typing import (UnoSpreadsheet, UnoController, UnoContext, UnoService,
                           UnoSheet, UnoRangeAddress, UnoRange, UnoCell,
@@ -204,6 +205,27 @@ def to_dict(oXNameAccess: UnoObject) -> Mapping[str, UnoObject]:
     for name in oXNameAccess.getElementNames():
         d[name] = oXNameAccess.getByName(name)
     return d
+
+
+def uno_url_to_path(url: str) -> Optional[Path]:
+    """
+    Wrapper
+    @param url: the url
+    @return: the path or None if the url is empty
+    """
+    if url.strip():
+        return Path(uno.fileUrlToSystemPath(url))
+    else:
+        return None
+
+
+def uno_path_to_url(path: Union[str, Path]) -> str:
+    """
+    Wrapper
+    @param path: the path
+    @return: the url
+    """
+    return uno.systemPathToFileUrl(str(path))
 
 
 def parent_doc(oRange: UnoRange) -> UnoSpreadsheet:
