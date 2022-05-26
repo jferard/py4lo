@@ -63,6 +63,9 @@ except ImportError:
     class FrameSearchFlag:
         AUTO = None
 
+###############################################################################
+# BASE
+###############################################################################
 provider = cast(Optional["_ObjectProvider"], None)
 _inspect = cast(Optional["_Inspector"], None)
 xray = cast(Optional[Callable], None)
@@ -161,70 +164,6 @@ class _ObjectProvider:
         return self._dispatcher
 
 
-class _Inspector:
-    def __init__(self, provider: _ObjectProvider):
-        self._provider = provider
-        self._xray_script = None
-        self._ignore_xray = False
-        self._oMRI = None
-        self._ignore_mri = False
-
-    def use_xray(self, fail_on_error: bool = False):
-        """
-        Try to load Xray lib.
-        :param fail_on_error: Should this function fail on error
-        :raises UnoRuntimeException: if Xray is not avaliable and `fail_on_error` is True.
-        """
-        try:
-            self._xray_script = self._provider.script_provider.getScript(
-                "vnd.sun.star.script:XrayTool._Main.Xray?"
-                "language=Basic&location=application")
-        except ScriptFrameworkErrorException:
-            if fail_on_error:
-                raise UnoRuntimeException(
-                    "\nBasic library Xray is not installed",
-                    self._provider.ctxt)
-            else:
-                self._ignore_xray = True
-
-    def xray(self, obj: Any, fail_on_error: bool = False):
-        """
-        Xray an obj. Loads dynamically the lib if possible.
-        :@param obj: the obj
-        :@param fail_on_error: Should this function fail on error
-        :@raises RuntimeException: if Xray is not avaliable and `fail_on_error` is True.
-        """
-        if self._ignore_xray:
-            return
-
-        if self._xray_script is None:
-            self.use_xray(fail_on_error)
-            if self._ignore_xray:
-                return
-
-        self._xray_script.invoke((obj,), (), ())
-
-    def mri(self, obj: Any, fail_on_error: bool = False):
-        """
-        MRI an object
-        @param fail_on_error:
-        @param obj: the object
-        """
-        if self._ignore_mri:
-            return
-
-        if self._oMRI is None:
-            try:
-                self._oMRI = uno_service("mytools.Mri")
-            except UnoException:
-                if fail_on_error:
-                    raise UnoRuntimeException("\nMRI is not installed",
-                                              self._provider.ctxt)
-                else:
-                    self._ignore_mri = True
-        self._oMRI.inspect(obj)
-
-
 def uno_service(sname: str, args: Optional[List[Any]] = None,
                 ctxt: Optional[UnoContext] = None) -> UnoService:
     sm = provider.service_manager
@@ -240,6 +179,49 @@ def uno_service(sname: str, args: Optional[List[Any]] = None,
 def uno_service_ctxt(sname: str,
                      args: Optional[List[Any]] = None) -> UnoService:
     return uno_service(sname, args, provider.ctxt)
+
+
+def to_iter(oXIndexAccess: UnoObject) -> Iterator[UnoObject]:
+    for i in range(0, oXIndexAccess.getCount()):
+        yield oXIndexAccess.getByIndex(i)
+
+
+def to_dict(oXNameAccess: UnoObject) -> Mapping[str, UnoObject]:
+    d = {}
+    for name in oXNameAccess.getElementNames():
+        d[name] = oXNameAccess.getByName(name)
+    return d
+
+
+def parent_doc(oRange: UnoRange) -> UnoSpreadsheet:
+    """
+    Find the document that owns this range.
+
+    @param oSheet: the range (range, sheet, cell)
+    @return: the document to which this range belongs
+    """
+    oSheet = oRange.Speadsheet
+    return oSheet.DrawPage.Forms.Parent
+
+
+def get_cell_type(oCell: str) -> str:
+    """
+    @param oCell: the cell
+    @return: 'EMPTY', 'TEXT', 'VALUE'
+    """
+    cell_type = oCell.getType().value
+    if cell_type == 'FORMULA':
+        cell_type = oCell.FormulaResultType.value
+
+    return cell_type
+
+
+def get_named_cells(oDoc: UnoSpreadsheet, name: str) -> UnoRange:
+    return oDoc.NamedRanges.getByName(name).ReferredCells
+
+
+def get_named_cell(oDoc: UnoSpreadsheet, name: str) -> UnoCell:
+    return get_named_cells(oDoc, name).getCellByPosition(0, 0)
 
 
 ###############################################################################
@@ -640,46 +622,9 @@ def right_void_row_count(data_array: DATA_ARRAY) -> int:
     return c1
 
 
-
 ###############################################################################
-# MISC
+# FORMATTING
 ###############################################################################
-
-
-def to_iter(oXIndexAccess: UnoObject) -> Iterator[UnoObject]:
-    for i in range(0, oXIndexAccess.getCount()):
-        yield oXIndexAccess.getByIndex(i)
-
-
-def to_dict(oXNameAccess: UnoObject) -> Mapping[str, UnoObject]:
-    d = {}
-    for name in oXNameAccess.getElementNames():
-        d[name] = oXNameAccess.getByName(name)
-    return d
-
-
-def read_options(oSheet: UnoSpreadsheet, aAddress: UnoRangeAddress,
-                 apply: Callable[[Tuple[str, str]],
-                                 Tuple[str, str]] = lambda k_v: k_v
-                 ) -> Mapping[str, str]:
-    options = {}
-    width = aAddress.EndColumn - aAddress.StartColumn
-    for r in range(aAddress.StartRow, aAddress.EndRow + 1):
-        k = oSheet.getCellByPosition(aAddress.StartColumn, r).String.strip()
-        if width <= 1:
-            v = oSheet.getCellByPosition(aAddress.StartColumn + 1,
-                                         r).String.strip()
-        else:
-            # from aAddress.StartColumn+1 to aAddress.EndColumn
-            v = [oSheet.getCellByPosition(aAddress.StartColumn + 1 + c,
-                                          r).String.strip() for c in
-                 range(width)]
-        if k and v:
-            k, v = apply((k, v))
-            options[k] = v
-    return options
-
-
 def set_validation_list_by_cell(
         oCell: UnoCell, fields: List[str], default_string: Optional[str] = None,
         allow_blank: bool = False):
@@ -689,6 +634,7 @@ def set_validation_list_by_cell(
     oValidation.ShowErrorMessage = True
     oValidation.ShowList = uno.getConstantByName(
         "com.sun.star.sheet.TableValidationVisibility.UNSORTED")
+    # TODO : improve me
     formula = ";".join('"' + a + '"' for a in fields)
     oValidation.setFormula1(formula)
     oValidation.IgnoreBlankCells = allow_blank
@@ -697,6 +643,14 @@ def set_validation_list_by_cell(
     if default_string is not None:
         oCell.String = default_string
 
+
+def set_validation_list_by_name(
+        oDoc: UnoSpreadsheet, cell_name: str, fields: List[str],
+        default_string: Optional[str] = None, allow_blank: bool = False):
+    oCell = get_named_cell(oDoc, cell_name)
+    set_validation_list_by_cell(oCell, fields, default_string, allow_blank)
+
+# CONDITIONAL
 
 def clear_conditional_format(oSheet: UnoSheet, range_name: str):
     oColoredColumns = oSheet.getCellRangeByName(range_name)
@@ -751,52 +705,16 @@ def find_or_create_number_format_style(oDoc: UnoSpreadsheet, format: str,
     return formatNum
 
 
-def copy_row_at_index(oSheet: UnoSheet, row: DATA_ROW, r: int):
-    oRange = oSheet.getCellRangeByPosition(0, 0, len(row) - 1, 0)
-    oRange.DataArray = row
-
-
-def get_doc(oRange: Union[UnoCell, UnoRange]) -> UnoSpreadsheet:
-    """
-    Find the document that owns this cell.
-
-    @param oRange: a cell or a range
-    @return: the document
-    """
-    return parent_doc(oRange.Spreadsheet)
-
-
-def get_cell_type(oCell: str) -> str:
-    """
-    @param oCell: the cell
-    @return: 'EMPTY', 'TEXT', 'VALUE'
-    """
-    cell_type = oCell.getType().value
-    if cell_type == 'FORMULA':
-        cell_type = oCell.FormulaResultType.value
-
-    return cell_type
-
-
-def parent_doc(oSheet: UnoSheet) -> UnoSpreadsheet:
-    """
-    @param oSheet: the sheet
-    @return: the document to which this sheet belongs
-    """
-    return oSheet.DrawPage.Forms.Parent
-
-
 def create_filter(oRange: UnoRange):
     """
     Create a new filter
     @param oRange: the range to filter
     """
-    oDoc = get_doc(oRange)
+    oDoc = parent_doc(oRange)
     oDoc.CurrentController.select(oRange)
     oDispatchHelper = uno_service("com.sun.star.frame.DispatchHelper")
     oDispatchHelper.executeDispatch(oDoc.CurrentController.Frame,
                                     ".uno:DataFilterAutoFilter", "", 0, [])
-
 
 
 def format_first_row(oSheet: UnoSheet):
@@ -831,17 +749,34 @@ def column_optimal_width(oColumn: UnoColumn, min_width: int = 2 * 1000,
         oColumn.OptimalWidth = True
 
 
-#####
-# other
-#####
+###############################################################################
+# MISC
+###############################################################################
+def read_options(oSheet: UnoSpreadsheet, aAddress: UnoRangeAddress,
+                 apply: Callable[[Tuple[str, str]],
+                                 Tuple[str, str]] = lambda k_v: k_v
+                 ) -> Mapping[str, str]:
+    options = {}
+    width = aAddress.EndColumn - aAddress.StartColumn
+    for r in range(aAddress.StartRow, aAddress.EndRow + 1):
+        k = oSheet.getCellByPosition(aAddress.StartColumn, r).String.strip()
+        if width <= 1:
+            v = oSheet.getCellByPosition(aAddress.StartColumn + 1,
+                                         r).String.strip()
+        else:
+            # from aAddress.StartColumn+1 to aAddress.EndColumn
+            v = [oSheet.getCellByPosition(aAddress.StartColumn + 1 + c,
+                                          r).String.strip() for c in
+                 range(width)]
+        if k and v:
+            k, v = apply((k, v))
+            options[k] = v
+    return options
 
-def add_filter(oDoc: UnoSpreadsheet, oSheet: UnoSheet, range_name: str):
-    oController = oDoc.CurrentController
-    oAll = oSheet.getCellRangeByName(range_name)
-    oController.select(oAll)
-    oFrame = oController.Frame
-    provider.dispatcher.executeDispatch(
-        oFrame, ".uno:DataFilterAutoFilter", "", 0, tuple())
+
+def copy_row_at_index(oSheet: UnoSheet, row: DATA_ROW, r: int):
+    oRange = oSheet.getCellRangeByPosition(0, 0, len(row) - 1, 0)
+    oRange.DataArray = row
 
 
 def read_options_from_sheet_name(
@@ -852,16 +787,65 @@ def read_options_from_sheet_name(
     return read_options(oSheet, oRangeAddress, apply)
 
 
-def get_named_cells(oDoc: UnoSpreadsheet, name: str) -> UnoRange:
-    return oDoc.NamedRanges.getByName(name).ReferredCells
+class _Inspector:
+    def __init__(self, provider: _ObjectProvider):
+        self._provider = provider
+        self._xray_script = None
+        self._ignore_xray = False
+        self._oMRI = None
+        self._ignore_mri = False
 
+    def use_xray(self, fail_on_error: bool = False):
+        """
+        Try to load Xray lib.
+        :param fail_on_error: Should this function fail on error
+        :raises UnoRuntimeException: if Xray is not avaliable and `fail_on_error` is True.
+        """
+        try:
+            self._xray_script = self._provider.script_provider.getScript(
+                "vnd.sun.star.script:XrayTool._Main.Xray?"
+                "language=Basic&location=application")
+        except ScriptFrameworkErrorException:
+            if fail_on_error:
+                raise UnoRuntimeException(
+                    "\nBasic library Xray is not installed",
+                    self._provider.ctxt)
+            else:
+                self._ignore_xray = True
 
-def get_named_cell(oDoc: UnoSpreadsheet, name: str) -> UnoCell:
-    return get_named_cells(oDoc, name).getCellByPosition(0, 0)
+    def xray(self, obj: Any, fail_on_error: bool = False):
+        """
+        Xray an obj. Loads dynamically the lib if possible.
+        :@param obj: the obj
+        :@param fail_on_error: Should this function fail on error
+        :@raises RuntimeException: if Xray is not avaliable and `fail_on_error` is True.
+        """
+        if self._ignore_xray:
+            return
 
+        if self._xray_script is None:
+            self.use_xray(fail_on_error)
+            if self._ignore_xray:
+                return
 
-def set_validation_list_by_name(
-        oDoc: UnoSpreadsheet, cell_name: str, fields: List[str],
-        default_string: Optional[str] = None, allow_blank: bool = False):
-    oCell = get_named_cell(oDoc, cell_name)
-    set_validation_list_by_cell(oCell, fields, default_string, allow_blank)
+        self._xray_script.invoke((obj,), (), ())
+
+    def mri(self, obj: Any, fail_on_error: bool = False):
+        """
+        MRI an object
+        @param fail_on_error:
+        @param obj: the object
+        """
+        if self._ignore_mri:
+            return
+
+        if self._oMRI is None:
+            try:
+                self._oMRI = uno_service("mytools.Mri")
+            except UnoException:
+                if fail_on_error:
+                    raise UnoRuntimeException("\nMRI is not installed",
+                                              self._provider.ctxt)
+                else:
+                    self._ignore_mri = True
+        self._oMRI.inspect(obj)
