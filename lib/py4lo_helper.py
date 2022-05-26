@@ -623,6 +623,44 @@ def narrow_range(oRange: UnoRange, narrow_data: bool = False
     return oNarrowedRange
 
 
+def copy_range(oSourceRange: UnoRange):
+    """
+    Copy a range to the clipboard
+    :param oSourceRange the range (may be a sheet)
+    """
+    oSourceDoc = parent_doc(oSourceRange)
+    oSelectBkp = oSourceDoc.getCurrentSelection()
+    oSourceController = oSourceDoc.CurrentController
+    oSourceController.select(oSourceRange)
+    provider.dispatcher.executeDispatch(
+        oSourceController, ".uno:Copy", "", 0, [])
+    oSourceController.select(oSelectBkp)
+
+
+def paste_range(oDestSheet: UnoSheet, oDestAddress: UnoCellAddress,
+                formulas: bool = False):
+    """
+    """
+    oDestDoc = parent_doc(oDestSheet)
+    oSelectBkp = oDestDoc.getCurrentSelection()
+    oDestController = oDestDoc.CurrentController
+    oDestCell = oDestSheet.getCellByPosition(oDestAddress.Column,
+                                             oDestAddress.Row)
+    oDestController.select(oDestCell)
+    if formulas:
+        provider.dispatcher.executeDispatch(
+            oDestController, ".uno:Copy", "", 0, [])
+    else:
+        # TODO: propose more options
+        args = make_pvs({
+            "Flags": "SVDT", "FormulaCommand": 0, "SkipEmptyCells": False,
+            "Transpose": False, "AsLink": False, "MoveMode": 4
+        })
+        provider.dispatcher.executeDispatch(
+            oDestController, ".uno:InsertContents", "", 0, args)
+    oDestController.select(oSelectBkp)
+
+
 ##############################################################################
 # DATA ARRAY
 ##############################################################################
@@ -800,12 +838,12 @@ def create_filter(oRange: UnoRange):
     """
     Create a new filter
     @param oRange: the range to filter
+    @param oDispathHelper: the dispatch helper if you have an instance.
     """
     oDoc = parent_doc(oRange)
     oDoc.CurrentController.select(oRange)
-    oDispatchHelper = uno_service("com.sun.star.frame.DispatchHelper")
-    oDispatchHelper.executeDispatch(oDoc.CurrentController.Frame,
-                                    ".uno:DataFilterAutoFilter", "", 0, [])
+    provider.dispatcher.executeDispatch(oDoc.CurrentController.Frame,
+                                        ".uno:DataFilterAutoFilter", "", 0, [])
 
 
 def row_as_header(oHeaderRow: UnoRow):
