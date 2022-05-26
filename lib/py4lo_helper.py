@@ -766,7 +766,7 @@ def create_filter(oRange: UnoRange):
 def row_as_header(oHeaderRow: UnoRow):
     """
     Format the first row of the sheet
-    @param oSheet:
+    @param oHeaderRow:
     """
     oHeaderRow.CharWeight = FontWeight.BOLD
     oHeaderRow.CharWeightAsian = FontWeight.BOLD
@@ -794,17 +794,74 @@ def column_optimal_width(oColumn: UnoColumn, min_width: int = 2 * 1000,
         oColumn.OptimalWidth = True
 
 
-def repeat_header_range(oSheet: UnoSheet, oRange: UnoRange):
+def set_print_area(oSheet: UnoSheet, oTitleRows: Optional[UnoRange] = None):
     """
     Repeat the given range when printing.
     @param oSheet: the sheet
-    @param oRange: the header range
+    @param oTitleRows: the header range
     """
-    used_range_address = get_used_range_address(oSheet)
-    first_row_range_address = oRange.RangeAddress
+    used_range_address = get_used_range_address(oSheet, True)
     oSheet.setPrintAreas([used_range_address])
-    oSheet.setPrintTitleRows(True)
-    oSheet.setTitleRows(first_row_range_address)
+    if oTitleRows is not None:
+        title_rows_address = oTitleRows.RangeAddress
+        oSheet.setPrintTitleRows(True)
+        oSheet.setTitleRows(title_rows_address)
+
+
+A3_LARGE = 42000
+A4_LARGE = A3_SMALL = 29700
+A4_SMALL = 21000
+
+
+def get_page_style(oSheet: UnoSheet) -> UnoService:
+    """
+    @param oSheet: a sheet
+    @return: the page style of this sheet
+    """
+    page_style_name = oSheet.PageStyle
+    oDoc = parent_doc(oSheet)
+    oStyle = oDoc.StyleFamilies.getByName("PageStyles").getByName(
+        page_style_name)
+    return oStyle
+
+
+def set_paper(oSheet: UnoSheet):
+    """
+    Set the paper for this sheet
+    @param oSheet: the sheet
+    """
+    oPageStyle = get_page_style(oSheet)
+    size = get_used_range(oSheet).Size
+    set_paper_to_size(oPageStyle, size)
+
+
+def set_paper_to_size(oPageStyle: UnoService, size: UnoStruct):
+    """
+    Make the paper of this style match this area.
+    @param oPageStyle: the page style
+    @param size: the size of the area
+    """
+    if size.Height >= size.Width:  # prefer portrait
+        oPageStyle.IsLandscape = False
+        oPageStyle.ScaleToPagesX = 1
+        oPageStyle.ScaleToPagesY = 0
+        if size.Width > A4_SMALL:  # too wide for A4
+            style_size = make_struct("com.sun.star.awt.Size",
+                                     Width=A3_SMALL, Height=A3_LARGE)
+        else:
+            style_size = make_struct("com.sun.star.awt.Size",
+                                     Width=A4_SMALL, Height=A4_LARGE)
+    else:  # prefer landscape
+        oPageStyle.IsLandscape = True
+        oPageStyle.ScaleToPagesX = 0
+        oPageStyle.ScaleToPagesY = 1
+        if size.Height > A4_SMALL:  # too high for A4
+            style_size = make_struct("com.sun.star.awt.Size",
+                                     Width=A3_LARGE, Height=A3_SMALL)
+        else:
+            style_size = make_struct("com.sun.star.awt.Size",
+                                     Width=A4_LARGE, Height=A4_SMALL)
+    oPageStyle.Size = style_size
 
 
 ###############################################################################
