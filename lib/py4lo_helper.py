@@ -29,7 +29,7 @@ from py4lo_typing import (UnoSpreadsheet, UnoController, UnoContext, UnoService,
                           UnoSheet, UnoRangeAddress, UnoRange, UnoCell,
                           UnoObject, DATA_ARRAY, UnoCellAddress,
                           UnoPropertyValue, DATA_ROW, UnoXScriptContext,
-                          UnoColumn)
+                          UnoColumn, UnoStruct, UnoEnum)
 
 import os
 
@@ -53,6 +53,10 @@ try:
 
     class FontWeight:
         from com.sun.star.awt.FontWeight import (BOLD, )
+
+
+    class BorderLineStyle:
+        from com.sun.star.table.BorderLineStyle import (SOLID, )
 
 
     from com.sun.star.script.provider import ScriptFrameworkErrorException
@@ -415,10 +419,43 @@ class DocBuilder:
         return self
 
 
+#####
+# Structs
+#####
+
+def make_struct(struct_id: str, **kwargs):
+    struct = uno.createUnoStruct(struct_id)
+    for k, v in kwargs.items():
+        struct.__setattr__(k, v)
+    return struct
+
+
 def make_pv(name: str, value: str) -> UnoPropertyValue:
+    """
+    @param name: the name of the PropertyValue
+    @param value: the value of the PropertyValue
+    @return: the PropertyValue
+    """
     pv = uno.createUnoStruct('com.sun.star.beans.PropertyValue')
     pv.Name = name
     pv.Value = value
+    return pv
+
+
+def make_full_pv(name: str, value: str, handle: int = -1,
+                 state: Optional[UnoEnum] = None) -> UnoPropertyValue:
+    """
+    @param name: the name of the PropertyValue
+    @param value: the value of the PropertyValue
+    @param handle: the handle
+    @param state: the state
+    @return: the PropertyValue
+    """
+    pv = make_pv(name, value)
+    if handle != -1:
+        pv.Handle = handle
+    if state is not None:
+        pv.State = state
     return pv
 
 
@@ -428,6 +465,49 @@ def make_pvs(d: Optional[Mapping[str, str]] = None) -> Tuple[
         return tuple()
     else:
         return tuple(make_pv(n, v) for n, v in d.items())
+
+
+def make_locale(country: str = "", language: str = "",
+                variant: str = "") -> UnoStruct:
+    """
+    Create a locale
+
+    @param country: ISO 3166 Country Code.
+    @param language: ISO 639 Language Code.
+    @param variant: BCP 47
+    @return: the locale
+    """
+    locale = uno.createUnoStruct('com.sun.star.lang.Locale')
+    locale.Country = country
+    if language:
+        if variant:
+            raise ValueError("Language or Variant")
+        locale.Language = language
+    elif variant:
+        locale.Language = "qlt"
+        locale.Variant = variant
+    return locale
+
+
+def make_border(color: int, width: int,
+                style: BorderLineStyle = BorderLineStyle.SOLID):
+    """
+    Create a border
+    @param color: the color
+    @param width: the width
+    @param style: the style
+    @return: the border
+    """
+    border = uno.createUnoStruct("com.sun.star.table.BorderLine2")
+    border.Color = color
+    border.LineWidth = width
+    border.LineStyle = style
+    return border
+
+
+#####
+#
+#####
 
 
 def get_last_used_row(oSheet: UnoSheet) -> int:
@@ -746,7 +826,7 @@ def format_first_row(oSheet: UnoSheet):
 
 
 def column_optimal_width(oColumn: UnoColumn, min_width: int = 2 * 1000,
-                  max_width: int = 10 * 1000):
+                         max_width: int = 10 * 1000):
     """
     Sets the width of the column to an optimal value
     @param oColumn: the column

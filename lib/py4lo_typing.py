@@ -24,28 +24,37 @@ from typing import (NewType, Any, Union, Tuple, List)
 UnoXScriptContext = NewType("UnoXScriptContext", Any)
 
 UnoObject = NewType("UnoObject", Any)
-UnoStruct = NewType("UnoStruct", Any)
-UnoService = NewType("UnoService", Any)
+UnoStruct = NewType("UnoStruct", UnoObject)
+UnoEnum = NewType("UnoEnum", UnoObject)
+UnoService = NewType("UnoService", UnoObject)
 
-UnoSpreadsheet = NewType("UnoSpreadsheet", UnoObject)
-UnoRange = NewType("UnoRange", UnoObject)
-UnoRangeAddress = NewType("UnoRangeAddress", UnoStruct)
+######
+# services
+######
+UnoSpreadsheet = NewType("UnoSpreadsheet", UnoService)
+UnoRange = NewType("UnoRange", UnoService)
 UnoSheet = NewType("UnoSheet", UnoRange)
 UnoCell = NewType("UnoCell", UnoRange)
 UnoRow = NewType("UnoRow", UnoRange)
 UnoColumn = NewType("UnoColumn", UnoRange)
-UnoCellAddress = NewType("UnoCellAddress", UnoObject)
+UnoCellAddress = NewType("UnoCellAddress", UnoService)
 
 
-UnoController = NewType("UnoController", UnoObject)
-UnoContext = NewType("UnoContext", UnoObject)
-
-UnoPropertyValue = NewType("UnoPropertyValue", UnoStruct)
+UnoController = NewType("UnoController", UnoService)
+UnoContext = NewType("UnoContext", UnoService)
 
 UnoControlModel = NewType("UnoControlModel", UnoService)
 UnoControl = NewType("UnoControl", UnoService)
 
+######
+# structs
+######
+UnoRangeAddress = NewType("UnoRangeAddress", UnoStruct)
+UnoPropertyValue = NewType("UnoPropertyValue", UnoStruct)
 
+#####
+# DATA_ARRAY
+#####
 DATA_VALUE = Union[str, float]
 DATA_ROW = Union[Tuple[DATA_VALUE, ...], List[DATA_VALUE]]
 DATA_ARRAY = Union[Tuple[DATA_ROW, ...], List[DATA_ROW]]
