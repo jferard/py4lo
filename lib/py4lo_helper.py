@@ -794,6 +794,19 @@ def column_optimal_width(oColumn: UnoColumn, min_width: int = 2 * 1000,
         oColumn.OptimalWidth = True
 
 
+def repeat_header_range(oSheet: UnoSheet, oRange: UnoRange):
+    """
+    Repeat the given range when printing.
+    @param oSheet: the sheet
+    @param oRange: the header range
+    """
+    used_range_address = get_used_range_address(oSheet)
+    first_row_range_address = oRange.RangeAddress
+    oSheet.setPrintAreas([used_range_address])
+    oSheet.setPrintTitleRows(True)
+    oSheet.setTitleRows(first_row_range_address)
+
+
 ###############################################################################
 # MISC
 ###############################################################################

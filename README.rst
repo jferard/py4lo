@@ -68,8 +68,8 @@ Create a simple Python script ``myscript.py`` :
 
     # -*- coding: utf-8 -*-
     # py4lo: entry
-    # py4lo: embed lib py4lo_helper
-    from py4lo_helper import message_box
+    # py4lo: embed lib py4lo_dialogs
+    from py4lo_dialogs import message_box
 
     def test(*args):
         message_box("A message", "py4lo")
@@ -112,8 +112,8 @@ Edit the Python script ``myscript.py``:
 
     # -*- coding: utf-8 -*-
     # py4lo: entry
-    # py4lo: embed lib py4lo_helper
-    from py4lo_helper import message_box
+    # py4lo: embed lib py4lo_dialogs
+    from py4lo_dialogs import message_box
 
     def test(*args):
         message_box("Another message", "py4lo")
