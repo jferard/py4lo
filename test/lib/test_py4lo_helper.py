@@ -36,11 +36,45 @@ class TestHelper(unittest.TestCase):
         self.ctxt = Mock()
         self.sm = Mock()
         self.desktop = Mock()
-        py4lo_helper.provider = _ObjectProvider(self.doc, self.ctrl, self.frame,
-                                                self.parent_win, self.msp,
-                                                self.ctxt, self.sm,
-                                                self.desktop)
+        py4lo_helper.provider = _ObjectProvider(
+            self.doc, self.ctrl, self.frame, self.parent_win, self.msp,
+            self.ctxt, self.sm, self.desktop)
         py4lo_helper._inspect = _Inspector(py4lo_helper.provider)
+
+    def test_init(self):
+        xsc = Mock()
+        init(xsc)
+        self.assertIsNotNone(py4lo_helper.provider)
+        self.assertIsNotNone(py4lo_helper._inspect)
+        self.assertIsNotNone(py4lo_helper.xray)
+        self.assertIsNotNone(py4lo_helper.mri)
+
+    def test_get_script_provider_factory(self):
+        # prepare
+        sp = Mock()
+        spf = Mock()
+        spf.createScriptProvider.side_effect = [sp]
+        self.sm.createInstanceWithContext.side_effect = [spf]
+
+        # play
+        actual_sp = py4lo_helper.provider.get_script_provider()
+
+        # verify
+        self.assertIs(sp, actual_sp)
+
+    def test_reflect(self):
+        # prepare
+        ref = Mock()
+        self.sm.createInstance.side_effect = [ref]
+
+        # play
+        actual_ref = py4lo_helper.provider.reflect
+
+        # verify
+        self.assertEqual(
+            [call.createInstance('com.sun.star.reflection.CoreReflection')],
+            self.sm.mock_calls)
+        self.assertEqual(actual_ref, ref)
 
     def testXray(self):
         py4lo_helper._inspect.use_xray()
@@ -251,6 +285,100 @@ class TestHelper(unittest.TestCase):
         self.assertEqual([mock.call.getCellRangeByPosition(1, 1, 7, 5),
                           mock.call.getCellRangeByPosition(2, 2, 6, 4)],
                          oSheet.mock_calls)
+
+    @patch("py4lo_helper.get_used_range_address")
+    def test_set_print_area(self, gura):
+        # prepare
+        sheet_ra = Mock()
+        gura.side_effect = [sheet_ra]
+        oSheet = Mock()
+        title_ra = Mock()
+        oRow = Mock(RangeAddress=title_ra)
+
+        # play
+        set_print_area(oSheet, oRow)
+
+        # verify
+        self.assertEqual([
+            call.setPrintAreas([sheet_ra]),
+            call.setPrintTitleRows(True),
+            call.setTitleRows(title_ra)
+        ], oSheet.mock_calls)
+
+    @patch("py4lo_helper.get_used_range_address")
+    def test_set_print_area_no_title(self, gura):
+        # prepare
+        sheet_ra = Mock()
+        gura.side_effect = [sheet_ra]
+        oSheet = Mock()
+
+        # play
+        set_print_area(oSheet)
+
+        # verify
+        self.assertEqual([
+            call.setPrintAreas([sheet_ra])
+        ], oSheet.mock_calls)
+
+    @patch("py4lo_helper.parent_doc")
+    def test_get_page_style(self, pd):
+        # prepare
+        oSheet = Mock(PageStyle="foo")
+        oDoc = Mock()
+        pd.side_effect = [oDoc]
+
+        # play
+        actual_ps = get_page_style(oSheet)
+
+        # verify
+        self.assertEqual([
+            call.StyleFamilies.getByName('PageStyles'),
+            call.StyleFamilies.getByName().getByName('foo')
+        ], oDoc.mock_calls)
+
+    @patch("py4lo_helper.make_struct")
+    @patch("py4lo_helper.get_used_range")
+    @patch("py4lo_helper.get_page_style")
+    def test_set_paper_1(self, gps, gur, ms):
+        self._set_paper(gps, gur, ms, 10 * 1000, 40 * 1000, False, 1, 0, 21000,
+                        29700)
+
+    @patch("py4lo_helper.make_struct")
+    @patch("py4lo_helper.get_used_range")
+    @patch("py4lo_helper.get_page_style")
+    def test_set_paper_2(self, gps, gur, ms):
+        self._set_paper(gps, gur, ms, 40 * 1000, 400 * 1000, False, 1, 0,
+                        29700, 42000)
+
+    @patch("py4lo_helper.make_struct")
+    @patch("py4lo_helper.get_used_range")
+    @patch("py4lo_helper.get_page_style")
+    def test_set_paper_3(self, gps, gur, ms):
+        self._set_paper(gps, gur, ms, 40 * 1000, 10 * 1000, True, 0, 1, 29700,
+                        21000)
+
+    @patch("py4lo_helper.make_struct")
+    @patch("py4lo_helper.get_used_range")
+    @patch("py4lo_helper.get_page_style")
+    def test_set_paper_4(self, gps, gur, ms):
+        self._set_paper(gps, gur, ms, 400 * 1000, 40 * 1000, True, 0, 1, 42000,
+                        29700)
+
+    def _set_paper(self, gps, gur, ms, w, h, is_landscape, sx, sy, pw, ph):
+        # prepare
+        oSheet = Mock()
+        oPageStyle = Mock()
+        gps.side_effect = [oPageStyle]
+        oRange = Mock(Size=Mock(Width=w, Height=h))
+        gur.side_effect = [oRange]
+        # play
+        set_paper(oSheet)
+        # verify
+        self.assertEqual(is_landscape, oPageStyle.IsLandscape)
+        self.assertEqual(sx, oPageStyle.ScaleToPagesX)
+        self.assertEqual(sy, oPageStyle.ScaleToPagesY)
+        self.assertEqual([call('com.sun.star.awt.Size', Width=pw, Height=ph)],
+                         ms.mock_calls)
 
 
 if __name__ == '__main__':

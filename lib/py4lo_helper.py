@@ -158,7 +158,7 @@ class _ObjectProvider:
         """
         > This service is the implementation of the reflection API
 
-        @return:
+        @return: the reflect service
         """
         if self._reflect is None:
             self._reflect = self.service_manager.createInstance(
