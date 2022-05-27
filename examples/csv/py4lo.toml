@@ -1,0 +1,9 @@
+# py4lo.toml file
+
+python_version = "3.5"
+calc_exe = "/usr/lib/libreoffice/program/scalc"
+python_exe = "/usr/bin/python3"
+log_level = "DEBUG"
+
+[src]
+source_ods_file = "{project}/csv-opener.ods"

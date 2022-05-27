@@ -765,17 +765,19 @@ def set_validation_list_by_name(
     set_validation_list_by_cell(oCell, fields, default_string, allow_blank)
 
 
-def sort_range(oRange: UnoRange, sort_fields: Tuple[UnoStruct, ...]):
+def sort_range(oRange: UnoRange, sort_fields: Tuple[UnoStruct, ...],
+               has_header: bool = True):
     """
     @param oRange:
     @param sort_fields:
+    @param has_header: True if the range has a header
     @return:
     """
     typed_sort_fields = uno.Any('[]com.sun.star.table.TableSortField',
                                 sort_fields)
     sort_descriptor = oRange.createSortDescriptor()
     update_pvs(sort_descriptor,
-               {'ContainsHeader': True, 'SortFields': typed_sort_fields})
+               {'ContainsHeader': has_header, 'SortFields': typed_sort_fields})
     oRange.sort(sort_descriptor)
 
 
@@ -844,9 +846,11 @@ def create_filter(oRange: UnoRange):
     @param oDispathHelper: the dispatch helper if you have an instance.
     """
     oDoc = parent_doc(oRange)
+    oSelectBkp = oDoc.getCurrentSelection()
     oDoc.CurrentController.select(oRange)
     provider.dispatcher.executeDispatch(oDoc.CurrentController.Frame,
                                         ".uno:DataFilterAutoFilter", "", 0, [])
+    oDoc.CurrentController.select(oSelectBkp)
 
 
 def row_as_header(oHeaderRow: UnoRow):
@@ -886,7 +890,7 @@ def set_print_area(oSheet: UnoSheet, oTitleRows: Optional[UnoRange] = None):
     @param oSheet: the sheet
     @param oTitleRows: the header range
     """
-    used_range_address = get_used_range_address(oSheet, True)
+    used_range_address = get_used_range_address(oSheet)
     oSheet.setPrintAreas([used_range_address])
     if oTitleRows is not None:
         title_rows_address = oTitleRows.RangeAddress

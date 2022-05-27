@@ -9,11 +9,12 @@ venv
 history
 
 # generated files
-example/*.ods
+examples/**/*.ods
 !examples/message/py4lo-example.ods
-example/*.ods#
-examples/message/target
-examples/message/target/*
+!examples/csv/csv-opener.ods
+examples/*.ods#
+examples/**/target
+examples/**/target/*
 examples/quickstart/qs
 **/*.pyc
 .coverage

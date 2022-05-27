@@ -730,12 +730,9 @@ def import_from_csv(oDoc: UnoSpreadsheet, sheet_name: str, dest_position: int,
                     "Hidden": "True"})
 
     oDoc.lockControllers()
-    print(path)
     url = uno_path_to_url(path)
-    print(url, pvs)
     oSource = pr.desktop.loadComponentFromURL(url, Target.BLANK,
                                               FrameSearchFlag.AUTO, pvs)
-    print(repr(oSource))
     oSource.Sheets.getByIndex(0).Name = sheet_name
     name = oSource.Sheets.getElementNames()[0]
     oDoc.Sheets.importSheet(oSource, name, dest_position)

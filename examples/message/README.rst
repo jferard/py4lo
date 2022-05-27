@@ -4,6 +4,9 @@ Py4LO (Python For LibreOffice) Example
 Py4LO is a simple toolkit to help you write Python macros for
 LibreOffice.
 
+This example is a simple demonstration of Py4LO "compilation" and some
+of the functions available in the Py4LO lib.
+
 How to run the example?
 -----------------------
 
@@ -11,7 +14,7 @@ Type in your command line interface:
 
 .. code-block:: bash
 
-    > python ../py4lo run
+    > python ../../py4lo run
 
 It will update the ods file, run the tests and launch LibreOffice.
 
@@ -22,7 +25,7 @@ Type in your command line interface:
 
 .. code-block:: bash
 
-    > python ../py4lo debug
+    > python ../../py4lo debug
 
 Open the py4lo-debug.ods file.
 
@@ -30,7 +33,7 @@ Or:
 
 .. code-block:: bash
 
-    > python ../py4lo debug && libreoffice py4lo-debug.ods
+    > python ../../py4lo debug && libreoffice py4lo-debug.ods
 
 All functions defined in example.py are available. This provides a base
 document: move buttons, add styles, etc. (You might also find that some
