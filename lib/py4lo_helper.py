@@ -225,6 +225,9 @@ def uno_path_to_url(path: Union[str, Path]) -> str:
     @param path: the path
     @return: the url
     """
+    if isinstance(path, str):
+        path = Path(path)
+    path = str(path.resolve())
     return uno.systemPathToFileUrl(str(path))
 
 
@@ -235,7 +238,7 @@ def parent_doc(oRange: UnoRange) -> UnoSpreadsheet:
     @param oRange: the range (range, sheet, cell)
     @return: the document to which this range belongs
     """
-    oSheet = oRange.Speadsheet
+    oSheet = oRange.Spreadsheet
     return oSheet.DrawPage.Forms.Parent
 
 

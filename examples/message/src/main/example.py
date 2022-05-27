@@ -19,6 +19,7 @@
 import os
 # py4lo: entry
 # py4lo: embed script alib.py
+# py4lo: embed lib py4lo_typing
 # py4lo: embed lib py4lo_helper
 # py4lo: embed lib py4lo_commons
 # py4lo: embed lib py4lo_io

@@ -22,7 +22,6 @@ import os
 import sys
 from datetime import (date, datetime, time)
 from enum import IntEnum, Enum
-from pathlib import Path
 
 import uno
 from com.sun.star.lang import Locale
@@ -32,7 +31,8 @@ from typing import Any, Callable, List, Iterator, Optional, Mapping
 # values of type_cell
 from py4lo_commons import float_to_date, date_to_float
 from py4lo_helper import (provider as pr, make_pvs, parent_doc, get_cell_type,
-                          get_used_range_address)
+                          get_used_range_address, uno_path_to_url, Target,
+                          FrameSearchFlag)
 from py4lo_typing import UnoCell, UnoSheet, UnoSpreadsheet, StrPath
 
 TYPE_NONE = 0
@@ -730,10 +730,12 @@ def import_from_csv(oDoc: UnoSpreadsheet, sheet_name: str, dest_position: int,
                     "Hidden": "True"})
 
     oDoc.lockControllers()
-    if isinstance(path, str):
-        path = Path(path)
-    url = uno.systemPathToFileUrl(path.resolve())
-    oSource = pr.desktop.loadComponentFromURL(url, "_blank", 0, pvs)
+    print(path)
+    url = uno_path_to_url(path)
+    print(url, pvs)
+    oSource = pr.desktop.loadComponentFromURL(url, Target.BLANK,
+                                              FrameSearchFlag.AUTO, pvs)
+    print(repr(oSource))
     oSource.Sheets.getByIndex(0).Name = sheet_name
     name = oSource.Sheets.getElementNames()[0]
     oDoc.Sheets.importSheet(oSource, name, dest_position)
@@ -800,7 +802,7 @@ def export_to_csv(oSheet: UnoSheet, path: StrPath, *args, **kwargs):
     @return: tokens
     """
     overwrite = kwargs.pop("overwrite", True)
-    filter_options = create_export_filter_options(*args, kwargs)
+    filter_options = create_export_filter_options(*args, **kwargs)
     pvs = make_pvs({"FilterName": Filter.CSV, "FilterOptions": filter_options,
                     "Overwrite": overwrite})
     oDoc = parent_doc(oSheet)
