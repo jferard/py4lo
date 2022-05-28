@@ -827,7 +827,7 @@ def get_conditional_entry(
 def find_or_create_number_format_style(oDoc: UnoSpreadsheet, fmt: str,
                                        locale: Optional[UnoStruct] = None
                                        ) -> int:
-    oFormats = oDoc.getNumberFormats()
+    oFormats = oDoc.NumberFormats
     if locale is None:
         oLocale = make_locale()
     else:
@@ -846,11 +846,13 @@ def create_filter(oRange: UnoRange):
     @param oDispathHelper: the dispatch helper if you have an instance.
     """
     oDoc = parent_doc(oRange)
-    oSelectBkp = oDoc.getCurrentSelection()
-    oDoc.CurrentController.select(oRange)
-    provider.dispatcher.executeDispatch(oDoc.CurrentController.Frame,
-                                        ".uno:DataFilterAutoFilter", "", 0, [])
-    oDoc.CurrentController.select(oSelectBkp)
+    oController = oDoc.CurrentController
+    oController.select(oRange)
+    provider.dispatcher.executeDispatch(
+        oController.Frame, ".uno:DataFilterAutoFilter", "", 0, [])
+    # unselect
+    oRanges = oDoc.createInstance("com.sun.star.sheet.SheetCellRanges")
+    oController.select(oRanges)
 
 
 def row_as_header(oHeaderRow: UnoRow):

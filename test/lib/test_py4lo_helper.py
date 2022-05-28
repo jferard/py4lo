@@ -286,6 +286,103 @@ class TestHelper(unittest.TestCase):
                           mock.call.getCellRangeByPosition(2, 2, 6, 4)],
                          oSheet.mock_calls)
 
+    def test_find_number_format_style(self):
+        # prepare
+        oFormats = Mock()
+        oFormats.queryKey.side_effect = [9]
+        oDoc = Mock(NumberFormats=oFormats)
+        oLocale = Mock()
+
+        # play
+        ret = find_or_create_number_format_style(oDoc, "YY-MM-DD", oLocale)
+
+        # verify
+        self.assertEqual(9, ret)
+
+    def test_create_number_format_style(self):
+        # prepare
+        oFormats = Mock()
+        oFormats.queryKey.side_effect = [-1]
+        oFormats.addNew.side_effect = [10]
+        oDoc = Mock(NumberFormats=oFormats)
+        oLocale = Mock()
+
+        # play
+        ret = find_or_create_number_format_style(oDoc, "YY-MM-DD", oLocale)
+
+        # verify
+        self.assertEqual(10, ret)
+
+    @patch("py4lo_helper.parent_doc")
+    def test_create_filter(self, pd):
+        # prepare
+        oFrame = Mock()
+        oController = Mock(Frame=oFrame)
+        oDoc = Mock(CurrentController=oController)
+        oRange = Mock()
+        pd.side_effect = [oDoc]
+
+        # play
+        create_filter(oRange)
+
+        # verify
+        self.assertEqual([
+            call.select(oRange),
+            call.select(ANY)
+        ], oController.mock_calls)
+        self.assertEqual([
+            call.createInstance('com.sun.star.frame.DispatchHelper'),
+            call.createInstance().executeDispatch(
+                oFrame, '.uno:DataFilterAutoFilter', '', 0, [])
+        ], self.sm.mock_calls)
+
+    def test_row_as_header(self):
+        # prepare
+        oRow = Mock()
+
+        # play
+        row_as_header(oRow)
+
+        # verify
+        self.assertEqual(150, oRow.CharWeight)
+        self.assertEqual(150, oRow.CharWeightAsian)
+        self.assertEqual(150, oRow.CharWeightComplex)
+        self.assertTrue(oRow.IsTextWrapped)
+        self.assertTrue(oRow.OptimalHeight)
+
+    def test_column_optimal_width_small(self):
+        # prepare
+        oColumn = Mock(Width=1 * 1000)
+
+        # play
+        column_optimal_width(oColumn)
+
+        # verify
+        self.assertFalse(oColumn.OptimalWidth)
+        self.assertEqual(2 * 1000, oColumn.Width)
+
+    def test_column_optimal_width_large(self):
+        # prepare
+        oColumn = Mock(Width=20 * 1000)
+
+        # play
+        column_optimal_width(oColumn)
+
+        # verify
+        self.assertFalse(oColumn.OptimalWidth)
+        self.assertTrue(oColumn.IsTextWrapped)
+        self.assertEqual(10 * 1000, oColumn.Width)
+
+    def test_column_optimal_width_medium(self):
+        # prepare
+        oColumn = Mock(Width=5 * 1000)
+
+        # play
+        column_optimal_width(oColumn)
+
+        # verify
+        self.assertTrue(oColumn.OptimalWidth)
+
     @patch("py4lo_helper.get_used_range_address")
     def test_set_print_area(self, gura):
         # prepare
