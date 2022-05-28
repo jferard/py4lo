@@ -286,6 +286,41 @@ class TestHelper(unittest.TestCase):
                           mock.call.getCellRangeByPosition(2, 2, 6, 4)],
                          oSheet.mock_calls)
 
+    @patch("py4lo_helper.get_formula_conditional_entry")
+    def test_conditional_format_on_formulas(self, gfce):
+        # prepare
+        oFormat = Mock()
+        oRange = Mock(ConditionalFormat=oFormat)
+        oCellAddress = Mock()
+        gfce.side_effect = ["e"]
+
+        # play
+        conditional_format_on_formulas(
+            oRange, {"foo": "bar"}, oCellAddress)
+
+        # verify
+        self.assertEqual([call('foo', 'bar', oCellAddress)], gfce.mock_calls)
+        self.assertEqual([call.addNew("e")], oFormat.mock_calls)
+
+    @patch("py4lo_helper.make_pv")
+    def test_get_formula_conditional_entry(self, mk_pv):
+        # prepare
+        oCellAddress = Mock()
+        mk_pv.side_effect = [1, 2, 3, 4, 5]
+
+        # play
+        ret = get_formula_conditional_entry("A1=0", "foo", oCellAddress)
+
+        # verify
+        self.assertEqual((1, 2, 3, 4, 5), ret)
+        self.assertEqual([
+            call('Formula1', 'A1=0'),
+            call('Formula2', ''),
+            call('Operator', ConditionOperator.FORMULA),
+            call('StyleName', 'foo'),
+            call('SourcePosition', oCellAddress)
+        ], mk_pv.mock_calls)
+
     def test_find_number_format_style(self):
         # prepare
         oFormats = Mock()
@@ -477,6 +512,116 @@ class TestHelper(unittest.TestCase):
         self.assertEqual([call('com.sun.star.awt.Size', Width=pw, Height=ph)],
                          ms.mock_calls)
 
+
+class InspectorTestCase(unittest.TestCase):
+    def setUp(self):
+        self.oSP = Mock()
+        self.provider = Mock(script_provider=self.oSP)
+        self.inspector = _Inspector(self.provider)
+
+    def test_use_xray_ok(self):
+        # prepare
+        # play
+        self.inspector.use_xray(False)
+
+        # verify
+        self.assertEqual([call.getScript(
+            'vnd.sun.star.script:XrayTool._Main.Xray?language=Basic&location=application')],
+                         self.oSP.mock_calls)
+        self.assertFalse(self.inspector._ignore_xray)
+
+    def test_use_xray_raise(self):
+        # prepare
+        from com.sun.star.script.provider import ScriptFrameworkErrorException
+        from com.sun.star.uno import RuntimeException as UnoRuntimeException
+
+        self.oSP.getScript.side_effect = ScriptFrameworkErrorException
+
+        # play
+        with self.assertRaises(UnoRuntimeException):
+            self.inspector.use_xray(True)
+
+        # verify
+        self.assertEqual([call.getScript(
+            'vnd.sun.star.script:XrayTool._Main.Xray?language=Basic&location=application')],
+                         self.oSP.mock_calls)
+        self.assertTrue(self.inspector._ignore_xray)
+
+    def test_use_xray_ignore(self):
+        # prepare
+        from com.sun.star.script.provider import ScriptFrameworkErrorException
+
+        self.oSP.getScript.side_effect = ScriptFrameworkErrorException
+
+        # play
+        self.inspector.use_xray(False)
+
+        # verify
+        self.assertEqual([call.getScript(
+            'vnd.sun.star.script:XrayTool._Main.Xray?language=Basic&location=application')],
+                         self.oSP.mock_calls)
+        self.assertTrue(self.inspector._ignore_xray)
+
+    def test_xray(self):
+        # prepare
+        obj = Mock()
+
+        # play
+        self.inspector.xray(obj)
+
+        # verify
+        self.assertEqual([
+            call.getScript(
+            'vnd.sun.star.script:XrayTool._Main.Xray?language=Basic&location=application'),
+            call.getScript().invoke((obj,), tuple(), tuple())
+        ], self.oSP.mock_calls)
+        self.assertFalse(self.inspector._ignore_xray)
+
+    @patch("py4lo_helper.uno_service")
+    def test_mri(self, us):
+        # prepare
+        obj = Mock()
+        oMRI = Mock()
+        us.side_effect = [oMRI]
+
+        # play
+        self.inspector.mri(obj)
+
+        # verify
+        self.assertEqual([
+            call.inspect(obj)
+        ], oMRI.mock_calls)
+        self.assertFalse(self.inspector._ignore_mri)
+
+    @patch("py4lo_helper.uno_service")
+    def test_mri_fail(self, us):
+        from com.sun.star.script.provider import ScriptFrameworkErrorException
+
+        # prepare
+        obj = Mock()
+        us.side_effect = ScriptFrameworkErrorException
+
+        # play
+        self.inspector.mri(obj)
+
+        # verify
+        self.assertTrue(self.inspector._ignore_mri)
+
+    @patch("py4lo_helper.uno_service")
+    def test_mri_fail_err(self, us):
+        from com.sun.star.script.provider import ScriptFrameworkErrorException
+        from com.sun.star.uno import RuntimeException as UnoRuntimeException
+
+        # prepare
+        obj = Mock()
+        us.side_effect = ScriptFrameworkErrorException
+
+        # play
+        with self.assertRaises(UnoRuntimeException):
+                self.inspector.mri(obj, True)
+
+        # verify
+        self.assertTrue(self.inspector._ignore_mri)
 
 if __name__ == '__main__':
     unittest.main()

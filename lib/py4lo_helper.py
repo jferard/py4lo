@@ -782,21 +782,15 @@ def sort_range(oRange: UnoRange, sort_fields: Tuple[UnoStruct, ...],
 
 
 # CONDITIONAL
-
-def clear_conditional_format(oSheet: UnoSheet, range_name: str):
-    oColoredColumns = oSheet.getCellRangeByName(range_name)
+def clear_conditional_format(oColoredColumns: UnoRange):
     oConditionalFormat = oColoredColumns.ConditionalFormat
     oConditionalFormat.clear()
 
 
 def conditional_format_on_formulas(
-        oSheet: UnoSheet, range_name: str, style_by_formula,
-        source_position: Tuple[int, int] = (0, 0)):
-    oColoredColumns = oSheet.getCellRangeByName(range_name)
+        oColoredColumns: UnoRange, style_by_formula: Mapping[str, str],
+        oSrcAddress: UnoCellAddress):
     oConditionalFormat = oColoredColumns.ConditionalFormat
-    oSrcAddress = oColoredColumns.getCellByPosition(
-        *source_position).CellAddress
-
     for formula, style in style_by_formula.items():
         oConditionalEntry = get_formula_conditional_entry(formula, style,
                                                           oSrcAddress)
@@ -1014,12 +1008,11 @@ class _Inspector:
                 "vnd.sun.star.script:XrayTool._Main.Xray?"
                 "language=Basic&location=application")
         except ScriptFrameworkErrorException:
+            self._ignore_xray = True
             if fail_on_error:
                 raise UnoRuntimeException(
                     "\nBasic library Xray is not installed",
                     self._provider.ctxt)
-            else:
-                self._ignore_xray = True
 
     def xray(self, obj: Any, fail_on_error: bool = False):
         """
@@ -1052,9 +1045,11 @@ class _Inspector:
             try:
                 self._oMRI = uno_service("mytools.Mri")
             except UnoException:
+                self._ignore_mri = True
                 if fail_on_error:
                     raise UnoRuntimeException("\nMRI is not installed",
                                               self._provider.ctxt)
-                else:
-                    self._ignore_mri = True
+        if self._ignore_mri:
+            return
+
         self._oMRI.inspect(obj)
