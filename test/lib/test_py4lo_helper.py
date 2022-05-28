@@ -577,6 +577,39 @@ class InspectorTestCase(unittest.TestCase):
         ], self.oSP.mock_calls)
         self.assertFalse(self.inspector._ignore_xray)
 
+    def test_xray_fail(self):
+        # prepare
+        from com.sun.star.script.provider import ScriptFrameworkErrorException
+
+        self.oSP.getScript.side_effect = ScriptFrameworkErrorException
+        obj = Mock()
+
+        # play
+        self.inspector.xray(obj)
+
+        # verify
+        self.assertEqual([call.getScript(
+            'vnd.sun.star.script:XrayTool._Main.Xray?language=Basic&location=application')],
+                         self.oSP.mock_calls)
+        self.assertTrue(self.inspector._ignore_xray)
+
+    def test_xray_twice(self):
+        # prepare
+        from com.sun.star.script.provider import ScriptFrameworkErrorException
+
+        self.oSP.getScript.side_effect = ScriptFrameworkErrorException
+        obj = Mock()
+
+        # play
+        self.inspector.use_xray(False)
+        self.inspector.xray(obj)
+
+        # verify
+        self.assertEqual([call.getScript(
+            'vnd.sun.star.script:XrayTool._Main.Xray?language=Basic&location=application')],
+                         self.oSP.mock_calls)
+        self.assertTrue(self.inspector._ignore_xray)
+
     @patch("py4lo_helper.uno_service")
     def test_mri(self, us):
         # prepare
@@ -594,6 +627,24 @@ class InspectorTestCase(unittest.TestCase):
         self.assertFalse(self.inspector._ignore_mri)
 
     @patch("py4lo_helper.uno_service")
+    def test_mri_twice(self, us):
+        # prepare
+        obj = Mock()
+        oMRI = Mock()
+        us.side_effect = [oMRI]
+
+        # play
+        self.inspector.mri(obj)
+        self.inspector.mri(obj)
+
+        # verify
+        self.assertEqual([
+            call.inspect(obj),
+            call.inspect(obj)
+        ], oMRI.mock_calls)
+        self.assertFalse(self.inspector._ignore_mri)
+
+    @patch("py4lo_helper.uno_service")
     def test_mri_fail(self, us):
         from com.sun.star.script.provider import ScriptFrameworkErrorException
 
@@ -602,6 +653,21 @@ class InspectorTestCase(unittest.TestCase):
         us.side_effect = ScriptFrameworkErrorException
 
         # play
+        self.inspector.mri(obj)
+
+        # verify
+        self.assertTrue(self.inspector._ignore_mri)
+
+    @patch("py4lo_helper.uno_service")
+    def test_mri_fail_twice(self, us):
+        from com.sun.star.script.provider import ScriptFrameworkErrorException
+
+        # prepare
+        obj = Mock()
+        us.side_effect = ScriptFrameworkErrorException
+
+        # play
+        self.inspector.mri(obj)
         self.inspector.mri(obj)
 
         # verify
