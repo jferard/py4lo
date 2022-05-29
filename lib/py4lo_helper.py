@@ -632,12 +632,13 @@ def copy_range(oSourceRange: UnoRange):
     :param oSourceRange the range (may be a sheet)
     """
     oSourceDoc = parent_doc(oSourceRange)
-    oSelectBkp = oSourceDoc.getCurrentSelection()
     oSourceController = oSourceDoc.CurrentController
     oSourceController.select(oSourceRange)
     provider.dispatcher.executeDispatch(
         oSourceController, ".uno:Copy", "", 0, [])
-    oSourceController.select(oSelectBkp)
+    # unselect
+    oRanges = oSourceDoc.createInstance("com.sun.star.sheet.SheetCellRanges")
+    oSourceController.select(oRanges)
 
 
 def paste_range(oDestSheet: UnoSheet, oDestAddress: UnoCellAddress,
@@ -645,14 +646,13 @@ def paste_range(oDestSheet: UnoSheet, oDestAddress: UnoCellAddress,
     """
     """
     oDestDoc = parent_doc(oDestSheet)
-    oSelectBkp = oDestDoc.getCurrentSelection()
     oDestController = oDestDoc.CurrentController
     oDestCell = oDestSheet.getCellByPosition(oDestAddress.Column,
                                              oDestAddress.Row)
     oDestController.select(oDestCell)
     if formulas:
         provider.dispatcher.executeDispatch(
-            oDestController, ".uno:Copy", "", 0, [])
+            oDestController, ".uno:Paste", "", 0, [])
     else:
         # TODO: propose more options
         args = make_pvs({
@@ -661,7 +661,9 @@ def paste_range(oDestSheet: UnoSheet, oDestAddress: UnoCellAddress,
         })
         provider.dispatcher.executeDispatch(
             oDestController, ".uno:InsertContents", "", 0, args)
-    oDestController.select(oSelectBkp)
+    # unselect
+    oRanges = oDestDoc.createInstance("com.sun.star.sheet.SheetCellRanges")
+    oDestController.select(oRanges)
 
 
 ##############################################################################
@@ -686,7 +688,7 @@ def top_void_row_count(data_array: DATA_ARRAY) -> int:
 def bottom_void_row_count(data_array: DATA_ARRAY) -> int:
     """
     @param data_array: a data array
-    @return: the number of void row at the top
+    @return: the number of void row at the bottom
     """
     row_count = len(data_array)
     r1 = 0
@@ -700,11 +702,11 @@ def bottom_void_row_count(data_array: DATA_ARRAY) -> int:
 def left_void_row_count(data_array: DATA_ARRAY) -> int:
     """
     @param data_array: a data array
-    @return: the number of void row at the top
+    @return: the number of void row at the left
     """
     row_count = len(data_array)
     if row_count == 0:
-        return 0
+        return -1
 
     c0 = len(data_array[0])
     for row in data_array:
@@ -719,11 +721,11 @@ def left_void_row_count(data_array: DATA_ARRAY) -> int:
 def right_void_row_count(data_array: DATA_ARRAY) -> int:
     """
     @param data_array: a data array
-    @return: the number of void row at the top
+    @return: the number of void row at the right
     """
     row_count = len(data_array)
     if row_count == 0:
-        return 0
+        return -1
 
     width = len(data_array[0])
     c1 = width
@@ -739,30 +741,80 @@ def right_void_row_count(data_array: DATA_ARRAY) -> int:
 ###############################################################################
 # FORMATTING
 ###############################################################################
+
 def set_validation_list_by_cell(
-        oCell: UnoCell, fields: List[str], default_string: Optional[str] = None,
-        allow_blank: bool = False):
-    oValidation = oCell.Validation
-    oValidation.Type = uno.getConstantByName(
-        "com.sun.star.sheet.ValidationType.LIST")
-    oValidation.ShowErrorMessage = True
-    oValidation.ShowList = uno.getConstantByName(
-        "com.sun.star.sheet.TableValidationVisibility.UNSORTED")
-    # TODO : improve me
-    formula = ";".join('"' + a + '"' for a in fields)
-    oValidation.setFormula1(formula)
-    oValidation.IgnoreBlankCells = allow_blank
-    oCell.Validation = oValidation
+        oCell: UnoCell, values: List[Any], default_string: Optional[str] = None,
+        ignore_blank: bool = True, sorted_values: bool = False,
+        show_error: bool = True):
+    factory = ValidationFactory().list().values(values)
+    factory.ignore_blank(ignore_blank)
+    factory.sorted_values(sorted_values)
+    factory.show_error(show_error)
+    factory.update(oCell.Validation)
 
     if default_string is not None:
         oCell.String = default_string
 
 
-def set_validation_list_by_name(
-        oDoc: UnoSpreadsheet, cell_name: str, fields: List[str],
-        default_string: Optional[str] = None, allow_blank: bool = False):
-    oCell = get_named_cell(oDoc, cell_name)
-    set_validation_list_by_cell(oCell, fields, default_string, allow_blank)
+class ValidationFactory:
+    def list(self):
+        return ListValidationBuilder()
+
+
+class ListValidationBuilder:
+    def __init__(self):
+        self._values = []
+        self._default_string = None
+        self._ignore_blank = False
+        self._sorted_values = False
+        self._show_error = True
+
+    def values(self, values: List[Any]) -> "ListValidationBuilder":
+        self._values = values
+        return self
+
+    def default_string(self, default_string: str) -> "ListValidationBuilder":
+        self._default_string = default_string
+        return self
+
+    def ignore_blank(self, ignore_blank: bool) -> "ListValidationBuilder":
+        self._ignore_blank = ignore_blank
+        return self
+
+    def sorted_values(self, sorted_values: bool) -> "ListValidationBuilder":
+        self._sorted_values = sorted_values
+        return self
+
+    def show_error(self, show_error: bool) -> "ListValidationBuilder":
+        self._show_error = show_error
+        return self
+
+    def update(self, oValidation: UnoStruct):
+        oValidation.Type = ValidationType.LIST
+        oValidation.IgnoreBlankCells = self._ignore_blank
+        if self._sorted_values:
+            oValidation.ShowList = TableValidationVisibility.UNSORTED
+        else:
+            oValidation.ShowList = TableValidationVisibility.SORTEDASCENDING
+        oValidation.ShowErrorMessage = self._show_error
+
+        oValidation.Formula1 = ";".join(
+            quote_element(f) for f in self._values)
+
+
+def quote_element(value: Any) -> str:
+    """
+    Quote a list element
+
+    :param value: the value
+    :return: the quoted value
+    """
+    if isinstance(value, str):
+        return '"{}"'.format(value.replace('"', '\\"'))
+    elif isinstance(value, float):
+        return str(value).replace(".", ",")
+    else:
+        return str(value)
 
 
 def sort_range(oRange: UnoRange, sort_fields: Tuple[UnoStruct, ...],

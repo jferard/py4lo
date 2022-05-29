@@ -122,14 +122,6 @@ class TestHelper(unittest.TestCase):
         uno_service("z")
         self.sm.createInstance.assert_called_once_with("z")
 
-    def test_set_validation_list(self):
-        oCell = Mock()
-        try:
-            py4lo_helper.provider.set_validation_list_by_cell(oCell,
-                                                              ["a", "b", "c"])
-        except Exception as e:
-            pass
-
     def test_doc_builder(self):
         d = doc_builder(NewDocumentUrl.Calc)
         d.build()
@@ -284,92 +276,202 @@ class TestHelper(unittest.TestCase):
                           mock.call.getCellRangeByPosition(2, 2, 6, 4)],
                          oSheet.mock_calls)
 
-    def test_read_options(self):
-        # prepare
-        oRange = Mock(DataArray=[
-            ("foo", 1, "", ""),
-            ("bar", 1, 2, 3),
-            ("baz", "a", "", "b"),
-            ("", "x", "", ""),
-        ])
-        oSheet = Mock()
-        oSheet.getCellRangeByPosition.side_effect = [oRange]
-        aAddress = Mock()
-        aAddress.StartColumn = 0
-        aAddress.EndColumn = 1
-        aAddress.StartRow = 0
-        aAddress.EndRow = 3
-
-        def f(k, v): return k, v
-
-        # play
-        act_options = read_options(oSheet, aAddress, f)
-
-        # verify
-        self.assertEqual({'foo': 1, 'bar': (1, 2, 3), 'baz': ('a', '', 'b')},
-                         act_options)
-
-    def test_read_empty_options(self):
-        # prepare
-        oSheet = Mock()
-        aAddress = Mock()
-        aAddress.StartColumn = 0
-        aAddress.EndColumn = 0
-        aAddress.StartRow = 0
-        aAddress.EndRow = 0
-
-        def f(k, v): return k, v
-
-        # play
-        act_options = read_options(oSheet, aAddress, f)
-
-        # verify
-        self.assertEqual({}, act_options)
-
-    def test_rtrim_row(self):
-        self.assertEqual("", rtrim_row(tuple()))
-        self.assertEqual(None, rtrim_row(tuple(), None))
-        self.assertEqual("", rtrim_row(("", "", "", "")))
-        self.assertEqual(None, rtrim_row(("", "", "", ""), None))
-        self.assertEqual("foo", rtrim_row(("foo", "", "", "")))
-        self.assertEqual(0.0, rtrim_row((0.0, "", "", "")))
-        self.assertEqual((0.0, "", 1.0), rtrim_row((0.0, "", 1.0, "")))
-        self.assertEqual(("foo", "", "", "bar"),
-                         rtrim_row(("foo", "", "", "bar")))
-
-    @patch("py4lo_helper.read_options")
-    @patch("py4lo_helper.get_used_range_address")
-    def test_read_options_from_sheet_name(self, gura, ro):
-        # prepare
-        oSheet = Mock()
-        oSheets = Mock()
-        oSheets.getByName.side_effect = [oSheet]
-        oDoc = Mock(Sheets=oSheets)
-        oAddress = Mock()
-        gura.side_effect = [oAddress]
-
-        def f(k, v): return k, v
-
-        # play
-        read_options_from_sheet_name(oDoc, "foo", f)
-
-        # verify
-        self.assertEqual([call(oSheet, oAddress, f)], ro.mock_calls)
-
-    def test_copy_row_at_index(self):
+    @patch("py4lo_helper.parent_doc")
+    def test_copy_range(self, pd):
         # prepare
         oRange = Mock()
-        oSheet = Mock()
-        oSheet.getCellRangeByPosition.side_effect = [oRange]
-        row = ("foo", "bar", "baz")
+        oController = Mock()
+        oDoc = Mock(CurrentController=oController)
+        pd.side_effect = [oDoc]
+        oDisp = Mock()
+        self.sm.createInstance.side_effect = [oDisp]
+        oRanges = Mock()
+        oDoc.createInstance.side_effect = [oRanges]
 
         # play
-        copy_row_at_index(oSheet, row, 3)
+        copy_range(oRange)
 
-        # verifiy
-        self.assertEqual([call.getCellRangeByPosition(0, 3, 2, 3)],
-                         oSheet.mock_calls)
-        self.assertEqual(row, oRange.DataArray)
+        # verify
+        self.assertEqual([
+            call.select(oRange),
+            call.select(oRanges),
+        ], oController.mock_calls)
+        self.assertEqual([
+            call.executeDispatch(oController, '.uno:Copy', '', 0, [])
+        ], oDisp.mock_calls)
+
+    @patch("py4lo_helper.parent_doc")
+    def test_paste_range(self, pd):
+        # prepare
+        oSheet = Mock()
+        oDestAddress = Mock()
+        oController = Mock()
+        oDoc = Mock(CurrentController=oController)
+        oRange = Mock()
+        oRanges = Mock()
+        oSheet.getCellByPosition.side_effect = [oRange]
+        oDoc.createInstance.side_effect = [oRanges]
+        pd.side_effect = [oDoc]
+        oDisp = Mock()
+        self.sm.createInstance.side_effect = [oDisp]
+
+        # play
+        paste_range(oSheet, oDestAddress)
+
+        # verify
+        self.assertEqual([
+            call.select(oRange),
+            call.select(oRanges),
+        ], oController.mock_calls)
+        self.assertEqual([
+            call.executeDispatch(oController, '.uno:InsertContents', '', 0,
+                                 make_pvs({
+                                     "Flags": "SVDT", "FormulaCommand": 0,
+                                     "SkipEmptyCells": False,
+                                     "Transpose": False, "AsLink": False,
+                                     "MoveMode": 4
+                                 }))
+        ], oDisp.mock_calls)
+
+    @patch("py4lo_helper.parent_doc")
+    def test_paste_range_formulas(self, pd):
+        # prepare
+        oSheet = Mock()
+        oDestAddress = Mock()
+        oController = Mock()
+        oDoc = Mock(CurrentController=oController)
+        oRange = Mock()
+        oRanges = Mock()
+        oSheet.getCellByPosition.side_effect = [oRange]
+        oDoc.createInstance.side_effect = [oRanges]
+        pd.side_effect = [oDoc]
+        oDisp = Mock()
+        self.sm.createInstance.side_effect = [oDisp]
+
+        # play
+        paste_range(oSheet, oDestAddress, True)
+
+        # verify
+        self.assertEqual([
+            call.select(oRange),
+            call.select(oRanges),
+        ], oController.mock_calls)
+        self.assertEqual([
+            call.executeDispatch(oController, '.uno:Paste', '', 0, [])
+        ], oDisp.mock_calls)
+
+    @patch("py4lo_helper.get_used_range")
+    def test_data_array(self, gura):
+        # prepare
+        oSheet = Mock()
+        da = [("foo",), ("bar",), ("baz",)]
+        oRange = Mock(DataArray=da)
+        gura.side_effect = [oRange]
+        # play
+        act_da = data_array(oSheet)
+
+        # verify
+        self.assertEqual(da, act_da)
+
+    def test_set_validation_list(self):
+        # prepare
+        oVal = Mock()
+        oCell = Mock(Validation=oVal)
+
+        # play
+        set_validation_list_by_cell(oCell, ["a", "b", "c"])
+
+        # verify
+        self.assertEqual(ValidationType.LIST, oVal.Type)
+        self.assertEqual(2, oVal.ShowList)
+        self.assertTrue(oVal.ShowErrorMessage)
+        self.assertTrue(oVal.IgnoreBlankCells)
+        self.assertEqual('"a";"b";"c"', oVal.Formula1)
+        self.assertIsNotNone(oCell.String)
+
+    def test_set_validation_list2(self):
+        # prepare
+        oVal = Mock()
+        oCell = Mock(Validation=oVal)
+
+        # play
+        set_validation_list_by_cell(oCell, [1, 2, 3], "foo", False, True,
+                                    False)
+
+        # verify
+        self.assertEqual(ValidationType.LIST, oVal.Type)
+        self.assertEqual(1, oVal.ShowList)
+        self.assertFalse(oVal.ShowErrorMessage)
+        self.assertFalse(oVal.IgnoreBlankCells)
+        self.assertEqual('1;2;3', oVal.Formula1)
+        self.assertEqual("foo", oCell.String)
+
+    def test_set_validation_list3(self):
+        # prepare
+        oVal = Mock()
+        oCell = Mock(Validation=oVal)
+
+        # play
+        set_validation_list_by_cell(oCell, [1, "a", False])
+
+        # verify
+        self.assertEqual(ValidationType.LIST, oVal.Type)
+        self.assertEqual(2, oVal.ShowList)
+        self.assertTrue(oVal.ShowErrorMessage)
+        self.assertTrue(oVal.IgnoreBlankCells)
+        self.assertEqual('1;"a";False', oVal.Formula1)
+        self.assertIsNotNone(oCell.String)
+
+    @patch("py4lo_helper.update_pvs")
+    def test_sort_range(self, up):
+        # prepare
+        oSD = Mock()
+        oRange = Mock()
+        oRange.createSortDescriptor.side_effect = [oSD]
+        sort_fields = tuple([Mock(), Mock()])
+
+        # play
+        sort_range(oRange, sort_fields, True)
+
+        # verify
+        self.assertEqual([
+            call.createSortDescriptor(),
+            call.sort(oSD)
+        ], oRange.mock_calls)
+        self.assertEqual([
+            call(oSD, {'ContainsHeader': True, 'SortFields': ANY})
+        ], up.mock_calls)
+
+    @patch("py4lo_helper.update_pvs")
+    def test_sort_range_no_header(self, up):
+        # prepare
+        oSD = Mock()
+        oRange = Mock()
+        oRange.createSortDescriptor.side_effect = [oSD]
+        sort_fields = tuple([Mock(), Mock()])
+
+        # play
+        sort_range(oRange, sort_fields, False)
+
+        # verify
+        self.assertEqual([
+            call.createSortDescriptor(),
+            call.sort(oSD)
+        ], oRange.mock_calls)
+        self.assertEqual([
+            call(oSD, {'ContainsHeader': False, 'SortFields': ANY})
+        ], up.mock_calls)
+
+    def test_clear_conditional_format(self):
+        # prepare
+        oFormat = Mock()
+        oRange = Mock(ConditionalFormat=oFormat)
+
+        # play
+        clear_conditional_format(oRange)
+
+        # verify
+        self.assertEqual([call.clear()], oFormat.mock_calls)
 
     @patch("py4lo_helper.get_formula_conditional_entry")
     def test_conditional_format_on_formulas(self, gfce):
@@ -415,6 +517,21 @@ class TestHelper(unittest.TestCase):
 
         # play
         ret = find_or_create_number_format_style(oDoc, "YY-MM-DD", oLocale)
+
+        # verify
+        self.assertEqual(9, ret)
+
+    @patch("py4lo_helper.make_locale")
+    def test_find_number_format_style_no_locale(self, ml):
+        # prepare
+        oFormats = Mock()
+        oFormats.queryKey.side_effect = [9]
+        oDoc = Mock(NumberFormats=oFormats)
+        oLocale = Mock()
+        ml.side_effect = [oLocale]
+
+        # play
+        ret = find_or_create_number_format_style(oDoc, "YY-MM-DD")
 
         # verify
         self.assertEqual(9, ret)
@@ -596,6 +713,93 @@ class TestHelper(unittest.TestCase):
         self.assertEqual(sy, oPageStyle.ScaleToPagesY)
         self.assertEqual([call('com.sun.star.awt.Size', Width=pw, Height=ph)],
                          ms.mock_calls)
+
+    def test_read_options(self):
+        # prepare
+        oRange = Mock(DataArray=[
+            ("foo", 1, "", ""),
+            ("bar", 1, 2, 3),
+            ("baz", "a", "", "b"),
+            ("", "x", "", ""),
+        ])
+        oSheet = Mock()
+        oSheet.getCellRangeByPosition.side_effect = [oRange]
+        aAddress = Mock()
+        aAddress.StartColumn = 0
+        aAddress.EndColumn = 1
+        aAddress.StartRow = 0
+        aAddress.EndRow = 3
+
+        def f(k, v): return k, v
+
+        # play
+        act_options = read_options(oSheet, aAddress, f)
+
+        # verify
+        self.assertEqual({'foo': 1, 'bar': (1, 2, 3), 'baz': ('a', '', 'b')},
+                         act_options)
+
+    def test_read_empty_options(self):
+        # prepare
+        oSheet = Mock()
+        aAddress = Mock()
+        aAddress.StartColumn = 0
+        aAddress.EndColumn = 0
+        aAddress.StartRow = 0
+        aAddress.EndRow = 0
+
+        def f(k, v): return k, v
+
+        # play
+        act_options = read_options(oSheet, aAddress, f)
+
+        # verify
+        self.assertEqual({}, act_options)
+
+    def test_rtrim_row(self):
+        self.assertEqual("", rtrim_row(tuple()))
+        self.assertEqual(None, rtrim_row(tuple(), None))
+        self.assertEqual("", rtrim_row(("", "", "", "")))
+        self.assertEqual(None, rtrim_row(("", "", "", ""), None))
+        self.assertEqual("foo", rtrim_row(("foo", "", "", "")))
+        self.assertEqual(0.0, rtrim_row((0.0, "", "", "")))
+        self.assertEqual((0.0, "", 1.0), rtrim_row((0.0, "", 1.0, "")))
+        self.assertEqual(("foo", "", "", "bar"),
+                         rtrim_row(("foo", "", "", "bar")))
+
+    @patch("py4lo_helper.read_options")
+    @patch("py4lo_helper.get_used_range_address")
+    def test_read_options_from_sheet_name(self, gura, ro):
+        # prepare
+        oSheet = Mock()
+        oSheets = Mock()
+        oSheets.getByName.side_effect = [oSheet]
+        oDoc = Mock(Sheets=oSheets)
+        oAddress = Mock()
+        gura.side_effect = [oAddress]
+
+        def f(k, v): return k, v
+
+        # play
+        read_options_from_sheet_name(oDoc, "foo", f)
+
+        # verify
+        self.assertEqual([call(oSheet, oAddress, f)], ro.mock_calls)
+
+    def test_copy_row_at_index(self):
+        # prepare
+        oRange = Mock()
+        oSheet = Mock()
+        oSheet.getCellRangeByPosition.side_effect = [oRange]
+        row = ("foo", "bar", "baz")
+
+        # play
+        copy_row_at_index(oSheet, row, 3)
+
+        # verifiy
+        self.assertEqual([call.getCellRangeByPosition(0, 3, 2, 3)],
+                         oSheet.mock_calls)
+        self.assertEqual(row, oRange.DataArray)
 
 
 class InspectorTestCase(unittest.TestCase):
