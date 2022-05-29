@@ -177,6 +177,51 @@ class TestHelper(unittest.TestCase):
 
         oDoc.unlockControllers.assert_called_once()
 
+    def test_used_range(self):
+        # prepare
+        oRangeAddress = Mock(
+            StartColumn=2, StartRow=4, EndColumn=8, EndRow=16
+        )
+        oCursor = Mock(RangeAddress=oRangeAddress)
+        oSheet = Mock()
+        oSheet.createCursor.side_effect = [oCursor]
+
+        # play
+        oRange = get_used_range(oSheet)
+
+        # verify
+        self.assertEqual([
+            call.gotoStartOfUsedArea(True), call.gotoEndOfUsedArea(True)
+        ], oCursor.mock_calls)
+        self.assertEqual([
+            call.createCursor(), call.getCellRangeByPosition(2, 4, 8, 16)
+        ], oSheet.mock_calls)
+
+    def test_narrow_range_to_address(self):
+        # prepare
+        oSheet = Mock()
+        oRangeAddress = Mock(
+            StartColumn=1, StartRow=2, EndColumn=4, EndRow=8
+        )
+        # play
+        oRange = narrow_range_to_address(oSheet, oRangeAddress)
+
+        # verify
+        self.assertEqual([call.getCellRangeByPosition(1, 2, 4, 8)],
+                         oSheet.mock_calls)
+
+    def test_get_range_size(self):
+        # prepare
+        oRange = Mock(RangeAddress=Mock(
+            StartColumn=1, StartRow=2, EndColumn=4, EndRow=8
+        ))
+        # play
+        w, h = get_range_size(oRange)
+
+        # verify
+        self.assertEqual(4, w)
+        self.assertEqual(7, h)
+
     def test_data_array(self):
         data_array = [
             ("", "", "", "", "", "", "",),
