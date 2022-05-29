@@ -24,6 +24,11 @@ from py4lo_helper import *
 import py4lo_helper
 from py4lo_helper import _ObjectProvider, _Inspector
 
+# noinspection PyUnresolvedReferences
+from com.sun.star.script.provider import ScriptFrameworkErrorException
+# noinspection PyUnresolvedReferences
+from com.sun.star.uno import RuntimeException as UnoRuntimeException
+
 
 class TestHelper(unittest.TestCase):
     def setUp(self):
@@ -79,13 +84,15 @@ class TestHelper(unittest.TestCase):
     def testXray(self):
         py4lo_helper._inspect.use_xray()
         self.msp.getScript.assert_called_once_with(
-            'vnd.sun.star.script:XrayTool._Main.Xray?language=Basic&location=application')
+            'vnd.sun.star.script:XrayTool._Main.Xray?'
+            'language=Basic&location=application')
 
     def testXray2(self):
         py4lo_helper._inspect.xray(1)
         py4lo_helper._inspect.xray(2)
         self.msp.getScript.assert_called_once_with(
-            'vnd.sun.star.script:XrayTool._Main.Xray?language=Basic&location=application')
+            'vnd.sun.star.script:XrayTool._Main.Xray?'
+            'language=Basic&location=application')
         self.msp.getScript.return_value.invoke.assert_has_calls(
             [call((1,), (), ()), call((2,), (), ())])
 
@@ -114,15 +121,6 @@ class TestHelper(unittest.TestCase):
 
         uno_service("z")
         self.sm.createInstance.assert_called_once_with("z")
-
-    def test_read_options(self):
-        oSheet = Mock()
-        aAdress = Mock()
-        aAdress.EndColumn = 10
-        aAdress.StartColumn = 0
-        aAdress.EndRow = 10
-        aAdress.StartRow = 0
-        read_options(oSheet, aAdress)
 
     def test_set_validation_list(self):
         oCell = Mock()
@@ -285,6 +283,93 @@ class TestHelper(unittest.TestCase):
         self.assertEqual([mock.call.getCellRangeByPosition(1, 1, 7, 5),
                           mock.call.getCellRangeByPosition(2, 2, 6, 4)],
                          oSheet.mock_calls)
+
+    def test_read_options(self):
+        # prepare
+        oRange = Mock(DataArray=[
+            ("foo", 1, "", ""),
+            ("bar", 1, 2, 3),
+            ("baz", "a", "", "b"),
+            ("", "x", "", ""),
+        ])
+        oSheet = Mock()
+        oSheet.getCellRangeByPosition.side_effect = [oRange]
+        aAddress = Mock()
+        aAddress.StartColumn = 0
+        aAddress.EndColumn = 1
+        aAddress.StartRow = 0
+        aAddress.EndRow = 3
+
+        def f(k, v): return k, v
+
+        # play
+        act_options = read_options(oSheet, aAddress, f)
+
+        # verify
+        self.assertEqual({'foo': 1, 'bar': (1, 2, 3), 'baz': ('a', '', 'b')},
+                         act_options)
+
+    def test_read_empty_options(self):
+        # prepare
+        oSheet = Mock()
+        aAddress = Mock()
+        aAddress.StartColumn = 0
+        aAddress.EndColumn = 0
+        aAddress.StartRow = 0
+        aAddress.EndRow = 0
+
+        def f(k, v): return k, v
+
+        # play
+        act_options = read_options(oSheet, aAddress, f)
+
+        # verify
+        self.assertEqual({}, act_options)
+
+    def test_rtrim_row(self):
+        self.assertEqual("", rtrim_row(tuple()))
+        self.assertEqual(None, rtrim_row(tuple(), None))
+        self.assertEqual("", rtrim_row(("", "", "", "")))
+        self.assertEqual(None, rtrim_row(("", "", "", ""), None))
+        self.assertEqual("foo", rtrim_row(("foo", "", "", "")))
+        self.assertEqual(0.0, rtrim_row((0.0, "", "", "")))
+        self.assertEqual((0.0, "", 1.0), rtrim_row((0.0, "", 1.0, "")))
+        self.assertEqual(("foo", "", "", "bar"),
+                         rtrim_row(("foo", "", "", "bar")))
+
+    @patch("py4lo_helper.read_options")
+    @patch("py4lo_helper.get_used_range_address")
+    def test_read_options_from_sheet_name(self, gura, ro):
+        # prepare
+        oSheet = Mock()
+        oSheets = Mock()
+        oSheets.getByName.side_effect = [oSheet]
+        oDoc = Mock(Sheets=oSheets)
+        oAddress = Mock()
+        gura.side_effect = [oAddress]
+
+        def f(k, v): return k, v
+
+        # play
+        read_options_from_sheet_name(oDoc, "foo", f)
+
+        # verify
+        self.assertEqual([call(oSheet, oAddress, f)], ro.mock_calls)
+
+    def test_copy_row_at_index(self):
+        # prepare
+        oRange = Mock()
+        oSheet = Mock()
+        oSheet.getCellRangeByPosition.side_effect = [oRange]
+        row = ("foo", "bar", "baz")
+
+        # play
+        copy_row_at_index(oSheet, row, 3)
+
+        # verifiy
+        self.assertEqual([call.getCellRangeByPosition(0, 3, 2, 3)],
+                         oSheet.mock_calls)
+        self.assertEqual(row, oRange.DataArray)
 
     @patch("py4lo_helper.get_formula_conditional_entry")
     def test_conditional_format_on_formulas(self, gfce):
@@ -526,14 +611,13 @@ class InspectorTestCase(unittest.TestCase):
 
         # verify
         self.assertEqual([call.getScript(
-            'vnd.sun.star.script:XrayTool._Main.Xray?language=Basic&location=application')],
-                         self.oSP.mock_calls)
+            'vnd.sun.star.script:XrayTool._Main.Xray?'
+            'language=Basic&location=application')],
+            self.oSP.mock_calls)
         self.assertFalse(self.inspector._ignore_xray)
 
     def test_use_xray_raise(self):
         # prepare
-        from com.sun.star.script.provider import ScriptFrameworkErrorException
-        from com.sun.star.uno import RuntimeException as UnoRuntimeException
 
         self.oSP.getScript.side_effect = ScriptFrameworkErrorException
 
@@ -543,14 +627,13 @@ class InspectorTestCase(unittest.TestCase):
 
         # verify
         self.assertEqual([call.getScript(
-            'vnd.sun.star.script:XrayTool._Main.Xray?language=Basic&location=application')],
-                         self.oSP.mock_calls)
+            'vnd.sun.star.script:XrayTool._Main.Xray?'
+            'language=Basic&location=application')],
+            self.oSP.mock_calls)
         self.assertTrue(self.inspector._ignore_xray)
 
     def test_use_xray_ignore(self):
         # prepare
-        from com.sun.star.script.provider import ScriptFrameworkErrorException
-
         self.oSP.getScript.side_effect = ScriptFrameworkErrorException
 
         # play
@@ -558,8 +641,9 @@ class InspectorTestCase(unittest.TestCase):
 
         # verify
         self.assertEqual([call.getScript(
-            'vnd.sun.star.script:XrayTool._Main.Xray?language=Basic&location=application')],
-                         self.oSP.mock_calls)
+            'vnd.sun.star.script:XrayTool._Main.Xray?'
+            'language=Basic&location=application')],
+            self.oSP.mock_calls)
         self.assertTrue(self.inspector._ignore_xray)
 
     def test_xray(self):
@@ -572,15 +656,14 @@ class InspectorTestCase(unittest.TestCase):
         # verify
         self.assertEqual([
             call.getScript(
-            'vnd.sun.star.script:XrayTool._Main.Xray?language=Basic&location=application'),
+                'vnd.sun.star.script:XrayTool._Main.Xray?'
+                'language=Basic&location=application'),
             call.getScript().invoke((obj,), tuple(), tuple())
         ], self.oSP.mock_calls)
         self.assertFalse(self.inspector._ignore_xray)
 
     def test_xray_fail(self):
         # prepare
-        from com.sun.star.script.provider import ScriptFrameworkErrorException
-
         self.oSP.getScript.side_effect = ScriptFrameworkErrorException
         obj = Mock()
 
@@ -589,14 +672,13 @@ class InspectorTestCase(unittest.TestCase):
 
         # verify
         self.assertEqual([call.getScript(
-            'vnd.sun.star.script:XrayTool._Main.Xray?language=Basic&location=application')],
-                         self.oSP.mock_calls)
+            'vnd.sun.star.script:XrayTool._Main.Xray?'
+            'language=Basic&location=application')],
+            self.oSP.mock_calls)
         self.assertTrue(self.inspector._ignore_xray)
 
     def test_xray_twice(self):
         # prepare
-        from com.sun.star.script.provider import ScriptFrameworkErrorException
-
         self.oSP.getScript.side_effect = ScriptFrameworkErrorException
         obj = Mock()
 
@@ -606,8 +688,9 @@ class InspectorTestCase(unittest.TestCase):
 
         # verify
         self.assertEqual([call.getScript(
-            'vnd.sun.star.script:XrayTool._Main.Xray?language=Basic&location=application')],
-                         self.oSP.mock_calls)
+            'vnd.sun.star.script:XrayTool._Main.Xray?'
+            'language=Basic&location=application')],
+            self.oSP.mock_calls)
         self.assertTrue(self.inspector._ignore_xray)
 
     @patch("py4lo_helper.uno_service")
@@ -646,8 +729,6 @@ class InspectorTestCase(unittest.TestCase):
 
     @patch("py4lo_helper.uno_service")
     def test_mri_fail(self, us):
-        from com.sun.star.script.provider import ScriptFrameworkErrorException
-
         # prepare
         obj = Mock()
         us.side_effect = ScriptFrameworkErrorException
@@ -660,8 +741,6 @@ class InspectorTestCase(unittest.TestCase):
 
     @patch("py4lo_helper.uno_service")
     def test_mri_fail_twice(self, us):
-        from com.sun.star.script.provider import ScriptFrameworkErrorException
-
         # prepare
         obj = Mock()
         us.side_effect = ScriptFrameworkErrorException
@@ -675,19 +754,17 @@ class InspectorTestCase(unittest.TestCase):
 
     @patch("py4lo_helper.uno_service")
     def test_mri_fail_err(self, us):
-        from com.sun.star.script.provider import ScriptFrameworkErrorException
-        from com.sun.star.uno import RuntimeException as UnoRuntimeException
-
         # prepare
         obj = Mock()
         us.side_effect = ScriptFrameworkErrorException
 
         # play
         with self.assertRaises(UnoRuntimeException):
-                self.inspector.mri(obj, True)
+            self.inspector.mri(obj, True)
 
         # verify
         self.assertTrue(self.inspector._ignore_mri)
+
 
 if __name__ == '__main__':
     unittest.main()

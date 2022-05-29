@@ -30,7 +30,7 @@ from py4lo_typing import (UnoSpreadsheet, UnoController, UnoContext, UnoService,
                           UnoSheet, UnoRangeAddress, UnoRange, UnoCell,
                           UnoObject, DATA_ARRAY, UnoCellAddress,
                           UnoPropertyValue, DATA_ROW, UnoXScriptContext,
-                          UnoColumn, UnoStruct, UnoEnum, UnoRow)
+                          UnoColumn, UnoStruct, UnoEnum, UnoRow, DATA_VALUE)
 
 try:
     import uno
@@ -954,38 +954,62 @@ def set_paper_to_size(oPageStyle: UnoService, size: UnoStruct):
 # MISC
 ###############################################################################
 def read_options(oSheet: UnoSpreadsheet, aAddress: UnoRangeAddress,
-                 apply: Callable[[Tuple[str, str]],
-                                 Tuple[str, str]] = lambda k_v: k_v
-                 ) -> Mapping[str, str]:
+                 apply: Union[
+                     Callable[[str, str], Tuple[str, str]],
+                     Callable[[str, List[str]], Tuple[str, List[str]]]
+                 ] = lambda k_v: k_v
+                 ) -> Mapping[str, DATA_VALUE]:
     options = {}
-    width = aAddress.EndColumn - aAddress.StartColumn
-    for r in range(aAddress.StartRow, aAddress.EndRow + 1):
-        k = oSheet.getCellByPosition(aAddress.StartColumn, r).String.strip()
-        if width <= 1:
-            v = oSheet.getCellByPosition(aAddress.StartColumn + 1,
-                                         r).String.strip()
-        else:
-            # from aAddress.StartColumn+1 to aAddress.EndColumn
-            v = [oSheet.getCellByPosition(aAddress.StartColumn + 1 + c,
-                                          r).String.strip() for c in
-                 range(width)]
-        if k and v:
-            k, v = apply((k, v))
-            options[k] = v
+    if aAddress.StartColumn == aAddress.EndColumn:
+        return {}
+
+    oRange = oSheet.getCellRangeByPosition(
+        aAddress.StartColumn, aAddress.StartRow,
+        aAddress.EndColumn, aAddress.EndRow)
+    data_array = oRange.DataArray
+    for row in data_array:
+        k = row[0]
+        v = rtrim_row(row[1:])
+        k, v = apply(k, v)
+        if not k:
+            continue
+        options[k] = v
     return options
 
 
-def copy_row_at_index(oSheet: UnoSheet, row: DATA_ROW, r: int):
-    oRange = oSheet.getCellRangeByPosition(0, 0, len(row) - 1, 0)
-    oRange.DataArray = row
+def rtrim_row(row: DATA_ROW, null="") -> Union[DATA_ROW, DATA_VALUE]:
+    if len(row) == 0:
+        return null
+
+    i = len(row)
+    while i > 0:
+        v = row[i - 1]
+        if v != "":
+            break
+        i -= 1
+
+    if i == 0:
+        return null
+    elif i == 1:
+        return row[0]
+    else:
+        return row[:i]
 
 
 def read_options_from_sheet_name(
         oDoc: UnoSpreadsheet, sheet_name: str,
-        apply: Callable[[Tuple[str, str]], Tuple[str, str]] = lambda k_v: k_v):
+        apply: Union[
+            Callable[[str, str], Tuple[str, str]],
+            Callable[[str, List[str]], Tuple[str, List[str]]]
+        ] = lambda k_v: k_v):
     oSheet = oDoc.Sheets.getByName(sheet_name)
     oRangeAddress = get_used_range_address(oSheet)
     return read_options(oSheet, oRangeAddress, apply)
+
+
+def copy_row_at_index(oSheet: UnoSheet, row: DATA_ROW, r: int):
+    oRange = oSheet.getCellRangeByPosition(0, r, len(row) - 1, r)
+    oRange.DataArray = row
 
 
 class _Inspector:
