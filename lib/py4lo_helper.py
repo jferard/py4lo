@@ -750,7 +750,7 @@ def set_validation_list_by_cell(
     factory.ignore_blank(ignore_blank)
     factory.sorted_values(sorted_values)
     factory.show_error(show_error)
-    factory.update(oCell.Validation)
+    factory.update(oCell)
 
     if default_string is not None:
         oCell.String = default_string
@@ -789,7 +789,8 @@ class ListValidationBuilder:
         self._show_error = show_error
         return self
 
-    def update(self, oValidation: UnoStruct):
+    def update(self, oCell: UnoCell):
+        oValidation = oCell.Validation
         oValidation.Type = ValidationType.LIST
         oValidation.IgnoreBlankCells = self._ignore_blank
         if self._sorted_values:
@@ -800,6 +801,7 @@ class ListValidationBuilder:
 
         oValidation.Formula1 = ";".join(
             quote_element(f) for f in self._values)
+        oCell.Validation = oValidation
 
 
 def quote_element(value: Any) -> str:
