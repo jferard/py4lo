@@ -759,6 +759,74 @@ class TestHelper(unittest.TestCase):
         self.assertEqual([call('com.sun.star.awt.Size', Width=pw, Height=ph)],
                          ms.mock_calls)
 
+    @patch("py4lo_helper.parent_doc")
+    def test_add_link(self, pd):
+        # prepare
+        oText = Mock(Start=1)
+        oCur = Mock()
+        oText.createTextCursorByRange.side_effect = [oCur]
+        oCell = Mock(Text=oText)
+        oDoc = Mock()
+        oURL = Mock()
+        oDoc.createInstance.side_effect = [oURL]
+        pd.side_effect = [oDoc]
+
+        # play
+        add_link(oCell, "a very long text", "https://url.org", -1)
+
+        # verify
+        self.assertEqual([
+            call.Text.createTextCursorByRange(1),
+            call.insertTextContent(oCur, oURL, False)
+        ], oCell.mock_calls)
+        self.assertEqual('a very long text', oURL.Representation)
+        self.assertEqual("https://url.org", oURL.URL)
+
+    @patch("py4lo_helper.parent_doc")
+    def test_add_link_wrapped(self, pd):
+        # prepare
+        oText = Mock(Start=1)
+        oCur = Mock()
+        oText.createTextCursorByRange.side_effect = [oCur]
+        oCell = Mock(Text=oText)
+        oDoc = Mock()
+        oURL1 = Mock()
+        oURL2 = Mock()
+        oDoc.createInstance.side_effect = [oURL1, oURL2]
+        pd.side_effect = [oDoc]
+
+        # play
+        add_link(oCell, "a very long text", "https://url.org", 10)
+
+        # verify
+        self.assertEqual([
+            call.Text.createTextCursorByRange(1),
+            call.insertTextContent(oCur, oURL1, False),
+            call.insertTextContent(oCur, oURL2, False)
+        ], oCell.mock_calls)
+        self.assertEqual('a very long', oURL1.Representation)
+        self.assertEqual("https://url.org", oURL1.URL)
+        self.assertEqual('text', oURL2.Representation)
+        self.assertEqual("https://url.org", oURL2.URL)
+
+    def test_wrap_text(self):
+        self.assertEqual(['abcd', 'efgh', 'ij'],
+                         py4lo_helper._wrap_text("abcd efgh ij", 6))
+        self.assertEqual(['abcd', 'efgh ij'],
+                         py4lo_helper._wrap_text("abcd efgh ij", 7))
+        self.assertEqual(['abcd', 'efgh ij'],
+                         py4lo_helper._wrap_text("abcd efgh ij", 8))
+        self.assertEqual(['abcd efgh', 'ij'],
+                         py4lo_helper._wrap_text("abcd efgh ij", 9))
+        self.assertEqual(['abcd efgh', 'ij'],
+                         py4lo_helper._wrap_text("abcd efgh ij", 10))
+        self.assertEqual(['abcd efgh ij'],
+                         py4lo_helper._wrap_text("abcd efgh ij", 11))
+        self.assertEqual(['a very', 'long', 'text'],
+                         py4lo_helper._wrap_text("a very long text", 8))
+        self.assertEqual(['a very', 'long text'],
+                         py4lo_helper._wrap_text("a very long text", 9))
+
     def test_read_options(self):
         # prepare
         oRange = Mock(DataArray=[

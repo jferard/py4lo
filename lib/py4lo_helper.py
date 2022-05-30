@@ -1004,6 +1004,41 @@ def set_paper_to_size(oPageStyle: UnoService, size: UnoStruct):
     oPageStyle.Size = style_size
 
 
+def add_link(oCell: UnoCell, text: str, url: str, wrap_at: int = -1):
+    oCursor = oCell.Text.createTextCursorByRange(oCell.Text.Start)
+    oDoc = parent_doc(oCell)
+
+    if wrap_at == -1:
+        lines = [text]
+    else:
+        lines = _wrap_text(text, wrap_at)
+
+    for line in lines:
+        text_field = oDoc.createInstance("com.sun.star.text.TextField.URL")
+        text_field.Representation = line
+        text_field.URL = url
+        oCell.insertTextContent(oCursor, text_field, False)
+
+
+def _wrap_text(text: str, wrap_at: int):
+    lines = []
+    words = text.split()
+    word = words[0]
+    cur = [word]
+    c = len(word) + 1
+    for word in words[1:]:
+        cur_len = len(word)
+        if c + cur_len > wrap_at:
+            lines.append(" ".join(cur))
+            cur = [word]
+            c = cur_len + 1
+        else:
+            cur.append(word)
+            c += cur_len
+    lines.append(" ".join(cur))
+    return lines
+
+
 ###############################################################################
 # MISC
 ###############################################################################
