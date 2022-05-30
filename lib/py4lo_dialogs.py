@@ -127,6 +127,24 @@ def place_widget(
     oWidgetModel.Height = height
 
 
+Size = namedtuple("Size", ["width", "height"])
+
+
+def get_text_size(oDialogModel: UnoControlModel, text: str) -> Size:
+    """
+    @param oDialogModel: the model
+    @param text: the text
+    @return: the text size
+    """
+    oTextControl = uno_service(Control.FixedText)
+    oTextModel = oDialogModel.createInstance(ControlModel.FixedText)
+    oTextModel.Label = text
+    oTextControl.setModel(oTextModel)
+    min_size = oTextControl.MinimumSize
+    # Why 0.5 ? I don't know
+    return Size(min_size.Width * 0.5, min_size.Height * 0.5)
+
+
 def message_box(msg_text: str, msg_title: str,
                 msg_type=MessageBoxType.MESSAGEBOX,
                 msg_buttons=MessageBoxButtons.BUTTONS_OK, parent_win=None):
@@ -190,7 +208,6 @@ def folder_dialog(title: str,
 
 MARGIN = 5
 Rectangle = namedtuple('Rectangle', ['x', 'y', 'w', 'h'])
-Size = namedtuple('Size', ['w', 'h'])
 Progress = namedtuple('Progress', ['min', 'max'])
 
 
