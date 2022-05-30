@@ -110,7 +110,7 @@ class Commons:
     ) -> logging.Logger:
         if file is None:
             file = self.join_current_dir("py4lo.log")
-
+        file = str(file)
         fh = Commons._get_handler(file, mode, level, fmt)
 
         logger = logging.getLogger()
