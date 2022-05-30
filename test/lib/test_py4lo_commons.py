@@ -92,7 +92,7 @@ class TestCommons(unittest.TestCase):
 
     def test_logger(self):
         t = tempfile.NamedTemporaryFile(delete=False, mode='w')
-        self.c.init_logger(t, format='%(levelname)s - %(message)s')
+        self.c.init_logger(t.name,fmt='%(levelname)s - %(message)s')
         self.c.logger().debug("é")
         t.flush()
         t.close()
@@ -102,9 +102,9 @@ class TestCommons(unittest.TestCase):
 
     def test_logger_init_twice(self):
         t = tempfile.NamedTemporaryFile(delete=False, mode='w')
-        self.c.init_logger(t, format='%(levelname)s - %(message)s')
+        self.c.init_logger(t, fmt='%(levelname)s - %(message)s')
         with self.assertRaises(Exception):
-            self.c.init_logger(t, format='%(levelname)s - %(message)s')
+            self.c.init_logger(t, fmt='%(levelname)s - %(message)s')
         os.unlink(t.name)
 
     def test_logger_none(self):

@@ -1005,7 +1005,14 @@ def set_paper_to_size(oPageStyle: UnoService, size: UnoStruct):
 
 
 def add_link(oCell: UnoCell, text: str, url: str, wrap_at: int = -1):
-    oCursor = oCell.Text.createTextCursorByRange(oCell.Text.Start)
+    """
+    Add a link to the end of this cell.
+    @param oCell: the cell
+    @param text: the text
+    @param url: the url of the link
+    @param wrap_at: if -1, don't wrap, else wrap the text every n chars
+    """
+    oCursor = oCell.Text.createTextCursorByRange(oCell.Text.End)
     oDoc = parent_doc(oCell)
 
     if wrap_at == -1:

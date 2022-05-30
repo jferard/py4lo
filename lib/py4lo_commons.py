@@ -96,12 +96,13 @@ class Commons:
         return path.parent
 
     def init_logger(
-            self, file=None, mode="a", level=logging.DEBUG,
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
+            self, file: Optional[Union[StrPath, TextIO]] = None, mode="a",
+            level=logging.DEBUG,
+            fmt='%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
         if self._logger is not None:
             raise Exception("use init_logger ONCE")
 
-        self._logger = self.get_logger(file, mode, level, format)
+        self._logger = self.get_logger(file, mode, level, fmt)
 
     def get_logger(
             self, file: Optional[Union[StrPath, TextIO]] = None,
