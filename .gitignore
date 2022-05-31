@@ -18,6 +18,7 @@ examples/**/target/*
 examples/quickstart/qs
 **/*.pyc
 .coverage
+<tempfile.*>
 
 # pypi
 build
