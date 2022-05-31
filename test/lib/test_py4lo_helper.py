@@ -762,7 +762,7 @@ class TestHelper(unittest.TestCase):
     @patch("py4lo_helper.parent_doc")
     def test_add_link(self, pd):
         # prepare
-        oText = Mock(Start=1)
+        oText = Mock(End=1)
         oCur = Mock()
         oText.createTextCursorByRange.side_effect = [oCur]
         oCell = Mock(Text=oText)
@@ -785,7 +785,7 @@ class TestHelper(unittest.TestCase):
     @patch("py4lo_helper.parent_doc")
     def test_add_link_wrapped(self, pd):
         # prepare
-        oText = Mock(Start=1)
+        oText = Mock(End=1)
         oCur = Mock()
         oText.createTextCursorByRange.side_effect = [oCur]
         oCell = Mock(Text=oText)
