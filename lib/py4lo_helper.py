@@ -227,7 +227,11 @@ def uno_path_to_url(path: Union[str, Path]) -> str:
     """
     if isinstance(path, str):
         path = Path(path)
-    path = str(path.resolve())
+    try:
+        path = path.resolve()
+    except FileNotFoundError:  # 3.5 is strict
+        pass
+
     return uno.systemPathToFileUrl(str(path))
 
 
