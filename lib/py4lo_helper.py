@@ -20,12 +20,12 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """py4lo_helper deals with LO objects."""
 
-import os
 from enum import Enum
 from pathlib import Path
 from typing import (Any, Optional, List, cast, Callable, Mapping, Tuple,
                     Iterator, Union, Iterable)
 
+from py4lo_commons import uno_path_to_url
 from py4lo_typing import (UnoSpreadsheet, UnoController, UnoContext, UnoService,
                           UnoSheet, UnoRangeAddress, UnoRange, UnoCell,
                           UnoObject, DATA_ARRAY, UnoCellAddress,
@@ -207,34 +207,6 @@ def to_dict(oXNameAccess: UnoObject) -> Mapping[str, UnoObject]:
     return d
 
 
-def uno_url_to_path(url: str) -> Optional[Path]:
-    """
-    Wrapper
-    @param url: the url
-    @return: the path or None if the url is empty
-    """
-    if url.strip():
-        return Path(uno.fileUrlToSystemPath(url))
-    else:
-        return None
-
-
-def uno_path_to_url(path: Union[str, Path]) -> str:
-    """
-    Wrapper
-    @param path: the path
-    @return: the url
-    """
-    if isinstance(path, str):
-        path = Path(path)
-    try:
-        path = path.resolve()
-    except FileNotFoundError:  # 3.5 is strict
-        pass
-
-    return uno.systemPathToFileUrl(str(path))
-
-
 def parent_doc(oRange: UnoRange) -> UnoSpreadsheet:
     """
     Find the document that owns this range.
@@ -303,7 +275,7 @@ class Target(str, Enum):
     BEAMER = "_beamer"  # means special sub frame
 
 
-def open_in_calc(filename: str, target: str = Target.BLANK,
+def open_in_calc(filename: Union[str, Path], target: str = Target.BLANK,
                  frame_flags=FrameSearchFlag.AUTO,
                  **kwargs) -> UnoSpreadsheet:
     """
@@ -315,7 +287,7 @@ def open_in_calc(filename: str, target: str = Target.BLANK,
     :param kwargs: les paramètres d'ouverture
     :return: a reference on the doc
     """
-    url = uno.systemPathToFileUrl(os.path.realpath(filename))
+    url = uno_path_to_url(filename)
     if kwargs:
         params = make_pvs(kwargs)
     else:

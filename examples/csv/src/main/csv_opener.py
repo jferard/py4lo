@@ -26,10 +26,11 @@ from codecs import (BOM_UTF32_BE, BOM_UTF32_LE, BOM_UTF16_BE, BOM_UTF16_LE,
                     BOM_UTF8, getincrementaldecoder)
 
 from py4lo_dialogs import FileFilter, file_dialog
-from py4lo_helper import (uno_url_to_path, make_pvs, provider, Target,
+from py4lo_helper import (make_pvs, provider, Target,
                           FrameSearchFlag, create_filter, row_as_header,
                           set_print_area, to_iter,
                           column_optimal_width, make_sort_field, sort_range)
+from py4lo_commons import uno_url_to_path
 from py4lo_io import create_import_filter_options, Filter
 
 

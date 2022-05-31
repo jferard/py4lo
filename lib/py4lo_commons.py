@@ -45,6 +45,39 @@ except ModuleNotFoundError:
             else:
                 return result.path
 
+        @staticmethod
+        def systemPathToFileUrl(path: str) -> str:
+            return Path(path).as_uri()
+
+
+def uno_url_to_path(url: str) -> Optional[Path]:
+    """
+    Wrapper
+    @param url: the url
+    @return: the path or None if the url is empty
+    """
+    if url.strip():
+        return Path(uno.fileUrlToSystemPath(url))
+    else:
+        return None
+
+
+def uno_path_to_url(path: Union[str, Path]) -> str:
+    """
+    Wrapper
+    @param path: the path
+    @return: the url
+    """
+    if isinstance(path, str):
+        path = Path(path)
+    try:
+        path = path.resolve()
+    except FileNotFoundError:  # 3.5 is strict
+        pass
+
+    return uno.systemPathToFileUrl(str(path))
+
+
 ORIGIN = dt.datetime(1899, 12, 30)
 
 
@@ -91,8 +124,7 @@ class Commons:
 
     def cur_dir(self) -> Path:
         """return the directory of the current document"""
-        system_path = uno.fileUrlToSystemPath(self._url)
-        path = Path(system_path)
+        path = uno_url_to_path(self._url)
         return path.parent
 
     def init_logger(
@@ -163,7 +195,7 @@ class Commons:
         apply(config)
         reader = codecs.getreader(encoding)
 
-        with zipfile.ZipFile(uno.fileUrlToSystemPath(self._url),
+        with zipfile.ZipFile(uno_url_to_path(self._url),
                              'r') as z:
             for filename in filenames:
                 try:
@@ -185,7 +217,7 @@ class Commons:
         @return: file content as bytes
         """
         import zipfile
-        with zipfile.ZipFile(uno.fileUrlToSystemPath(self._url),
+        with zipfile.ZipFile(uno_url_to_path(self._url),
                              'r') as z:
             with z.open(filename) as f:
                 return f.read()
