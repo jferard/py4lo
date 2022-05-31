@@ -33,11 +33,9 @@ class TomlLoader:
         self._load_toml(self._project_py4lo_toml, skip_on_error=True)
         self._check_python_target_version()
         self._check_level()
-        print("****", self._data)
         return self._data
 
     def _load_toml(self, path: Path, skip_on_error: bool=False):
-        print("****", path)
         try:
             with path.open('r', encoding="utf-8") as s:
                 content = s.read()

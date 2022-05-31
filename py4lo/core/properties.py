@@ -77,17 +77,14 @@ class PropertiesProviderFactory:
         kwargs = {'py4lo': base_path, 'project': os.getcwd()}
         self._tdata = load_toml(base_path.joinpath(
             "default-py4lo.toml"), Path(toml_filename), kwargs)
-        print("*******", self._tdata)
         logger = self.get_logger()
         sources = self._get_sources()
-        print("****S***", self._get_sources())
         destinations = self._get_destinations(sources.source_ods_file)
         return PropertiesProvider(logger, base_path, sources, destinations,
                                   self._tdata)
 
     def _get_sources(self):
         src: Mapping[str, Any] = self._tdata["src"]
-        print("**************************", src)
         if "source_ods_file" in src:
             source_ods_file = Path(src["source_ods_file"])
         else:
