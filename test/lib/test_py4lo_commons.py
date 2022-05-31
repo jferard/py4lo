@@ -92,7 +92,7 @@ class TestCommons(unittest.TestCase):
 
     def test_logger(self):
         t = tempfile.NamedTemporaryFile(delete=False, mode='w')
-        self.c.init_logger(t.name,fmt='%(levelname)s - %(message)s')
+        self.c.init_logger(t.name, fmt='%(levelname)s - %(message)s')
         self.c.logger().debug("é")
         t.flush()
         t.close()
