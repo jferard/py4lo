@@ -563,45 +563,6 @@ def get_range_size(oRange: UnoRange) -> Tuple[int, int]:
     return width, height
 
 
-def narrow_range(oRange: UnoRange, narrow_data: bool = False
-                 ) -> Optional[UnoRange]:
-    """
-    Narrow the range to the used range
-    @param oRange: the range, usually a row or a column
-    @param narrow_data: if True, remove top/bottom blank lines and left/right
-     blank colmuns
-    @return the narrowed range or None
-    """
-    oSheet = oRange.Spreadsheet
-    oSheetRangeAddress = get_used_range_address(oSheet)
-    oRangeAddress = oRange.RangeAddress
-    start_column = max(oRangeAddress.StartColumn,
-                       oSheetRangeAddress.StartColumn)
-    end_column = min(oRangeAddress.EndColumn, oSheetRangeAddress.EndColumn)
-    if start_column > end_column:
-        return None
-    start_row = max(oRangeAddress.StartRow, oSheetRangeAddress.StartRow)
-    end_row = min(oRangeAddress.EndRow, oSheetRangeAddress.EndRow)
-    if start_row > end_row:
-        return None
-
-    oNarrowedRange = oSheet.getCellRangeByPosition(
-        start_column, start_row, end_column, end_row)
-
-    if narrow_data:
-        data_array = oNarrowedRange.DataArray
-        start_row += top_void_row_count(data_array)
-        if start_row > end_row:
-            return None
-        end_row -= bottom_void_row_count(data_array)
-        start_column += left_void_row_count(data_array)
-        end_column -= right_void_row_count(data_array)
-        oNarrowedRange = oSheet.getCellRangeByPosition(
-            start_column, start_row, end_column, end_row)
-
-    return oNarrowedRange
-
-
 def copy_range(oSourceRange: UnoRange):
     """
     Copy a range to the clipboard
@@ -640,6 +601,47 @@ def paste_range(oDestSheet: UnoSheet, oDestAddress: UnoCellAddress,
     # unselect
     oRanges = oDestDoc.createInstance("com.sun.star.sheet.SheetCellRanges")
     oDestController.select(oRanges)
+
+
+def narrow_range(oRange: UnoRange, narrow_data: bool = False
+                 ) -> Optional[UnoRange]:
+    """
+    Narrow the range to the used range
+    @param oRange: the range, usually a row or a column
+    @param narrow_data: if True, remove top/bottom blank lines and left/right
+     blank colmuns
+    @return the narrowed range or None
+    """
+    oSheet = oRange.Spreadsheet
+    oSheetRangeAddress = get_used_range_address(oSheet)
+    oRangeAddress = oRange.RangeAddress
+    start_column = max(oRangeAddress.StartColumn,
+                       oSheetRangeAddress.StartColumn)
+    end_column = min(oRangeAddress.EndColumn, oSheetRangeAddress.EndColumn)
+    if start_column > end_column:
+        return None
+    start_row = max(oRangeAddress.StartRow, oSheetRangeAddress.StartRow)
+    end_row = min(oRangeAddress.EndRow, oSheetRangeAddress.EndRow)
+    if start_row > end_row:
+        return None
+
+    oNarrowedRange = oSheet.getCellRangeByPosition(
+        start_column, start_row, end_column, end_row)
+
+    if narrow_data:
+        data_array = oNarrowedRange.DataArray
+        count = top_void_row_count(data_array)
+        if count == len(data_array):
+            return None
+
+        start_row += count
+        end_row -= bottom_void_row_count(data_array)
+        start_column += left_void_row_count(data_array)
+        end_column -= right_void_row_count(data_array)
+        oNarrowedRange = oSheet.getCellRangeByPosition(
+            start_column, start_row, end_column, end_row)
+
+    return oNarrowedRange
 
 
 ##############################################################################
@@ -682,7 +684,7 @@ def left_void_row_count(data_array: DATA_ARRAY) -> int:
     """
     row_count = len(data_array)
     if row_count == 0:
-        return -1
+        return 0
 
     c0 = len(data_array[0])
     for row in data_array:
@@ -701,7 +703,7 @@ def right_void_row_count(data_array: DATA_ARRAY) -> int:
     """
     row_count = len(data_array)
     if row_count == 0:
-        return -1
+        return 0
 
     width = len(data_array[0])
     c1 = width

@@ -177,6 +177,20 @@ class TestHelper(unittest.TestCase):
 
         oDoc.unlockControllers.assert_called_once()
 
+    @patch("py4lo_helper.uno")
+    def test_make_sort_field(self, uno):
+        # prepare
+        struct = Mock()
+        uno.createUnoStruct.side_effect = [struct]
+
+        # play
+        make_sort_field(1, False)
+
+        # verify
+        self.assertEqual(1, struct.Field)
+        self.assertFalse(struct.IsAscending)
+
+
     def test_used_range(self):
         # prepare
         oRangeAddress = Mock(
@@ -237,6 +251,34 @@ class TestHelper(unittest.TestCase):
         self.assertEqual(2, left_void_row_count(data_array))
         self.assertEqual(1, right_void_row_count(data_array))
 
+    def test_data_array0(self):
+        data_array = []
+        self.assertEqual(0, top_void_row_count(data_array))
+        self.assertEqual(0, bottom_void_row_count(data_array))
+        self.assertEqual(0, left_void_row_count(data_array))
+        self.assertEqual(0, right_void_row_count(data_array))
+
+    def test_data_array1(self):
+        data_array = [("",)]
+        self.assertEqual(1, top_void_row_count(data_array))
+        self.assertEqual(1, bottom_void_row_count(data_array))
+        self.assertEqual(1, left_void_row_count(data_array))
+        self.assertEqual(1, right_void_row_count(data_array))
+
+    def test_data_array2h(self):
+        data_array = [("", "")]
+        self.assertEqual(1, top_void_row_count(data_array))
+        self.assertEqual(1, bottom_void_row_count(data_array))
+        self.assertEqual(2, left_void_row_count(data_array))
+        self.assertEqual(2, right_void_row_count(data_array))
+
+    def test_data_array2v(self):
+        data_array = [("",), ("",)]
+        self.assertEqual(2, top_void_row_count(data_array))
+        self.assertEqual(2, bottom_void_row_count(data_array))
+        self.assertEqual(1, left_void_row_count(data_array))
+        self.assertEqual(1, right_void_row_count(data_array))
+
     def test_data_array2(self):
         data_array = [
             ("", "", "", "", "", "", "",),
@@ -289,6 +331,33 @@ class TestHelper(unittest.TestCase):
 
         # verify
         self.assertIsNone(nr)
+        self.assertEqual([mock.call.getCellRangeByPosition(1, 1, 7, 5)],
+                         oSheet.mock_calls)
+
+    @mock.patch("py4lo_helper.get_used_range_address")
+    def test_narrow_range_dont_narrow_data(self, gura):
+        # prepare
+        data_array = [
+            ("", "", "", "", "", "", "",),
+            ("", "", "", "", "", "", "",),
+            ("", "", "", "", "", "", "",),
+            ("", "", "", "", "", "", "",),
+            ("", "", "", "", "", "", "",),
+        ]
+        oSheet = mock.Mock()
+        oRange = mock.Mock(Spreadsheet=oSheet,
+                           RangeAddress=mock.Mock(StartColumn=1, EndColumn=7,
+                                                  StartRow=1, EndRow=5))
+        gura.side_effect = [mock.Mock(StartColumn=0, EndColumn=60,
+                                      StartRow=0, EndRow=50)]
+        oNRange = mock.Mock(DataArray=data_array)
+        oSheet.getCellRangeByPosition.side_effect = [oNRange]
+
+        # play
+        nr = narrow_range(oRange)
+
+        # verify
+        self.assertEqual(oNRange, nr)
         self.assertEqual([mock.call.getCellRangeByPosition(1, 1, 7, 5)],
                          oSheet.mock_calls)
 
@@ -410,6 +479,19 @@ class TestHelper(unittest.TestCase):
         # prepare
         oSheet = Mock()
         da = [("foo",), ("bar",), ("baz",)]
+        oRange = Mock(DataArray=da)
+        gura.side_effect = [oRange]
+        # play
+        act_da = data_array(oSheet)
+
+        # verify
+        self.assertEqual(da, act_da)
+
+    @patch("py4lo_helper.get_used_range")
+    def test_data_array_empty(self, gura):
+        # prepare
+        oSheet = Mock()
+        da = []
         oRange = Mock(DataArray=da)
         gura.side_effect = [oRange]
         # play

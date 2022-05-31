@@ -1,0 +1,8 @@
+DEBUG - test
+ERROR - Branch condition not closed!
+DEBUG - Load TOML : <MagicMock id='140519259036912'> (default=<MagicMock id='140519257681648'>)
+DEBUG - Load TOML : <MagicMock id='140519257981184'> (default=<MagicMock id='140519257953408'>)
+DEBUG - Load TOML : <MagicMock id='140519257948608'> (default=<MagicMock id='140519257760256'>)
+DEBUG - Load TOML : <MagicMock id='140519258946672'> (default=<MagicMock id='140519257514640'>)
+DEBUG - Update zip: input source, output dest
+WARNING - calc .
