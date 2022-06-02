@@ -54,7 +54,20 @@ class TestHelper(unittest.TestCase):
         self.assertIsNotNone(py4lo_helper.xray)
         self.assertIsNotNone(py4lo_helper.mri)
 
-    def test_get_script_provider_factory(self):
+    def test_get_script_provider_factory_twice(self):
+        # prepare
+        spf = Mock()
+        self.sm.createInstanceWithContext.side_effect = [spf]
+
+        # play
+        actual_spf1 = py4lo_helper.provider.get_script_provider_factory()
+        actual_spf2 = py4lo_helper.provider.get_script_provider_factory()
+
+        # verify
+        self.assertIs(spf, actual_spf1)
+        self.assertIs(spf, actual_spf2)
+
+    def test_get_script_provider(self):
         # prepare
         sp = Mock()
         spf = Mock()
@@ -66,6 +79,21 @@ class TestHelper(unittest.TestCase):
 
         # verify
         self.assertIs(sp, actual_sp)
+
+    def test_get_script_provider_twice(self):
+        # prepare
+        sp = Mock()
+        spf = Mock()
+        spf.createScriptProvider.side_effect = [sp]
+        self.sm.createInstanceWithContext.side_effect = [spf]
+
+        # play
+        actual_sp1 = py4lo_helper.provider.get_script_provider()
+        actual_sp2 = py4lo_helper.provider.get_script_provider()
+
+        # verify
+        self.assertIs(sp, actual_sp1)
+        self.assertIs(sp, actual_sp2)
 
     def test_reflect(self):
         # prepare
@@ -79,7 +107,141 @@ class TestHelper(unittest.TestCase):
         self.assertEqual(
             [call.createInstance('com.sun.star.reflection.CoreReflection')],
             self.sm.mock_calls)
-        self.assertEqual(actual_ref, ref)
+        self.assertEqual(ref, actual_ref)
+
+    def test_reflect_twice(self):
+        # prepare
+        ref = Mock()
+        self.sm.createInstance.side_effect = [ref]
+
+        # play
+        actual_ref1 = py4lo_helper.provider.reflect
+        actual_ref2 = py4lo_helper.provider.reflect
+
+        # verify
+        self.assertEqual(
+            [call.createInstance('com.sun.star.reflection.CoreReflection')],
+            self.sm.mock_calls)
+        self.assertEqual(ref, actual_ref1)
+        self.assertEqual(ref, actual_ref2)
+
+    def test_dispatcher(self):
+        # prepare
+        ref = Mock()
+        self.sm.createInstance.side_effect = [ref]
+
+        # play
+        actual_ref = py4lo_helper.provider.dispatcher
+
+        # verify
+        self.assertEqual(
+            [call.createInstance('com.sun.star.frame.DispatchHelper')],
+            self.sm.mock_calls)
+        self.assertEqual(ref, actual_ref)
+
+    def test_dispatcher_twice(self):
+        # prepare
+        ref = Mock()
+        self.sm.createInstance.side_effect = [ref]
+
+        # play
+        actual_ref1 = py4lo_helper.provider.dispatcher
+        actual_ref2 = py4lo_helper.provider.dispatcher
+
+        # verify
+        self.assertEqual(
+            [call.createInstance('com.sun.star.frame.DispatchHelper')],
+            self.sm.mock_calls)
+        self.assertEqual(ref, actual_ref1)
+        self.assertEqual(ref, actual_ref2)
+
+    def test_to_iter(self):
+        # prepare
+        index_access = Mock()
+        index_access.getCount.side_effect = [3]
+        index_access.getByIndex.side_effect = [1, 4, 9]
+
+        # play
+        ret = list(to_iter(index_access))
+
+        # verify
+        self.assertEqual([1, 4, 9], ret)
+
+    def test_to_dict(self):
+        # prepare
+        name_access = Mock()
+        name_access.getElementNames.side_effect = [("foo", "bar", "baz")]
+        name_access.getByName.side_effect = [1, 4, 9]
+
+        # play
+        ret = to_dict(name_access)
+
+        # verify
+        self.assertEqual({'bar': 4, 'baz': 9, 'foo': 1}, ret)
+
+    def test_parent_doc(self):
+        # prepare
+        oDoc = Mock()
+        oSH = Mock(DrawPage=Mock(Forms=Mock(Parent=oDoc)))
+        oRange = Mock(Spreadsheet=oSH)
+
+        # play
+        ret = parent_doc(oRange)
+
+        # verify
+        self.assertEqual(oDoc, ret)
+
+    def test_get_cell_type(self):
+        # prepare
+        oCell = Mock(Type=Mock(value="foo"))
+
+        # play
+        ret = get_cell_type(oCell)
+
+        # verify
+        self.assertEqual("foo", ret)
+
+    def test_get_cell_type_formula(self):
+        # prepare
+        oCell = Mock(Type=Mock(value="FORMULA"), FormulaResultType=Mock(value="bar"))
+
+        # play
+        ret = get_cell_type(oCell)
+
+        # verify
+        self.assertEqual("bar", ret)
+
+    def test_get_named_cells(self):
+        # prepare
+        oCells = Mock()
+        oRange = Mock(ReferredCells=oCells)
+
+        oRanges = Mock()
+        oRanges.getByName.side_effect = [oRange]
+        oDoc = Mock(NamedRanges=oRanges)
+
+        # play
+        ret = get_named_cells(oDoc, "foo")
+
+        # verify
+        self.assertEqual(oCells, ret)
+
+    def test_get_named_cell(self):
+        # prepare
+        oCell = Mock()
+        oCells = Mock()
+        oCells.getCellByPosition.side_effect = [oCell]
+        oRange = Mock(ReferredCells=oCells)
+
+        oRanges = Mock()
+        oRanges.getByName.side_effect = [oRange]
+        oDoc = Mock(NamedRanges=oRanges)
+
+        # play
+        ret = get_named_cell(oDoc, "foo")
+
+        # verify
+        self.assertEqual(oCell, ret)
 
     def testXray(self):
         py4lo_helper._inspect.use_xray()

@@ -196,15 +196,15 @@ def uno_service_ctxt(sname: str,
 
 
 def to_iter(oXIndexAccess: UnoObject) -> Iterator[UnoObject]:
-    for i in range(0, oXIndexAccess.getCount()):
+    for i in range(oXIndexAccess.getCount()):
         yield oXIndexAccess.getByIndex(i)
 
 
 def to_dict(oXNameAccess: UnoObject) -> Mapping[str, UnoObject]:
-    d = {}
-    for name in oXNameAccess.getElementNames():
-        d[name] = oXNameAccess.getByName(name)
-    return d
+    return {
+        name: oXNameAccess.getByName(name)
+        for name in oXNameAccess.getElementNames()
+    }
 
 
 def parent_doc(oRange: UnoRange) -> UnoSpreadsheet:
