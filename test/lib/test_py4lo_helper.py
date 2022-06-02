@@ -243,6 +243,26 @@ class TestHelper(unittest.TestCase):
         # verify
         self.assertEqual(oCell, ret)
 
+    def test_get_main_cell(self):
+        # prepare
+        oMCell = Mock()
+        oCursor = Mock(RangeAddress=Mock(StartColumn=1, StartRow=5))
+        oSheet = Mock()
+        oSheet.createCursorByRange.side_effect = [oCursor]
+        oSheet.getCellByPosition.side_effect = [oMCell]
+        oCell = Mock(Spreadsheet=oSheet)
+
+        # play
+        ret = get_main_cell(oCell)
+
+        # verify
+        self.assertEqual(oMCell, ret)
+        self.assertEqual([call.collapseToMergedArea()], oCursor.mock_calls)
+        self.assertEqual([
+            call.createCursorByRange(oCell),
+            call.getCellByPosition(1, 5)
+        ], oSheet.mock_calls)
+
     def testXray(self):
         py4lo_helper._inspect.use_xray()
         self.msp.getScript.assert_called_once_with(
