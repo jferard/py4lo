@@ -251,164 +251,6 @@ def get_main_cell(oCell: UnoCell) -> UnoCell:
                                     oCursor.RangeAddress.StartRow)
 
 
-###############################################################################
-# OPEN A DOCUMENT
-###############################################################################
-
-class NewDocumentUrl(str, Enum):
-    Calc = "private:factory/scalc"
-    Writer = "private:factory/swriter"
-    Draw = "private:factory/sdraw"
-    Impress = "private:factory/simpress"
-    Math = "private:factory/smath"
-
-
-# special targets
-class Target(str, Enum):
-    BLANK = "_blank"  # always creates a new frame
-    # special UI functionality (e.g. detecting of already loaded documents,
-    # using of empty frames of creating of new top frames as fallback)
-    DEFAULT = "_default"
-    SELF = "_self"  # means frame himself
-    PARENT = "_parent"  # address direct parent of frame
-    TOP = "_top"  # indicates top frame of current path in tree
-    BEAMER = "_beamer"  # means special sub frame
-
-
-def open_in_calc(filename: Union[str, Path], target: str = Target.BLANK,
-                 frame_flags=FrameSearchFlag.AUTO,
-                 **kwargs) -> UnoSpreadsheet:
-    """
-    Open a document in calc
-    :param filename: the name of the file to open
-    :param target: "the name of the frame to view the document in" or a special
-    target
-    :param frame_flags: where to search the frame
-    :param kwargs: les paramètres d'ouverture
-    :return: a reference on the doc
-    """
-    url = uno_path_to_url(filename)
-    if kwargs:
-        params = make_pvs(kwargs)
-    else:
-        params = ()
-    return provider.desktop.loadComponentFromURL(url, target, frame_flags,
-                                                 params)
-
-
-# Create a document
-####
-def doc_builder(
-        url: NewDocumentUrl = NewDocumentUrl.Calc,
-        taget_frame_name: Target = Target.BLANK,
-        search_flags: FrameSearchFlag = FrameSearchFlag.AUTO,
-        pvs: List[UnoPropertyValue] = None
-) -> "DocBuilder":
-    if pvs is None:
-        pvs = tuple()
-    return DocBuilder(url, taget_frame_name, search_flags, pvs)
-
-
-def new_doc(url: NewDocumentUrl = NewDocumentUrl.Calc,
-            taget_frame_name: Target = Target.BLANK,
-            search_flags: FrameSearchFlag = FrameSearchFlag.AUTO,
-            pvs: List[UnoPropertyValue] = None) -> UnoSpreadsheet:
-    """Create a blank new doc"""
-    return doc_builder(url, taget_frame_name, search_flags, pvs).build()
-
-
-class DocBuilder:
-    def __init__(self, url: NewDocumentUrl, taget_frame_name: Target,
-                 search_flags: FrameSearchFlag, pvs: List[UnoPropertyValue]):
-        """Create a blank new doc"""
-        self._oDoc = provider.desktop.loadComponentFromURL(
-            url, taget_frame_name, search_flags, pvs)
-        self._oDoc.lockControllers()
-
-    def build(self) -> UnoSpreadsheet:
-        self._oDoc.unlockControllers()
-        return self._oDoc
-
-    def sheet_names(self, sheet_names: List[str],
-                    expand_if_necessary: bool = True,
-                    trunc_if_necessary: bool = True) -> "DocBuilder":
-        oSheets = self._oDoc.Sheets
-        it = iter(sheet_names)
-        s = 0
-
-        try:
-            # rename
-            while s < oSheets.getCount():
-                oSheet = oSheets.getByIndex(s)
-                oSheet.setName(next(it))  # may raise a StopIteration
-                s += 1
-
-            if s != oSheets.getCount():
-                raise AssertionError("s={} vs oSheets.getCount()={}".format(
-                    s, oSheets.getCount()))
-
-            if expand_if_necessary:
-                # add
-                for sheet_name in it:
-                    oSheets.insertNewByName(sheet_name, s)
-                    s += 1
-        except StopIteration:  # it
-            if s > oSheets.getCount():
-                raise AssertionError("s={} vs oSheets.getCount()={}".format(
-                    s, oSheets.getCount()))
-            if trunc_if_necessary:
-                self.trunc_to_count(s)
-
-        return self
-
-    def apply_func_to_sheets(
-            self, func: Callable[[UnoSheet], None]) -> "DocBuilder":
-        oSheets = self._oDoc.Sheets
-        for oSheet in oSheets:
-            func(oSheet)
-        return self
-
-    def apply_func_list_to_sheets(
-            self, funcs: List[Callable[[UnoSheet], None]]) -> "DocBuilder":
-        oSheets = self._oDoc.Sheets
-        for func, oSheet in zip(funcs, oSheets):
-            func(oSheet)
-        return self
-
-    def duplicate_base_sheet(self, func: Callable[[UnoSheet], None],
-                             sheet_names: List[str], trunc: bool = True):
-        """Create a base sheet and duplicate it n-1 times"""
-        oSheets = self._oDoc.Sheets
-        oBaseSheet = oSheets.getByIndex(0)
-        func(oBaseSheet)
-        for s, sheet_name in enumerate(sheet_names, 1):
-            oSheets.copyByName(oBaseSheet.Name, sheet_name, s)
-
-        return self
-
-    def make_base_sheet(self, func: Callable[[UnoSheet], None]) -> "DocBuilder":
-        oSheets = self._oDoc.Sheets
-        oBaseSheet = oSheets.getByIndex(0)
-        func(oBaseSheet)
-        return self
-
-    def duplicate_to(self, n: int) -> "DocBuilder":
-        oSheets = self._oDoc.Sheets
-        oBaseSheet = oSheets.getByIndex(0)
-        for s in range(n + 1):
-            oSheets.copyByName(oBaseSheet.Name, oBaseSheet.Name + str(s), s)
-
-        return self
-
-    def trunc_to_count(self, final_sheet_count: int) -> "DocBuilder":
-        oSheets = self._oDoc.Sheets
-        while final_sheet_count < oSheets.getCount():
-            oSheet = oSheets.getByIndex(final_sheet_count)
-            oSheets.removeByName(oSheet.getName())
-
-        return self
-
-
 ##############################################################################
 # STRUCTS
 ##############################################################################
@@ -468,25 +310,26 @@ def update_pvs(pvs: Iterable[UnoPropertyValue], d: Mapping[str, Any]):
             pv.Value = d[pv.Name]
 
 
-def make_locale(country: str = "", language: str = "",
-                variant: str = "") -> UnoStruct:
+def make_locale(language: str = "", region: str = "",
+                subtags: Optional[List[str]] = None) -> UnoStruct:
     """
     Create a locale
 
-    @param country: ISO 3166 Country Code.
+    @param region: ISO 3166 Country Code.
     @param language: ISO 639 Language Code.
     @param variant: BCP 47
     @return: the locale
     """
     locale = uno.createUnoStruct('com.sun.star.lang.Locale')
-    locale.Country = country
-    if language:
-        if variant:
-            raise ValueError("Language or Variant")
+    if not subtags:
+        locale.Country = region
         locale.Language = language
-    elif variant:
+    else:
         locale.Language = "qlt"
-        locale.Variant = variant
+        if region:
+            locale.Variant = "-".join([language, region] + subtags)
+        else:
+            locale.Variant = "-".join([language] + subtags)
     return locale
 
 
@@ -1022,6 +865,164 @@ def _wrap_text(text: str, wrap_at: int):
             c += cur_len
     lines.append(" ".join(cur))
     return lines
+
+
+###############################################################################
+# OPEN A DOCUMENT
+###############################################################################
+
+class NewDocumentUrl(str, Enum):
+    Calc = "private:factory/scalc"
+    Writer = "private:factory/swriter"
+    Draw = "private:factory/sdraw"
+    Impress = "private:factory/simpress"
+    Math = "private:factory/smath"
+
+
+# special targets
+class Target(str, Enum):
+    BLANK = "_blank"  # always creates a new frame
+    # special UI functionality (e.g. detecting of already loaded documents,
+    # using of empty frames of creating of new top frames as fallback)
+    DEFAULT = "_default"
+    SELF = "_self"  # means frame himself
+    PARENT = "_parent"  # address direct parent of frame
+    TOP = "_top"  # indicates top frame of current path in tree
+    BEAMER = "_beamer"  # means special sub frame
+
+
+def open_in_calc(filename: Union[str, Path], target: str = Target.BLANK,
+                 frame_flags=FrameSearchFlag.AUTO,
+                 **kwargs) -> UnoSpreadsheet:
+    """
+    Open a document in calc
+    :param filename: the name of the file to open
+    :param target: "the name of the frame to view the document in" or a special
+    target
+    :param frame_flags: where to search the frame
+    :param kwargs: les paramètres d'ouverture
+    :return: a reference on the doc
+    """
+    url = uno_path_to_url(filename)
+    if kwargs:
+        params = make_pvs(kwargs)
+    else:
+        params = ()
+    return provider.desktop.loadComponentFromURL(url, target, frame_flags,
+                                                 params)
+
+
+# Create a document
+####
+def doc_builder(
+        url: NewDocumentUrl = NewDocumentUrl.Calc,
+        taget_frame_name: Target = Target.BLANK,
+        search_flags: FrameSearchFlag = FrameSearchFlag.AUTO,
+        pvs: List[UnoPropertyValue] = None
+) -> "DocBuilder":
+    if pvs is None:
+        pvs = tuple()
+    return DocBuilder(url, taget_frame_name, search_flags, pvs)
+
+
+def new_doc(url: NewDocumentUrl = NewDocumentUrl.Calc,
+            taget_frame_name: Target = Target.BLANK,
+            search_flags: FrameSearchFlag = FrameSearchFlag.AUTO,
+            pvs: List[UnoPropertyValue] = None) -> UnoSpreadsheet:
+    """Create a blank new doc"""
+    return doc_builder(url, taget_frame_name, search_flags, pvs).build()
+
+
+class DocBuilder:
+    def __init__(self, url: NewDocumentUrl, taget_frame_name: Target,
+                 search_flags: FrameSearchFlag, pvs: List[UnoPropertyValue]):
+        """Create a blank new doc"""
+        self._oDoc = provider.desktop.loadComponentFromURL(
+            url, taget_frame_name, search_flags, pvs)
+        self._oDoc.lockControllers()
+
+    def build(self) -> UnoSpreadsheet:
+        self._oDoc.unlockControllers()
+        return self._oDoc
+
+    def sheet_names(self, sheet_names: List[str],
+                    expand_if_necessary: bool = True,
+                    trunc_if_necessary: bool = True) -> "DocBuilder":
+        oSheets = self._oDoc.Sheets
+        it = iter(sheet_names)
+        s = 0
+
+        try:
+            # rename
+            while s < oSheets.getCount():
+                oSheet = oSheets.getByIndex(s)
+                oSheet.setName(next(it))  # may raise a StopIteration
+                s += 1
+
+            if s != oSheets.getCount():
+                raise AssertionError("s={} vs oSheets.getCount()={}".format(
+                    s, oSheets.getCount()))
+
+            if expand_if_necessary:
+                # add
+                for sheet_name in it:
+                    oSheets.insertNewByName(sheet_name, s)
+                    s += 1
+        except StopIteration:  # it
+            if s > oSheets.getCount():
+                raise AssertionError("s={} vs oSheets.getCount()={}".format(
+                    s, oSheets.getCount()))
+            if trunc_if_necessary:
+                self.trunc_to_count(s)
+
+        return self
+
+    def apply_func_to_sheets(
+            self, func: Callable[[UnoSheet], None]) -> "DocBuilder":
+        oSheets = self._oDoc.Sheets
+        for oSheet in oSheets:
+            func(oSheet)
+        return self
+
+    def apply_func_list_to_sheets(
+            self, funcs: List[Callable[[UnoSheet], None]]) -> "DocBuilder":
+        oSheets = self._oDoc.Sheets
+        for func, oSheet in zip(funcs, oSheets):
+            func(oSheet)
+        return self
+
+    def duplicate_base_sheet(self, func: Callable[[UnoSheet], None],
+                             sheet_names: List[str], trunc: bool = True):
+        """Create a base sheet and duplicate it n-1 times"""
+        oSheets = self._oDoc.Sheets
+        oBaseSheet = oSheets.getByIndex(0)
+        func(oBaseSheet)
+        for s, sheet_name in enumerate(sheet_names, 1):
+            oSheets.copyByName(oBaseSheet.Name, sheet_name, s)
+
+        return self
+
+    def make_base_sheet(self, func: Callable[[UnoSheet], None]) -> "DocBuilder":
+        oSheets = self._oDoc.Sheets
+        oBaseSheet = oSheets.getByIndex(0)
+        func(oBaseSheet)
+        return self
+
+    def duplicate_to(self, n: int) -> "DocBuilder":
+        oSheets = self._oDoc.Sheets
+        oBaseSheet = oSheets.getByIndex(0)
+        for s in range(n + 1):
+            oSheets.copyByName(oBaseSheet.Name, oBaseSheet.Name + str(s), s)
+
+        return self
+
+    def trunc_to_count(self, final_sheet_count: int) -> "DocBuilder":
+        oSheets = self._oDoc.Sheets
+        while final_sheet_count < oSheets.getCount():
+            oSheet = oSheets.getByIndex(final_sheet_count)
+            oSheets.removeByName(oSheet.getName())
+
+        return self
 
 
 ###############################################################################

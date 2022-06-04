@@ -30,7 +30,7 @@ from com.sun.star.script.provider import ScriptFrameworkErrorException
 from com.sun.star.uno import RuntimeException as UnoRuntimeException
 
 
-class TestHelper(unittest.TestCase):
+class HelperBaseTestCase(unittest.TestCase):
     def setUp(self):
         self.xsc = Mock()
         self.doc = Mock()
@@ -264,6 +264,104 @@ class TestHelper(unittest.TestCase):
             call.getCellByPosition(1, 5)
         ], oSheet.mock_calls)
 
+
+##########################################################################
+# STRUCTS
+##########################################################################
+class HelperStructTestCase(unittest.TestCase):
+    @patch("py4lo_helper.uno")
+    def test_struct(self, uno):
+        # prepare
+        s = Mock()
+        uno.createUnoStruct.side_effect = [s]
+
+        # play
+        actual_s = make_struct("uno.Struct", foo="bar")
+
+        # verify
+        self.assertIs(s, actual_s)
+        self.assertEqual("bar", actual_s.foo)
+
+    def test_make_pv(self):
+        pv = make_pv("name", "value")
+        self.assertTrue("uno.com.sun.star.beans.PropertyValue" in str(type(pv)))
+        self.assertEqual("name", pv.Name)
+        self.assertEqual("value", pv.Value)
+
+    def test_make_full_pv(self):
+        class PropertyState:
+            from com.sun.star.beans.PropertyState import DIRECT_VALUE
+
+        pv = make_full_pv("name", "value", 2, PropertyState.DIRECT_VALUE)
+        self.assertTrue("uno.com.sun.star.beans.PropertyValue" in str(type(pv)))
+        self.assertEqual("name", pv.Name)
+        self.assertEqual("value", pv.Value)
+        self.assertEqual(2, pv.Handle)
+        self.assertEqual(PropertyState.DIRECT_VALUE, pv.State)
+
+    def test_make_pvs(self):
+        pvs = make_pvs({"name1": "value1", "name2": "value2"})
+        pvs = sorted(pvs, key=lambda pv: pv.Name)
+        self.assertEqual(2, len(pvs))
+        self.assertEqual("name1", pvs[0].Name)
+        self.assertEqual("value1", pvs[0].Value)
+        self.assertEqual("name2", pvs[1].Name)
+        self.assertEqual("value2", pvs[1].Value)
+
+    def test_update_pvs(self):
+        pvs = make_pvs({"name1": "value1", "name2": "value2"})
+        update_pvs(pvs, {"name1": "value3"})
+        pvs = sorted(pvs, key=lambda pv: pv.Name)
+        self.assertEqual(2, len(pvs))
+        self.assertEqual("name1", pvs[0].Name)
+        self.assertEqual("value3", pvs[0].Value)
+        self.assertEqual("name2", pvs[1].Name)
+        self.assertEqual("value2", pvs[1].Value)
+
+    def test_update_pvs_non_existing(self):
+        pvs = make_pvs({"name1": "value1", "name2": "value2"})
+        update_pvs(pvs, {"name3": "value3"})
+        pvs = sorted(pvs, key=lambda pv: pv.Name)
+        self.assertEqual(2, len(pvs))
+        self.assertEqual("name1", pvs[0].Name)
+        self.assertEqual("value1", pvs[0].Value)
+        self.assertEqual("name2", pvs[1].Name)
+        self.assertEqual("value2", pvs[1].Value)
+
+    def test_make_locale(self):
+        locale1 = make_locale("en", "US")
+        self.assertEqual("US", locale1.Country)
+        self.assertEqual("en", locale1.Language)
+        self.assertEqual("", locale1.Variant)
+
+    def test_make_locale_subtags(self):
+        locale1 = make_locale("de", "CH", ["1996"])
+        self.assertEqual("", locale1.Country)
+        self.assertEqual("qlt", locale1.Language)
+        self.assertEqual("de-CH-1996", locale1.Variant)
+
+    def test_make_locale_subtags_wo_region(self):
+        locale1 = make_locale("sr", subtags=["Latn", "RS"])
+        self.assertEqual("", locale1.Country)
+        self.assertEqual("qlt", locale1.Language)
+        self.assertEqual("sr-Latn-RS", locale1.Variant)
+
+#########################################################################
+# RANGES
+#########################################################################
+
+    ##########################################################################
+    # DATA ARRAY
+    ##########################################################################
+
+    ##########################################################################
+    # FORMATTING
+    ##########################################################################
+
+    ###########################################################################
+    # OPEN A DOCUMENT
+    ###########################################################################
+
     def test_open_in_calc(self):
         # prepare
         py4lo_helper.provider = Mock()
@@ -278,34 +376,38 @@ class TestHelper(unittest.TestCase):
                 Target.SELF, 0, (make_pv("Hidden", True),))],
             py4lo_helper.provider.mock_calls)
 
-    def testXray(self):
-        py4lo_helper._inspect.use_xray()
-        self.msp.getScript.assert_called_once_with(
-            'vnd.sun.star.script:XrayTool._Main.Xray?'
-            'language=Basic&location=application')
+    def test_open_in_calc_no_params(self):
+        # prepare
+        py4lo_helper.provider = Mock()
 
-    def testXray2(self):
-        py4lo_helper._inspect.xray(1)
-        py4lo_helper._inspect.xray(2)
-        self.msp.getScript.assert_called_once_with(
-            'vnd.sun.star.script:XrayTool._Main.Xray?'
-            'language=Basic&location=application')
-        self.msp.getScript.return_value.invoke.assert_has_calls(
-            [call((1,), (), ()), call((2,), (), ())])
+        # play
+        open_in_calc("/fname", Target.SELF, FrameSearchFlag.AUTO)
+        # verify
 
-    def testPv(self):
-        pv = make_pv("name", "value")
-        self.assertTrue("uno.com.sun.star.beans.PropertyValue" in str(type(pv)))
-        self.assertEqual("name", pv.Name)
-        self.assertEqual("value", pv.Value)
+        self.assertEqual([
+            call.desktop.loadComponentFromURL(
+                'file:///fname',
+                Target.SELF, 0, tuple())],
+            py4lo_helper.provider.mock_calls)
 
-    def testPvs(self):
-        pvs = make_pvs({"name1": "value1", "name2": "value2"})
-        pvs = sorted(pvs, key=lambda pv: pv.Name)
-        self.assertEqual("name1", pvs[0].Name)
-        self.assertEqual("value1", pvs[0].Value)
-        self.assertEqual("name2", pvs[1].Name)
-        self.assertEqual("value2", pvs[1].Value)
+    ##########################################################################
+    # MISC
+    ##########################################################################
+class HelperBaseTestCase(unittest.TestCase):
+    def setUp(self):
+        self.xsc = Mock()
+        self.doc = Mock()
+        self.ctrl = Mock()
+        self.frame = Mock()
+        self.parent_win = Mock()
+        self.msp = Mock()
+        self.ctxt = Mock()
+        self.sm = Mock()
+        self.desktop = Mock()
+        py4lo_helper.provider = _ObjectProvider(
+            self.doc, self.ctrl, self.frame, self.parent_win, self.msp,
+            self.ctxt, self.sm, self.desktop)
+        py4lo_helper._inspect = _Inspector(py4lo_helper.provider)
 
     def testUnoService(self):
         uno_service_ctxt("x")
@@ -1193,7 +1295,7 @@ class TestHelper(unittest.TestCase):
         self.assertEqual(row, oRange.DataArray)
 
 
-class InspectorTestCase(unittest.TestCase):
+class MiscTestCase(unittest.TestCase):
     def setUp(self):
         self.oSP = Mock()
         self.provider = Mock(script_provider=self.oSP)
@@ -1359,6 +1461,21 @@ class InspectorTestCase(unittest.TestCase):
 
         # verify
         self.assertTrue(self.inspector._ignore_mri)
+
+    def test_xray(self):
+        self.inspector.use_xray()
+        self.oSP.getScript.assert_called_once_with(
+            'vnd.sun.star.script:XrayTool._Main.Xray?'
+            'language=Basic&location=application')
+
+    def test_xray2(self):
+        self.inspector.xray(1)
+        self.inspector.xray(2)
+        self.oSP.getScript.assert_called_once_with(
+            'vnd.sun.star.script:XrayTool._Main.Xray?'
+            'language=Basic&location=application')
+        self.oSP.getScript.return_value.invoke.assert_has_calls(
+            [call((1,), (), ()), call((2,), (), ())])
 
 
 if __name__ == '__main__':
