@@ -16,10 +16,61 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest
+from unittest.mock import Mock, patch
+
+import py4lo_helper
 from py4lo_io import (create_import_filter_options,
-                      create_export_filter_options, Format)
+                      create_export_filter_options, Format, create_read_cell,
+                      TYPE_NONE, TYPE_MINIMAL)
+
 
 class Py4LOIOTestCase(unittest.TestCase):
+    def test_create_read_cell_none(self):
+        # prepare
+        oCell = Mock(String="foo")
+
+        # play
+        rc = create_read_cell(TYPE_NONE)
+
+        # verify
+        self.assertEqual("foo", rc(oCell))
+
+    @patch("py4lo_io.get_cell_type")
+    def test_create_read_cell_minimal_empty(self, gct):
+        # prepare
+        oCell = Mock()
+        gct.side_effect = ['EMPTY']
+
+        # play
+        rc = create_read_cell(TYPE_MINIMAL)
+
+        # verify
+        self.assertIsNone(rc(oCell))
+
+    @patch("py4lo_io.get_cell_type")
+    def test_create_read_cell_minimal_text(self, gct):
+        # prepare
+        oCell = Mock(String="foo")
+        gct.side_effect = ['TEXT']
+
+        # play
+        rc = create_read_cell(TYPE_MINIMAL)
+
+        # verify
+        self.assertEqual("foo", rc(oCell))
+
+    @patch("py4lo_io.get_cell_type")
+    def test_create_read_cell_minimal_value(self, gct):
+        # prepare
+        oCell = Mock(Value=3.14)
+        gct.side_effect = ['VALUE']
+
+        # play
+        rc = create_read_cell(TYPE_MINIMAL)
+
+        # verify
+        self.assertEqual(3.14, rc(oCell))
+
     def test_empty_import_options(self):
         self.assertEqual('44,34,76,1,,1033,false,false', create_import_filter_options(language_code="en_US"))
 

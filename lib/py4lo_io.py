@@ -44,8 +44,8 @@ TYPE_ALL = 2
 # Reader #
 ##########
 
-def create_read_cell(type_cell=TYPE_MINIMAL, oFormats=None) -> Callable[
-    [UnoCell], Any]:
+def create_read_cell(type_cell=TYPE_MINIMAL, oFormats=None
+                     ) -> Callable[[UnoCell], Any]:
     """
     Create a function to read a cell
     @param type_cell: one of `TYPE_NONE` (return the String value),

@@ -420,7 +420,7 @@ def make_struct(struct_id: str, **kwargs):
     return struct
 
 
-def make_pv(name: str, value: str) -> UnoPropertyValue:
+def make_pv(name: str, value: Any) -> UnoPropertyValue:
     """
     @param name: the name of the PropertyValue
     @param value: the value of the PropertyValue

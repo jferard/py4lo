@@ -203,7 +203,8 @@ class TestHelper(unittest.TestCase):
 
     def test_get_cell_type_formula(self):
         # prepare
-        oCell = Mock(Type=Mock(value="FORMULA"), FormulaResultType=Mock(value="bar"))
+        oCell = Mock(Type=Mock(value="FORMULA"),
+                     FormulaResultType=Mock(value="bar"))
 
         # play
         ret = get_cell_type(oCell)
@@ -262,6 +263,20 @@ class TestHelper(unittest.TestCase):
             call.createCursorByRange(oCell),
             call.getCellByPosition(1, 5)
         ], oSheet.mock_calls)
+
+    def test_open_in_calc(self):
+        # prepare
+        py4lo_helper.provider = Mock()
+
+        # play
+        open_in_calc("/fname", Target.SELF, FrameSearchFlag.AUTO, Hidden=True)
+        # verify
+
+        self.assertEqual([
+            call.desktop.loadComponentFromURL(
+                'file:///fname',
+                Target.SELF, 0, (make_pv("Hidden", True),))],
+            py4lo_helper.provider.mock_calls)
 
     def testXray(self):
         py4lo_helper._inspect.use_xray()
@@ -371,7 +386,6 @@ class TestHelper(unittest.TestCase):
         # verify
         self.assertEqual(1, struct.Field)
         self.assertFalse(struct.IsAscending)
-
 
     def test_used_range(self):
         # prepare
