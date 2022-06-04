@@ -569,7 +569,7 @@ def set_validation_list_by_cell(
         show_error: bool = True):
     factory = ValidationFactory().list().values(values)
     factory.ignore_blank(ignore_blank)
-    factory.sorted_values(sorted_values)
+    factory.sort_values(sorted_values)
     factory.show_error(show_error)
     factory.update(oCell)
 
@@ -587,7 +587,7 @@ class ListValidationBuilder:
         self._values = []
         self._default_string = None
         self._ignore_blank = False
-        self._sorted_values = False
+        self._sort_values = False
         self._show_error = True
 
     def values(self, values: List[Any]) -> "ListValidationBuilder":
@@ -602,8 +602,8 @@ class ListValidationBuilder:
         self._ignore_blank = ignore_blank
         return self
 
-    def sorted_values(self, sorted_values: bool) -> "ListValidationBuilder":
-        self._sorted_values = sorted_values
+    def sort_values(self, sorted_values: bool) -> "ListValidationBuilder":
+        self._sort_values = sorted_values
         return self
 
     def show_error(self, show_error: bool) -> "ListValidationBuilder":
@@ -614,7 +614,7 @@ class ListValidationBuilder:
         oValidation = oCell.Validation
         oValidation.Type = ValidationType.LIST
         oValidation.IgnoreBlankCells = self._ignore_blank
-        if self._sorted_values:
+        if self._sort_values:
             oValidation.ShowList = TableValidationVisibility.UNSORTED
         else:
             oValidation.ShowList = TableValidationVisibility.SORTEDASCENDING
@@ -633,11 +633,16 @@ def quote_element(value: Any) -> str:
     :return: the quoted value
     """
     if isinstance(value, str):
-        return '"{}"'.format(value.replace('"', '\\"'))
+        value = value.replace('"', '\\"')
     elif isinstance(value, float):
-        return str(value).replace(".", ",")
-    else:
-        return str(value)
+        # TODO: com.sun.star.configuration.ConfigurationProvider
+        # com.sun.star.configuration.ConfigurationAccess
+        pass  # if locale: replace(".", ",")
+    # elif isinstance(value, bool):
+    #     pass  # if locale
+    # elif isinstance(value, (date, datetime)):
+    #     pass # if locale
+    return '"{}"'.format(value)
 
 
 def sort_range(oRange: UnoRange, sort_fields: Tuple[UnoStruct, ...],
