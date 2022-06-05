@@ -25,32 +25,38 @@ from enum import IntEnum, Enum
 
 import uno
 from com.sun.star.lang import Locale
-from com.sun.star.util import NumberFormat
-from typing import Any, Callable, List, Iterator, Optional, Mapping
 
-# values of type_cell
+class NumberFormat:
+    from com.sun.star.util.NumberFormat import (DATE, TIME, DATETIME, LOGICAL)
+
+from typing import Any, Callable, List, Iterator, Optional, Mapping, Tuple
+
+# values of cell_typing
 from py4lo_commons import float_to_date, date_to_float, uno_path_to_url
 from py4lo_helper import (provider as pr, make_pvs, parent_doc, get_cell_type,
                           get_used_range_address, Target,
                           FrameSearchFlag)
-from py4lo_typing import UnoCell, UnoSheet, UnoSpreadsheet, StrPath
+from py4lo_typing import UnoCell, UnoSheet, UnoSpreadsheet, StrPath, UnoService
 
-TYPE_NONE = 0
-TYPE_MINIMAL = 1
-TYPE_ALL = 2
+
+class CellTyping(Enum):
+    String = 0
+    Minimal = 1
+    Accurate = 2
 
 
 ##########
 # Reader #
 ##########
 
-def create_read_cell(type_cell=TYPE_MINIMAL, oFormats=None
+def create_read_cell(cell_typing: CellTyping = CellTyping.Minimal,
+                     oFormats: Optional[UnoService] = None
                      ) -> Callable[[UnoCell], Any]:
     """
     Create a function to read a cell
-    @param type_cell: one of `TYPE_NONE` (return the String value),
-                      `TYPE_MINIMAL` (String or Value), `TYPE_ALL` (the most
-                      accurate type)
+    @param cell_typing: one of `CellTyping.String` (return the String value),
+                      `CellTyping.Minimal` (String or Value),
+                      `CellTyping.Accurate` (the most accurate type)
     @param oFormats: the container for NumberFormats.
     @return: a function to read the cell value
     """
@@ -77,8 +83,10 @@ def create_read_cell(type_cell=TYPE_MINIMAL, oFormats=None
             return oCell.String
         elif cell_type == 'VALUE':
             return oCell.Value
+        else:
+            raise ValueError()
 
-    def read_cell_all(oCell: UnoCell) -> Any:
+    def read_cell_accurate(oCell: UnoCell) -> Any:
         """
         Read a cell value
         @param oCell: the cell
@@ -93,24 +101,27 @@ def create_read_cell(type_cell=TYPE_MINIMAL, oFormats=None
         elif cell_type == 'VALUE':
             key = oCell.NumberFormat
             cell_data_type = oFormats.getByKey(key).Type
+            value = oCell.Value
             if cell_data_type in {NumberFormat.DATE, NumberFormat.DATETIME,
                                   NumberFormat.TIME}:
-                return float_to_date(oCell.Value)
+                return float_to_date(value)
             elif cell_data_type == NumberFormat.LOGICAL:
-                return bool(oCell.Value)
+                return bool(value)
             else:
-                return oCell.Value
+                return value
+        else:
+            raise ValueError()
 
-    if type_cell == TYPE_NONE:
+    if cell_typing == CellTyping.String:
         return read_cell_none
-    elif type_cell == TYPE_MINIMAL:
+    elif cell_typing == CellTyping.Minimal:
         return read_cell_minimal
-    elif type_cell == TYPE_ALL:
+    elif cell_typing == CellTyping.Accurate:
         if oFormats is None:
             raise ValueError("Need formats to type all values")
-        return read_cell_all
+        return read_cell_accurate
     else:
-        raise ValueError("type_cell must be one of TYPE_* values")
+        raise ValueError("cell_typing must be one of TYPE_* values")
 
 
 class reader(Iterator[List[Any]]):
@@ -118,12 +129,14 @@ class reader(Iterator[List[Any]]):
     A reader that returns rows as lists of values.
     """
 
-    def __init__(self, oSheet: UnoSheet, type_cell=TYPE_MINIMAL, oFormats=None,
-                 read_cell=None):
+    def __init__(self, oSheet: UnoSheet,
+                 type_cell: CellTyping = CellTyping.Minimal,
+                 oFormats: Optional[UnoService] = None,
+                 read_cell: Optional[Callable[[UnoCell], Any]] = None):
         if read_cell is not None:
             self._read_cell = read_cell
         else:
-            if type_cell == TYPE_ALL and oFormats is None:
+            if type_cell == CellTyping.Accurate and oFormats is None:
                 oFormats = oSheet.DrawPage.Forms.Parent.NumberFormats
             self._read_cell = create_read_cell(type_cell, oFormats)
         self._oSheet = oSheet
@@ -155,9 +168,10 @@ class dict_reader:
     A reader that returns rows as dicts.
     """
 
-    def __init__(self, oSheet: UnoSheet, fieldnames=None, restkey=None,
+    def __init__(self, oSheet: UnoSheet,
+                 fieldnames: Optional[Tuple[str]] = None, restkey=None,
                  restval=None,
-                 type_cell=TYPE_MINIMAL, oFormats=None, read_cell=None):
+                 type_cell=CellTyping.Minimal, oFormats=None, read_cell=None):
         self._reader = reader(oSheet, type_cell, oFormats, read_cell)
         if fieldnames is None:
             self.fieldnames = next(self._reader)
@@ -204,7 +218,7 @@ def find_number_format_style(oFormats, format_id, oLocale=Locale()):
     return oFormats.getStandardFormat(format_id, oLocale)
 
 
-def create_write_cell(type_cell=TYPE_MINIMAL, oFormats=None):
+def create_write_cell(type_cell=CellTyping.Minimal, oFormats=None):
     """
     Create a cell writer
     @param type_cell: see `create_read_cell`
@@ -265,16 +279,16 @@ def create_write_cell(type_cell=TYPE_MINIMAL, oFormats=None):
 
         return write_cell_all
 
-    if type_cell == TYPE_NONE:
+    if type_cell == CellTyping.String:
         return write_cell_none
-    elif type_cell == TYPE_MINIMAL:
+    elif type_cell == CellTyping.Minimal:
         return write_cell_minimal
-    elif type_cell == TYPE_ALL:
+    elif type_cell == CellTyping.Accurate:
         if oFormats is None:
             raise ValueError("Need formats to type all values")
         return create_write_cell_all(oFormats)
     else:
-        raise ValueError("type_cell must be one of TYPE_* values")
+        raise ValueError("cell_typing must be one of TYPE_* values")
 
 
 class writer:
@@ -282,7 +296,7 @@ class writer:
     A writer that takes lists
     """
 
-    def __init__(self, oSheet, type_cell=TYPE_MINIMAL, oFormats=None,
+    def __init__(self, oSheet, type_cell=CellTyping.Minimal, oFormats=None,
                  write_cell=None,
                  initial_pos=(0, 0)):
         self._oSheet = oSheet
@@ -290,7 +304,7 @@ class writer:
         if write_cell is not None:
             self._write_cell = write_cell
         else:
-            if type_cell == TYPE_ALL and oFormats is None:
+            if type_cell == CellTyping.Accurate and oFormats is None:
                 oFormats = oSheet.DrawPage.Forms.Parent.NumberFormats
             self._write_cell = create_write_cell(type_cell, oFormats)
 
@@ -311,7 +325,7 @@ class dict_writer:
     """
 
     def __init__(self, oSheet, fieldnames, restval='', extrasaction='raise',
-                 type_cell=TYPE_MINIMAL, oFormats=None, write_cell=None):
+                 type_cell=CellTyping.Minimal, oFormats=None, write_cell=None):
         self.writer = writer(oSheet, type_cell, oFormats, write_cell)
         self.fieldnames = fieldnames
         self._set_fieldnames = set(fieldnames)

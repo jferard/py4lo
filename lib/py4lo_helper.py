@@ -640,8 +640,14 @@ def quote_element(value: Any) -> str:
     if isinstance(value, str):
         value = value.replace('"', '\\"')
     elif isinstance(value, float):
-        # TODO: com.sun.star.configuration.ConfigurationProvider
-        # com.sun.star.configuration.ConfigurationAccess
+        # 	oDoc = ThisComponent
+        # 	oCell = ThisComponent.Sheets(0).getCellByPosition(0, 0)
+        # 	oNF = oDoc.getNumberFormats()
+        #     Dim aLocale as New com.sun.star.lang.Locale
+        #     n = oNF.getStandardFormat(com.sun.star.util.NumberFormat.NUMBER, aLocale)
+        #     nf = CreateUnoService("com.sun.star.util.NumberFormatter")
+        #     nf.attachNumberFormatsSupplier(oDoc)
+        #     nf.convertNumberToString(n, 1.5)
         pass  # if locale: replace(".", ",")
     # elif isinstance(value, bool):
     #     pass  # if locale
