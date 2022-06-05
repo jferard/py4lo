@@ -16,12 +16,15 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest
-from unittest.mock import Mock, patch
+from typing import Any
+from unittest.mock import Mock, patch, call, ANY
 import datetime as dt
 
 from py4lo_io import (create_import_filter_options,
                       create_export_filter_options, Format, create_read_cell,
-                      CellTyping, reader, dict_reader)
+                      CellTyping, reader, dict_reader, find_number_format_style,
+                      create_write_cell, writer)
+from py4lo_typing import UnoCell
 
 
 class NumberFormat:
@@ -175,6 +178,10 @@ class Py4LOIOTestCase(unittest.TestCase):
         with self.assertRaises(ValueError):
             create_read_cell(CellTyping.Accurate)
 
+    def test_create_read_cell_other(self):
+        with self.assertRaises(ValueError):
+            create_read_cell(object())
+
     @patch("py4lo_io.get_used_range_address")
     def test_reader_rc(self, gura):
         # prepare
@@ -299,10 +306,254 @@ class Py4LOIOTestCase(unittest.TestCase):
             {'bar': 'RV', 'foo': 'A1'}, {'RK': ['C2'], 'bar': 'B2', 'foo': 'A2'}
         ], list(r))
 
+    def test_find_number_format_style(self):
+        # prepare
+        oFormats = Mock()
+        oLocale = Mock()
+        oFormats.getStandardFormat.side_effect = [1]
 
-    def test_create_read_cell_other(self):
+        # play
+        act_n = find_number_format_style(oFormats, 10, oLocale)
+
+        # verify
+        self.assertEqual(1, act_n)
+        self.assertEqual([call.getStandardFormat(10, oLocale)],
+                         oFormats.mock_calls)
+
+    def test_create_write_cell_string(self):
+        # prepare
+        oCell = Mock()
+
+        # play
+        wc = create_write_cell(CellTyping.String)
+        wc(oCell, 10)
+
+        # verify
+        self.assertEqual("10", oCell.String)
+
+    def test_create_write_cell_minimal_none(self):
+        # prepare
+        oCell = Mock()
+
+        # play
+        wc = create_write_cell(CellTyping.Minimal)
+        wc(oCell, None)
+
+        # verify
+        self.assertEqual("", oCell.String)
+
+    def test_create_write_cell_minimal_string(self):
+        # prepare
+        oCell = Mock()
+
+        # play
+        wc = create_write_cell(CellTyping.Minimal)
+        wc(oCell, "foo")
+
+        # verify
+        self.assertEqual("foo", oCell.String)
+
+    def test_create_write_cell_minimal_date(self):
+        # prepare
+        oCell = Mock()
+
+        # play
+        wc = create_write_cell(CellTyping.Minimal)
+        wc(oCell, dt.date(2021, 1, 2))
+
+        # verify
+        self.assertEqual(44198.0, oCell.Value)
+
+    def test_create_write_cell_minimal_bool(self):
+        # prepare
+        oCell = Mock()
+
+        # play
+        wc = create_write_cell(CellTyping.Minimal)
+        wc(oCell, True)
+
+        # verify
+        self.assertEqual(1, oCell.Value)
+
+    def test_create_write_cell_minimal_number(self):
+        # prepare
+        oCell = Mock()
+
+        # play
+        wc = create_write_cell(CellTyping.Minimal)
+        wc(oCell, 10)
+
+        # verify
+        self.assertEqual(10.0, oCell.Value)
+
+    def test_create_write_cell_accurate_none(self):
+        # prepare
+        oCell = Mock()
+        oFormats = Mock()
+
+        # play
+        wc = create_write_cell(CellTyping.Accurate, oFormats)
+        wc(oCell, None)
+
+        # verify
+        self.assertEqual("", oCell.String)
+
+    def test_create_write_cell_accurate_string(self):
+        # prepare
+        oCell = Mock()
+        oFormats = Mock()
+
+        # play
+        wc = create_write_cell(CellTyping.Accurate, oFormats)
+        wc(oCell, "foo")
+
+        # verify
+        self.assertEqual("foo", oCell.String)
+
+    def test_create_write_cell_accurate_number(self):
+        # prepare
+        oCell = Mock()
+        oFormats = Mock()
+
+        # play
+        wc = create_write_cell(CellTyping.Accurate, oFormats)
+        wc(oCell, 10)
+
+        # verify
+        self.assertEqual(10.0, oCell.Value)
+
+    def test_create_write_cell_accurate_date(self):
+        # prepare
+        oCell = Mock()
+        oFormats = Mock()
+        oFormats.getStandardFormat.side_effect = [1, 2, 3]
+
+        # play
+        wc = create_write_cell(CellTyping.Accurate, oFormats)
+        wc(oCell, dt.date(2020, 1, 1))
+
+        # verify
+        self.assertEqual(43831.0, oCell.Value)
+        self.assertEqual(1, oCell.NumberFormat)
+
+    def test_create_write_cell_accurate_datetime(self):
+        # prepare
+        oCell = Mock()
+        oFormats = Mock()
+        oFormats.getStandardFormat.side_effect = [1, 2, 3]
+
+        # play
+        wc = create_write_cell(CellTyping.Accurate, oFormats)
+        wc(oCell, dt.datetime(2020, 1, 1, 4, 5, 6))
+
+        # verify
+        self.assertEqual(43831.17020833334, oCell.Value)
+        self.assertEqual(2, oCell.NumberFormat)
+
+    def test_create_write_cell_accurate_bool(self):
+        # prepare
+        oCell = Mock()
+        oFormats = Mock()
+        oFormats.getStandardFormat.side_effect = [1, 2, 3]
+
+        # play
+        wc = create_write_cell(CellTyping.Accurate, oFormats)
+        wc(oCell, True)
+
+        # verify
+        self.assertEqual(1, oCell.Value)
+        self.assertEqual(3, oCell.NumberFormat)
+
+    def test_create_write_cell_accurate_no_format(self):
         with self.assertRaises(ValueError):
-            create_read_cell(object())
+            create_write_cell(CellTyping.Accurate)
+
+    def test_create_write_cell_other(self):
+        with self.assertRaises(ValueError):
+            create_write_cell(object())
+
+    def test_writer_wc(self):
+        # prepare
+        oSheet = Mock()
+        cells = [Mock() for _ in range(6)]
+        oSheet.getCellByPosition.side_effect = cells
+
+        # play
+        def wc(oCell: UnoCell, value: Any):
+            oCell.t = value
+
+        w = writer(oSheet, write_cell=wc)
+        w.writerows([
+            ("a", "b", "c"),
+            (1, 2, 3),
+        ])
+
+        #
+        self.assertEqual([
+            call.getCellByPosition(0, 0),
+            call.getCellByPosition(1, 0),
+            call.getCellByPosition(2, 0),
+            call.getCellByPosition(0, 1),
+            call.getCellByPosition(1, 1),
+            call.getCellByPosition(2, 1)
+        ], oSheet.mock_calls)
+        self.assertEqual(['a', 'b', 'c', 1, 2, 3], [c.t for c in cells])
+
+    def test_writer_formats(self):
+        # prepare
+        oSheet = Mock()
+        cells = [Mock() for _ in range(6)]
+        oSheet.getCellByPosition.side_effect = cells
+        oFormats = Mock()
+
+        # play
+        w = writer(oSheet, CellTyping.Accurate, oFormats=oFormats)
+        w.writerows([
+            ("a", "b", "c"),
+            (1, 2, 3),
+        ])
+
+        #
+        self.assertEqual([
+            call.getCellByPosition(0, 0),
+            call.getCellByPosition(1, 0),
+            call.getCellByPosition(2, 0),
+            call.getCellByPosition(0, 1),
+            call.getCellByPosition(1, 1),
+            call.getCellByPosition(2, 1)
+        ], oSheet.mock_calls)
+        self.assertEqual(['a', 'b', 'c'], [c.String for c in cells[:3]])
+        self.assertEqual([1, 2, 3], [c.Value for c in cells[3:]])
+
+    def test_writer_no_formats(self):
+        # prepare
+        oSheet = Mock()
+        cells = [Mock() for _ in range(6)]
+        oSheet.getCellByPosition.side_effect = cells
+        oLocale = Mock()
+
+        # play
+        w = writer(oSheet, CellTyping.Accurate)
+        w.writerows([
+            ("a", "b", "c"),
+            (1, 2, 3),
+        ])
+
+        #
+        self.assertEqual([
+            call.DrawPage.Forms.Parent.NumberFormats.getStandardFormat(2, ANY),
+            call.DrawPage.Forms.Parent.NumberFormats.getStandardFormat(6, ANY),
+            call.DrawPage.Forms.Parent.NumberFormats.getStandardFormat(1024,
+                                                                       ANY),
+            call.getCellByPosition(0, 0),
+            call.getCellByPosition(1, 0),
+            call.getCellByPosition(2, 0),
+            call.getCellByPosition(0, 1),
+            call.getCellByPosition(1, 1),
+            call.getCellByPosition(2, 1)
+        ], oSheet.mock_calls)
+        self.assertEqual(['a', 'b', 'c'], [c.String for c in cells[:3]])
+        self.assertEqual([1, 2, 3], [c.Value for c in cells[3:]])
 
     def test_empty_import_options(self):
         self.assertEqual('44,34,76,1,,1033,false,false',

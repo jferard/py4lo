@@ -63,7 +63,7 @@ def create_read_cell(cell_typing: CellTyping = CellTyping.Minimal,
     @return: a function to read the cell value
     """
 
-    def read_cell_none(oCell: UnoCell) -> str:
+    def read_cell_string(oCell: UnoCell) -> str:
         """
         Read a cell value
         @param oCell: the cell
@@ -115,7 +115,7 @@ def create_read_cell(cell_typing: CellTyping = CellTyping.Minimal,
             raise ValueError()
 
     if cell_typing == CellTyping.String:
-        return read_cell_none
+        return read_cell_string
     elif cell_typing == CellTyping.Minimal:
         return read_cell_minimal
     elif cell_typing == CellTyping.Accurate:
@@ -210,7 +210,8 @@ class dict_reader:
 ##########
 # Writer #
 ##########
-def find_number_format_style(oFormats, format_id, oLocale=Locale()):
+def find_number_format_style(oFormats: UnoService, format_id: NumberFormat,
+                             oLocale: Locale = Locale()) -> int:
     """
     
     @param oFormats: the formats 
@@ -221,7 +222,9 @@ def find_number_format_style(oFormats, format_id, oLocale=Locale()):
     return oFormats.getStandardFormat(format_id, oLocale)
 
 
-def create_write_cell(cell_typing=CellTyping.Minimal, oFormats=None):
+def create_write_cell(cell_typing: CellTyping = CellTyping.Minimal,
+                      oFormats: Optional[UnoService] = None
+                      ) -> Callable[[UnoCell, Any], None]:
     """
     Create a cell writer
     @param cell_typing: see `create_read_cell`
@@ -229,7 +232,7 @@ def create_write_cell(cell_typing=CellTyping.Minimal, oFormats=None):
     @return: a function
     """
 
-    def write_cell_none(oCell, value):
+    def write_cell_string(oCell: UnoCell, value: Any):
         """
         Write a cell value
         @param oCell: the cell
@@ -237,7 +240,7 @@ def create_write_cell(cell_typing=CellTyping.Minimal, oFormats=None):
         """
         oCell.String = str(value)
 
-    def write_cell_minimal(oCell, value):
+    def write_cell_minimal(oCell: UnoCell, value: Any):
         """
         Write a cell value
         @param oCell: the cell
@@ -249,15 +252,19 @@ def create_write_cell(cell_typing=CellTyping.Minimal, oFormats=None):
             oCell.String = value
         elif isinstance(value, (date, datetime, time)):
             oCell.Value = date_to_float(value)
+        elif isinstance(value, bool):
+            oCell.Value = int(value)
         else:
             oCell.Value = value
 
-    def create_write_cell_all(oFormats):
+    def create_write_cell_all(oFormats: UnoService
+                              ) -> Callable[[UnoCell, Any], None]:
+        # todo: Add locale parameter
         date_id = find_number_format_style(oFormats, NumberFormat.DATE)
         datetime_id = find_number_format_style(oFormats, NumberFormat.DATETIME)
         boolean_id = find_number_format_style(oFormats, NumberFormat.LOGICAL)
 
-        def write_cell_all(oCell, value):
+        def write_cell_all(oCell: UnoCell, value: Any):
             """
             Write a cell value
             @param oCell: the cell
@@ -275,7 +282,7 @@ def create_write_cell(cell_typing=CellTyping.Minimal, oFormats=None):
                 oCell.Value = date_to_float(value)
                 oCell.NumberFormat = date_id
             elif isinstance(value, bool):
-                oCell.Value = value
+                oCell.Value = int(value)
                 oCell.NumberFormat = boolean_id
             else:
                 oCell.Value = value
@@ -283,7 +290,7 @@ def create_write_cell(cell_typing=CellTyping.Minimal, oFormats=None):
         return write_cell_all
 
     if cell_typing == CellTyping.String:
-        return write_cell_none
+        return write_cell_string
     elif cell_typing == CellTyping.Minimal:
         return write_cell_minimal
     elif cell_typing == CellTyping.Accurate:
@@ -298,10 +305,11 @@ class writer:
     """
     A writer that takes lists
     """
-
-    def __init__(self, oSheet, cell_typing=CellTyping.Minimal, oFormats=None,
-                 write_cell=None,
-                 initial_pos=(0, 0)):
+    def __init__(self, oSheet: UnoSheet,
+                 cell_typing: CellTyping = CellTyping.Minimal,
+                 oFormats: Optional[UnoService] = None,
+                 write_cell: Optional[Callable[[UnoCell, Any], None]] = None,
+                 initial_pos: Tuple[str, str] = (0, 0)):
         self._oSheet = oSheet
         self._row, self._base_col = initial_pos
         if write_cell is not None:
