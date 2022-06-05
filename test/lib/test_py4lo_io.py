@@ -23,7 +23,7 @@ import datetime as dt
 from py4lo_io import (create_import_filter_options,
                       create_export_filter_options, Format, create_read_cell,
                       CellTyping, reader, dict_reader, find_number_format_style,
-                      create_write_cell, writer)
+                      create_write_cell, writer, dict_writer)
 from py4lo_typing import UnoCell
 
 
@@ -539,7 +539,7 @@ class Py4LOIOTestCase(unittest.TestCase):
             (1, 2, 3),
         ])
 
-        #
+        # verify
         self.assertEqual([
             call.DrawPage.Forms.Parent.NumberFormats.getStandardFormat(2, ANY),
             call.DrawPage.Forms.Parent.NumberFormats.getStandardFormat(6, ANY),
@@ -554,6 +554,88 @@ class Py4LOIOTestCase(unittest.TestCase):
         ], oSheet.mock_calls)
         self.assertEqual(['a', 'b', 'c'], [c.String for c in cells[:3]])
         self.assertEqual([1, 2, 3], [c.Value for c in cells[3:]])
+
+    def test_dict_writer_wc(self):
+        # prepare
+        oSheet = Mock()
+        cells = [Mock() for _ in range(9)]
+        oSheet.getCellByPosition.side_effect = cells
+
+        # play
+        def wc(oCell: UnoCell, value: Any):
+            oCell.t = value
+
+        w = dict_writer(oSheet, ['a', 'b', 'c'], write_cell=wc)
+
+        w.writeheader()
+        w.writerows([
+            {"a": 1, "b": 2, "c": 3},
+            {"a": 4, "b": 5, "c": 6},
+        ])
+
+        #
+        self.assertEqual([
+            call.getCellByPosition(0, 0),
+            call.getCellByPosition(1, 0),
+            call.getCellByPosition(2, 0),
+            call.getCellByPosition(0, 1),
+            call.getCellByPosition(1, 1),
+            call.getCellByPosition(2, 1),
+            call.getCellByPosition(0, 2),
+            call.getCellByPosition(1, 2),
+            call.getCellByPosition(2, 2)
+        ], oSheet.mock_calls)
+        self.assertEqual(['a', 'b', 'c', 1, 2, 3, 4, 5, 6], [c.t for c in cells])
+
+    def test_dict_writer_wc_raise(self):
+        # prepare
+        oSheet = Mock()
+        cells = [Mock() for _ in range(3)]
+        oSheet.getCellByPosition.side_effect = cells
+
+        # play
+        def wc(oCell: UnoCell, value: Any):
+            oCell.t = value
+
+        w = dict_writer(oSheet, ['a', 'b', 'c'], write_cell=wc)
+
+        w.writeheader()
+        with self.assertRaises(ValueError):
+            w.writerow({"a": 1, "b": 2, "d": 3})
+
+        #
+        self.assertEqual([
+            call.getCellByPosition(0, 0),
+            call.getCellByPosition(1, 0),
+            call.getCellByPosition(2, 0),
+        ], oSheet.mock_calls)
+        self.assertEqual(['a', 'b', 'c'], [c.t for c in cells])
+
+    def test_dict_writer_wc_restval(self):
+        # prepare
+        oSheet = Mock()
+        cells = [Mock() for _ in range(6)]
+        oSheet.getCellByPosition.side_effect = cells
+
+        # play
+        def wc(oCell: UnoCell, value: Any):
+            oCell.t = value
+
+        w = dict_writer(oSheet, ['a', 'b', 'c'], restval="foo", write_cell=wc)
+
+        w.writeheader()
+        w.writerow({"a": 1, "b": 2})
+
+        #
+        self.assertEqual([
+            call.getCellByPosition(0, 0),
+            call.getCellByPosition(1, 0),
+            call.getCellByPosition(2, 0),
+            call.getCellByPosition(0, 1),
+            call.getCellByPosition(1, 1),
+            call.getCellByPosition(2, 1),
+        ], oSheet.mock_calls)
+        self.assertEqual(['a', 'b', 'c', 1, 2, 'foo'], [c.t for c in cells])
 
     def test_empty_import_options(self):
         self.assertEqual('44,34,76,1,,1033,false,false',

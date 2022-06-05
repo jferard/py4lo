@@ -31,7 +31,8 @@ class NumberFormat:
     from com.sun.star.util.NumberFormat import (DATE, TIME, DATETIME, LOGICAL)
 
 
-from typing import Any, Callable, List, Iterator, Optional, Mapping, Tuple
+from typing import Any, Callable, List, Iterator, Optional, Mapping, Tuple, \
+    Iterable
 
 # values of cell_typing
 from py4lo_commons import float_to_date, date_to_float, uno_path_to_url
@@ -305,11 +306,12 @@ class writer:
     """
     A writer that takes lists
     """
+
     def __init__(self, oSheet: UnoSheet,
                  cell_typing: CellTyping = CellTyping.Minimal,
                  oFormats: Optional[UnoService] = None,
                  write_cell: Optional[Callable[[UnoCell, Any], None]] = None,
-                 initial_pos: Tuple[str, str] = (0, 0)):
+                 initial_pos: Tuple[int, int] = (0, 0)):
         self._oSheet = oSheet
         self._row, self._base_col = initial_pos
         if write_cell is not None:
@@ -335,9 +337,11 @@ class dict_writer:
     A writer that takes dicts
     """
 
-    def __init__(self, oSheet, fieldnames, restval='', extrasaction='raise',
-                 cell_typing=CellTyping.Minimal, oFormats=None,
-                 write_cell=None):
+    def __init__(self, oSheet: UnoSheet, fieldnames: List[str],
+                 restval: str = '', extrasaction: str = 'raise',
+                 cell_typing: CellTyping = CellTyping.Minimal,
+                 oFormats: Optional[UnoService] = None,
+                 write_cell: Optional[Callable[[UnoCell, Any], None]] = None):
         self.writer = writer(oSheet, cell_typing, oFormats, write_cell)
         self.fieldnames = fieldnames
         self._set_fieldnames = set(fieldnames)
@@ -347,13 +351,13 @@ class dict_writer:
     def writeheader(self):
         self.writer.writerow(self.fieldnames)
 
-    def writerow(self, row):
+    def writerow(self, row: Mapping[str, Any]):
         if self.extrasaction == 'raise' and set(row) - self._set_fieldnames:
             raise ValueError()
         flat_row = [row.get(name, self.restval) for name in self.fieldnames]
         self.writer.writerow(flat_row)
 
-    def writerows(self, rows):
+    def writerows(self, rows: Iterable[Mapping[str, Any]]):
         for row in rows:
             self.writerow(row)
 
