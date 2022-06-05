@@ -1276,64 +1276,355 @@ class HelperOpenTestCase(unittest.TestCase):
                 Target.SELF, 0, tuple())],
             py4lo_helper.provider.mock_calls)
 
+    def test_new_doc(self):
+        # prepare
+        oDoc = Mock()
+        py4lo_helper.provider.desktop.loadComponentFromURL.side_effect = [oDoc]
+
+        # play
+        oActualDoc = new_doc(NewDocumentUrl.Calc)
+
+        # verify
+        self.assertEqual(oDoc, oActualDoc)
+        self.assertEqual([
+            call.loadComponentFromURL('private:factory/scalc', Target.BLANK, 0,
+                                      tuple())
+        ], py4lo_helper.provider.desktop.mock_calls)
+        self.assertEqual([
+            call.lockControllers, call.unlockControllers
+        ], oDoc.mock_calls)
+
     def test_doc_builder(self):
+        # prepare
+        oDoc = Mock()
+        py4lo_helper.provider.desktop.loadComponentFromURL.side_effect = [oDoc]
+
+        # play
         d = doc_builder(NewDocumentUrl.Calc)
         d.build()
-        py4lo_helper.provider.desktop.loadComponentFromURL.assert_called_once_with(
-            NewDocumentUrl.Calc, Target.BLANK, 0, ())
-        oDoc = py4lo_helper.provider.desktop.loadComponentFromURL.return_value
-        oDoc.lockControllers.assert_called_once()
-        oDoc.unlockControllers.assert_called_once()
 
-    def test_doc_builder_sheet_names(self):
-        oDoc = py4lo_helper.provider.desktop.loadComponentFromURL.return_value
-        oDoc.Sheets.getCount.side_effect = [3, 3, 3, 3, 3]
-        s1, s2, s3 = MagicMock(), MagicMock(), MagicMock()
-        oDoc.Sheets.getByIndex.side_effect = [s1, s2, s3]
+        # verify
+        self.assertEqual([
+            call.loadComponentFromURL('private:factory/scalc', Target.BLANK, 0,
+                                      tuple())
+        ], py4lo_helper.provider.desktop.mock_calls)
+        self.assertEqual([
+            call.lockControllers, call.unlockControllers
+        ], oDoc.mock_calls)
 
-        d = doc_builder(NewDocumentUrl.Calc)
-        d.sheet_names(list("abcdef"), expand_if_necessary=True)
+    def test_doc_builder_pvs(self):
+        # prepare
+        oDoc = Mock()
+        py4lo_helper.provider.desktop.loadComponentFromURL.side_effect = [oDoc]
+
+        # play
+        d = doc_builder(NewDocumentUrl.Calc, pvs=make_pvs({"Hidden": True}))
         d.build()
-        py4lo_helper.provider.desktop.loadComponentFromURL.assert_called_once_with(
-            NewDocumentUrl.Calc, Target.BLANK, 0, ())
-        oDoc.lockControllers.assert_called_once()
-        oDoc.Sheets.getCount.assert_called()
 
-        oDoc.Sheets.getByIndex.assert_has_calls([call(0), call(1), call(2)])
-        s1.setName.assert_called_once_with("a")
-        s2.setName.assert_called_once_with("b")
-        s3.setName.assert_called_once_with("c")
-        oDoc.Sheets.insertNewByName.assert_has_calls(
-            [call("d", 3), call("e", 4), call("f", 5)])
+        # verify
+        self.assertEqual([
+            call.loadComponentFromURL('private:factory/scalc', Target.BLANK, 0,
+                                      (make_pv("Hidden", True),))
+        ], py4lo_helper.provider.desktop.mock_calls)
+        self.assertEqual([
+            call.lockControllers, call.unlockControllers
+        ], oDoc.mock_calls)
 
-        oDoc.unlockControllers.assert_called_once()
+    def test_doc_builder_sheet_names_two(self):
+        # prepare
+        sheets = [Mock() for _ in range(3)]
+        oSheets = Mock()
+        oSheets.getCount.side_effect = [3]
+        oSheets.getByIndex.side_effect = lambda i: sheets[i]
+        oDoc = Mock(Sheets=oSheets)
+        py4lo_helper.provider.desktop.loadComponentFromURL.side_effect = [oDoc]
 
-    def test_doc_builder_sheet_names2(self):
-        oDoc = py4lo_helper.provider.desktop.loadComponentFromURL.return_value
-        oDoc.Sheets.getCount.side_effect = [3, 3, 3, 3, 3, 2]
-        s1, s2, s3 = MagicMock(), MagicMock(), MagicMock()
-        oDoc.Sheets.getByIndex.side_effect = [s1, s2, s3, s3]
-
+        # play
         d = doc_builder(NewDocumentUrl.Calc)
-        d.sheet_names(list("ab"), trunc_if_necessary=True)
+        d.sheet_names(list("ab"), expand_if_necessary=False,
+                      trunc_if_necessary=False)
         d.build()
-        py4lo_helper.provider.desktop.loadComponentFromURL.assert_called_once_with(
-            NewDocumentUrl.Calc, Target.BLANK, 0, ())
-        oDoc.lockControllers.assert_called_once()
-        oDoc.Sheets.getCount.assert_called()
 
-        oDoc.Sheets.getByIndex.assert_has_calls([call(0), call(1), call(2)])
-        s1.setName.assert_called_once_with("a")
-        s2.setName.assert_called_once_with("b")
-        s3.getName.assert_called_once()
-        oDoc.Sheets.removeByName.assert_called_once_with(
-            s3.getName.return_value)
+        # verify
+        self.assertEqual([
+            call.loadComponentFromURL(NewDocumentUrl.Calc, Target.BLANK, 0, ())
+        ], py4lo_helper.provider.desktop.mock_calls)
+        self.assertEqual([
+            call.lockControllers(),
+            call.Sheets.getCount(),
+            call.Sheets.getByIndex(0),
+            call.Sheets.getByIndex(1),
+            call.Sheets.getByIndex(2),
+            call.unlockControllers()
+        ], oDoc.mock_calls)
+        self.assertEqual('a', sheets[0].Name)
+        self.assertEqual('b', sheets[1].Name)
+        self.assertEqual([], sheets[2].mock_calls)
 
-        oDoc.unlockControllers.assert_called_once()
+    def test_doc_builder_sheet_names_two_trunc(self):
+        # prepare
+        sheets = [Mock() for _ in range(3)]
+        sheets[2].Name = "foo"
+        oSheets = Mock()
+        oSheets.getCount.side_effect = [3, 3, 2]
+        oSheets.getByIndex.side_effect = lambda i: sheets[i]
+        oDoc = Mock(Sheets=oSheets)
+        py4lo_helper.provider.desktop.loadComponentFromURL.side_effect = [oDoc]
 
-    ##########################################################################
-    # MISC
-    ##########################################################################
+        # play
+        d = doc_builder(NewDocumentUrl.Calc)
+        d.sheet_names(list("ab"), expand_if_necessary=False,
+                      trunc_if_necessary=True)
+        d.build()
+
+        # verify
+        self.assertEqual([
+            call.loadComponentFromURL(NewDocumentUrl.Calc, Target.BLANK, 0, ())
+        ], py4lo_helper.provider.desktop.mock_calls)
+        self.assertEqual([
+            call.lockControllers(),
+            call.Sheets.getCount(),
+            call.Sheets.getByIndex(0),
+            call.Sheets.getByIndex(1),
+            call.Sheets.getByIndex(2),
+            call.Sheets.getCount(),
+            call.Sheets.getByIndex(2),
+            call.Sheets.removeByName('foo'),
+            call.Sheets.getCount(),
+            call.unlockControllers()
+        ], oDoc.mock_calls)
+        self.assertEqual('a', sheets[0].Name)
+        self.assertEqual('b', sheets[1].Name)
+        self.assertEqual([], sheets[2].mock_calls)
+
+    def test_doc_builder_sheet_names_three(self):
+        # prepare
+        sheets = [Mock() for _ in range(3)]
+        oSheets = Mock()
+        oSheets.getCount.side_effect = [3]
+        oSheets.getByIndex.side_effect = lambda i: sheets[i]
+        oDoc = Mock(Sheets=oSheets)
+        py4lo_helper.provider.desktop.loadComponentFromURL.side_effect = [oDoc]
+
+        # play
+        d = doc_builder(NewDocumentUrl.Calc)
+        d.sheet_names(list("abc"), expand_if_necessary=False,
+                      trunc_if_necessary=False)
+        d.build()
+
+        # verify
+        self.assertEqual([
+            call.loadComponentFromURL(NewDocumentUrl.Calc, Target.BLANK, 0, ())
+        ], py4lo_helper.provider.desktop.mock_calls)
+        self.assertEqual([
+            call.lockControllers(),
+            call.Sheets.getCount(),
+            call.Sheets.getByIndex(0),
+            call.Sheets.getByIndex(1),
+            call.Sheets.getByIndex(2),
+            call.unlockControllers()
+        ], oDoc.mock_calls)
+        self.assertEqual('a', sheets[0].Name)
+        self.assertEqual('b', sheets[1].Name)
+        self.assertEqual('c', sheets[2].Name)
+
+    def test_doc_builder_sheet_names_four(self):
+        # prepare
+        sheets = [Mock() for _ in range(3)]
+        oSheets = Mock()
+        oSheets.getCount.side_effect = [3]
+        oSheets.getByIndex.side_effect = lambda i: sheets[i]
+        oDoc = Mock(Sheets=oSheets)
+        py4lo_helper.provider.desktop.loadComponentFromURL.side_effect = [oDoc]
+
+        # play
+        d = doc_builder(NewDocumentUrl.Calc)
+        d.sheet_names(list("abcc"), expand_if_necessary=True)
+        d.build()
+
+        # verify
+        self.assertEqual([
+            call.loadComponentFromURL(NewDocumentUrl.Calc, Target.BLANK, 0, ())
+        ], py4lo_helper.provider.desktop.mock_calls)
+        self.assertEqual([
+            call.lockControllers(),
+            call.Sheets.getCount(),
+            call.Sheets.getByIndex(0),
+            call.Sheets.getByIndex(1),
+            call.Sheets.getByIndex(2),
+            call.Sheets.insertNewByName('c', 3),
+            call.unlockControllers()
+        ], oDoc.mock_calls)
+        self.assertEqual('a', sheets[0].Name)
+        self.assertEqual('b', sheets[1].Name)
+        self.assertEqual('c', sheets[2].Name)
+
+    def test_doc_builder_apply(self):
+        # prepare
+        sheets = [Mock() for _ in range(3)]
+        oSheets = Mock()
+        oSheets.getCount.side_effect = [3]
+        oSheets.getByIndex.side_effect = lambda i: sheets[i]
+        oDoc = Mock(Sheets=oSheets)
+        py4lo_helper.provider.desktop.loadComponentFromURL.side_effect = [oDoc]
+
+        # play
+        d = doc_builder(NewDocumentUrl.Calc)
+        def func(oSheet): oSheet.app = 0
+        d.apply_func_to_sheets(func)
+        d.build()
+
+        # verify
+        self.assertEqual([
+            call.loadComponentFromURL(NewDocumentUrl.Calc, Target.BLANK, 0, ())
+        ], py4lo_helper.provider.desktop.mock_calls)
+        self.assertEqual([
+            call.lockControllers(),
+            call.Sheets.getCount(),
+            call.Sheets.getByIndex(0),
+            call.Sheets.getByIndex(1),
+            call.Sheets.getByIndex(2),
+            call.unlockControllers()
+        ], oDoc.mock_calls)
+        for s in sheets:
+            self.assertEqual([], s.mock_calls)
+            self.assertEqual(0, s.app)
+
+    def test_doc_builder_apply_list(self):
+        # prepare
+        sheets = [Mock(app=None) for _ in range(3)]
+        oSheets = Mock()
+        oSheets.getCount.side_effect = [3]
+        oSheets.getByIndex.side_effect = lambda i: sheets[i]
+        oDoc = Mock(Sheets=oSheets)
+        py4lo_helper.provider.desktop.loadComponentFromURL.side_effect = [oDoc]
+
+        # play
+        d = doc_builder(NewDocumentUrl.Calc)
+        def func1(oSheet): oSheet.app = 0
+        def func2(oSheet): oSheet.app = 1
+        d.apply_func_list_to_sheets([func1, func2])
+        d.build()
+
+        # verify
+        self.assertEqual([
+            call.loadComponentFromURL(NewDocumentUrl.Calc, Target.BLANK, 0, ())
+        ], py4lo_helper.provider.desktop.mock_calls)
+        self.assertEqual([
+            call.lockControllers(),
+            call.Sheets.getCount(),
+            call.Sheets.getByIndex(0),
+            call.Sheets.getByIndex(1),
+            call.unlockControllers()
+        ], oDoc.mock_calls)
+        for s in sheets:
+            self.assertEqual([], s.mock_calls)
+
+        self.assertEqual(0, sheets[0].app)
+        self.assertEqual(1, sheets[1].app)
+        self.assertIsNone(sheets[2].app)
+
+    def test_doc_builder_duplicate_base_sheet(self):
+        # prepare
+        sheets = [Mock(Name=str(i)) for i in range(3)]
+        oSheets = Mock()
+        oSheets.getCount.side_effect = [3]
+        oSheets.getByIndex.side_effect = lambda i: sheets[i]
+        oDoc = Mock(Sheets=oSheets)
+        py4lo_helper.provider.desktop.loadComponentFromURL.side_effect = [oDoc]
+
+        # play
+        d = doc_builder(NewDocumentUrl.Calc)
+        def func(oSheet): oSheet.app = 0
+        d.duplicate_base_sheet(func, list("abc"))
+        d.build()
+
+        # verify
+        self.assertEqual([
+            call.loadComponentFromURL(NewDocumentUrl.Calc, Target.BLANK, 0, ())
+        ], py4lo_helper.provider.desktop.mock_calls)
+        self.assertEqual([
+            call.lockControllers(),
+            call.Sheets.getByIndex(0),
+            call.Sheets.copyByName('0', 'a', 1),
+            call.Sheets.copyByName('0', 'b', 2),
+            call.Sheets.copyByName('0', 'c', 3),
+            call.unlockControllers()
+        ], oDoc.mock_calls)
+        for s in sheets:
+            self.assertEqual([], s.mock_calls)
+
+        self.assertEqual(0, sheets[0].app)
+        self.assertNotEqual(0, sheets[1].app)
+        self.assertNotEqual(0, sheets[2].app)
+
+    def test_doc_builder_duplicate_to(self):
+        # prepare
+        sheets = [Mock(Name=str(i)) for i in range(3)]
+        oSheets = Mock()
+        oSheets.getCount.side_effect = [3]
+        oSheets.getByIndex.side_effect = lambda i: sheets[i]
+        oDoc = Mock(Sheets=oSheets)
+        py4lo_helper.provider.desktop.loadComponentFromURL.side_effect = [oDoc]
+
+        # play
+        d = doc_builder(NewDocumentUrl.Calc)
+        d.duplicate_to(6)
+        d.build()
+
+        # verify
+        self.assertEqual([
+            call.loadComponentFromURL(NewDocumentUrl.Calc, Target.BLANK, 0, ())
+        ], py4lo_helper.provider.desktop.mock_calls)
+        self.assertEqual([
+            call.lockControllers(),
+            call.Sheets.getByIndex(0),
+            call.Sheets.copyByName('0', '00', 0),
+            call.Sheets.copyByName('0', '01', 1),
+            call.Sheets.copyByName('0', '02', 2),
+            call.Sheets.copyByName('0', '03', 3),
+            call.Sheets.copyByName('0', '04', 4),
+            call.Sheets.copyByName('0', '05', 5),
+            call.Sheets.copyByName('0', '06', 6),
+            call.unlockControllers()
+        ], oDoc.mock_calls)
+        for s in sheets:
+            self.assertEqual([], s.mock_calls)
+
+    def test_doc_builder_make_base_sheet(self):
+        # prepare
+        sheets = [Mock(Name=str(i)) for i in range(3)]
+        oSheets = Mock()
+        oSheets.getCount.side_effect = [3]
+        oSheets.getByIndex.side_effect = lambda i: sheets[i]
+        oDoc = Mock(Sheets=oSheets)
+        py4lo_helper.provider.desktop.loadComponentFromURL.side_effect = [oDoc]
+
+        # play
+        d = doc_builder(NewDocumentUrl.Calc)
+        def func(oSheet): oSheet.app = 0
+        d.make_base_sheet(func)
+        d.build()
+
+        # verify
+        self.assertEqual([
+            call.loadComponentFromURL(NewDocumentUrl.Calc, Target.BLANK, 0, ())
+        ], py4lo_helper.provider.desktop.mock_calls)
+        self.assertEqual([
+            call.lockControllers(),
+            call.Sheets.getByIndex(0),
+            call.unlockControllers()
+        ], oDoc.mock_calls)
+        for s in sheets:
+            self.assertEqual([], s.mock_calls)
+
+        self.assertEqual(0, sheets[0].app)
+        self.assertNotEqual(0, sheets[1].app)
+        self.assertNotEqual(0, sheets[2].app)
+
+##########################################################################
+# MISC
+##########################################################################
 
 
 class HelperMiscTestCase(unittest.TestCase):

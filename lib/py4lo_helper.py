@@ -200,6 +200,11 @@ def to_iter(oXIndexAccess: UnoObject) -> Iterator[UnoObject]:
         yield oXIndexAccess.getByIndex(i)
 
 
+def to_enumerate(oXIndexAccess: UnoObject) -> Iterator[Tuple[int, UnoObject]]:
+    for i in range(oXIndexAccess.getCount()):
+        yield i, oXIndexAccess.getByIndex(i)
+
+
 def to_dict(oXNameAccess: UnoObject) -> Mapping[str, UnoObject]:
     return {
         name: oXNameAccess.getByName(name)
@@ -923,7 +928,7 @@ def doc_builder(
         url: NewDocumentUrl = NewDocumentUrl.Calc,
         taget_frame_name: Target = Target.BLANK,
         search_flags: FrameSearchFlag = FrameSearchFlag.AUTO,
-        pvs: List[UnoPropertyValue] = None
+        pvs: Tuple[UnoPropertyValue] = None
 ) -> "DocBuilder":
     if pvs is None:
         pvs = tuple()
@@ -939,6 +944,9 @@ def new_doc(url: NewDocumentUrl = NewDocumentUrl.Calc,
 
 
 class DocBuilder:
+    """
+    Todo: store and then build
+    """
     def __init__(self, url: NewDocumentUrl, taget_frame_name: Target,
                  search_flags: FrameSearchFlag, pvs: List[UnoPropertyValue]):
         """Create a blank new doc"""
@@ -959,14 +967,15 @@ class DocBuilder:
 
         try:
             # rename
-            while s < oSheets.getCount():
+            initial_count = oSheets.getCount()
+            while s < initial_count:
                 oSheet = oSheets.getByIndex(s)
-                oSheet.setName(next(it))  # may raise a StopIteration
+                oSheet.Name = next(it)  # may raise a StopIteration
                 s += 1
 
-            if s != oSheets.getCount():
+            if s != initial_count:
                 raise AssertionError("s={} vs oSheets.getCount()={}".format(
-                    s, oSheets.getCount()))
+                    s, initial_count))
 
             if expand_if_necessary:
                 # add
@@ -974,7 +983,7 @@ class DocBuilder:
                     oSheets.insertNewByName(sheet_name, s)
                     s += 1
         except StopIteration:  # it
-            if s > oSheets.getCount():
+            if s > initial_count:
                 raise AssertionError("s={} vs oSheets.getCount()={}".format(
                     s, oSheets.getCount()))
             if trunc_if_necessary:
@@ -985,14 +994,14 @@ class DocBuilder:
     def apply_func_to_sheets(
             self, func: Callable[[UnoSheet], None]) -> "DocBuilder":
         oSheets = self._oDoc.Sheets
-        for oSheet in oSheets:
+        for oSheet in to_iter(oSheets):
             func(oSheet)
         return self
 
     def apply_func_list_to_sheets(
             self, funcs: List[Callable[[UnoSheet], None]]) -> "DocBuilder":
         oSheets = self._oDoc.Sheets
-        for func, oSheet in zip(funcs, oSheets):
+        for func, oSheet in zip(funcs, to_iter(oSheets)):
             func(oSheet)
         return self
 
@@ -1025,7 +1034,7 @@ class DocBuilder:
         oSheets = self._oDoc.Sheets
         while final_sheet_count < oSheets.getCount():
             oSheet = oSheets.getByIndex(final_sheet_count)
-            oSheets.removeByName(oSheet.getName())
+            oSheets.removeByName(oSheet.Name)
 
         return self
 
