@@ -21,7 +21,7 @@ import datetime as dt
 
 from py4lo_io import (create_import_filter_options,
                       create_export_filter_options, Format, create_read_cell,
-                      CellTyping)
+                      CellTyping, reader, dict_reader)
 
 
 class NumberFormat:
@@ -170,6 +170,139 @@ class Py4LOIOTestCase(unittest.TestCase):
         # verify
         with self.assertRaises(ValueError):
             rc(oCell)
+
+    def test_create_read_cell_accurate_wo_formats(self):
+        with self.assertRaises(ValueError):
+            create_read_cell(CellTyping.Accurate)
+
+    @patch("py4lo_io.get_used_range_address")
+    def test_reader_rc(self, gura):
+        # prepare
+        oSheet = Mock()
+        oRangeAddress = Mock(StartColumn=0, StartRow=0, EndColumn=1, EndRow=2)
+        gura.side_effect = [oRangeAddress]
+
+        # play
+        r = reader(oSheet, read_cell=lambda oCell: 15)
+
+        # verify
+        self.assertEqual([
+            [15, 15],
+            [15, 15],
+            [15, 15]
+        ], list(r))
+
+    @patch("py4lo_io.get_used_range_address")
+    def test_reader(self, gura):
+        # prepare
+        oSheet = Mock()
+        oSheet.getCellByPosition.side_effect = [
+            Mock(String="A1"), Mock(String="B1"),
+            Mock(String="A2"), Mock(String="B2"),
+            Mock(String="A3"), Mock(String="B3"),
+        ]
+        oRangeAddress = Mock(StartColumn=0, StartRow=0, EndColumn=1, EndRow=2)
+        gura.side_effect = [oRangeAddress]
+
+        # play
+        r = reader(oSheet, CellTyping.String)
+
+        # verify
+        self.assertEqual([
+            ['A1', 'B1'], ['A2', 'B2'], ['A3', 'B3']
+        ], list(r))
+
+    @patch("py4lo_io.get_cell_type")
+    @patch("py4lo_io.get_used_range_address")
+    def test_reader_accurate(self, gura, gct):
+        # prepare
+        gct.side_effect = ['TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'EMPTY']
+        oSheet = Mock()
+        oSheet.getCellByPosition.side_effect = [
+            Mock(String="A1"), Mock(String="B1"),
+            Mock(String="A2"), Mock(String="B2"),
+            Mock(String="A3"), Mock(),
+        ]
+        oFormats = Mock()
+        oRangeAddress = Mock(StartColumn=0, StartRow=0, EndColumn=1, EndRow=2)
+        gura.side_effect = [oRangeAddress]
+
+        # play
+        r = reader(oSheet, CellTyping.Accurate, oFormats)
+
+        # verify
+        self.assertEqual([
+            ['A1', 'B1'], ['A2', 'B2'], ['A3']
+        ], list(r))
+
+    @patch("py4lo_io.get_used_range_address")
+    def test_dict_reader(self, gura):
+        # prepare
+        oSheet = Mock()
+        oSheet.getCellByPosition.side_effect = [
+            Mock(String="A1"), Mock(String="B1"),
+            Mock(String="A2"), Mock(String="B2"),
+            Mock(String="A3"), Mock(String="B3"),
+        ]
+        oRangeAddress = Mock(StartColumn=0, StartRow=0, EndColumn=1, EndRow=2)
+        gura.side_effect = [oRangeAddress]
+
+        # play
+        r = dict_reader(oSheet, cell_typing=CellTyping.String)
+
+        # verify
+        self.assertEqual([
+            {'A1': 'A2', 'B1': 'B2'}, {'A1': 'A3', 'B1': 'B3'}
+        ], list(r))
+
+    @patch("py4lo_io.get_used_range_address")
+    def test_dict_reader_fieldnames(self, gura):
+        # prepare
+        oSheet = Mock()
+        oSheet.getCellByPosition.side_effect = [
+            Mock(String="A1"), Mock(String="B1"),
+            Mock(String="A2"), Mock(String="B2"),
+            Mock(String="A3"), Mock(String="B3"),
+        ]
+        oRangeAddress = Mock(StartColumn=0, StartRow=0, EndColumn=1, EndRow=2)
+        gura.side_effect = [oRangeAddress]
+
+        # play
+        r = dict_reader(oSheet, ("foo", "bar"), cell_typing=CellTyping.String)
+
+        # verify
+        self.assertEqual([
+            {'bar': 'B1', 'foo': 'A1'},
+            {'bar': 'B2', 'foo': 'A2'},
+            {'bar': 'B3', 'foo': 'A3'}
+        ], list(r))
+
+    @patch("py4lo_io.get_cell_type")
+    @patch("py4lo_io.get_used_range_address")
+    def test_dict_reader_fieldnames_rest(self, gura, gct):
+        # prepare
+        oSheet = Mock()
+        oSheet.getCellByPosition.side_effect = [
+            Mock(String="A1"), Mock(), Mock(),
+            Mock(String="A2"), Mock(String="B2"), Mock(String="C2"),
+        ]
+        gct.side_effect = ['TEXT', 'EMPTY', 'EMPTY', 'TEXT', 'TEXT', 'TEXT']
+        oRangeAddress = Mock(StartColumn=0, StartRow=0, EndColumn=2, EndRow=1)
+        gura.side_effect = [oRangeAddress]
+
+        # play
+        r = dict_reader(oSheet, ("foo", "bar"), restkey="RK", restval="RV",
+                        cell_typing=CellTyping.Minimal)
+
+        # verify
+        self.assertEqual([
+            {'bar': 'RV', 'foo': 'A1'}, {'RK': ['C2'], 'bar': 'B2', 'foo': 'A2'}
+        ], list(r))
+
+
+    def test_create_read_cell_other(self):
+        with self.assertRaises(ValueError):
+            create_read_cell(object())
 
     def test_empty_import_options(self):
         self.assertEqual('44,34,76,1,,1033,false,false',

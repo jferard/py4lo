@@ -26,8 +26,10 @@ from enum import IntEnum, Enum
 import uno
 from com.sun.star.lang import Locale
 
+
 class NumberFormat:
     from com.sun.star.util.NumberFormat import (DATE, TIME, DATETIME, LOGICAL)
+
 
 from typing import Any, Callable, List, Iterator, Optional, Mapping, Tuple
 
@@ -130,15 +132,15 @@ class reader(Iterator[List[Any]]):
     """
 
     def __init__(self, oSheet: UnoSheet,
-                 type_cell: CellTyping = CellTyping.Minimal,
+                 cell_typing: CellTyping = CellTyping.Minimal,
                  oFormats: Optional[UnoService] = None,
                  read_cell: Optional[Callable[[UnoCell], Any]] = None):
         if read_cell is not None:
             self._read_cell = read_cell
         else:
-            if type_cell == CellTyping.Accurate and oFormats is None:
+            if cell_typing == CellTyping.Accurate and oFormats is None:
                 oFormats = oSheet.DrawPage.Forms.Parent.NumberFormats
-            self._read_cell = create_read_cell(type_cell, oFormats)
+            self._read_cell = create_read_cell(cell_typing, oFormats)
         self._oSheet = oSheet
         self.line_num = 0
         self._oRangeAddress = get_used_range_address(oSheet)
@@ -169,10 +171,11 @@ class dict_reader:
     """
 
     def __init__(self, oSheet: UnoSheet,
-                 fieldnames: Optional[Tuple[str]] = None, restkey=None,
-                 restval=None,
-                 type_cell=CellTyping.Minimal, oFormats=None, read_cell=None):
-        self._reader = reader(oSheet, type_cell, oFormats, read_cell)
+                 fieldnames: Optional[Tuple[str, ...]] = None,
+                 restkey: Optional[str] = None,
+                 restval: Optional[Any] = None,
+                 cell_typing=CellTyping.Minimal, oFormats=None, read_cell=None):
+        self._reader = reader(oSheet, cell_typing, oFormats, read_cell)
         if fieldnames is None:
             self.fieldnames = next(self._reader)
         else:
@@ -218,10 +221,10 @@ def find_number_format_style(oFormats, format_id, oLocale=Locale()):
     return oFormats.getStandardFormat(format_id, oLocale)
 
 
-def create_write_cell(type_cell=CellTyping.Minimal, oFormats=None):
+def create_write_cell(cell_typing=CellTyping.Minimal, oFormats=None):
     """
     Create a cell writer
-    @param type_cell: see `create_read_cell`
+    @param cell_typing: see `create_read_cell`
     @param oFormats: the NumberFormats
     @return: a function
     """
@@ -279,11 +282,11 @@ def create_write_cell(type_cell=CellTyping.Minimal, oFormats=None):
 
         return write_cell_all
 
-    if type_cell == CellTyping.String:
+    if cell_typing == CellTyping.String:
         return write_cell_none
-    elif type_cell == CellTyping.Minimal:
+    elif cell_typing == CellTyping.Minimal:
         return write_cell_minimal
-    elif type_cell == CellTyping.Accurate:
+    elif cell_typing == CellTyping.Accurate:
         if oFormats is None:
             raise ValueError("Need formats to type all values")
         return create_write_cell_all(oFormats)
@@ -296,7 +299,7 @@ class writer:
     A writer that takes lists
     """
 
-    def __init__(self, oSheet, type_cell=CellTyping.Minimal, oFormats=None,
+    def __init__(self, oSheet, cell_typing=CellTyping.Minimal, oFormats=None,
                  write_cell=None,
                  initial_pos=(0, 0)):
         self._oSheet = oSheet
@@ -304,9 +307,9 @@ class writer:
         if write_cell is not None:
             self._write_cell = write_cell
         else:
-            if type_cell == CellTyping.Accurate and oFormats is None:
+            if cell_typing == CellTyping.Accurate and oFormats is None:
                 oFormats = oSheet.DrawPage.Forms.Parent.NumberFormats
-            self._write_cell = create_write_cell(type_cell, oFormats)
+            self._write_cell = create_write_cell(cell_typing, oFormats)
 
     def writerow(self, row):
         for i, value in enumerate(row, self._base_col):
@@ -325,8 +328,9 @@ class dict_writer:
     """
 
     def __init__(self, oSheet, fieldnames, restval='', extrasaction='raise',
-                 type_cell=CellTyping.Minimal, oFormats=None, write_cell=None):
-        self.writer = writer(oSheet, type_cell, oFormats, write_cell)
+                 cell_typing=CellTyping.Minimal, oFormats=None,
+                 write_cell=None):
+        self.writer = writer(oSheet, cell_typing, oFormats, write_cell)
         self.fieldnames = fieldnames
         self._set_fieldnames = set(fieldnames)
         self.restval = restval
