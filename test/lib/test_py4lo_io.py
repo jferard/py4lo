@@ -657,7 +657,7 @@ class IOCSVTestCase(unittest.TestCase):
         pr.desktop.loadComponentFromURL.side_effect = [oOtherDoc]
 
         # play
-        import_from_csv(oDoc, "foo", 2, p)
+        import_from_csv(oDoc, "foo", 2, p, language_code="en_US")
 
         # verify
         self.assertEqual([call.getByIndex(0)], oOtherSheets.mock_calls)
@@ -667,14 +667,15 @@ class IOCSVTestCase(unittest.TestCase):
             call.desktop.loadComponentFromURL(
                 'url', '_blank', 0, (
                     make_pv("FilterName", "Text - txt - csv (StarCalc)"),
-                    make_pv("FilterOptions", "44,34,76,1,,1036,false,false"),
+                    make_pv("FilterOptions", "44,34,76,1,,1033,false,false"),
                     make_pv("Hidden", True)))
         ], pr.mock_calls)
 
     def test_import_options_dialect(self):
-        self.assertEqual('59,34,76,1,,1036,true,false',
+        self.assertEqual('59,34,76,1,,1033,true,false',
                          create_import_filter_options(csv.unix_dialect,
-                                                      delimiter=";"))
+                                                      delimiter=";",
+                                                      language_code="en_US"))
 
     def test_import_options_two_args(self):
         with self.assertRaises(ValueError):
@@ -702,7 +703,7 @@ class IOCSVTestCase(unittest.TestCase):
         pd.side_effect = [oDoc]
 
         # play
-        export_to_csv(oSheet, path)
+        export_to_csv(oSheet, path, language_code="en_US")
 
         # verify
         self.assertEqual([], oSheet.mock_calls)
@@ -711,7 +712,7 @@ class IOCSVTestCase(unittest.TestCase):
             call.storeToURL(
                 'url',
                 (make_pv("FilterName", "Text - txt - csv (StarCalc)"),
-                 make_pv("FilterOptions", "44,34,76,1,,1036,false,false,true"),
+                 make_pv("FilterOptions", "44,34,76,1,,1033,false,false,true"),
                  make_pv("Overwrite", True))),
             call.unlockControllers()
         ], oDoc.mock_calls)
@@ -721,8 +722,10 @@ class IOCSVTestCase(unittest.TestCase):
                          create_export_filter_options(language_code="en_US"))
 
     def test_export_options_dialect(self):
-        self.assertEqual('44,39,76,1,,1036,true,true,true',
-                         create_export_filter_options(csv.unix_dialect, quotechar="'"))
+        self.assertEqual('44,39,76,1,,1033,true,true,true',
+                         create_export_filter_options(csv.unix_dialect,
+                                                      quotechar="'",
+                                                      language_code="en_US"))
 
     def test_export_options_two_parameters(self):
         with self.assertRaises(ValueError):
