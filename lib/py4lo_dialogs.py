@@ -139,7 +139,7 @@ def get_text_size(oDialogModel: UnoControlModel, text: str) -> Size:
     oTextControl = uno_service(Control.FixedText)
     oTextModel = oDialogModel.createInstance(ControlModel.FixedText)
     oTextModel.Label = text
-    oTextControl.setModel(oTextModel)
+    oTextControl.Model = oTextModel
     min_size = oTextControl.MinimumSize
     # Why 0.5 ? I don't know
     return Size(min_size.Width * 0.5, min_size.Height * 0.5)
@@ -179,14 +179,14 @@ def file_dialog(title: str, filters: Optional[List[FileFilter]] = None,
     if single:
         oFilePicker.MultiSelectionMode = False
         if oFilePicker.execute() == ExecutableDialogResults.OK:
-            urls = oFilePicker.getSelectedFiles()
+            urls = oFilePicker.SelectedFiles
             return urls[0] if urls else None
         else:
             return None
     else:
         oFilePicker.MultiSelectionMode = True
         if oFilePicker.execute() == ExecutableDialogResults.OK:
-            return oFilePicker.getSelectedFiles()
+            return oFilePicker.SelectedFiles
         else:
             return []
 
@@ -231,16 +231,16 @@ class ProgressExecutorBuilder:
         self._oDialogModel.insertByName("text", self._oTextModel)
         _set_rectangle(self._oDialogModel, self._dialog_rectangle)
         self._oDialog.setModel(self._oDialogModel)
-        x = self._centered(self._dialog_rectangle.w, self._bar_dimensions.w)
+        x = self._centered(self._dialog_rectangle.w, self._bar_dimensions.width)
         _set_rectangle(self._oBarModel,
-                       Rectangle(x, MARGIN, self._bar_dimensions.w,
-                                 self._bar_dimensions.h))
+                       Rectangle(x, MARGIN, self._bar_dimensions.width,
+                                 self._bar_dimensions.height))
         self._oBarModel.ProgressValueMin = self._bar_progress.min
         self._oBarModel.ProgressValueMax = self._bar_progress.max
         self._oBarModel.ProgressValue = self._bar_progress.min
-        y = self._bar_dimensions.h + MARGIN * 2
+        y = self._bar_dimensions.height + MARGIN * 2
         w = self._dialog_rectangle.w - MARGIN * 2
-        h = self._dialog_rectangle.h - self._bar_dimensions.h - MARGIN * 2
+        h = self._dialog_rectangle.h - self._bar_dimensions.height - MARGIN * 2
         _set_rectangle(self._oTextModel, Rectangle(MARGIN, y, w, h))
         if self._message is not None:
             self._oTextModel.Label = self._message
@@ -331,15 +331,15 @@ def _set_rectangle(o: Any, rectangle: Rectangle):
 class ProgressHandler:
     def __init__(self, oBar: UnoControlModel, oText: UnoControlModel):
         self._oBar = oBar
-        self._oBar.setValue(0)
+        self._oBar.Value = 0
         self._oText = oText
         self.response = None
 
     def progress(self, n: int = 1):
-        self._oBar.setValue(self._oBar.getValue() + n)
+        self._oBar.Value = self._oBar.Value + n
 
     def message(self, text: str):
-        self._oText.setText(text)
+        self._oText.Text = text
 
 
 class ProgressExecutor:
