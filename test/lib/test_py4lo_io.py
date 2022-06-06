@@ -15,15 +15,19 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import csv
 import unittest
 from typing import Any
 from unittest.mock import Mock, patch, call, ANY
 import datetime as dt
 
+import py4lo_io
+from py4lo_helper import (_ObjectProvider, _Inspector, make_pv)
 from py4lo_io import (create_import_filter_options,
                       create_export_filter_options, Format, create_read_cell,
                       CellTyping, reader, dict_reader, find_number_format_style,
-                      create_write_cell, writer, dict_writer)
+                      create_write_cell, writer, dict_writer, import_from_csv,
+                      export_to_csv)
 from py4lo_typing import UnoCell
 
 
@@ -585,7 +589,8 @@ class Py4LOIOTestCase(unittest.TestCase):
             call.getCellByPosition(1, 2),
             call.getCellByPosition(2, 2)
         ], oSheet.mock_calls)
-        self.assertEqual(['a', 'b', 'c', 1, 2, 3, 4, 5, 6], [c.t for c in cells])
+        self.assertEqual(['a', 'b', 'c', 1, 2, 3, 4, 5, 6],
+                         [c.t for c in cells])
 
     def test_dict_writer_wc_raise(self):
         # prepare
@@ -637,6 +642,44 @@ class Py4LOIOTestCase(unittest.TestCase):
         ], oSheet.mock_calls)
         self.assertEqual(['a', 'b', 'c', 1, 2, 'foo'], [c.t for c in cells])
 
+
+class IOCSVTestCase(unittest.TestCase):
+    @patch("py4lo_io.uno_path_to_url")
+    @patch("py4lo_io.pr")
+    def test_import_from_csv(self, pr, ptu):
+        # prepare
+        oSheets = Mock()
+        oDoc = Mock(Sheets=oSheets)
+        p = Mock()
+        ptu.side_effect = ["url"]
+        oOtherSheets = Mock(ElementNames=["a", "b", "c"])
+        oOtherDoc = Mock(Sheets=oOtherSheets)
+        pr.desktop.loadComponentFromURL.side_effect = [oOtherDoc]
+
+        # play
+        import_from_csv(oDoc, "foo", 2, p)
+
+        # verify
+        self.assertEqual([call.getByIndex(0)], oOtherSheets.mock_calls)
+        self.assertEqual([call.importSheet(oOtherDoc, 'a', 2)],
+                         oSheets.mock_calls)
+        self.assertEqual([
+            call.desktop.loadComponentFromURL(
+                'url', '_blank', 0, (
+                    make_pv("FilterName", "Text - txt - csv (StarCalc)"),
+                    make_pv("FilterOptions", "44,34,76,1,,1036,false,false"),
+                    make_pv("Hidden", True)))
+        ], pr.mock_calls)
+
+    def test_import_options_dialect(self):
+        self.assertEqual('59,34,76,1,,1036,true,false',
+                         create_import_filter_options(csv.unix_dialect,
+                                                      delimiter=";"))
+
+    def test_import_options_two_args(self):
+        with self.assertRaises(ValueError):
+            create_import_filter_options(1, 2)
+
     def test_empty_import_options(self):
         self.assertEqual('44,34,76,1,,1033,false,false',
                          create_import_filter_options(language_code="en_US"))
@@ -647,9 +690,43 @@ class Py4LOIOTestCase(unittest.TestCase):
                                                       format_by_idx={
                                                           1: Format.TEXT}))
 
+    @patch("py4lo_io.uno_path_to_url")
+    @patch("py4lo_io.parent_doc")
+    def test_export_to_csv(self, pd, ptu):
+        # prepare
+        oSheet = Mock()
+        path = Mock()
+        ptu.side_effect = ['url']
+        oCurSheet = Mock()
+        oDoc = Mock(CurrentController=Mock(ActiveSheet=oCurSheet))
+        pd.side_effect = [oDoc]
+
+        # play
+        export_to_csv(oSheet, path)
+
+        # verify
+        self.assertEqual([], oSheet.mock_calls)
+        self.assertEqual([
+            call.lockControllers(),
+            call.storeToURL(
+                'url',
+                (make_pv("FilterName", "Text - txt - csv (StarCalc)"),
+                 make_pv("FilterOptions", "44,34,76,1,,1036,false,false,true"),
+                 make_pv("Overwrite", True))),
+            call.unlockControllers()
+        ], oDoc.mock_calls)
+
     def test_empty_export_options(self):
         self.assertEqual('44,34,76,1,,1033,false,false,true',
                          create_export_filter_options(language_code="en_US"))
+
+    def test_export_options_dialect(self):
+        self.assertEqual('44,39,76,1,,1036,true,true,true',
+                         create_export_filter_options(csv.unix_dialect, quotechar="'"))
+
+    def test_export_options_two_parameters(self):
+        with self.assertRaises(ValueError):
+            create_export_filter_options(1, 2)
 
 
 if __name__ == '__main__':

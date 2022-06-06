@@ -26,13 +26,15 @@ from enum import IntEnum, Enum
 import uno
 from com.sun.star.lang import Locale
 
+import py4lo_helper
+
 
 class NumberFormat:
     from com.sun.star.util.NumberFormat import (DATE, TIME, DATETIME, LOGICAL)
 
 
-from typing import Any, Callable, List, Iterator, Optional, Mapping, Tuple, \
-    Iterable
+from typing import (Any, Callable, List, Iterator, Optional, Mapping, Tuple,
+                    Iterable)
 
 # values of cell_typing
 from py4lo_commons import float_to_date, date_to_float, uno_path_to_url
@@ -757,14 +759,14 @@ def import_from_csv(oDoc: UnoSpreadsheet, sheet_name: str, dest_position: int,
     """
     filter_options = create_import_filter_options(*args, **kwargs)
     pvs = make_pvs({"FilterName": Filter.CSV, "FilterOptions": filter_options,
-                    "Hidden": "True"})
+                    "Hidden": True})
 
     oDoc.lockControllers()
     url = uno_path_to_url(path)
     oSource = pr.desktop.loadComponentFromURL(url, Target.BLANK,
                                               FrameSearchFlag.AUTO, pvs)
     oSource.Sheets.getByIndex(0).Name = sheet_name
-    name = oSource.Sheets.getElementNames()[0]
+    name = oSource.Sheets.ElementNames[0]
     oDoc.Sheets.importSheet(oSource, name, dest_position)
     oSource.close(True)
     oDoc.unlockControllers()
@@ -833,12 +835,12 @@ def export_to_csv(oSheet: UnoSheet, path: StrPath, *args, **kwargs):
     pvs = make_pvs({"FilterName": Filter.CSV, "FilterOptions": filter_options,
                     "Overwrite": overwrite})
     oDoc = parent_doc(oSheet)
-    oActive = oDoc.CurrentController.getActiveSheet()
+    oActive = oDoc.CurrentController.ActiveSheet
     oDoc.lockControllers()
-    oDoc.CurrentController.setActiveSheet(oSheet)
-    url = uno.systemPathToFileUrl(os.path.realpath(path))
+    oDoc.CurrentController.ActiveSheet = oSheet
+    url = uno_path_to_url(path)
     oDoc.storeToURL(url, pvs)
-    oDoc.CurrentController.setActiveSheet(oActive)
+    oDoc.CurrentController.ActiveSheet = oActive
     oDoc.unlockControllers()
 
 
