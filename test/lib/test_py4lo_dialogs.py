@@ -15,14 +15,17 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import os
+import time
 import unittest
 from unittest import mock
-from unittest.mock import Mock, call
+from unittest.mock import Mock, call, ANY
 
 from py4lo_dialogs import (message_box, MessageBoxType, place_widget, Size,
                            get_text_size, FileFilter, file_dialog,
                            folder_dialog, ProgressExecutorBuilder,
-                           ProgressHandler)
+                           ProgressHandler, ConsoleExecutorBuilder,
+                           ConsoleHandler)
 
 
 class ExecutableDialogResults:
@@ -263,7 +266,8 @@ class ProgressExecutorTestCase(unittest.TestCase):
         oText = Mock()
         oDialog = Mock()
         oDialog.getControl.side_effect = [oBar, oText]
-        us.side_effect = [oDialogModel, oDialog]
+        oTK = Mock()
+        us.side_effect = [oDialogModel, oDialog, oTK]
 
         # play
         pe = ProgressExecutorBuilder().build()
@@ -273,8 +277,14 @@ class ProgressExecutorTestCase(unittest.TestCase):
             h.message("foo")
 
         pe.execute(func)
+        time.sleep(1)
 
-        #
+        # verify
+        self.assertEqual([
+            call('com.sun.star.awt.UnoControlDialogModel'),
+            call('com.sun.star.awt.UnoControlDialog'),
+            call('com.sun.star.awt.Toolkit')
+        ], us.mock_calls)
         self.assertEqual([
             call.createInstance('com.sun.star.awt.UnoControlProgressBarModel'),
             call.createInstance('com.sun.star.awt.UnoControlFixedTextModel'),
@@ -286,6 +296,7 @@ class ProgressExecutorTestCase(unittest.TestCase):
             call.getControl('bar'),
             call.getControl('text'),
             call.setVisible(True),
+            call.createPeer(oTK, None),
             call.dispose()
         ], oDialog.mock_calls)
         self.assertEqual(10, oBar.Value)
@@ -303,7 +314,8 @@ class ProgressExecutorTestCase(unittest.TestCase):
         oText = Mock()
         oDialog = Mock()
         oDialog.getControl.side_effect = [oBar, oText]
-        us.side_effect = [oDialogModel, oDialog]
+        oTK = Mock()
+        us.side_effect = [oDialogModel, oDialog, oTK]
 
         # play
         pe = ProgressExecutorBuilder().title(
@@ -316,8 +328,14 @@ class ProgressExecutorTestCase(unittest.TestCase):
             h.message("foo")
 
         pe.execute(func)
+        time.sleep(1)
 
-        #
+        # verify
+        self.assertEqual([
+            call('com.sun.star.awt.UnoControlDialogModel'),
+            call('com.sun.star.awt.UnoControlDialog'),
+            call('com.sun.star.awt.Toolkit')
+        ], us.mock_calls)
         self.assertEqual([
             call.createInstance('com.sun.star.awt.UnoControlProgressBarModel'),
             call.createInstance('com.sun.star.awt.UnoControlFixedTextModel'),
@@ -329,10 +347,64 @@ class ProgressExecutorTestCase(unittest.TestCase):
             call.getControl('bar'),
             call.getControl('text'),
             call.setVisible(True),
+            call.createPeer(oTK, None),
             call.execute()
         ], oDialog.mock_calls)
         self.assertEqual(1000, oBar.Value)
         self.assertEqual("foo", oText.Text)
+
+
+class ConsoleExecutorTestCase(unittest.TestCase):
+    @mock.patch("py4lo_dialogs.uno_service")
+    def test_simple(self, us):
+        # prepare
+        oTextModel = Mock()
+        oDialogModel = Mock()
+        oDialogModel.createInstance.side_effect = [oTextModel]
+
+        oText = Mock()
+        oDialog = Mock()
+        oDialog.getControl.side_effect = [oText]
+        oTK = Mock()
+        us.side_effect = [oDialogModel, oDialog, oTK]
+
+        # play
+        ce = ConsoleExecutorBuilder().build()
+
+        def func(h: ConsoleHandler):
+            h.message("foo")
+
+        ce.execute(func)
+        time.sleep(1)
+
+        # verify
+        # TODO: might not
+        # self.assertEqual([
+        #     call.insertText(ANY,  'foo\n')
+        # ], oText.mock_calls)
+        self.assertEqual([
+            call('com.sun.star.awt.UnoControlDialogModel'),
+            call('com.sun.star.awt.UnoControlDialog'),
+            call('com.sun.star.awt.Toolkit')
+        ], us.mock_calls)
+        self.assertEqual([
+            call.createInstance('com.sun.star.awt.UnoControlEditModel'),
+            call.insertByName('text', oTextModel),
+        ], oDialogModel.mock_calls)
+        self.assertEqual([
+            call.setModel(oDialogModel),
+            call.getControl('text'),
+            call.setVisible(True),
+            call.createPeer(oTK, None),
+            call.execute()
+        ], oDialog.mock_calls)
+        self.assertEqual(5, oTextModel.PositionX)
+        self.assertEqual(5, oTextModel.PositionY)
+        self.assertEqual(90, oTextModel.Height)
+        self.assertEqual(240, oTextModel.Width)
+        self.assertTrue(oTextModel.ReadOnly)
+        self.assertTrue(oTextModel.MultiLine)
+        self.assertTrue(oTextModel.VScroll)
 
 
 if __name__ == '__main__':

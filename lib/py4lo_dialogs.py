@@ -363,18 +363,18 @@ class ProgressExecutor:
         Execute the function with a progress bar
         @param func: a function that takes a `ProgressDialog` object.
         """
+        toolkit = uno_service("com.sun.star.awt.Toolkit")
 
         def aux():
-            # TODO:     oDialogControl.setVisible(True)
-            #     toolkit = uno_service("com.sun.star.awt.Toolkit")
-            #     oDialogControl.createPeer(toolkit, None)
             self._oDialog.setVisible(True)
+            self._oDialog.createPeer(toolkit, None)
             func(self._progress_handler)
             if self._autoclose:
+                # free all resources as soon as the function is executed
                 self._oDialog.dispose()
             else:
-                self._oDialog.execute()  # blocking
-
+                # wait for the user to close the window
+                self._oDialog.execute()
         t = Thread(target=aux)
         t.start()
 
@@ -473,17 +473,18 @@ class ConsoleExecutor:
         Execute the function with a progress bar
         @param func: a function that takes a `ProgressDialog` object.
         """
+        toolkit = uno_service("com.sun.star.awt.Toolkit")
 
         def aux():
-            # TODO:     oDialogControl.setVisible(True)
-            #     toolkit = uno_service("com.sun.star.awt.Toolkit")
-            #     oDialogControl.createPeer(toolkit, None)
             self._oDialog.setVisible(True)
+            self._oDialog.createPeer(toolkit, None)
             func(self._console_handler)
             if self._autoclose:
+                # free all resources as soon as the function is executed
                 self._oDialog.dispose()
             else:
-                self._oDialog.execute()  # blocking
+                # wait for the user to close the window
+                self._oDialog.execute()
 
         t = Thread(target=aux)
         t.start()
