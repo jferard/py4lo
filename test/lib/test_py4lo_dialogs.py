@@ -59,10 +59,12 @@ class Py4LODialogsTestCase(unittest.TestCase):
         # verify
         self.assertEqual(Size(5.5, 8.5), actual_size)
         self.assertEqual("test", oModel.Label)
-        self.assertEqual(oModel, oControl.Model)
         self.assertEqual([
             call.createInstance('com.sun.star.awt.UnoControlFixedTextModel')
         ], oDialogModel.mock_calls)
+        self.assertEqual([
+            call.setModel(oModel)
+        ], oControl.mock_calls)
 
     @mock.patch("py4lo_dialogs.uno_service_ctxt")
     @mock.patch("py4lo_dialogs.provider")
@@ -250,7 +252,7 @@ class Py4LODialogsTestCase(unittest.TestCase):
 
 class ProgressExecutorTestCase(unittest.TestCase):
     @mock.patch("py4lo_dialogs.uno_service")
-    def test(self, us):
+    def test_simple(self, us):
         # prepare
         oBarModel = Mock()
         oTextModel = Mock()
@@ -287,6 +289,49 @@ class ProgressExecutorTestCase(unittest.TestCase):
             call.dispose()
         ], oDialog.mock_calls)
         self.assertEqual(10, oBar.Value)
+        self.assertEqual("foo", oText.Text)
+
+    @mock.patch("py4lo_dialogs.uno_service")
+    def test_build(self, us):
+        # prepare
+        oBarModel = Mock()
+        oTextModel = Mock()
+        oDialogModel = Mock()
+        oDialogModel.createInstance.side_effect = [oBarModel, oTextModel]
+
+        oBar = Mock()
+        oText = Mock()
+        oDialog = Mock()
+        oDialog.getControl.side_effect = [oBar, oText]
+        us.side_effect = [oDialogModel, oDialog]
+
+        # play
+        pe = ProgressExecutorBuilder().title(
+            "bar").bar_dimensions(100, 50).autoclose(
+            False).dialog_rectangle(10, 10, 120, 60).bar_progress(
+            100, 1000).message("base msg").build()
+
+        def func(h: ProgressHandler):
+            h.progress(1000)
+            h.message("foo")
+
+        pe.execute(func)
+
+        #
+        self.assertEqual([
+            call.createInstance('com.sun.star.awt.UnoControlProgressBarModel'),
+            call.createInstance('com.sun.star.awt.UnoControlFixedTextModel'),
+            call.insertByName('bar', oBarModel),
+            call.insertByName('text', oTextModel),
+        ], oDialogModel.mock_calls)
+        self.assertEqual([
+            call.setModel(oDialogModel),
+            call.getControl('bar'),
+            call.getControl('text'),
+            call.setVisible(True),
+            call.execute()
+        ], oDialog.mock_calls)
+        self.assertEqual(1000, oBar.Value)
         self.assertEqual("foo", oText.Text)
 
 

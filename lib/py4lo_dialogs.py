@@ -27,6 +27,7 @@ from py4lo_typing import UnoControlModel, UnoControl, StrPath
 try:
     import uno
 
+
     class MessageBoxType:
         from com.sun.star.awt.MessageBoxType import (ERRORBOX, MESSAGEBOX)
 
@@ -139,7 +140,7 @@ def get_text_size(oDialogModel: UnoControlModel, text: str) -> Size:
     oTextControl = uno_service(Control.FixedText)
     oTextModel = oDialogModel.createInstance(ControlModel.FixedText)
     oTextModel.Label = text
-    oTextControl.Model = oTextModel
+    oTextControl.setModel(oTextModel)
     min_size = oTextControl.MinimumSize
     # Why 0.5 ? I don't know
     return Size(min_size.Width * 0.5, min_size.Height * 0.5)
@@ -247,6 +248,7 @@ class ProgressExecutorBuilder:
 
         return ProgressExecutor(self._oDialog, self._autoclose,
                                 self._oDialog.getControl("bar"),
+                                self._bar_progress.min, self._bar_progress.max,
                                 self._oDialog.getControl("text"))
 
     def _centered(self, outer_w: int, inner_w: int) -> int:
@@ -329,14 +331,18 @@ def _set_rectangle(o: Any, rectangle: Rectangle):
 
 
 class ProgressHandler:
-    def __init__(self, oBar: UnoControlModel, oText: UnoControlModel):
+    def __init__(self, oBar: UnoControlModel, bar_progress_min: int,
+                 bar_progress_max: int, oText: UnoControlModel):
         self._oBar = oBar
-        self._oBar.Value = 0
+        self._oBar.Value = bar_progress_min
+        self._bar_progress_max = bar_progress_max
         self._oText = oText
         self.response = None
 
     def progress(self, n: int = 1):
         self._oBar.Value = self._oBar.Value + n
+        if self._oBar.Value > self._bar_progress_max:
+            self._oBar.Value = self._bar_progress_max
 
     def message(self, text: str):
         self._oText.Text = text
@@ -344,10 +350,13 @@ class ProgressHandler:
 
 class ProgressExecutor:
     def __init__(self, oDialog: UnoControl, autoclose: bool,
-                 oBar: UnoControlModel, oText: UnoControlModel):
+                 oBar: UnoControlModel, bar_progress_min: int,
+                 bar_progress_max: int,
+                 oText: UnoControlModel):
         self._oDialog = oDialog
         self._autoclose = autoclose
-        self._progress_handler = ProgressHandler(oBar, oText)
+        self._progress_handler = ProgressHandler(oBar, bar_progress_min,
+                                                 bar_progress_max, oText)
 
     def execute(self, func: Callable[[ProgressHandler], None]):
         """
