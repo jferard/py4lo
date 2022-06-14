@@ -194,8 +194,7 @@ class Commons:
         apply(config)
         reader = codecs.getreader(encoding)
 
-        with zipfile.ZipFile(uno_url_to_path(self._url),
-                             'r') as z:
+        with zipfile.ZipFile(uno_url_to_path(self._url), 'r') as z:
             for filename in filenames:
                 try:
                     file = z.open(filename)
@@ -216,8 +215,7 @@ class Commons:
         @return: file content as bytes
         """
         import zipfile
-        with zipfile.ZipFile(uno_url_to_path(self._url),
-                             'r') as z:
+        with zipfile.ZipFile(uno_url_to_path(self._url), 'r') as z:
             with z.open(filename) as f:
                 return f.read()
 
@@ -269,8 +267,12 @@ def sanitize(s: str) -> str:
 
 
 def date_to_int(a_date: Union[dt.date, dt.datetime]) -> int:
-    if isinstance(a_date, dt.date):
+    if isinstance(a_date, dt.datetime):
+        pass
+    elif isinstance(a_date, dt.date):
         a_date = dt.datetime(a_date.year, a_date.month, a_date.day)
+    else:
+        raise ValueError()
     return (a_date - ORIGIN).days
 
 

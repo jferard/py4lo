@@ -16,24 +16,78 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
+import subprocess
+import tempfile
 import unittest
 import zipfile
 from io import TextIOWrapper
+import os
+
 from unittest import mock
 from unittest.mock import *
-import tempfile
-import os
-import subprocess
-import tst_env
-import sys
 
 from py4lo_commons import *
-from py4lo_commons import _get_config
+
+
+class MiscTestCase(unittest.TestCase):
+    def test_uno(self):
+        from py4lo_commons import uno
+        self.assertEqual("url", uno.fileUrlToSystemPath("url"))
+        self.assertEqual("url", uno.systemPathToFileUrl("url"))
+
+    @patch("py4lo_commons.uno.fileUrlToSystemPath")
+    def test_uno_url_to_path(self, futsp):
+        # prepare
+        futsp.side_effect = ["path"]
+
+        # play
+        ret = uno_url_to_path("abc")
+
+        # verify
+        self.assertEqual(Path("path"), ret)
+
+    @patch("py4lo_commons.uno.fileUrlToSystemPath")
+    def test_uno_url_to_path_empty(self, futsp):
+        # prepare
+        futsp.side_effect = ["path"]
+
+        # play
+        ret = uno_url_to_path("  ")
+
+        # verify
+        self.assertIsNone(ret)
+
+    @patch("py4lo_commons.uno.systemPathToFileUrl")
+    def test_uno_path_to_url(self, sptfu):
+        # prepare
+        sptfu.side_effect = ["url"]
+
+        # play
+        ret = uno_path_to_url("abc")
+
+        # verify
+        self.assertEqual("url", ret)
+        self.assertEqual([call(str(Path("abc").resolve()))], sptfu.mock_calls)
+
+    @patch("py4lo_commons.uno.systemPathToFileUrl")
+    def test_uno_path_to_url_err(self, sptfu):
+        # prepare
+        sptfu.side_effect = ["url"]
+        path = Mock()
+        path.resolve.side_effect = FileNotFoundError
+
+        # play
+        ret = uno_path_to_url(path)
+
+        # verify
+        self.assertEqual("url", ret)
+        self.assertEqual([call(str(path))], sptfu.mock_calls)
+
 
 
 class TestBus(unittest.TestCase):
     def setUp(self):
-        self.b = Bus()
+        self.b = create_bus()
         self.s = Mock()
 
     def test(self):
@@ -72,6 +126,19 @@ class TestCommons(unittest.TestCase):
 
         init(xsc)
         c = Commons.create()
+        self.assertEqual(Path("/doc"), c.cur_dir())
+
+    def test_create_linux2(self):
+        # prepare
+        oDoc = mock.Mock(URL="file:///doc/url.ods")
+
+        xsc = mock.Mock()
+        xsc.getDocument.side_effect = [oDoc]
+
+        # play
+        c = Commons.create(xsc)
+
+        # verify
         self.assertEqual(Path("/doc"), c.cur_dir())
 
     # def test_create_win(self):
@@ -117,7 +184,15 @@ class TestCommons(unittest.TestCase):
             text = s.read()
             self.assertTrue(text.endswith(" - root - DEBUG - test\n"))
 
-    def test_get_config(self):
+    def test_logger_err(self):
+        t = tempfile.mkdtemp()
+        c = Commons((Path(t) / "file.ods").as_uri())
+        with self.assertRaises(Exception):
+            logger = c.logger()
+
+        os.rmdir(t)
+
+    def test_read_internal_config(self):
         t = tempfile.mkdtemp()
         path = Path(t) / "file.ods"
         c = Commons(path.as_uri())
@@ -130,10 +205,50 @@ class TestCommons(unittest.TestCase):
         finally:
             zf.close()
 
-        config2 = c.read_internal_config(["config"], {})
+        config2 = c.read_internal_config("config", {})
         self.assertEqual(config, config2)
         path.unlink()
         os.rmdir(t)
+
+    def test_read_internal_config_missing(self):
+        t = tempfile.mkdtemp()
+        path = Path(t) / "file.ods"
+        c = Commons(path.as_uri())
+        config = configparser.ConfigParser()
+        config["S"] = {"a": "1"}
+        zf = zipfile.ZipFile(path, "w")
+        try:
+            s = zf.open("config", "w")
+            config.write(TextIOWrapper(s, encoding="utf-8"))
+        finally:
+            zf.close()
+
+        config2 = c.read_internal_config(["config", "config2"], {})
+        self.assertEqual(config, config2)
+        path.unlink()
+        os.rmdir(t)
+
+    def test_read_asset(self):
+        t = tempfile.mkdtemp()
+        path = Path(t) / "file.ods"
+        c = Commons(path.as_uri())
+        zf = zipfile.ZipFile(path, "w")
+        try:
+            s = zf.open("asset", "w")
+            try:
+                s.write(b"abc")
+            finally:
+                s.close()
+        finally:
+            zf.close()
+
+        self.assertEqual(b"abc", c.get_asset("asset"))
+        path.unlink()
+        os.rmdir(t)
+
+    def test_read_empty_config(self):
+        config = read_config([])
+        self.assertEqual(['DEFAULT'], list(config))
 
     def test_get_logger(self):
         t = tempfile.mkdtemp()
@@ -151,6 +266,9 @@ class TestDate(unittest.TestCase):
         self.assertEqual(0, date_to_int(dt.datetime(1899, 12, 30)))
         self.assertEqual(44639, date_to_int(dt.datetime(2022, 3, 19)))
         self.assertEqual(44639, date_to_int(dt.date(2022, 3, 19)))
+        self.assertEqual(44639, date_to_int(dt.datetime(2022, 3, 19)))
+        with self.assertRaises(ValueError):
+            date_to_int(1)
 
     def test_date_to_float(self):
         self.assertEqual(0.0, date_to_float(dt.datetime(1899, 12, 30)))
@@ -159,6 +277,8 @@ class TestDate(unittest.TestCase):
             2022, 3, 19, 17, 21, 10)), delta=0.0001)
         self.assertAlmostEqual(0.723032407404, date_to_float(dt.time(
             17, 21, 10)), delta=0.0001)
+        with self.assertRaises(ValueError):
+            date_to_float(1)
 
     def test_int_to_date(self):
         self.assertEqual(dt.datetime(1899, 12, 30), int_to_date(0))
