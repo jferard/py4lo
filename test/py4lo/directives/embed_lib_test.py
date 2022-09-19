@@ -26,16 +26,20 @@ from directives import EmbedLib
 
 class TestEmbedLib(unittest.TestCase):
     def setUp(self):
-        self._directive = EmbedLib(Path("LIB"))
+        lib_path = Path(__file__).parent.parent.parent.parent / "lib"
+        self._directive = EmbedLib(lib_path)
 
     def test_sig_elements(self):
         self.assertEqual(["embed", "lib"], self._directive.sig_elements())
 
     def test_execute(self):
         proc = Mock()
-        self.assertEqual(True, self._directive.execute(proc, None, ["a"]))
+        self.assertEqual(True,
+                         self._directive.execute(proc, None, ["py4lo_helper"]))
         self.assertEqual([call.append_script(
-            SourceScript(Path('LIB/a.py'), Path("LIB"), False))],
+            SourceScript(
+                Path('/home/jferard/prog/python/py4lo/lib/py4lo_helper.py'),
+                Path('/home/jferard/prog/python/py4lo/lib'), False))],
             proc.mock_calls)
 
         if __name__ == '__main__':

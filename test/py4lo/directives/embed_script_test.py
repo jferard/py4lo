@@ -37,6 +37,8 @@ class TestEmbed(unittest.TestCase):
     def test_execute(self):
         proc = Mock()
         fpath = file_path_mock(io.BytesIO(b"content"))
+        fpath.suffix = ""
+        fpath.with_suffix.return_value = fpath
 
         self._opt.joinpath.return_value = fpath
         fpath.is_dir.return_value = False
@@ -47,6 +49,7 @@ class TestEmbed(unittest.TestCase):
             TempScript(fpath, b"content", self._opt, [], None))],
             proc.mock_calls)
         verify_open_path(self, fpath, 'rb')
+
 
 if __name__ == '__main__':
     unittest.main()

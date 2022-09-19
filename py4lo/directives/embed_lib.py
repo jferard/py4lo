@@ -17,6 +17,7 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from pathlib import Path
+from typing import Sequence
 
 from core.script import SourceScript
 from directives.directive import Directive
@@ -36,12 +37,13 @@ class EmbedLib(Directive):
 
     def execute(self, processor: "DirectiveProcessor",
                 line_processor: "DirectiveLineProcessor", args):
-        script_ref = args[0]
-        # TODO : sript_ref might be a dir (script_ref/__init__.py)
-        script_path = self._lib_dir.joinpath(script_ref + ".py")
-        processor.append_script(SourceScript(script_path, self._lib_dir, False))
+        lib_ref = Path(args[0])
+        lib_path = self._lib_dir.joinpath(lib_ref)
+        source_scripts = self._embed(lib_path)
+        for source_script in source_scripts:
+            processor.append_script(source_script)
 
-        if script_ref == "py4lo_helper":
+        if lib_ref == "py4lo_helper":
             line_processor.append(
                 """# begin py4lo: init py4lo_helper
 import py4lo_helper
@@ -53,3 +55,20 @@ finally:
     del py4lo_helper  # does not wipe cache, but remove the access.
 # end py4lo: init py4lo_helper""")
         return True
+
+    def _embed(self, lib_path: Path) -> Sequence[SourceScript]:
+        stack = [lib_path]
+        ret = []
+
+        while stack:
+            path = stack.pop()
+            if path.is_dir():
+                stack.extend(lib_path.glob("*.py"))
+            elif path.suffix == "" or path.suffix == ".py":
+                path = path.with_suffix(".py")
+                with path.open('rb') as f:
+                    temp_script = SourceScript(
+                        path, self._lib_dir, False)
+                ret.append(temp_script)
+
+        return ret

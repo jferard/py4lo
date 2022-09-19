@@ -205,7 +205,7 @@ From the py4lo directory:
 
 .. code-block:: bash
 
-   python3 -m pytest --cov-report term-missing --ignore=example --cov=py4lo --cov=lib && python3 -m pytest --cov-report term-missing --ignore=example --ignore=test --ignore=py4lo/__main__.py --cov-append --doctest-modules --cov=lib
+   python3 -m pytest --cov-report term-missing --ignore=examples --cov=py4lo --cov=lib && python3 -m pytest --cov-report term-missing --ignore=examples --ignore=test --ignore=py4lo/__main__.py --cov-append --doctest-modules --cov=lib
 
 
 .. |Build Status| image:: https://app.travis-ci.com/jferard/py4lo.svg?branch=master
