@@ -178,8 +178,8 @@ class _ObjectProvider:
         return self._dispatcher
 
 
-def uno_service(sname: str, args: Optional[List[Any]] = None,
-                ctxt: Optional[UnoContext] = None) -> UnoService:
+def create_uno_service(sname: str, args: Optional[List[Any]] = None,
+                       ctxt: Optional[UnoContext] = None) -> UnoService:
     sm = provider.service_manager
     if ctxt is None:
         return sm.createInstance(sname)
@@ -190,9 +190,15 @@ def uno_service(sname: str, args: Optional[List[Any]] = None,
             return sm.createInstanceWithArgumentsAndContext(sname, args, ctxt)
 
 
-def uno_service_ctxt(sname: str,
-                     args: Optional[List[Any]] = None) -> UnoService:
-    return uno_service(sname, args, provider.ctxt)
+def create_uno_service_ctxt(sname: str,
+                            args: Optional[List[Any]] = None) -> UnoService:
+    return create_uno_service(sname, args, provider.ctxt)
+
+
+# deprecated
+uno_service = create_uno_service
+# deprecated
+uno_service_ctxt = create_uno_service_ctxt
 
 
 def to_iter(oXIndexAccess: UnoObject) -> Iterator[UnoObject]:
@@ -260,11 +266,14 @@ def get_main_cell(oCell: UnoCell) -> UnoCell:
 # STRUCTS
 ##############################################################################
 
-def make_struct(struct_id: str, **kwargs):
+def create_uno_struct(struct_id: str, **kwargs):
     struct = uno.createUnoStruct(struct_id)
     for k, v in kwargs.items():
         struct.__setattr__(k, v)
     return struct
+
+
+make_struct = create_uno_struct
 
 
 def make_pv(name: str, value: Any) -> UnoPropertyValue:
@@ -823,21 +832,21 @@ def set_paper_to_size(oPageStyle: UnoService, size: UnoStruct):
         oPageStyle.ScaleToPagesX = 1
         oPageStyle.ScaleToPagesY = 0
         if size.Width > A4_SMALL:  # too wide for A4
-            style_size = make_struct("com.sun.star.awt.Size",
-                                     Width=A3_SMALL, Height=A3_LARGE)
+            style_size = create_uno_struct("com.sun.star.awt.Size",
+                                           Width=A3_SMALL, Height=A3_LARGE)
         else:
-            style_size = make_struct("com.sun.star.awt.Size",
-                                     Width=A4_SMALL, Height=A4_LARGE)
+            style_size = create_uno_struct("com.sun.star.awt.Size",
+                                           Width=A4_SMALL, Height=A4_LARGE)
     else:  # prefer landscape
         oPageStyle.IsLandscape = True
         oPageStyle.ScaleToPagesX = 0
         oPageStyle.ScaleToPagesY = 1
         if size.Height > A4_SMALL:  # too high for A4
-            style_size = make_struct("com.sun.star.awt.Size",
-                                     Width=A3_LARGE, Height=A3_SMALL)
+            style_size = create_uno_struct("com.sun.star.awt.Size",
+                                           Width=A3_LARGE, Height=A3_SMALL)
         else:
-            style_size = make_struct("com.sun.star.awt.Size",
-                                     Width=A4_LARGE, Height=A4_SMALL)
+            style_size = create_uno_struct("com.sun.star.awt.Size",
+                                           Width=A4_LARGE, Height=A4_SMALL)
     oPageStyle.Size = style_size
 
 
@@ -953,6 +962,7 @@ class DocBuilder:
     """
     Todo: store and then build
     """
+
     def __init__(self, url: NewDocumentUrl, taget_frame_name: Target,
                  search_flags: FrameSearchFlag, pvs: List[UnoPropertyValue]):
         """Create a blank new doc"""
@@ -1162,7 +1172,7 @@ class _Inspector:
 
         if self._oMRI is None:
             try:
-                self._oMRI = uno_service("mytools.Mri")
+                self._oMRI = create_uno_service("mytools.Mri")
             except UnoException:
                 self._ignore_mri = True
                 if fail_on_error:

@@ -47,7 +47,7 @@ class Py4LODialogsTestCase(unittest.TestCase):
         self.assertEqual(3, oModel.Width)
         self.assertEqual(4, oModel.Height)
 
-    @mock.patch("py4lo_dialogs.uno_service")
+    @mock.patch("py4lo_dialogs.create_uno_service")
     def test_get_text_size(self, us):
         # prepare
         oModel = Mock()
@@ -69,14 +69,14 @@ class Py4LODialogsTestCase(unittest.TestCase):
             call.setModel(oModel)
         ], oControl.mock_calls)
 
-    @mock.patch("py4lo_dialogs.uno_service_ctxt")
+    @mock.patch("py4lo_dialogs.create_uno_service_ctxt")
     @mock.patch("py4lo_dialogs.provider")
-    def test_message_box(self, provider, uno_service_ctxt):
+    def test_message_box(self, provider, usc):
         self.maxDiff = None
 
         # prepare
         toolkit = mock.Mock()
-        uno_service_ctxt.return_value = toolkit
+        usc.return_value = toolkit
 
         # play
         message_box("text", "title")
@@ -88,16 +88,16 @@ class Py4LODialogsTestCase(unittest.TestCase):
                                          MessageBoxType.MESSAGEBOX, 1,
                                          'title', 'text'),
             mock.call().createMessageBox().execute()
-        ], uno_service_ctxt.mock_calls)
+        ], usc.mock_calls)
 
-    @mock.patch("py4lo_dialogs.uno_service_ctxt")
+    @mock.patch("py4lo_dialogs.create_uno_service_ctxt")
     @mock.patch("py4lo_dialogs.provider")
-    def test_message_box_parent_win(self, provider, uno_service_ctxt):
+    def test_message_box_parent_win(self, provider, usc):
         self.maxDiff = None
 
         # prepare
         toolkit = mock.Mock()
-        uno_service_ctxt.return_value = toolkit
+        usc.return_value = toolkit
         pw = Mock()
 
         # play
@@ -110,9 +110,9 @@ class Py4LODialogsTestCase(unittest.TestCase):
                                          MessageBoxType.MESSAGEBOX, 1,
                                          'title', 'text'),
             mock.call().createMessageBox().execute()
-        ], uno_service_ctxt.mock_calls)
+        ], usc.mock_calls)
 
-    @mock.patch("py4lo_dialogs.uno_service")
+    @mock.patch("py4lo_dialogs.create_uno_service")
     def test_file_dialog_single(self, us):
         # prepare
         ddir = "baz"
@@ -132,7 +132,7 @@ class Py4LODialogsTestCase(unittest.TestCase):
         ], oPicker.mock_calls)
         self.assertEqual("foo", actual)
 
-    @mock.patch("py4lo_dialogs.uno_service")
+    @mock.patch("py4lo_dialogs.create_uno_service")
     def test_file_dialog_single_no_filter(self, us):
         # prepare
         ddir = "baz"
@@ -152,7 +152,7 @@ class Py4LODialogsTestCase(unittest.TestCase):
         ], oPicker.mock_calls)
         self.assertEqual("foo", actual)
 
-    @mock.patch("py4lo_dialogs.uno_service")
+    @mock.patch("py4lo_dialogs.create_uno_service")
     def test_file_dialog_single_none(self, us):
         # prepare
         ddir = "baz"
@@ -172,7 +172,7 @@ class Py4LODialogsTestCase(unittest.TestCase):
         ], oPicker.mock_calls)
         self.assertIsNone(actual)
 
-    @mock.patch("py4lo_dialogs.uno_service")
+    @mock.patch("py4lo_dialogs.create_uno_service")
     def test_file_dialog_multiple(self, us):
         # prepare
         ddir = "baz"
@@ -193,7 +193,7 @@ class Py4LODialogsTestCase(unittest.TestCase):
         ], oPicker.mock_calls)
         self.assertEqual(["foo", "bar"], actual)
 
-    @mock.patch("py4lo_dialogs.uno_service")
+    @mock.patch("py4lo_dialogs.create_uno_service")
     def test_file_dialog_multiple_empty(self, us):
         # prepare
         ddir = "baz"
@@ -214,7 +214,7 @@ class Py4LODialogsTestCase(unittest.TestCase):
         ], oPicker.mock_calls)
         self.assertEqual([], actual)
 
-    @mock.patch("py4lo_dialogs.uno_service")
+    @mock.patch("py4lo_dialogs.create_uno_service")
     def test_folder_dialog(self, us):
         # prepare
         ddir = "baz"
@@ -233,7 +233,7 @@ class Py4LODialogsTestCase(unittest.TestCase):
         ], oPicker.mock_calls)
         self.assertEqual("d", actual)
 
-    @mock.patch("py4lo_dialogs.uno_service")
+    @mock.patch("py4lo_dialogs.create_uno_service")
     def test_folder_dialog_none(self, us):
         # prepare
         ddir = "baz"
@@ -254,7 +254,7 @@ class Py4LODialogsTestCase(unittest.TestCase):
 
 
 class ProgressExecutorTestCase(unittest.TestCase):
-    @mock.patch("py4lo_dialogs.uno_service")
+    @mock.patch("py4lo_dialogs.create_uno_service")
     def test_simple(self, us):
         # prepare
         oBarModel = Mock()
@@ -302,7 +302,7 @@ class ProgressExecutorTestCase(unittest.TestCase):
         self.assertEqual(10, oBar.Value)
         self.assertEqual("foo", oText.Text)
 
-    @mock.patch("py4lo_dialogs.uno_service")
+    @mock.patch("py4lo_dialogs.create_uno_service")
     def test_build(self, us):
         # prepare
         oBarModel = Mock()
@@ -355,7 +355,7 @@ class ProgressExecutorTestCase(unittest.TestCase):
 
 
 class ConsoleExecutorTestCase(unittest.TestCase):
-    @mock.patch("py4lo_dialogs.uno_service")
+    @mock.patch("py4lo_dialogs.create_uno_service")
     def test_simple(self, us):
         # prepare
         oTextModel = Mock()

@@ -277,7 +277,7 @@ class HelperStructTestCase(unittest.TestCase):
         uno.createUnoStruct.side_effect = [s]
 
         # play
-        actual_s = make_struct("uno.Struct", foo="bar")
+        actual_s = create_uno_struct("uno.Struct", foo="bar")
 
         # verify
         self.assertIs(s, actual_s)
@@ -1115,28 +1115,28 @@ class HelperFormattingTestCase(unittest.TestCase):
             call.StyleFamilies.getByName().getByName('foo')
         ], oDoc.mock_calls)
 
-    @patch("py4lo_helper.make_struct")
+    @patch("py4lo_helper.create_uno_struct")
     @patch("py4lo_helper.get_used_range")
     @patch("py4lo_helper.get_page_style")
     def test_set_paper_1(self, gps, gur, ms):
         self._set_paper(gps, gur, ms, 10 * 1000, 40 * 1000, False, 1, 0, 21000,
                         29700)
 
-    @patch("py4lo_helper.make_struct")
+    @patch("py4lo_helper.create_uno_struct")
     @patch("py4lo_helper.get_used_range")
     @patch("py4lo_helper.get_page_style")
     def test_set_paper_2(self, gps, gur, ms):
         self._set_paper(gps, gur, ms, 40 * 1000, 400 * 1000, False, 1, 0,
                         29700, 42000)
 
-    @patch("py4lo_helper.make_struct")
+    @patch("py4lo_helper.create_uno_struct")
     @patch("py4lo_helper.get_used_range")
     @patch("py4lo_helper.get_page_style")
     def test_set_paper_3(self, gps, gur, ms):
         self._set_paper(gps, gur, ms, 40 * 1000, 10 * 1000, True, 0, 1, 29700,
                         21000)
 
-    @patch("py4lo_helper.make_struct")
+    @patch("py4lo_helper.create_uno_struct")
     @patch("py4lo_helper.get_used_range")
     @patch("py4lo_helper.get_page_style")
     def test_set_paper_4(self, gps, gur, ms):
@@ -1644,15 +1644,15 @@ class HelperMiscTestCase(unittest.TestCase):
         py4lo_helper._inspect = _Inspector(py4lo_helper.provider)
 
     def testUnoService(self):
-        uno_service_ctxt("x")
+        create_uno_service_ctxt("x")
         self.sm.createInstanceWithContext.assert_called_once_with("x",
                                                                   self.ctxt)
 
-        uno_service_ctxt("y", [1, 2, 3])
+        create_uno_service_ctxt("y", [1, 2, 3])
         self.sm.createInstanceWithArgumentsAndContext.assert_called_once_with(
             "y", [1, 2, 3], self.ctxt)
 
-        uno_service("z")
+        create_uno_service("z")
         self.sm.createInstance.assert_called_once_with("z")
 
     def test_read_options(self):
@@ -1838,7 +1838,7 @@ class MiscTestCase(unittest.TestCase):
             self.oSP.mock_calls)
         self.assertTrue(self.inspector._ignore_xray)
 
-    @patch("py4lo_helper.uno_service")
+    @patch("py4lo_helper.create_uno_service")
     def test_mri(self, us):
         # prepare
         obj = Mock()
@@ -1854,7 +1854,7 @@ class MiscTestCase(unittest.TestCase):
         ], oMRI.mock_calls)
         self.assertFalse(self.inspector._ignore_mri)
 
-    @patch("py4lo_helper.uno_service")
+    @patch("py4lo_helper.create_uno_service")
     def test_mri_twice(self, us):
         # prepare
         obj = Mock()
@@ -1872,7 +1872,7 @@ class MiscTestCase(unittest.TestCase):
         ], oMRI.mock_calls)
         self.assertFalse(self.inspector._ignore_mri)
 
-    @patch("py4lo_helper.uno_service")
+    @patch("py4lo_helper.create_uno_service")
     def test_mri_fail(self, us):
         # prepare
         obj = Mock()
@@ -1884,7 +1884,7 @@ class MiscTestCase(unittest.TestCase):
         # verify
         self.assertTrue(self.inspector._ignore_mri)
 
-    @patch("py4lo_helper.uno_service")
+    @patch("py4lo_helper.create_uno_service")
     def test_mri_fail_twice(self, us):
         # prepare
         obj = Mock()
@@ -1897,7 +1897,7 @@ class MiscTestCase(unittest.TestCase):
         # verify
         self.assertTrue(self.inspector._ignore_mri)
 
-    @patch("py4lo_helper.uno_service")
+    @patch("py4lo_helper.create_uno_service")
     def test_mri_fail_err(self, us):
         # prepare
         obj = Mock()

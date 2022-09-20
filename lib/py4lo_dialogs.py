@@ -21,7 +21,7 @@ from typing import Any, Callable, Optional, List, Union, NamedTuple
 
 from collections import namedtuple
 
-from py4lo_helper import (uno_service_ctxt, provider, uno_service)
+from py4lo_helper import (create_uno_service_ctxt, provider, create_uno_service)
 from py4lo_typing import UnoControlModel, UnoControl, StrPath
 
 try:
@@ -137,7 +137,7 @@ def get_text_size(oDialogModel: UnoControlModel, text: str) -> Size:
     @param text: the text
     @return: the text size
     """
-    oTextControl = uno_service(Control.FixedText)
+    oTextControl = create_uno_service(Control.FixedText)
     oTextModel = oDialogModel.createInstance(ControlModel.FixedText)
     oTextModel.Label = text
     oTextControl.setModel(oTextModel)
@@ -152,7 +152,7 @@ def message_box(msg_text: str, msg_title: str,
     """Create a message box"""
     # from https://forum.openoffice.org/fr/forum/viewtopic.php?f=15&t=47603#
     # (thanks Bernard !)
-    toolkit = uno_service_ctxt("com.sun.star.awt.Toolkit")
+    toolkit = create_uno_service_ctxt("com.sun.star.awt.Toolkit")
     if parent_win is None:
         parent_win = provider.parent_win
     mb = toolkit.createMessageBox(parent_win, msg_type, msg_buttons, msg_title,
@@ -170,7 +170,7 @@ def file_dialog(title: str, filters: Optional[List[FileFilter]] = None,
     Open a file dialog
     @return: if single, url or None, else a list of urls
     """
-    oFilePicker = uno_service("com.sun.star.ui.dialogs.FilePicker")
+    oFilePicker = create_uno_service("com.sun.star.ui.dialogs.FilePicker")
     if filters is not None:
         for flt in filters:
             oFilePicker.appendFilter(flt.title, flt.filter)
@@ -198,7 +198,7 @@ def folder_dialog(title: str,
     Open a file dialog
     @return: url or None
     """
-    oFolder = uno_service("com.sun.star.ui.dialogs.FolderPicker")
+    oFolder = create_uno_service("com.sun.star.ui.dialogs.FolderPicker")
     oFolder.Title = title
     oFolder.DisplayDirectory = str(display_dir)
     if oFolder.execute() == ExecutableDialogResults.OK:
@@ -214,12 +214,12 @@ Progress = namedtuple('Progress', ['min', 'max'])
 
 class ProgressExecutorBuilder:
     def __init__(self):
-        self._oDialogModel = uno_service(ControlModel.Dialog)
+        self._oDialogModel = create_uno_service(ControlModel.Dialog)
         self._oBarModel = self._oDialogModel.createInstance(
             ControlModel.ProgressBar)
         self._oTextModel = self._oDialogModel.createInstance(
             ControlModel.FixedText)
-        self._oDialog = uno_service(Control.Dialog)
+        self._oDialog = create_uno_service(Control.Dialog)
         self.title("Please wait...")
         self._dialog_rectangle = Rectangle(150, 150, 150, 30)
         self._bar_dimensions = Size(140, 12)
@@ -363,7 +363,7 @@ class ProgressExecutor:
         Execute the function with a progress bar
         @param func: a function that takes a `ProgressDialog` object.
         """
-        toolkit = uno_service("com.sun.star.awt.Toolkit")
+        toolkit = create_uno_service("com.sun.star.awt.Toolkit")
 
         def aux():
             self._oDialog.setVisible(True)
@@ -388,9 +388,9 @@ class ProgressExecutor:
 
 class ConsoleExecutorBuilder:
     def __init__(self):
-        self._oDialogModel = uno_service(ControlModel.Dialog)
+        self._oDialogModel = create_uno_service(ControlModel.Dialog)
         self._oDialogModel.Closeable = True
-        self._oDialog = uno_service(Control.Dialog)
+        self._oDialog = create_uno_service(Control.Dialog)
         self._oTextModel = self._oDialogModel.createInstance(ControlModel.Edit)
         self._oTextModel.ReadOnly = True
         self._oTextModel.MultiLine = True
@@ -473,7 +473,7 @@ class ConsoleExecutor:
         Execute the function with a progress bar
         @param func: a function that takes a `ProgressDialog` object.
         """
-        toolkit = uno_service("com.sun.star.awt.Toolkit")
+        toolkit = create_uno_service("com.sun.star.awt.Toolkit")
 
         def aux():
             self._oDialog.setVisible(True)
