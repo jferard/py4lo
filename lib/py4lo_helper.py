@@ -25,6 +25,12 @@ from pathlib import Path
 from typing import (Any, Optional, List, cast, Callable, Mapping, Tuple,
                     Iterator, Union, Iterable)
 
+try:
+    import unohelper
+    from com.sun.star.datatransfer import XTransferable
+except ImportError:
+    XTransferable = None
+
 from py4lo_commons import uno_path_to_url
 from py4lo_typing import (UnoSpreadsheet, UnoController, UnoContext, UnoService,
                           UnoSheet, UnoRangeAddress, UnoRange, UnoCell,
@@ -1182,3 +1188,46 @@ class _Inspector:
             return
 
         self._oMRI.inspect(obj)
+
+
+TEXT_FLAVOR = ("text/plain;charset=utf-16", "Unicode-text")
+
+
+def copy_to_clipboard(value: Any, flavor: Tuple[str, str] = TEXT_FLAVOR):
+    """See https://forum.openoffice.org/en/forum/viewtopic.php?t=93562"""
+    oClipboard = create_uno_service(
+        "com.sun.star.datatransfer.clipboard.SystemClipboard")
+    oClipboard.setContents(Transferable(value, flavor), None)
+
+
+def get_from_clipboard(flavor: Tuple[str, str] = TEXT_FLAVOR) -> Optional[Any]:
+    """See https://forum.openoffice.org/en/forum/viewtopic.php?t=93562"""
+    oClipboard = create_uno_service(
+        "com.sun.star.datatransfer.clipboard.SystemClipboard")
+    oContents = oClipboard.getContents()
+    oTypes = oContents.getTransferDataFlavors()
+
+    for oType in oTypes:
+        if oType.MimeType == flavor[0]:
+            return oContents.getTransferData(oType)
+
+    return None
+
+
+class Transferable(unohelper.Base, XTransferable):
+    def __init__(self, value: Any, flavor: Tuple[str, str]):
+        self._value = value
+        self._flavor = flavor
+
+    def getTransferData(self, aFlavor: UnoObject):
+        if aFlavor.MimeType == self._flavor[0]:
+            return self._value
+
+    def getTransferDataFlavors(self):
+        flavor = create_uno_struct("com.sun.star.datatransfer.DataFlavor",
+                                   MimeType=self._flavor[0],
+                                   HumanPresentableName=self._flavor[1])
+        return [flavor]
+
+    def isDataFlavorSupported(self, aFlavor: UnoObject) -> bool:
+        return aFlavor.MimeType == self._flavor[0]
