@@ -79,7 +79,7 @@ class Py4LODialogsTestCase(unittest.TestCase):
         usc.return_value = toolkit
 
         # play
-        message_box("text", "title")
+        message_box("title", "text")
 
         # verify
         self.assertEqual([
@@ -101,7 +101,7 @@ class Py4LODialogsTestCase(unittest.TestCase):
         pw = Mock()
 
         # play
-        message_box("text", "title", parent_win=pw)
+        message_box("title", "text", parent_win=pw)
 
         # verify
         self.assertEqual([

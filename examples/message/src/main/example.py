@@ -53,7 +53,7 @@ def message_example(*_args):
         "Current sheet name is: {}".format(oSheet.Name),
     ]
 
-    message_box("\n".join(lines), "py4lo")
+    message_box("py4lo", "\n".join(lines))
 
 
 def xray_example(*_args):
@@ -85,7 +85,7 @@ def reader_example(*_args):
                     restval="x", restkey="t",
                     type_cell=TYPE_ALL)
     for row in r:
-        message_box("{}: {}".format(r.line_num, row), "py4lo")
+        message_box("py4lo", "{}: {}".format(r.line_num, row))
 
 
 def export_example(*_args):
@@ -119,8 +119,8 @@ def progress_example(*_args):
 
 
 def after_progress(*_args):
-    message_box("The return value was: {}".format(progress_executor.response),
-                "Title")
+    message_box("Title",
+                "The return value was: {}".format(progress_executor.response))
 
 
 console_executor = None
