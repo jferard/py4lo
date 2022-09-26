@@ -130,7 +130,7 @@ class Commons:
     def init_logger(
             self, file: Optional[Union[StrPath, TextIO]] = None, mode="a",
             level=logging.DEBUG,
-            fmt='%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
+            fmt: str='%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
         if self._logger is not None:
             raise Exception("use init_logger ONCE")
 
@@ -154,7 +154,7 @@ class Commons:
     def _get_handler(file: Union[StrPath, TextIO], mode: str, level: int,
                      fmt: str):
         if isinstance(file, (str, Path)):
-            fh = logging.FileHandler(file, mode)
+            fh = logging.FileHandler(str(file), mode)
         else:
             fh = logging.StreamHandler(file)
         formatter = logging.Formatter(fmt)

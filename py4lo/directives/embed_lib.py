@@ -37,7 +37,7 @@ class EmbedLib(Directive):
 
     def execute(self, processor: "DirectiveProcessor",
                 line_processor: "DirectiveLineProcessor", args):
-        lib_ref = Path(args[0])
+        lib_ref = args[0]
         lib_path = self._lib_dir.joinpath(lib_ref)
         source_scripts = self._embed(lib_path)
         for source_script in source_scripts:

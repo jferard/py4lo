@@ -38,7 +38,7 @@ class EmbedScript(Directive):
 
     def execute(self, processor: "DirectiveProcessor",
                 _line_processor: "DirectiveLineProcessor", args: List[str]):
-        script_ref = Path(args[0])
+        script_ref = args[0]
         script_path = self._opt_dir.joinpath(script_ref)
         temp_scripts = self._embed(script_path)
         for temp_script in temp_scripts:
