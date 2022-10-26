@@ -23,13 +23,7 @@
 from enum import Enum
 from pathlib import Path
 from typing import (Any, Optional, List, cast, Callable, Mapping, Tuple,
-                    Iterator, Union, Iterable)
-
-try:
-    import unohelper
-    from com.sun.star.datatransfer import XTransferable
-except ImportError:
-    XTransferable = None
+                    Iterator, Union, Iterable, Collection)
 
 from py4lo_commons import uno_path_to_url
 from py4lo_typing import (UnoSpreadsheet, UnoController, UnoContext, UnoService,
@@ -39,36 +33,48 @@ from py4lo_typing import (UnoSpreadsheet, UnoController, UnoContext, UnoService,
                           UnoColumn, UnoStruct, UnoEnum, UnoRow, DATA_VALUE)
 
 try:
+    import unohelper
+    # noinspection PyUnresolvedReferences
     import uno
+
+    from com.sun.star.datatransfer import XTransferable
 
 
     class FrameSearchFlag:
+        # noinspection PyUnresolvedReferences
         from com.sun.star.frame.FrameSearchFlag import (
             AUTO, PARENT, SELF, CHILDREN, CREATE, SIBLINGS, TASKS, ALL, GLOBAL)
 
 
     class ConditionOperator:
+        # noinspection PyUnresolvedReferences
         from com.sun.star.sheet.ConditionOperator import (FORMULA, )
 
 
     class FontWeight:
+        # noinspection PyUnresolvedReferences
         from com.sun.star.awt.FontWeight import (BOLD, )
 
 
     class BorderLineStyle:
+        # noinspection PyUnresolvedReferences
         from com.sun.star.table.BorderLineStyle import (SOLID, )
 
 
     class ValidationType:
+        # noinspection PyUnresolvedReferences
         from com.sun.star.sheet.ValidationType import (LIST, )
 
 
     class TableValidationVisibility:
+        # noinspection PyUnresolvedReferences
         from com.sun.star.sheet.TableValidationVisibility import (
             SORTEDASCENDING, UNSORTED)
 
 
+    # noinspection PyUnresolvedReferences
     from com.sun.star.script.provider import ScriptFrameworkErrorException
+    # noinspection PyUnresolvedReferences
     from com.sun.star.uno import (RuntimeException as UnoRuntimeException,
                                   Exception as UnoException)
 
@@ -79,6 +85,14 @@ except ImportError:
 
     class BorderLineStyle:
         SOLID = None
+
+
+    class unohelper:
+        class Base:
+            pass
+
+
+    XTransferable = None
 
 ###############################################################################
 # BASE
@@ -337,7 +351,7 @@ def make_locale(language: str = "", region: str = "",
 
     @param region: ISO 3166 Country Code.
     @param language: ISO 639 Language Code.
-    @param variant: BCP 47
+    @param subtags: BCP 47
     @return: the locale
     """
     locale = uno.createUnoStruct('com.sun.star.lang.Locale')
@@ -655,14 +669,6 @@ def quote_element(value: Any) -> str:
     if isinstance(value, str):
         value = value.replace('"', '\\"')
     elif isinstance(value, float):
-        # 	oDoc = ThisComponent
-        # 	oCell = ThisComponent.Sheets(0).getCellByPosition(0, 0)
-        # 	oNF = oDoc.getNumberFormats()
-        #     Dim aLocale as New com.sun.star.lang.Locale
-        #     n = oNF.getStandardFormat(com.sun.star.util.NumberFormat.NUMBER, aLocale)
-        #     nf = CreateUnoService("com.sun.star.util.NumberFormatter")
-        #     nf.attachNumberFormatsSupplier(oDoc)
-        #     nf.convertNumberToString(n, 1.5)
         pass  # if locale: replace(".", ",")
     # elif isinstance(value, bool):
     #     pass  # if locale
@@ -743,7 +749,6 @@ def create_filter(oRange: UnoRange):
     """
     Create a new filter
     @param oRange: the range to filter
-    @param oDispathHelper: the dispatch helper if you have an instance.
     """
     oDoc = parent_doc(oRange)
     oController = oDoc.CurrentController
@@ -753,6 +758,17 @@ def create_filter(oRange: UnoRange):
     # unselect
     oRanges = oDoc.createInstance("com.sun.star.sheet.SheetCellRanges")
     oController.select(oRanges)
+
+
+def remove_filter(oRange: UnoRange):
+    """
+    Remove the existing filter on a range
+    @param oRange: The range
+    """
+    oFilterDescriptor = oRange.createFilterDescriptor(
+        True)  # True means "empty"
+    oRange.filter(oFilterDescriptor)
+    create_filter(oRange)
 
 
 def row_as_header(oHeaderRow: UnoRow):
@@ -949,7 +965,7 @@ def doc_builder(
         url: NewDocumentUrl = NewDocumentUrl.Calc,
         taget_frame_name: Target = Target.BLANK,
         search_flags: FrameSearchFlag = FrameSearchFlag.AUTO,
-        pvs: Tuple[UnoPropertyValue] = None
+        pvs: Collection[UnoPropertyValue] = None
 ) -> "DocBuilder":
     if pvs is None:
         pvs = tuple()
@@ -970,7 +986,8 @@ class DocBuilder:
     """
 
     def __init__(self, url: NewDocumentUrl, taget_frame_name: Target,
-                 search_flags: FrameSearchFlag, pvs: List[UnoPropertyValue]):
+                 search_flags: FrameSearchFlag,
+                 pvs: Collection[UnoPropertyValue]):
         """Create a blank new doc"""
         self._oDoc = provider.desktop.loadComponentFromURL(
             url, taget_frame_name, search_flags, pvs)
@@ -987,9 +1004,9 @@ class DocBuilder:
         it = iter(sheet_names)
         s = 0
 
+        initial_count = oSheets.Count
         try:
             # rename
-            initial_count = oSheets.getCount()
             while s < initial_count:
                 oSheet = oSheets.getByIndex(s)
                 oSheet.Name = next(it)  # may raise a StopIteration
