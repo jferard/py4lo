@@ -25,22 +25,27 @@ from py4lo_helper import (create_uno_service_ctxt, provider, create_uno_service)
 from py4lo_typing import UnoControlModel, UnoControl, StrPath
 
 try:
+    # noinspection PyUnresolvedReferences
     import uno
 
 
     class MessageBoxType:
+        # noinspection PyUnresolvedReferences
         from com.sun.star.awt.MessageBoxType import (ERRORBOX, MESSAGEBOX)
 
 
     class MessageBoxButtons:
+        # noinspection PyUnresolvedReferences
         from com.sun.star.awt.MessageBoxButtons import (BUTTONS_OK, )
 
 
     class FontWeight:
+        # noinspection PyUnresolvedReferences
         from com.sun.star.awt.FontWeight import (BOLD, )
 
 
     class ExecutableDialogResults:
+        # noinspection PyUnresolvedReferences
         from com.sun.star.ui.dialogs.ExecutableDialogResults import (OK, CANCEL)
 except ModuleNotFoundError:
     class MessageBoxType:
@@ -438,9 +443,10 @@ class ConsoleExecutorBuilder:
         self._oDialog.setModel(self._oDialogModel)
         self._oDialogModel.insertByName("text", self._oTextModel)
         _set_rectangle(self._oDialogModel, self._console_rectangle)
-        _set_rectangle(self._oTextModel, Rectangle(MARGIN, MARGIN,
-                                                   self._console_rectangle.w - MARGIN * 2,
-                                                   self._console_rectangle.h - MARGIN * 2))
+        _set_rectangle(self._oTextModel, Rectangle(
+            MARGIN, MARGIN,
+            self._console_rectangle.w - MARGIN * 2,
+            self._console_rectangle.h - MARGIN * 2))
         return ConsoleExecutor(self._oDialog, self._autoclose,
                                self._oDialog.getControl("text"))
 
