@@ -108,6 +108,7 @@ class Commons:
     @staticmethod
     def create(xsc: Optional[UnoXScriptContext] = None):
         if xsc is None:
+            # noinspection PyUnresolvedReferences
             xsc = Commons.xsc
         doc = xsc.getDocument()
         return Commons(doc.URL)
@@ -130,7 +131,7 @@ class Commons:
     def init_logger(
             self, file: Optional[Union[StrPath, TextIO]] = None, mode="a",
             level=logging.DEBUG,
-            fmt: str='%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
+            fmt: str = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
         if self._logger is not None:
             raise Exception("use init_logger ONCE")
 
@@ -226,8 +227,9 @@ def create_bus() -> Bus:
 
 def read_config(filenames: Union[StrPath, Iterable[StrPath]],
                 args: Optional[Mapping] = None,
-                apply: Callable[[configparser.ConfigParser], None] = lambda
-                        config: None,
+                apply: Callable[
+                    [configparser.ConfigParser], None
+                ] = lambda config: None,
                 encoding: str = 'utf-8') -> configparser.ConfigParser:
     """
     Read a config. See https://docs.python.org/3.7/library/configparser.html
@@ -237,7 +239,8 @@ def read_config(filenames: Union[StrPath, Iterable[StrPath]],
     :param apply: function to modifiy the config
     :param encoding: the encoding of the file
 
-    Example: `config = commons.read_config(commons.join_current_dir("pcrp.ini"))`
+    Example: `config = commons.read_config(
+            commons.join_current_dir("pcrp.ini"))`
     """
     config = _get_config(args)
     apply(config)
@@ -287,7 +290,7 @@ def date_to_float(a_date: Union[dt.date, dt.datetime, dt.time]) -> float:
             hours=a_date.hour, minutes=a_date.minute, seconds=a_date.second,
             microseconds=a_date.microsecond)
     else:
-        raise ValueError()
+        raise ValueError(a_date)
     return time_delta.total_seconds() / 86400
 
 
