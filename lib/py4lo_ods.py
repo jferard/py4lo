@@ -34,8 +34,11 @@ OFFICE_NS_DICT = {
 
 
 class NameSpace:
-    def __init__(self, ns_dict: Dict[str, str] = OFFICE_NS_DICT):
-        self._ns_dict = ns_dict
+    def __init__(self, ns_dict: Optional[Dict[str, str]] = None):
+        if ns_dict is None:
+            self._ns_dict = OFFICE_NS_DICT
+        else:
+            self._ns_dict = ns_dict
 
     def findall(self, element: ET.Element, path: str) -> List[ET.Element]:
         return element.findall(path, self._ns_dict)
@@ -70,8 +73,8 @@ class OdsTables:
         self._ns = ns
 
     def __iter__(self) -> Iterator[ET.Element]:
-        tables = self._ns.findall(self._root,
-                                  "./office:body/office:spreadsheet/table:table")
+        tables = self._ns.findall(
+            self._root, "./office:body/office:spreadsheet/table:table")
         tables = self._sort_func(tables)
         for table in tables:
             yield table
@@ -88,7 +91,8 @@ class OdsTablesBuilder:
         return self
 
     def sort_func_creator(self, sort_func_creator: Callable[
-        [zipfile.ZipFile, NameSpace], SortFunc]):
+        [zipfile.ZipFile, NameSpace], SortFunc
+    ]):
         self._sort_func_creator = sort_func_creator
 
     def build(self) -> "OdsTables":
@@ -205,8 +209,8 @@ class OdsRows:
         cells = self._trim_list(cells)
         return cells
 
-    def __getitem__(self, index: Union[int, slice]) -> Union[
-        List[str], List[List[str]]]:
+    def __getitem__(self, index: Union[int, slice]
+                    ) -> Union[List[str], List[List[str]]]:
         if isinstance(index, int):
             if index >= 0:
                 for i, row in enumerate(self):
@@ -223,12 +227,12 @@ class OdsRows:
         else:
             raise TypeError("index must be int or slice")
 
-    def _trim_list(self, l: List[str]) -> List[str]:
-        if not l:
-            return l
-        for i in range(len(l) - 1, -1, -1):
-            if len(l[i]):
-                return l[:i + 1]
+    def _trim_list(self, lis: List[str]) -> List[str]:
+        if not lis:
+            return lis
+        for i in range(len(lis) - 1, -1, -1):
+            if len(lis[i]):
+                return lis[:i + 1]
         return []
 
 
