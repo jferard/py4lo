@@ -18,21 +18,9 @@
 import csv
 import encodings
 import locale
-import os
 import sys
 from datetime import (date, datetime, time)
 from enum import IntEnum, Enum
-
-import uno
-from com.sun.star.lang import Locale
-
-import py4lo_helper
-
-
-class NumberFormat:
-    from com.sun.star.util.NumberFormat import (DATE, TIME, DATETIME, LOGICAL)
-
-
 from typing import (Any, Callable, List, Iterator, Optional, Mapping, Tuple,
                     Iterable)
 
@@ -42,6 +30,19 @@ from py4lo_helper import (provider as pr, make_pvs, parent_doc, get_cell_type,
                           get_used_range_address, Target,
                           FrameSearchFlag)
 from py4lo_typing import UnoCell, UnoSheet, UnoSpreadsheet, StrPath, UnoService
+
+
+try:
+    # noinspection PyUnresolvedReferences
+    from com.sun.star.lang import Locale
+
+
+    class NumberFormat:
+        # noinspection PyUnresolvedReferences
+        from com.sun.star.util.NumberFormat import (DATE, TIME, DATETIME, LOGICAL)
+except ImportError:
+    pass
+
 
 
 class CellTyping(Enum):
@@ -177,7 +178,8 @@ class dict_reader:
                  fieldnames: Optional[Tuple[str, ...]] = None,
                  restkey: Optional[str] = None,
                  restval: Optional[Any] = None,
-                 cell_typing=CellTyping.Minimal, oFormats=None, read_cell=None):
+                 cell_typing=CellTyping.Minimal, oFormats=None,
+                 read_cell=None):
         self._reader = reader(oSheet, cell_typing, oFormats, read_cell)
         if fieldnames is None:
             self.fieldnames = next(self._reader)
@@ -812,7 +814,8 @@ def _create_import_filter_options(
     quoting = "true" if quoted_field_as_text else "false"
     detect = "true" if detect_special_numbers else "false"
     tokens = _base_filter_tokens(
-        delimiter, quotechar, encoding, language_code, first_line, format_by_idx
+        delimiter, quotechar, encoding, language_code, first_line,
+        format_by_idx
     ) + [quoting, detect]
     return ",".join(tokens)
 
@@ -919,6 +922,7 @@ def _create_export_filter_options(
     store_as_text = "true" if store_numeric_cells_as_text else "false"
     save_as_shown = "true" if save_cell_contents_as_shown else "false"
     tokens = _base_filter_tokens(
-        delimiter, quotechar, encoding, language_code, first_line, format_by_idx
+        delimiter, quotechar, encoding, language_code, first_line,
+        format_by_idx
     ) + [store_as_text, store_as_text, save_as_shown]
     return ",".join(tokens)
