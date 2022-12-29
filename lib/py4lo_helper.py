@@ -1093,7 +1093,7 @@ class DocBuilder:
 
     def trunc_to_count(self, final_sheet_count: int) -> "DocBuilder":
         oSheets = self._oDoc.Sheets
-        while final_sheet_count < oSheets.getCount():
+        while final_sheet_count < oSheets.Count:
             oSheet = oSheets.getByIndex(final_sheet_count)
             oSheets.removeByName(oSheet.Name)
 

@@ -159,7 +159,7 @@ class HelperBaseTestCase(unittest.TestCase):
     def test_to_iter(self):
         # prepare
         index_access = Mock()
-        index_access.getCount.side_effect = [3]
+        index_access.Count = 3
         index_access.getByIndex.side_effect = [1, 4, 9]
 
         # play
@@ -1333,8 +1333,7 @@ class HelperOpenTestCase(unittest.TestCase):
     def test_doc_builder_sheet_names_two(self):
         # prepare
         sheets = [Mock() for _ in range(3)]
-        oSheets = Mock()
-        oSheets.getCount.side_effect = [3]
+        oSheets = Mock(Count=3)
         oSheets.getByIndex.side_effect = lambda i: sheets[i]
         oDoc = Mock(Sheets=oSheets)
         py4lo_helper.provider.desktop.loadComponentFromURL.side_effect = [oDoc]
@@ -1351,7 +1350,6 @@ class HelperOpenTestCase(unittest.TestCase):
         ], py4lo_helper.provider.desktop.mock_calls)
         self.assertEqual([
             call.lockControllers(),
-            call.Sheets.getCount(),
             call.Sheets.getByIndex(0),
             call.Sheets.getByIndex(1),
             call.Sheets.getByIndex(2),
@@ -1365,8 +1363,8 @@ class HelperOpenTestCase(unittest.TestCase):
         # prepare
         sheets = [Mock() for _ in range(3)]
         sheets[2].Name = "foo"
-        oSheets = Mock()
-        oSheets.getCount.side_effect = [3, 3, 2]
+        oSheets = MagicMock()
+        type(oSheets).Count = PropertyMock(side_effect=[3, 3, 2])
         oSheets.getByIndex.side_effect = lambda i: sheets[i]
         oDoc = Mock(Sheets=oSheets)
         py4lo_helper.provider.desktop.loadComponentFromURL.side_effect = [oDoc]
@@ -1383,14 +1381,11 @@ class HelperOpenTestCase(unittest.TestCase):
         ], py4lo_helper.provider.desktop.mock_calls)
         self.assertEqual([
             call.lockControllers(),
-            call.Sheets.getCount(),
             call.Sheets.getByIndex(0),
             call.Sheets.getByIndex(1),
             call.Sheets.getByIndex(2),
-            call.Sheets.getCount(),
             call.Sheets.getByIndex(2),
             call.Sheets.removeByName('foo'),
-            call.Sheets.getCount(),
             call.unlockControllers()
         ], oDoc.mock_calls)
         self.assertEqual('a', sheets[0].Name)
@@ -1400,8 +1395,7 @@ class HelperOpenTestCase(unittest.TestCase):
     def test_doc_builder_sheet_names_three(self):
         # prepare
         sheets = [Mock() for _ in range(3)]
-        oSheets = Mock()
-        oSheets.getCount.side_effect = [3]
+        oSheets = Mock(Count=3)
         oSheets.getByIndex.side_effect = lambda i: sheets[i]
         oDoc = Mock(Sheets=oSheets)
         py4lo_helper.provider.desktop.loadComponentFromURL.side_effect = [oDoc]
@@ -1418,7 +1412,6 @@ class HelperOpenTestCase(unittest.TestCase):
         ], py4lo_helper.provider.desktop.mock_calls)
         self.assertEqual([
             call.lockControllers(),
-            call.Sheets.getCount(),
             call.Sheets.getByIndex(0),
             call.Sheets.getByIndex(1),
             call.Sheets.getByIndex(2),
@@ -1431,8 +1424,7 @@ class HelperOpenTestCase(unittest.TestCase):
     def test_doc_builder_sheet_names_four(self):
         # prepare
         sheets = [Mock() for _ in range(3)]
-        oSheets = Mock()
-        oSheets.getCount.side_effect = [3]
+        oSheets = Mock(Count=3)
         oSheets.getByIndex.side_effect = lambda i: sheets[i]
         oDoc = Mock(Sheets=oSheets)
         py4lo_helper.provider.desktop.loadComponentFromURL.side_effect = [oDoc]
@@ -1448,7 +1440,6 @@ class HelperOpenTestCase(unittest.TestCase):
         ], py4lo_helper.provider.desktop.mock_calls)
         self.assertEqual([
             call.lockControllers(),
-            call.Sheets.getCount(),
             call.Sheets.getByIndex(0),
             call.Sheets.getByIndex(1),
             call.Sheets.getByIndex(2),
@@ -1462,15 +1453,16 @@ class HelperOpenTestCase(unittest.TestCase):
     def test_doc_builder_apply(self):
         # prepare
         sheets = [Mock() for _ in range(3)]
-        oSheets = Mock()
-        oSheets.getCount.side_effect = [3]
+        oSheets = Mock(Count=3)
         oSheets.getByIndex.side_effect = lambda i: sheets[i]
         oDoc = Mock(Sheets=oSheets)
         py4lo_helper.provider.desktop.loadComponentFromURL.side_effect = [oDoc]
 
         # play
         d = doc_builder(NewDocumentUrl.Calc)
+
         def func(oSheet): oSheet.app = 0
+
         d.apply_func_to_sheets(func)
         d.build()
 
@@ -1480,7 +1472,6 @@ class HelperOpenTestCase(unittest.TestCase):
         ], py4lo_helper.provider.desktop.mock_calls)
         self.assertEqual([
             call.lockControllers(),
-            call.Sheets.getCount(),
             call.Sheets.getByIndex(0),
             call.Sheets.getByIndex(1),
             call.Sheets.getByIndex(2),
@@ -1493,16 +1484,18 @@ class HelperOpenTestCase(unittest.TestCase):
     def test_doc_builder_apply_list(self):
         # prepare
         sheets = [Mock(app=None) for _ in range(3)]
-        oSheets = Mock()
-        oSheets.getCount.side_effect = [3]
+        oSheets = Mock(Count=3)
         oSheets.getByIndex.side_effect = lambda i: sheets[i]
         oDoc = Mock(Sheets=oSheets)
         py4lo_helper.provider.desktop.loadComponentFromURL.side_effect = [oDoc]
 
         # play
         d = doc_builder(NewDocumentUrl.Calc)
+
         def func1(oSheet): oSheet.app = 0
+
         def func2(oSheet): oSheet.app = 1
+
         d.apply_func_list_to_sheets([func1, func2])
         d.build()
 
@@ -1512,7 +1505,6 @@ class HelperOpenTestCase(unittest.TestCase):
         ], py4lo_helper.provider.desktop.mock_calls)
         self.assertEqual([
             call.lockControllers(),
-            call.Sheets.getCount(),
             call.Sheets.getByIndex(0),
             call.Sheets.getByIndex(1),
             call.unlockControllers()
@@ -1535,7 +1527,9 @@ class HelperOpenTestCase(unittest.TestCase):
 
         # play
         d = doc_builder(NewDocumentUrl.Calc)
+
         def func(oSheet): oSheet.app = 0
+
         d.duplicate_base_sheet(func, list("abc"))
         d.build()
 
@@ -1602,7 +1596,9 @@ class HelperOpenTestCase(unittest.TestCase):
 
         # play
         d = doc_builder(NewDocumentUrl.Calc)
+
         def func(oSheet): oSheet.app = 0
+
         d.make_base_sheet(func)
         d.build()
 
@@ -1621,6 +1617,7 @@ class HelperOpenTestCase(unittest.TestCase):
         self.assertEqual(0, sheets[0].app)
         self.assertNotEqual(0, sheets[1].app)
         self.assertNotEqual(0, sheets[2].app)
+
 
 ##########################################################################
 # MISC
