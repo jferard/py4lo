@@ -131,7 +131,7 @@ class Commons:
     def init_logger(
             self, file: Optional[Union[StrPath, TextIO]] = None, mode="a",
             level=logging.DEBUG,
-            fmt: str = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
+            fmt='%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
         if self._logger is not None:
             raise Exception("use init_logger ONCE")
 

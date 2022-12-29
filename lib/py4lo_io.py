@@ -36,7 +36,6 @@ try:
     # noinspection PyUnresolvedReferences
     from com.sun.star.lang import Locale
 
-
     class NumberFormat:
         # noinspection PyUnresolvedReferences
         from com.sun.star.util.NumberFormat import (DATE, TIME, DATETIME, LOGICAL)
