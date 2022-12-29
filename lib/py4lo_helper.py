@@ -26,26 +26,50 @@ from typing import (Any, Optional, List, cast, Callable, Mapping, Tuple,
                     Iterator, Union, Iterable, Collection)
 
 from py4lo_commons import uno_path_to_url
-from py4lo_typing import (UnoSpreadsheet, UnoController, UnoContext, UnoService,
-                          UnoSheet, UnoRangeAddress, UnoRange, UnoCell,
-                          UnoObject, DATA_ARRAY, UnoCellAddress,
+from py4lo_typing import (UnoSpreadsheet, UnoController, UnoContext,
+                          UnoService, UnoSheet, UnoRangeAddress, UnoRange,
+                          UnoCell, UnoObject, DATA_ARRAY, UnoCellAddress,
                           UnoPropertyValue, DATA_ROW, UnoXScriptContext,
-                          UnoColumn, UnoStruct, UnoEnum, UnoRow, DATA_VALUE)
+                          UnoColumn, UnoStruct, UnoEnum, UnoRow, DATA_VALUE,
+                          UnoPropertyValues)
 
 try:
     import unohelper
     # noinspection PyUnresolvedReferences
+except ImportError:
+    class unohelper:
+        class Base:
+            pass
+
+try:
     import uno
+except ImportError:
+    uno = None
 
+try:
     from com.sun.star.datatransfer import XTransferable
+except ImportError:
+    XTransferable = None
 
-
+try:
     class FrameSearchFlag:
         # noinspection PyUnresolvedReferences
         from com.sun.star.frame.FrameSearchFlag import (
             AUTO, PARENT, SELF, CHILDREN, CREATE, SIBLINGS, TASKS, ALL, GLOBAL)
 
 
+    class BorderLineStyle:
+        # noinspection PyUnresolvedReferences
+        from com.sun.star.table.BorderLineStyle import (SOLID, )
+except ImportError:
+    class FrameSearchFlag:
+        AUTO = None
+
+
+    class BorderLineStyle:
+        SOLID = None
+
+try:
     class ConditionOperator:
         # noinspection PyUnresolvedReferences
         from com.sun.star.sheet.ConditionOperator import (FORMULA, )
@@ -54,11 +78,6 @@ try:
     class FontWeight:
         # noinspection PyUnresolvedReferences
         from com.sun.star.awt.FontWeight import (BOLD, )
-
-
-    class BorderLineStyle:
-        # noinspection PyUnresolvedReferences
-        from com.sun.star.table.BorderLineStyle import (SOLID, )
 
 
     class ValidationType:
@@ -79,20 +98,7 @@ try:
                                   Exception as UnoException)
 
 except ImportError:
-    class FrameSearchFlag:
-        AUTO = None
-
-
-    class BorderLineStyle:
-        SOLID = None
-
-
-    class unohelper:
-        class Base:
-            pass
-
-
-    XTransferable = None
+    pass
 
 ###############################################################################
 # BASE
@@ -222,12 +228,12 @@ uno_service_ctxt = create_uno_service_ctxt
 
 
 def to_iter(oXIndexAccess: UnoObject) -> Iterator[UnoObject]:
-    for i in range(oXIndexAccess.getCount()):
+    for i in range(oXIndexAccess.Count):
         yield oXIndexAccess.getByIndex(i)
 
 
 def to_enumerate(oXIndexAccess: UnoObject) -> Iterator[Tuple[int, UnoObject]]:
-    for i in range(oXIndexAccess.getCount()):
+    for i in range(oXIndexAccess.Count):
         yield i, oXIndexAccess.getByIndex(i)
 
 
@@ -236,6 +242,21 @@ def to_dict(oXNameAccess: UnoObject) -> Mapping[str, UnoObject]:
         name: oXNameAccess.getByName(name)
         for name in oXNameAccess.getElementNames()
     }
+
+def to_items(oXNameAccess: UnoObject) -> Iterator[Tuple[str, UnoObject]]:
+    return (
+        (name, oXNameAccess.getByName(name))
+        for name in oXNameAccess.ElementNames
+    )
+
+
+def remove_all(oXAccess: UnoObject):
+    try:
+        for name in oXAccess.ElementNames:
+            oXAccess.removeByName(name)
+    except AttributeError:
+        while oXAccess.Count:
+            oXAccess.removeByIndex(0)
 
 
 def parent_doc(oRange: UnoRange) -> UnoSpreadsheet:
@@ -661,7 +682,8 @@ class ListValidationBuilder:
 
 def quote_element(value: Any) -> str:
     """
-    Quote a list element
+    Quote a list element (see formula).
+    TODO: use a locale
 
     :param value: the value
     :return: the quoted value
@@ -765,8 +787,8 @@ def remove_filter(oRange: UnoRange):
     Remove the existing filter on a range
     @param oRange: The range
     """
-    oFilterDescriptor = oRange.createFilterDescriptor(
-        True)  # True means "empty"
+    # True means "empty"
+    oFilterDescriptor = oRange.createFilterDescriptor(True)
     oRange.filter(oFilterDescriptor)
     create_filter(oRange)
 
@@ -965,7 +987,7 @@ def doc_builder(
         url: NewDocumentUrl = NewDocumentUrl.Calc,
         taget_frame_name: Target = Target.BLANK,
         search_flags: FrameSearchFlag = FrameSearchFlag.AUTO,
-        pvs: Collection[UnoPropertyValue] = None
+        pvs: Optional[UnoPropertyValues] = None
 ) -> "DocBuilder":
     if pvs is None:
         pvs = tuple()
@@ -975,7 +997,7 @@ def doc_builder(
 def new_doc(url: NewDocumentUrl = NewDocumentUrl.Calc,
             taget_frame_name: Target = Target.BLANK,
             search_flags: FrameSearchFlag = FrameSearchFlag.AUTO,
-            pvs: List[UnoPropertyValue] = None) -> UnoSpreadsheet:
+            pvs: Optional[UnoPropertyValues] = None) -> UnoSpreadsheet:
     """Create a blank new doc"""
     return doc_builder(url, taget_frame_name, search_flags, pvs).build()
 
@@ -987,7 +1009,7 @@ class DocBuilder:
 
     def __init__(self, url: NewDocumentUrl, taget_frame_name: Target,
                  search_flags: FrameSearchFlag,
-                 pvs: Collection[UnoPropertyValue]):
+                 pvs: UnoPropertyValues):
         """Create a blank new doc"""
         self._oDoc = provider.desktop.loadComponentFromURL(
             url, taget_frame_name, search_flags, pvs)

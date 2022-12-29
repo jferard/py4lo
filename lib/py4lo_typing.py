@@ -51,6 +51,7 @@ UnoControl = NewType("UnoControl", UnoService)
 ######
 UnoRangeAddress = NewType("UnoRangeAddress", UnoStruct)
 UnoPropertyValue = NewType("UnoPropertyValue", UnoStruct)
+UnoPropertyValues = Union[List[UnoPropertyValue], Tuple[UnoPropertyValue, ...]]
 
 #####
 # DATA_ARRAY
