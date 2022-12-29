@@ -34,13 +34,16 @@ class TestEmbedLib(unittest.TestCase):
 
     def test_execute(self):
         proc = Mock()
+        s = []
         self.assertEqual(True,
-                         self._directive.execute(proc, None, ["py4lo_helper"]))
+                         self._directive.execute(proc, s, ["py4lo_helper"]))
         self.assertEqual([call.append_script(
             SourceScript(
                 Path('/home/jferard/prog/python/py4lo/lib/py4lo_helper.py'),
                 Path('/home/jferard/prog/python/py4lo/lib'), False))],
             proc.mock_calls)
 
-        if __name__ == '__main__':
-            unittest.main()
+        self.assertEqual(['# begin py4lo: init py4lo_helper\nimport py4lo_helper\ntry:\n    py4lo_helper.init(XSCRIPTCONTEXT)\nexcept NameError:\n    pass\nfinally:\n    del py4lo_helper  # does not wipe cache, but remove the access.\n# end py4lo: init py4lo_helper'], s)
+
+if __name__ == '__main__':
+    unittest.main()
