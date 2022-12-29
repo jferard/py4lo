@@ -31,17 +31,21 @@ from py4lo_helper import (provider as pr, make_pvs, parent_doc, get_cell_type,
                           FrameSearchFlag)
 from py4lo_typing import UnoCell, UnoSheet, UnoSpreadsheet, StrPath, UnoService
 
-
 try:
     # noinspection PyUnresolvedReferences
     from com.sun.star.lang import Locale
 
+
     class NumberFormat:
         # noinspection PyUnresolvedReferences
-        from com.sun.star.util.NumberFormat import (DATE, TIME, DATETIME, LOGICAL)
+        from com.sun.star.util.NumberFormat import (DATE, TIME, DATETIME,
+                                                    LOGICAL)
 except ImportError:
-    pass
+    Locale = object
 
+
+    class NumberFormat:
+        pass
 
 
 class CellTyping(Enum):
