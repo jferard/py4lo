@@ -336,11 +336,44 @@ def _set_rectangle(o: Any, rectangle: Rectangle):
     o.Height = rectangle.h
 
 
-class ProgressHandler:
+class VoidProgressHandler:
+    """
+    A progress handler
+    """
+    def progress(self, n: int):
+        """
+        Update the progress
+        @param n: number of steps since the last progress
+        """
+        pass
+
+    def set(self, i: int):
+        """
+        Set the progress
+        @param i: total number of steps since the beginning
+        """
+        pass
+
+    def reset(self):
+        """
+        Reset the progress
+        """
+        pass
+
+    def message(self, text: str):
+        """
+        Create a message
+        @param text: the text
+        """
+        pass
+
+
+class ProgressHandler(VoidProgressHandler):
     def __init__(self, oBar: UnoControlModel, bar_progress_min: int,
                  bar_progress_max: int, oText: UnoControlModel):
         self._oBar = oBar
         self._oBar.Value = bar_progress_min
+        self._bar_progress_min = bar_progress_min
         self._bar_progress_max = bar_progress_max
         self._oText = oText
         self.response = None
@@ -349,6 +382,15 @@ class ProgressHandler:
         self._oBar.Value = self._oBar.Value + n
         if self._oBar.Value > self._bar_progress_max:
             self._oBar.Value = self._bar_progress_max
+
+    def set(self, i: int):
+        if i > self._bar_progress_max:
+            self._oBar.Value = self._bar_progress_max
+        else:
+            self._oBar.Value = i
+
+    def reset(self):
+        self._oBar.Value = self._bar_progress_min
 
     def message(self, text: str):
         self._oText.Text = text
@@ -451,7 +493,18 @@ class ConsoleExecutorBuilder:
                                self._oDialog.getControl("text"))
 
 
-class ConsoleHandler:
+class VoidConsoleHandler:
+    """
+    A console handler
+    """
+    def message(self, text: str):
+        """
+        A message
+        @param text: the text of the message
+        """
+        pass
+
+class ConsoleHandler(VoidConsoleHandler):
     def __init__(self, oText: UnoControlModel):
         self._oText = oText
         self.response = None
