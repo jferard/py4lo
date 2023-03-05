@@ -26,8 +26,8 @@ from core.asset import DestinationAsset
 from core.script import DestinationScript
 
 BASIC_ENTRIES = [
-    """<manifest:file-entry manifest:full-path="Basic" manifest:media-type="application/binary"/>""",
-    """<manifest:file-entry manifest:full-path="Basic/Standard" manifest:media-type="application/binary"/>""",
+    """<manifest:file-entry manifest:full-path="Basic/" manifest:media-type="application/binary"/>""",
+    """<manifest:file-entry manifest:full-path="Basic/Standard/" manifest:media-type="application/binary"/>""",
     """<manifest:file-entry manifest:full-path="Basic/Standard/py4lo.xml" manifest:media-type="text/xml"/>""",
     """<manifest:file-entry manifest:full-path="Basic/Standard/script-lb.xml" manifest:media-type="text/xml"/>""",
     """<manifest:file-entry manifest:full-path="Basic/script-lc.xml" manifest:media-type="text/xml"/>""",
@@ -80,7 +80,10 @@ class RewriteManifest(ItemCallback):
         lines = ["    " + be for be in BASIC_ENTRIES]
 
         for d in self._get_dirs():
-            lines.append("    " + DIR_TPL.format(d.as_posix()))
+            posix = d.as_posix()
+            if not posix.endswith("/"):
+                posix += "/"
+            lines.append("    " + DIR_TPL.format(posix))
         for script in self._scripts:
             lines.append(
                 "    " + PYTHON_ENTRY_TPL.format(script.script_path.as_posix()))
