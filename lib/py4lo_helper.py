@@ -23,7 +23,7 @@
 from enum import Enum
 from pathlib import Path
 from typing import (Any, Optional, List, cast, Callable, Mapping, Tuple,
-                    Iterator, Union, Iterable, Collection)
+                    Iterator, Union, Iterable)
 
 from py4lo_commons import uno_path_to_url
 from py4lo_typing import (UnoSpreadsheet, UnoController, UnoContext,
@@ -49,7 +49,8 @@ except ImportError:
 try:
     from com.sun.star.datatransfer import XTransferable
 except ImportError:
-    XTransferable = None
+    class XTransferable:
+        pass
 
 try:
     class FrameSearchFlag:
@@ -57,15 +58,16 @@ try:
         from com.sun.star.frame.FrameSearchFlag import (
             AUTO, PARENT, SELF, CHILDREN, CREATE, SIBLINGS, TASKS, ALL, GLOBAL)
 
-
-    class BorderLineStyle:
-        # noinspection PyUnresolvedReferences
-        from com.sun.star.table.BorderLineStyle import (SOLID, )
 except ImportError:
     class FrameSearchFlag:
         AUTO = None
 
 
+try:
+    class BorderLineStyle:
+        # noinspection PyUnresolvedReferences
+        from com.sun.star.table.BorderLineStyle import (SOLID, )
+except ImportError:
     class BorderLineStyle:
         SOLID = None
 
