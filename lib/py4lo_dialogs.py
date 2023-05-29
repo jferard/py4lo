@@ -21,7 +21,7 @@ from typing import Any, Callable, Optional, List, Union, NamedTuple
 
 from collections import namedtuple
 
-from py4lo_helper import (create_uno_service_ctxt, provider, create_uno_service)
+from py4lo_helper import (create_uno_service_ctxt, provider, create_uno_service, create_uno_struct)
 from py4lo_typing import UnoControlModel, UnoControl, StrPath
 
 try:
@@ -47,6 +47,12 @@ try:
     class ExecutableDialogResults:
         # noinspection PyUnresolvedReferences
         from com.sun.star.ui.dialogs.ExecutableDialogResults import (OK, CANCEL)
+
+
+    class PushButtonType:
+        # noinspection PyUnresolvedReferences
+        from com.sun.star.awt.PushButtonType import (OK, CANCEL)
+
 except ModuleNotFoundError:
     class MessageBoxType:
         MESSAGEBOX = None
@@ -164,6 +170,152 @@ def message_box(msg_title: str, msg_text: str,
     mb = toolkit.createMessageBox(parent_win, msg_type, msg_buttons, msg_title,
                                   msg_text)
     return mb.execute()
+
+
+class InputBox:
+    # see https://wiki.documentfoundation.org/Macros/General/IO_to_Screen#Using_Application_Programming_Interface_(API)
+    """TODO: choose input type"""
+
+    def __init__(
+            self, width: int, height: int, hori_margin: int, vert_margin: int, button_width: int, button_height: int,
+            hori_sep: int, vert_sep: int, label_width: int, label_height: int, edit_height: int):
+        self.width = width
+        self.height = height
+        self.hori_margin = hori_margin
+        self.vert_margin = vert_margin
+        self.button_width = button_width
+        self.button_height = button_height
+        self.hori_sep = hori_sep
+        self.vert_sep = vert_sep
+        self.label_width = label_width
+        self.label_height = label_height
+        self.edit_height = edit_height
+
+    def input(self, msg_title: str, msg_text: str, msg_default: str = "",
+              parent_win=None, x: Optional[int] = None, y: Optional[int] = None) -> Optional[str]:
+        if parent_win is None:
+            parent_win = provider.parent_win
+        toolkit = create_uno_service_ctxt("com.sun.star.awt.Toolkit")
+
+        if x is None or y is None:
+            ps = parent_win.PosSize
+            if x is None:
+                x = (ps.Width - self.width) / 2
+            if y is None:
+                y = (ps.Height - self.height) / 2
+
+        oDialogModel = create_uno_service(ControlModel.Dialog)
+        oDialogModel.Title = msg_title
+        place_widget(oDialogModel, x, y, self.width, self.height)
+
+        _oLabelModel = self._create_label_model(oDialogModel, "label", msg_text)
+        oEditModel = self._create_edit_model(oDialogModel, "edit", msg_default)
+        _oCancelModel = self._create_cancel_model(oDialogModel, "btn_cancel")
+        _oOkModel = self._create_ok_model(oDialogModel, "btn_ok")
+
+        dialog = create_uno_service(Control.Dialog)
+        dialog.setModel(oDialogModel)
+
+        dialog.createPeer(toolkit, parent_win)
+
+        oEditControl = dialog.getControl("edit")
+        oEditControl.setSelection(create_uno_struct("com.sun.star.awt.Selection", Min=0, Max=len(msg_default)))
+        oEditControl.setFocus()
+
+        if dialog.execute() == ExecutableDialogResults.CANCEL:
+            return None
+
+        ret = oEditModel.Text
+        dialog.dispose()
+        return ret
+
+    def _create_label_model(self, oDialogModel: UnoControlModel, name: str, msg_text: str) -> UnoControlModel:
+        oLabelModel = oDialogModel.createInstance(ControlModel.FixedText)
+        place_widget(oLabelModel, self.hori_margin, self.vert_margin, self.label_width, self.label_height)
+        oLabelModel.Label = msg_text
+        oLabelModel.NoLabel = True
+        oDialogModel.insertByName(name, oLabelModel)
+        return oLabelModel
+
+    def _create_edit_model(self, oDialogModel, name, msg_default):
+        oEditModel = oDialogModel.createInstance("com.sun.star.awt.UnoControlEditModel")
+        edit_width = self.width - self.hori_margin * 2
+        place_widget(oEditModel,
+                     self.hori_margin,
+                     self.vert_margin + self.label_height + self.vert_sep,
+                     edit_width, self.edit_height)
+        oEditModel.Text = msg_default
+        oDialogModel.insertByName(name, oEditModel)
+        return oEditModel
+
+    def _create_cancel_model(self, oDialogModel: UnoControlModel, name: str) -> UnoControlModel:
+        oCancelModel = oDialogModel.createInstance(ControlModel.Button)
+        place_widget(oCancelModel,
+                     self.width - (self.hori_margin + self.button_width + self.hori_sep + self.button_width),
+                     self.vert_margin + self.label_height + self.vert_sep + self.edit_height + self.vert_sep,
+                     self.button_width, self.button_height)
+        oCancelModel.PushButtonType = PushButtonType.CANCEL
+        oCancelModel.DefaultButton = False
+        oDialogModel.insertByName(name, oCancelModel)
+        return oCancelModel
+
+    def _create_ok_model(self, oDialogModel: UnoControlModel, name: str) -> UnoControlModel:
+        oOkModel = oDialogModel.createInstance(ControlModel.Button)
+        place_widget(oOkModel,
+                     self.width - (self.hori_margin + self.button_width),
+                     self.vert_margin + self.label_height + self.vert_sep + self.edit_height + self.vert_sep,
+                     self.button_width, self.button_height)
+        oOkModel.PushButtonType = PushButtonType.OK
+        oOkModel.DefaultButton = True
+        oDialogModel.insertByName(name, oOkModel)
+        return oOkModel
+
+
+class InputBoxBuilder:
+    # see https://wiki.documentfoundation.org/Macros/General/IO_to_Screen#Using_Application_Programming_Interface_(API)
+    def __init__(self):
+        self.width = 300
+        self.height = None
+        self.hori_margin = 8
+        self.vert_margin = 8
+        self.label_height = 10
+        self.edit_height = 20
+        self.button_width = 60
+        self.button_height = 18
+        self.hori_sep = 4
+        self.vert_sep = 4
+
+    def _set_sep(self, value: int):
+        self.hori_sep = value
+        self.vert_sep = value
+
+    def _set_margin(self, value: int):
+        self.hori_margin = value
+        self.vert_margin = value
+
+    sep = property(fset=_set_sep)
+    margin = property(fset=_set_margin)
+
+    def build(self) -> InputBox:
+        if self.height is None:
+            self.height = (
+                    self.vert_margin + self.label_height + self.vert_sep + self.edit_height
+                    + self.vert_sep + self.button_height + self.vert_margin)
+        else:
+            self.label_height = self.height - (
+                    self.vert_margin + self.vert_sep + self.edit_height + self.vert_sep
+                    + self.button_height + self.vert_margin)
+
+        label_width = self.width - (self.button_width + self.hori_sep + self.hori_margin * 2)
+        return InputBox(
+            self.width, self.height, self.hori_margin, self.vert_margin, self.button_width, self.button_height,
+            self.hori_sep, self.vert_sep, label_width, self.label_height, self.edit_height)
+
+
+def input_box(msg_title: str, msg_text: str, msg_default="", parent_win=None, x: Optional[int] = None,
+              y: Optional[int] = None) -> str:
+    """Create an input box"""
+    return InputBoxBuilder().build().input(msg_title, msg_text, msg_default, parent_win, x, y)
 
 
 FileFilter = NamedTuple("FileFilter", [("title", str), ("filter", str)])
@@ -340,6 +492,7 @@ class VoidProgressHandler:
     """
     A progress handler
     """
+
     def progress(self, n: int):
         """
         Update the progress
@@ -497,12 +650,14 @@ class VoidConsoleHandler:
     """
     A console handler
     """
+
     def message(self, text: str):
         """
         A message
         @param text: the text of the message
         """
         pass
+
 
 class ConsoleHandler(VoidConsoleHandler):
     def __init__(self, oText: UnoControlModel):
