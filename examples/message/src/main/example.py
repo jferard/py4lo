@@ -28,11 +28,11 @@ import time
 from datetime import datetime
 
 import example_lib
-from py4lo_dialogs import ProgressExecutorBuilder, ConsoleExecutorBuilder, \
-    message_box
+from py4lo_dialogs import (ProgressExecutorBuilder, ConsoleExecutorBuilder,
+                           message_box, input_box)
 from py4lo_helper import provider as pr, xray, mri, parent_doc
-from py4lo_io import (dict_reader, TYPE_ALL, dict_writer, export_to_csv,
-                      import_from_csv)
+from py4lo_io import (dict_reader, dict_writer, export_to_csv,
+                      import_from_csv, CellTyping)
 
 o = example_lib.O(pr)
 
@@ -45,7 +45,7 @@ def message_example(*_args):
 
     """
     oSheet = pr.controller.getActiveSheet()
-    oDoc = parent_doc(oSheet) # could be pr.doc
+    oDoc = parent_doc(oSheet)  # could be pr.doc
     lines = [
         "A message from main script example.py. ",
         "Current dir is: {}".format(os.path.abspath("../../../../py4lo")),
@@ -54,6 +54,8 @@ def message_example(*_args):
     ]
 
     message_box("py4lo", "\n".join(lines))
+    name = input_box("py4lo", "enter your name")
+    message_box("py4lo", "Hello {}".format(name))
 
 
 def xray_example(*_args):
@@ -70,8 +72,8 @@ def example_from_lib(*_args):
 
 def writer_example(*_args):
     w = dict_writer(pr.controller.getActiveSheet(),
-                    ("a", "b", "c", "d", "e"),
-                    type_cell=TYPE_ALL)
+                    ["a", "b", "c", "d", "e"],
+                    cell_typing=CellTyping.Accurate)
     w.writeheader()
     for row in [{"a": "value", "b": 1, "c": True,
                  "d": datetime(2020, 11, 21, 12, 36, 50)},
@@ -83,7 +85,7 @@ def writer_example(*_args):
 def reader_example(*_args):
     r = dict_reader(pr.controller.getActiveSheet(),
                     restval="x", restkey="t",
-                    type_cell=TYPE_ALL)
+                    cell_typing=CellTyping.Accurate)
     for row in r:
         message_box("py4lo", "{}: {}".format(r.line_num, row))
 
