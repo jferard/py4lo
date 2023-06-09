@@ -10,6 +10,7 @@ history
 
 # generated files
 examples/**/*.ods
+examples/**/*.log
 !examples/message/py4lo-example.ods
 !examples/csv/csv-opener.ods
 examples/*.ods#
