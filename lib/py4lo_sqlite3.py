@@ -33,9 +33,13 @@ sqlite3_lib.sqlite3_errmsg.restype = c_char_p
 sqlite3_errmsg = sqlite3_lib.sqlite3_errmsg
 
 # https://www.sqlite.org/c3ref/close.html
-sqlite3_lib.sqlite3_close_v2.argtypes = [sqlite3_p]
-sqlite3_lib.sqlite3_close_v2.restype = c_int
-sqlite3_close_v2 = sqlite3_lib.sqlite3_close_v2
+try:
+    sqlite3_close_v2 = sqlite3_lib.sqlite3_close_v2
+except AttributeError:
+    sqlite3_close_v2 = sqlite3_lib.sqlite3_close
+
+sqlite3_close_v2.argtypes = [sqlite3_p]
+sqlite3_close_v2.restype = c_int
 
 # https://www.sqlite.org/c3ref/exec.html
 sqlite3_lib.sqlite3_exec.argtypes = [sqlite3_p, c_char_p, c_void_p, c_void_p, POINTER(c_char_p)]
