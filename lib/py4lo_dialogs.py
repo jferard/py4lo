@@ -132,7 +132,7 @@ class Control(str, Enum):
 
 def place_widget(
         oWidgetModel: UnoControlModel, x: int, y: int, width: int, height: int):
-    """Place a widget on the main model"""
+    """Place a widget on the widget model"""
     oWidgetModel.PositionX = x
     oWidgetModel.PositionY = y
     oWidgetModel.Width = width
