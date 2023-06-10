@@ -15,6 +15,7 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import enum
 import logging
 import time
 from pathlib import Path
@@ -40,8 +41,11 @@ try:
         )
 
 except ImportError:
-    class DataType:
-        pass
+    class DataType(enum.Enum):
+        INTEGER = 0
+        TEXT = 1
+        DATE = 2
+        DECIMAL = 3
 
 
     class ColumnValue:
