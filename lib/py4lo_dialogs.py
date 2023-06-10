@@ -28,7 +28,6 @@ try:
     # noinspection PyUnresolvedReferences
     import uno
 
-
     class MessageBoxType:
         # noinspection PyUnresolvedReferences
         from com.sun.star.awt.MessageBoxType import (ERRORBOX, MESSAGEBOX)
@@ -53,14 +52,10 @@ try:
         # noinspection PyUnresolvedReferences
         from com.sun.star.awt.PushButtonType import (OK, CANCEL)
 
-except ModuleNotFoundError:
-    class MessageBoxType:
-        MESSAGEBOX = None
-
-
-    class MessageBoxButtons:
-        BUTTONS_OK = None
-
+except (ModuleNotFoundError, ImportError):
+    from mock_constants import (
+        uno, MessageBoxType, MessageBoxButtons, FontWeight, ExecutableDialogResults, PushButtonType
+    )
 
 class ControlModel(str, Enum):
     AnimatedImages = "com.sun.star.awt.AnimatedImagesControlModel"

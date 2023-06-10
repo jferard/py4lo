@@ -34,44 +34,27 @@ from py4lo_typing import (UnoSpreadsheet, UnoController, UnoContext,
                           UnoPropertyValues)
 
 try:
-    import unohelper
     # noinspection PyUnresolvedReferences
-except ImportError:
-    class unohelper:
-        class Base:
-            pass
+    import unohelper
 
-try:
+    # noinspection PyUnresolvedReferences
     import uno
-except ImportError:
-    uno = None
 
-try:
+    # noinspection PyUnresolvedReferences
     from com.sun.star.datatransfer import XTransferable
-except ImportError:
-    class XTransferable:
-        pass
 
-try:
+
     class FrameSearchFlag:
         # noinspection PyUnresolvedReferences
         from com.sun.star.frame.FrameSearchFlag import (
             AUTO, PARENT, SELF, CHILDREN, CREATE, SIBLINGS, TASKS, ALL, GLOBAL)
 
-except ImportError:
-    class FrameSearchFlag:
-        AUTO = None
 
-
-try:
     class BorderLineStyle:
         # noinspection PyUnresolvedReferences
         from com.sun.star.table.BorderLineStyle import (SOLID, )
-except ImportError:
-    class BorderLineStyle:
-        SOLID = None
 
-try:
+
     class ConditionOperator:
         # noinspection PyUnresolvedReferences
         from com.sun.star.sheet.ConditionOperator import (FORMULA, )
@@ -99,8 +82,11 @@ try:
     from com.sun.star.uno import (RuntimeException as UnoRuntimeException,
                                   Exception as UnoException)
 
-except ImportError:
-    pass
+except (ModuleNotFoundError, ImportError):
+    from mock_constants import (
+        unohelper, uno, XTransferable, FrameSearchFlag, BorderLineStyle, ConditionOperator, FontWeight, ValidationType,
+        TableValidationVisibilty, ScriptFrameworkErrorException, UnoRuntimeException, UnoException
+    )
 
 ###############################################################################
 # BASE
@@ -244,6 +230,7 @@ def to_dict(oXNameAccess: UnoObject) -> Mapping[str, UnoObject]:
         name: oXNameAccess.getByName(name)
         for name in oXNameAccess.getElementNames()
     }
+
 
 def to_items(oXNameAccess: UnoObject) -> Iterator[Tuple[str, UnoObject]]:
     return (

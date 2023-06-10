@@ -40,12 +40,8 @@ try:
         # noinspection PyUnresolvedReferences
         from com.sun.star.util.NumberFormat import (DATE, TIME, DATETIME,
                                                     LOGICAL)
-except ImportError:
-    Locale = object
-
-
-    class NumberFormat:
-        pass
+except (ModuleNotFoundError, ImportError):
+    from mock_constants import (Locale, NumberFormat)
 
 
 class CellTyping(Enum):

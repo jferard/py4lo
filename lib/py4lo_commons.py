@@ -31,24 +31,8 @@ from py4lo_typing import UnoXScriptContext, StrPath
 try:
     # noinspection PyUnresolvedReferences
     import uno
-except ModuleNotFoundError:
-    import os
-    from urllib.parse import urlparse
-
-
-    class uno:
-        @staticmethod
-        def fileUrlToSystemPath(url: str) -> str:
-            result = urlparse(url)
-            if result.netloc:
-                return os.path.join(result.netloc, result.path.lstrip("/"))
-            else:
-                return result.path
-
-        @staticmethod
-        def systemPathToFileUrl(path: str) -> str:
-            return Path(path).as_uri()
-
+except (ModuleNotFoundError, ImportError):
+    from mock_constants import uno
 
 def uno_url_to_path(url: str) -> Optional[Path]:
     """
@@ -300,3 +284,4 @@ def int_to_date(days: int) -> dt.datetime:
 
 def float_to_date(days: float) -> dt.datetime:
     return ORIGIN + dt.timedelta(days)
+

@@ -15,7 +15,7 @@ class Sqlite3TestCase(unittest.TestCase):
         path = Path("test.sqlite3")
         path.unlink(True)
 
-        with sqlite_open(path, "rw") as db:
+        with sqlite_open(path, "crw") as db:
             t1 = datetime.now()
             print("-> generate data")
             data = [
