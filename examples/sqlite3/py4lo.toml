@@ -1,6 +1,6 @@
 # py4lo.toml file
 
-python_version = "3.5"
+python_version = "3.8"
 calc_exe = "/usr/lib/libreoffice/program/scalc"
 python_exe = "/usr/bin/python3"
 log_level = "DEBUG"
