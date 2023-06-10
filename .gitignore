@@ -13,6 +13,7 @@ examples/**/*.ods
 examples/**/*.log
 !examples/message/py4lo-example.ods
 !examples/csv/csv-opener.ods
+!examples/sqlite3/sqlite3.ods
 examples/*.ods#
 examples/**/target
 examples/**/target/*
