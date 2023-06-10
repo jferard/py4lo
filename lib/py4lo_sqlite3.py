@@ -1,11 +1,19 @@
 import enum
+import os
 from contextlib import contextmanager
-from ctypes import cdll, c_void_p, byref, c_int, c_char_p, POINTER, c_double, string_at
+from ctypes import cdll, c_void_p, byref, c_int, c_char_p, POINTER, c_double, string_at, CDLL
 from ctypes.util import find_library
 from pathlib import Path
 from typing import Union, Generator, List, Any, Iterator, Mapping, Sequence
 
-sqlite3_lib = cdll.LoadLibrary(find_library('sqlite3'))
+library_name = find_library('sqlite3')
+if library_name is None:
+    path = Path.cwd() / "sqlite3.dll"
+    if not path.exists():
+        path = os.environ["SQLITE3_LIB"]  # will raise an error if not present
+    sqlite3_lib = CDLL(str(path))
+else:
+    sqlite3_lib = cdll.LoadLibrary(library_name)
 
 # opaque structure
 sqlite3_p = c_void_p
