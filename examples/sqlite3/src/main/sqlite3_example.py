@@ -28,16 +28,21 @@ from py4lo_commons import Commons, uno_url_to_path
 from py4lo_sqlite3 import sqlite_open
 
 try:
+    CUR_PATH = uno_url_to_path(provider.doc.URL).parent
+except AttributeError:
+    CUR_PATH = Path.cwd()
+
+try:
     commons = Commons.create(XSCRIPTCONTEXT)
 except NameError:
     pass
 else:
-    commons.init_logger("sqlite3.log")
+    commons.init_logger(CUR_PATH / "sqlite3.log")
 
 logger = logging.getLogger()
 
 def sqlite_example(*_args):
-    path = uno_url_to_path(provider.doc.URL).parent / "temp.sqlite3"
+    path = CUR_PATH / "temp.sqlite3"
     logger.debug("Base path %s", path)
     try:
         oSheet = provider.controller.ActiveSheet
