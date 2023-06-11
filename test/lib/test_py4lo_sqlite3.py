@@ -1,12 +1,11 @@
+import ctypes
 import random
 import string
-import time
 import unittest
 from datetime import datetime
 from pathlib import Path
-from pprint import pprint
 
-from py4lo_sqlite3 import sqlite_open, SQLType, SQLiteError, TransactionMode
+from py4lo_sqlite3 import sqlite_open, SQLiteError, TransactionMode, SQLITE_BUSY, SQLITE_ERROR, SQLITE_CONSTRAINT
 
 
 class Sqlite3TestCase(unittest.TestCase):
@@ -15,8 +14,9 @@ class Sqlite3TestCase(unittest.TestCase):
         self._path.unlink(True)
 
     def tearDown(self) -> None:
-        self._path = Path("test.sqlite3")
-        self._path.unlink(True)
+        pass
+        #self._path = Path("test.sqlite3")
+        #self._path.unlink(True)
 
     def test_sqlite3(self):
         with sqlite_open(self._path, "crw") as db:
@@ -36,7 +36,7 @@ class Sqlite3TestCase(unittest.TestCase):
             t1 = t2
 
             print("-> create table")
-            self.assertEqual(0, db.execute_update("CREATE TABLE t(a INTEGER, b TEXT, c DOUBLE, e BLOB)"))
+            self.assertEqual(0, db.execute_update("CREATE TABLE t(a INTEGER, b TEXT, c REAL, e BLOB)"))
 
             t2 = datetime.now()
             print(t2 - t1)
@@ -85,7 +85,7 @@ class Sqlite3TestCase(unittest.TestCase):
                 db.execute_update("Hello, world!")
 
         exc = cm.exception
-        self.assertEqual(1, exc.result_code)
+        self.assertEqual(SQLITE_ERROR, exc.result_code)
         self.assertEqual('near "Hello": syntax error', exc.msg)
 
     def test_busy(self):
@@ -98,8 +98,28 @@ class Sqlite3TestCase(unittest.TestCase):
                     with db2.transaction(TransactionMode.IMMEDIATE):
                         pass
                 except SQLiteError as exc:
-                    self.assertEqual(5, exc.result_code)
+                    self.assertEqual(SQLITE_BUSY, exc.result_code)
                     self.assertEqual('database is locked', exc.msg)
+
+    def test_bindings(self):
+        with sqlite_open(self._path, "crw") as db:
+            self.assertEqual(0, db.execute_update("CREATE TABLE t(a INTEGER, b TEXT, c REAL, e BLOB) STRICT"))
+            with self.assertRaises(SQLiteError) as cm:
+                with db.prepare("INSERT INTO t VALUES(?, ?, ?, ?)") as stmt:
+                    with self.assertRaises(ctypes.ArgumentError):
+                        stmt.bind_int(1, "ok")
+
+                    stmt.bind_text(1, "ok")
+                    stmt.execute_update()
+
+                exc = cm.exception
+                self.assertEqual(SQLITE_CONSTRAINT, exc.result_code)
+                self.assertEqual('cannot store TEXT value in INTEGER column t.a', exc.msg)
+
+    def test_index(self):
+        with sqlite_open(self._path, "crw") as db:
+            self.assertEqual(0, db.execute_update("CREATE TABLE t(a INTEGER, b TEXT, c REAL, e BLOB) STRICT"))
+            self.assertEqual(0, db.execute_update("CREATE UNIQUE INDEX `id_UNIQUE` ON `t` (`a` ASC)"))
 
 
 if __name__ == '__main__':

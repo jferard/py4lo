@@ -212,8 +212,10 @@ SQLITE_FLOAT = 2
 SQLITE_TEXT = 3
 SQLITE_BLOB = 4
 SQLITE_NULL = 5
-#endif
-#define SQLITE3_TEXT     3
+
+# https://www.sqlite.org/c3ref/c_static.html
+SQLITE_STATIC = 0
+SQLITE_TRANSIENT = -1
 
 # types
 class SQLType(enum.Enum):
@@ -238,13 +240,13 @@ class Sqlite3Statement:
         self._stmt = stmt
 
     def bind_text(self, i: int, v: str):
-        v = str(v).encode("utf-8")
-        ret = sqlite3_bind_text(self._stmt, i, v, len(v), -1)
+        v = v.encode("utf-8")
+        ret = sqlite3_bind_text(self._stmt, i, v, len(v), SQLITE_TRANSIENT)
         if ret != SQLITE_OK:
             raise self._err(ret)
 
     def bind_blob(self, i: int, v: bytes):
-        ret = sqlite3_bind_blob(self._stmt, i, v, len(v), -1)
+        ret = sqlite3_bind_blob(self._stmt, i, v, len(v), SQLITE_TRANSIENT)
         if ret != SQLITE_OK:
             raise self._err(ret)
 
