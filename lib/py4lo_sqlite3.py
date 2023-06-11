@@ -21,7 +21,7 @@ from contextlib import contextmanager
 from ctypes import cdll, c_void_p, byref, c_int, c_char_p, POINTER, c_double, string_at, CDLL
 from ctypes.util import find_library
 from pathlib import Path
-from typing import Union, Generator, List, Any, Iterator, Mapping, Sequence
+from typing import Union, Generator, List, Any, Iterator, Mapping
 
 library_name = find_library('sqlite3')
 if library_name is None:
@@ -35,6 +35,20 @@ else:
 # opaque structure
 sqlite3_p = c_void_p
 sqlite3_stmt_p = c_void_p
+
+class SQLiteError(Exception):
+    def __init__(self, result_code: int, msg: str):
+        self.result_code = result_code
+        self.msg = msg
+
+    def __repr__(self) -> str:
+        return "SQLiteError({}, {})".format(self.result_code, repr(self.msg))
+
+# Transaction mode
+class TransactionMode(enum.Enum):
+    DEFERRED = "DEFERRED"
+    IMMEDIATE = "IMMEDIATE"
+    EXCLUSIVE = "EXCLUSIVE"
 
 ##############################################
 # https://www.sqlite.org/c3ref/funclist.html
@@ -227,50 +241,45 @@ class Sqlite3Statement:
         v = str(v).encode("utf-8")
         ret = sqlite3_bind_text(self._stmt, i, v, len(v), -1)
         if ret != SQLITE_OK:
-            raise self._err()
-        return ret
+            raise self._err(ret)
 
     def bind_blob(self, i: int, v: bytes):
         ret = sqlite3_bind_blob(self._stmt, i, v, len(v), -1)
         if ret != SQLITE_OK:
-            raise self._err()
-        return ret
+            raise self._err(ret)
 
     def bind_double(self, i: int, v: float):
         ret = sqlite3_bind_double(self._stmt, i, v)
         if ret != SQLITE_OK:
-            raise self._err()
-        return ret
+            raise self._err(ret)
 
     def bind_int(self, i: int, v: int):
         ret = sqlite3_bind_int(self._stmt, i, v)
         if ret != SQLITE_OK:
-            raise self._err()
-        return ret
+            raise self._err(ret)
 
     def bind_null(self, i: int):
         ret = sqlite3_bind_null(self._stmt, i)
         if ret != SQLITE_OK:
-            raise self._err()
-        return ret
+            raise self._err(ret)
 
-    def _err(self):
-        return ValueError(sqlite3_errmsg(self._db).decode("utf-8"))
+    def _err(self, ret: int) -> SQLiteError:
+        return SQLiteError(ret, sqlite3_errmsg(self._db).decode("utf-8"))
 
     def reset(self):
         ret = sqlite3_reset(self._stmt)
         if ret != SQLITE_OK:
-            raise self._err()
+            raise self._err(ret)
 
     def clear_bindings(self):
         ret = sqlite3_clear_bindings(self._stmt)
         if ret != SQLITE_OK:
-            raise self._err()
+            raise self._err(ret)
 
     def execute_update(self) -> int:
         ret = sqlite3_step(self._stmt)
         if ret != SQLITE_DONE:
-            raise self._err()
+            raise self._err(ret)
         return sqlite3_changes(self._db)
 
     def execute_query(self, with_names: bool=False) -> Iterator[Union[List[Any], Mapping[str, Any]]]:
@@ -299,7 +308,7 @@ class Sqlite3Statement:
             yield row
             ret = sqlite3_step(self._stmt)
         if ret != SQLITE_DONE:
-            raise self._err()
+            raise self._err(ret)
 
     def _execute_query_without_names(self) -> Iterator[List[Any]]:
         col_count = sqlite3_column_count(self._stmt)
@@ -317,7 +326,7 @@ class Sqlite3Statement:
             yield row
             ret = sqlite3_step(self._stmt)
         if ret != SQLITE_DONE:
-            raise self._err()
+            raise self._err(ret)
 
     def _value(self, i: int, column_types: List[int]) -> Any:
         sql_type = column_types[i]
@@ -345,15 +354,19 @@ class Sqlite3Database:
     def execute_update(self, sql: str) -> int:
         ret = sqlite3_exec(self._db, sql.encode("utf-8"), None, None, None)
         if ret != SQLITE_OK:
-            raise ValueError(sqlite3_errmsg(self._db))
+            raise self._err(ret)
         return sqlite3_changes(self._db)
 
+    def _err(self, ret):
+        return SQLiteError(ret, sqlite3_errmsg(self._db).decode("utf-8"))
 
     @contextmanager
     def prepare(self, sql: str) -> Generator[Sqlite3Statement, None, None]:
         stmt_p = sqlite3_stmt_p()
-        if sqlite3_prepare_v2(self._db, sql.encode("utf-8"), -1, byref(stmt_p), None) != SQLITE_OK:
-            raise ValueError(sqlite3_errmsg(self._db))
+        ret = sqlite3_prepare_v2(self._db, sql.encode("utf-8"), -1, byref(stmt_p), None)
+        if ret != SQLITE_OK:
+            raise self._err(ret)
+
         try:
             yield Sqlite3Statement(self._db, stmt_p)
         except Exception:
@@ -361,28 +374,33 @@ class Sqlite3Database:
         finally:
             ret = sqlite3_finalize(stmt_p)
             if ret != SQLITE_OK:
-                raise ValueError(sqlite3_errmsg(self._db))
+                raise self._err(ret)
 
     @contextmanager
-    def transaction(self) -> Generator[None, None, None]:
-        self.execute_update("BEGIN TRANSACTION")
+    def transaction(self, mode: TransactionMode = TransactionMode.DEFERRED) -> Generator[None, None, None]:
+        self.execute_update("BEGIN {} TRANSACTION".format(mode.value))
         yield
         self.execute_update("END TRANSACTION")
 
 
 @contextmanager
 def sqlite_open(filepath: Union[str, Path], mode: str = "r") -> Generator[Sqlite3Database, None, None]:
-    if isinstance(filepath, Path):
-        filepath = str(filepath.absolute())
     db = c_void_p()
     if mode == "r":
         flags = SQLITE_OPEN_READONLY
+        if not filepath.exists():
+            raise FileNotFoundError(str(filepath))
     elif mode == "rw":
         flags = SQLITE_OPEN_READWRITE
+        if not filepath.exists():
+            raise FileNotFoundError(str(filepath))
     elif mode == "crw":
         flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE
     else:
         raise ValueError(mode)
+
+    if isinstance(filepath, Path):
+        filepath = str(filepath.absolute())
     sqlite3_open_v2(filepath.encode("utf-8"), byref(db), flags, None)
     try:
         yield Sqlite3Database(db)
