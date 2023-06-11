@@ -14,9 +14,8 @@ class Sqlite3TestCase(unittest.TestCase):
         self._path.unlink(True)
 
     def tearDown(self) -> None:
-        pass
-        #self._path = Path("test.sqlite3")
-        #self._path.unlink(True)
+        self._path = Path("test.sqlite3")
+        self._path.unlink(True)
 
     def test_sqlite3(self):
         with sqlite_open(self._path, "crw") as db:
