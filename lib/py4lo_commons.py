@@ -179,7 +179,9 @@ class Commons:
         apply(config)
         reader = codecs.getreader(encoding)
 
-        with zipfile.ZipFile(uno_url_to_path(self._url), 'r') as z:
+        path = uno_url_to_path(self._url)
+        path = str(path)  # py < 3.6.2
+        with zipfile.ZipFile(path, 'r') as z:
             for filename in filenames:
                 try:
                     file = z.open(filename)
@@ -200,7 +202,9 @@ class Commons:
         @return: file content as bytes
         """
         import zipfile
-        with zipfile.ZipFile(uno_url_to_path(self._url), 'r') as z:
+        path = uno_url_to_path(self._url)
+        path = str(path)  # py < 3.6.2
+        with zipfile.ZipFile(path, 'r') as z:
             with z.open(filename) as f:
                 return f.read()
 
