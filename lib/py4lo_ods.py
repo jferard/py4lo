@@ -19,6 +19,7 @@
 import itertools
 import xml.etree.ElementTree as ET
 import zipfile
+from pathlib import Path
 
 from typing import (List, cast, Dict, Callable, IO, Iterator,
                     Optional, Union)
@@ -63,7 +64,7 @@ class OdsTables:
     """An iterator over tables in an ods file"""
 
     @staticmethod
-    def create(fullpath: str, ns: NameSpace = OFFICE_NS):
+    def create(fullpath: Union[str, Path], ns: NameSpace = OFFICE_NS):
         return OdsTablesBuilder(fullpath).ns(ns).build()
 
     def __init__(self, root: ET.Element, sort_func: SortFunc,
@@ -81,8 +82,11 @@ class OdsTables:
 
 
 class OdsTablesBuilder:
-    def __init__(self, fullpath: str):
-        self._fullpath = fullpath
+    def __init__(self, fullpath: Union[str, Path]):
+        if isinstance(fullpath, Path):
+            self._fullpath = str(fullpath)  # py < 3.6.2
+        else:
+            self._fullpath = fullpath
         self._ns = OFFICE_NS
         self._sort_func_creator = dont_sort
 
