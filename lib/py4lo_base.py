@@ -18,7 +18,7 @@
 import logging
 import time
 from pathlib import Path
-from typing import Iterable, Union, Dict
+from typing import Iterable, Union, Dict, Mapping
 
 from py4lo_helper import (uno_path_to_url, create_uno_service, to_items,
                           remove_all)
@@ -26,6 +26,7 @@ from py4lo_typing import UnoObject
 
 try:
     class DataType:
+        # noinspection PyUnresolvedReferences
         from com.sun.star.sdbc.DataType import (
             BIT, TINYINT, SMALLINT, INTEGER, BIGINT, FLOAT, REAL, DOUBLE,
             NUMERIC, DECIMAL, CHAR, VARCHAR, LONGVARCHAR, DATE, TIME,
@@ -35,6 +36,7 @@ try:
 
 
     class ColumnValue:
+        # noinspection PyUnresolvedReferences
         from com.sun.star.sdbc.ColumnValue import (
             NO_NULLS, NULLABLE, NULLABLE_UNKNOWN
         )
@@ -188,10 +190,14 @@ class BaseDB:
             fields = [field_s]
         else:
             fields = list(field_s)
-        sql = "CREATE INDEX IDX_{}_{} ON {} ({})".format(
-            table, "_".join(fields), table, ", ".join(fields)
+        sql = "CREATE INDEX IDX_{}_{} ON {} (\"{}\")".format(
+            table, "_".join(fields), table, "\", \"".join(fields)
         )
-        self.execute(sql)
+        # noinspection PyBroadException
+        try:
+            self.execute(sql)
+        except Exception:
+            self._logger.exception(sql)
 
     def drop_views(self):
         """
@@ -212,6 +218,7 @@ class BaseDB:
                 time.sleep(1)
             else:
                 break
+
     def _drop_table(self, oTables: UnoObject, name: str):
         oTable = oTables.getByName(name)
         drop_all(oTable.Keys)
@@ -238,7 +245,7 @@ class BaseDB:
             sql_by_name[name] = oQuery.Command
         return sql_by_name
 
-    def add_queries(self, sql_by_name: Dict[str, str]):
+    def add_queries(self, sql_by_name: Mapping[str, str]):
         """
         Add some queries
         """
@@ -251,7 +258,11 @@ class BaseDB:
         """
         oQuery = self._oDB.QueryDefinitions.createInstance()
         oQuery.Command = sql
-        self._oDB.QueryDefinitions.insertByName(name, oQuery)
+        # noinspection PyBroadException
+        try:
+            self._oDB.QueryDefinitions.insertByName(name, oQuery)
+        except Exception:
+            self._logger.exception("insert query %s => %s", repr(name), repr(sql))
 
 
 def open_or_create_db(path: Path) -> "BaseDB":
