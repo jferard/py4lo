@@ -20,7 +20,7 @@ import logging
 from logging import Logger
 from pathlib import Path
 from typing import List
-from zipfile import ZipFile, ZipInfo
+from zipfile import ZipFile, ZipInfo, ZIP_DEFLATED
 
 from callbacks.callback import AfterCallback, BeforeCallback, ItemCallback
 
@@ -76,7 +76,7 @@ class ZipUpdater:
         """
         ZipUpdater._logger.debug("Update zip: input %s, output %s", zip_source, zip_dest)
         print("Update zip: input %s, output %s", zip_source, zip_dest)
-        with ZipFile(zip_dest, 'w') as zout:
+        with ZipFile(zip_dest, 'w', compression=ZIP_DEFLATED) as zout:
             self._do_before(zout)
 
             with ZipFile(zip_source, 'r') as zin:
