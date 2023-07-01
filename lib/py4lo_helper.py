@@ -84,7 +84,7 @@ try:
 except (ModuleNotFoundError, ImportError):
     from mock_constants import (
         unohelper, uno, XTransferable, FrameSearchFlag, BorderLineStyle, ConditionOperator, FontWeight, ValidationType,
-        TableValidationVisibilty, ScriptFrameworkErrorException, UnoRuntimeException, UnoException
+        TableValidationVisibility, ScriptFrameworkErrorException, UnoRuntimeException, UnoException
     )
 
 ###############################################################################
