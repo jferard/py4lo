@@ -60,11 +60,11 @@ class ColumnValue:
     pass
 
 class MessageBoxType:
-    MESSAGEBOX = None
+    MESSAGEBOX = 0
 
 
 class MessageBoxButtons:
-    BUTTONS_OK = None
+    BUTTONS_OK = 1
 
 
 class FontWeight:

@@ -33,6 +33,8 @@ jobs:
           # ruff --format=github --target-version=py37 .
       - name: Test with pytest & generate coverage report
         run: |
+          echo $PYTHONPATH
+          ls /usr/lib/python3/dist-packages/
           python -m pytest --cov-report term-missing --ignore=examples --cov=py4lo --cov=lib --cov-report=xml
           python -m pytest --cov-report term-missing --ignore=examples --ignore=test --ignore=py4lo/__main__.py --cov-append --doctest-modules --cov=lib --cov-report=xml
       - name: Upload coverage reports to Codecov

@@ -21,7 +21,8 @@ from typing import Any, Callable, Optional, List, Union, NamedTuple
 
 from collections import namedtuple
 
-from py4lo_helper import (create_uno_service_ctxt, provider, create_uno_service, create_uno_struct)
+from py4lo_helper import (create_uno_service_ctxt, provider,
+                          create_uno_service, create_uno_struct)
 from py4lo_typing import UnoControlModel, UnoControl, StrPath
 
 try:

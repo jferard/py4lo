@@ -20,7 +20,7 @@ import unittest
 from unittest import mock
 from unittest.mock import Mock, call
 
-from py4lo_dialogs import (MessageBoxType, ExecutableDialogResults)
+from mock_constants import (MessageBoxType, ExecutableDialogResults)
 from py4lo_dialogs import (message_box, place_widget,
                            get_text_size, file_dialog, Size, FileFilter,
                            folder_dialog, ProgressExecutorBuilder,
@@ -77,13 +77,13 @@ class Py4LODialogsTestCase(unittest.TestCase):
         message_box("title", "text")
 
         # verify
-        self.assertEqual([
+        self.assertEqual(usc.mock_calls, [
             mock.call('com.sun.star.awt.Toolkit'),
             mock.call().createMessageBox(provider.parent_win,
                                          MessageBoxType.MESSAGEBOX, 1,
                                          'title', 'text'),
             mock.call().createMessageBox().execute()
-        ], usc.mock_calls)
+        ])
 
     @mock.patch("py4lo_dialogs.create_uno_service_ctxt")
     @mock.patch("py4lo_dialogs.provider")

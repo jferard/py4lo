@@ -16,26 +16,33 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
+import configparser
 import subprocess
 import tempfile
 import unittest
 import zipfile
 from io import TextIOWrapper
 import os
+import datetime as dt
+from pathlib import Path
 
 from unittest import mock
-from unittest.mock import *
 
-from py4lo_commons import *
+from py4lo_commons import (
+    uno_url_to_path, uno_path_to_url, create_bus, Commons, init, sanitize,
+    read_config, date_to_int, date_to_float, int_to_date, float_to_date)
+
+
+# from py4lo_commons import *
 
 
 class MiscTestCase(unittest.TestCase):
     def test_uno(self):
-        from py4lo_commons import uno
-        self.assertEqual("url", uno.fileUrlToSystemPath("url"))
-        self.assertEqual("url", uno.systemPathToFileUrl("url"))
+        from mock_constants import uno
+        self.assertEqual("url/", uno.fileUrlToSystemPath("file://url"))
+        self.assertEqual("file:///url", uno.systemPathToFileUrl("/url"))
 
-    @patch("py4lo_commons.uno.fileUrlToSystemPath")
+    @mock.patch("py4lo_commons.uno.fileUrlToSystemPath")
     def test_uno_url_to_path(self, futsp):
         # prepare
         futsp.side_effect = ["path"]
@@ -46,7 +53,7 @@ class MiscTestCase(unittest.TestCase):
         # verify
         self.assertEqual(Path("path"), ret)
 
-    @patch("py4lo_commons.uno.fileUrlToSystemPath")
+    @mock.patch("py4lo_commons.uno.fileUrlToSystemPath")
     def test_uno_url_to_path_empty(self, futsp):
         # prepare
         futsp.side_effect = ["path"]
@@ -57,7 +64,7 @@ class MiscTestCase(unittest.TestCase):
         # verify
         self.assertIsNone(ret)
 
-    @patch("py4lo_commons.uno.systemPathToFileUrl")
+    @mock.patch("py4lo_commons.uno.systemPathToFileUrl")
     def test_uno_path_to_url(self, sptfu):
         # prepare
         sptfu.side_effect = ["url"]
@@ -67,13 +74,14 @@ class MiscTestCase(unittest.TestCase):
 
         # verify
         self.assertEqual("url", ret)
-        self.assertEqual([call(str(Path("abc").resolve()))], sptfu.mock_calls)
+        self.assertEqual([mock.call(str(Path("abc").resolve()))],
+                         sptfu.mock_calls)
 
-    @patch("py4lo_commons.uno.systemPathToFileUrl")
+    @mock.patch("py4lo_commons.uno.systemPathToFileUrl")
     def test_uno_path_to_url_err(self, sptfu):
         # prepare
         sptfu.side_effect = ["url"]
-        path = Mock()
+        path = mock.Mock()
         path.resolve.side_effect = FileNotFoundError
 
         # play
@@ -81,14 +89,13 @@ class MiscTestCase(unittest.TestCase):
 
         # verify
         self.assertEqual("url", ret)
-        self.assertEqual([call(str(path))], sptfu.mock_calls)
-
+        self.assertEqual([mock.call(str(path))], sptfu.mock_calls)
 
 
 class TestBus(unittest.TestCase):
     def setUp(self):
         self.b = create_bus()
-        self.s = Mock()
+        self.s = mock.Mock()
 
     def test(self):
         self.b.subscribe(self.s)
