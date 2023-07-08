@@ -20,7 +20,11 @@ examples/**/target/*
 examples/quickstart/qs
 **/*.pyc
 .coverage
+.coverage.xml
 <tempfile.*>
+
+.travis.yml
+test.sqlite3
 
 # pypi
 build
