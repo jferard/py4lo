@@ -20,7 +20,7 @@ import unittest
 from unittest import mock
 from unittest.mock import Mock, call
 
-from mock_constants import (MessageBoxType, ExecutableDialogResults)
+from py4lo_dialogs import (MessageBoxType, ExecutableDialogResults)
 from py4lo_dialogs import (message_box, place_widget,
                            get_text_size, file_dialog, Size, FileFilter,
                            folder_dialog, ProgressExecutorBuilder,
