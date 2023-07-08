@@ -117,7 +117,21 @@ Locale = object
 
 
 class NumberFormat:
-    pass
+    ALL = 0
+    DEFINED = 1
+    DATE = 2
+    TIME = 4
+    CURRENCY = 8
+    NUMBER = 16
+    SCIENTIFIC = 32
+    FRACTION = 64
+    PERCENT = 128
+    TEXT = 256
+    DATETIME = 6
+    LOGICAL = 1024
+    UNDEFINED = 2048
+    EMPTY = 4096
+    DURATION = 8196
 
 class uno:
     @staticmethod
@@ -136,3 +150,8 @@ class uno:
 class unohelper:
     class Base:
         pass
+
+class PropertyState:
+    DIRECT_VALUE = 0
+    DEFAULT_VALUE = 1
+    AMBIGUOUS_VALUE = 2

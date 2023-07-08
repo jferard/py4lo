@@ -81,10 +81,17 @@ try:
     from com.sun.star.uno import (RuntimeException as UnoRuntimeException,
                                   Exception as UnoException)
 
+    class PropertyState:
+        # noinspection PyUnresolvedReferences
+        from com.sun.star.beans.PropertyState import (
+           AMBIGUOUS_VALUE, DIRECT_VALUE)
+
 except (ModuleNotFoundError, ImportError):
     from mock_constants import (
-        unohelper, uno, XTransferable, FrameSearchFlag, BorderLineStyle, ConditionOperator, FontWeight, ValidationType,
-        TableValidationVisibility, ScriptFrameworkErrorException, UnoRuntimeException, UnoException
+        unohelper, uno, XTransferable, FrameSearchFlag, BorderLineStyle,
+        ConditionOperator, FontWeight, ValidationType,
+        TableValidationVisibility, ScriptFrameworkErrorException,
+        UnoRuntimeException, UnoException, PropertyState
     )
 
 ###############################################################################

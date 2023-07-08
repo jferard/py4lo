@@ -16,24 +16,19 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import csv
+import datetime as dt
 import unittest
 from typing import Any
 from unittest.mock import Mock, patch, call, ANY
-import datetime as dt
 
-import py4lo_io
-from py4lo_helper import (_ObjectProvider, _Inspector, make_pv)
+from py4lo_helper import (make_pv)
 from py4lo_io import (create_import_filter_options,
                       create_export_filter_options, Format, create_read_cell,
                       CellTyping, reader, dict_reader, find_number_format_style,
                       create_write_cell, writer, dict_writer, import_from_csv,
                       export_to_csv)
 from py4lo_typing import UnoCell
-
-
-class NumberFormat:
-    from com.sun.star.util.NumberFormat import (DATE, TIME, DATETIME, LOGICAL,
-                                                NUMBER)
+from mock_constants import NumberFormat
 
 
 class Py4LOIOTestCase(unittest.TestCase):
@@ -317,11 +312,12 @@ class Py4LOIOTestCase(unittest.TestCase):
         oFormats.getStandardFormat.side_effect = [1]
 
         # play
-        act_n = find_number_format_style(oFormats, 10, oLocale)
+        act_n = find_number_format_style(
+            oFormats, NumberFormat.NUMBER, oLocale)
 
         # verify
         self.assertEqual(1, act_n)
-        self.assertEqual([call.getStandardFormat(10, oLocale)],
+        self.assertEqual([call.getStandardFormat(NumberFormat.NUMBER, oLocale)],
                          oFormats.mock_calls)
 
     def test_create_write_cell_string(self):

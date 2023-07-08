@@ -23,11 +23,12 @@ from unittest.mock import *
 from py4lo_helper import *
 import py4lo_helper
 from py4lo_helper import _ObjectProvider, _Inspector
+from py4lo_helper import PropertyState
 
 # noinspection PyUnresolvedReferences
-from com.sun.star.script.provider import ScriptFrameworkErrorException
+#from com.sun.star.script.provider import ScriptFrameworkErrorException
 # noinspection PyUnresolvedReferences
-from com.sun.star.uno import RuntimeException as UnoRuntimeException
+#from com.sun.star.uno import RuntimeException as UnoRuntimeException
 
 
 class HelperBaseTestCase(unittest.TestCase):
@@ -290,20 +291,14 @@ class HelperStructTestCase(unittest.TestCase):
         self.assertEqual("value", pv.Value)
 
     def test_make_full_pv(self):
-        class PropertyState:
-            from com.sun.star.beans.PropertyState import AMBIGUOUS_VALUE
-
-        pv = make_full_pv("name", "value", 2, PropertyState.AMBIGUOUS_VALUE)
+        pv = make_full_pv("name", "value", 20, PropertyState.AMBIGUOUS_VALUE)
         self.assertTrue("uno.com.sun.star.beans.PropertyValue" in str(type(pv)))
         self.assertEqual("name", pv.Name)
         self.assertEqual("value", pv.Value)
-        self.assertEqual(2, pv.Handle)
+        self.assertEqual(20, pv.Handle)
         self.assertEqual(PropertyState.AMBIGUOUS_VALUE, pv.State)
 
     def test_make_full_pv2(self):
-        class PropertyState:
-            from com.sun.star.beans.PropertyState import DIRECT_VALUE
-
         pv = make_full_pv("name", "value")
         self.assertTrue("uno.com.sun.star.beans.PropertyValue" in str(type(pv)))
         self.assertEqual("name", pv.Name)

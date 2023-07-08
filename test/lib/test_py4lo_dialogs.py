@@ -15,22 +15,17 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import os
 import time
 import unittest
 from unittest import mock
-from unittest.mock import Mock, call, ANY
+from unittest.mock import Mock, call
 
-from py4lo_dialogs import (message_box, MessageBoxType, place_widget, Size,
-                           get_text_size, FileFilter, file_dialog,
+from py4lo_dialogs import (MessageBoxType, ExecutableDialogResults)
+from py4lo_dialogs import (message_box, place_widget,
+                           get_text_size, file_dialog, Size, FileFilter,
                            folder_dialog, ProgressExecutorBuilder,
                            ProgressHandler, ConsoleExecutorBuilder,
                            ConsoleHandler)
-
-
-class ExecutableDialogResults:
-    from com.sun.star.ui.dialogs.ExecutableDialogResults import (
-        OK, CANCEL)
 
 
 class Py4LODialogsTestCase(unittest.TestCase):

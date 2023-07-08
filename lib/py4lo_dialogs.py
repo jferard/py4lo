@@ -54,7 +54,8 @@ try:
 
 except (ModuleNotFoundError, ImportError):
     from mock_constants import (
-        uno, MessageBoxType, MessageBoxButtons, FontWeight, ExecutableDialogResults, PushButtonType
+        uno, MessageBoxType, MessageBoxButtons, FontWeight,
+        ExecutableDialogResults, PushButtonType
     )
 
 class ControlModel(str, Enum):
