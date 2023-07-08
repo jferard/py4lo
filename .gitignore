@@ -20,7 +20,9 @@ examples/**/target/*
 examples/quickstart/qs
 **/*.pyc
 .coverage
-.coverage.xml
+coverage.xml
+.coverage
+.coveragerc
 <tempfile.*>
 
 .travis.yml

@@ -208,7 +208,7 @@ From the py4lo directory:
    python3 -m pytest --cov-report term-missing --ignore=examples --cov=py4lo --cov=lib && python3 -m pytest --cov-report term-missing --ignore=examples --ignore=test --ignore=py4lo/__main__.py --cov-append --doctest-modules --cov=lib
 
 
-.. |Build Status| image:: https://app.travis-ci.com/jferard/py4lo.svg?branch=master
-    :target: https://app.travis-ci.com/jferard/py4lo
-.. |Code Coverage| image:: https://img.shields.io/codecov/c/github/jferard/py4lo/master.svg
-   :target: https://codecov.io/github/jferard/py4lo?branch=master
+.. |Build Status| image:: https://github.com/jferard/py4lo/actions/workflows/workflow.yml/badge.svg
+    :target: https://github.com/jferard/py4lo/actions/workflows/workflow.yml
+.. |Code Coverage| image:: https://codecov.io/github/jferard/py4lo/branch/master/graph/badge.svg
+    :target: https://codecov.io/github/jferard/py4lo
