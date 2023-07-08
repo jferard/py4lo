@@ -37,10 +37,11 @@ class TestEmbedLib(unittest.TestCase):
         s = []
         self.assertEqual(True,
                          self._directive.execute(proc, s, ["py4lo_helper"]))
+        py4lo_path = Path(__file__).parent.parent.parent.parent
         self.assertEqual([call.append_script(
             SourceScript(
-                Path('/home/jferard/prog/python/py4lo/lib/py4lo_helper.py'),
-                Path('/home/jferard/prog/python/py4lo/lib'), False))],
+                py4lo_path / 'lib/py4lo_helper.py',
+                py4lo_path / 'lib', False))],
             proc.mock_calls)
 
         self.assertEqual(['# begin py4lo: init py4lo_helper\nimport py4lo_helper\ntry:\n    py4lo_helper.init(XSCRIPTCONTEXT)\nexcept NameError:\n    pass\nfinally:\n    del py4lo_helper  # does not wipe cache, but remove the access.\n# end py4lo: init py4lo_helper'], s)
