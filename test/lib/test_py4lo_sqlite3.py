@@ -8,6 +8,13 @@ from pathlib import Path
 from py4lo_sqlite3 import sqlite_open, SQLiteError, TransactionMode, SQLITE_BUSY, SQLITE_ERROR, SQLITE_CONSTRAINT
 
 
+def randbytes(n):
+    try: # >= 3.9
+        return random.randbytes(random.randrange(0, n))
+    except AttributeError: # <= 3.8
+        return bytes([random.randrange(0, 256) for _ in range(0, n)])
+
+
 class Sqlite3TestCase(unittest.TestCase):
     def setUp(self) -> None:
         self._path = Path("test.sqlite3")
@@ -21,12 +28,13 @@ class Sqlite3TestCase(unittest.TestCase):
         with sqlite_open(self._path, "crw") as db:
             t1 = datetime.now()
             print("-> generate data")
+            n = 1000
             data = [
                 (
                     random.randint(0, 100),
                     "".join(random.choice(string.ascii_letters) for _ in range(random.randrange(10, 200))),
                     random.random() * 100,
-                    random.randbytes(random.randrange(0, 1000))
+                    randbytes(n)
                 ) for _ in range(10000)
             ]
 
