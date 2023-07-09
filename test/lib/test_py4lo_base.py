@@ -1,8 +1,6 @@
 import unittest
 from pathlib import Path
-
-import mock
-
+from unittest import mock
 from py4lo_base import open_or_create_db, DataType
 
 
