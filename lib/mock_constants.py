@@ -59,6 +59,7 @@ class DataType(enum.Enum):
 class ColumnValue:
     pass
 
+
 class MessageBoxType:
     MESSAGEBOX = 0
 
@@ -70,6 +71,7 @@ class MessageBoxButtons:
 class FontWeight:
     BOLD = None
 
+
 class ExecutableDialogResults:
     OK = None,
     CANCEL = None
@@ -79,8 +81,10 @@ class PushButtonType:
     OK = None,
     CANCEL = None
 
+
 class XTransferable:
     pass
+
 
 class FrameSearchFlag:
     AUTO = None
@@ -106,8 +110,10 @@ class TableValidationVisibility:
 class ScriptFrameworkErrorException(Exception):
     pass
 
+
 class UnoRuntimeException(Exception):
     pass
+
 
 class UnoException(Exception):
     pass
@@ -133,6 +139,7 @@ class NumberFormat:
     EMPTY = 4096
     DURATION = 8196
 
+
 class uno:
     @staticmethod
     def fileUrlToSystemPath(url: str) -> str:
@@ -146,10 +153,35 @@ class uno:
     def systemPathToFileUrl(path: str) -> str:
         return Path(path).as_uri()
 
+    @staticmethod
+    def createUnoStruct(struct_id: str) -> None:
+        pass
+
+    @staticmethod
+    def Any(name, value) -> None:
+        pass
+
+    @staticmethod
+    def systemPathToFileUrl(systemPath):
+        return ""
+
+    @staticmethod
+    def fileUrlToSystemPath(url):
+        return ""
+
 
 class unohelper:
     class Base:
         pass
+
+    @staticmethod
+    def ImplementationHelper():
+        class C:
+            @staticmethod
+            def addImplementation(*args): return None
+
+        return C
+
 
 class PropertyState:
     DIRECT_VALUE = 0
