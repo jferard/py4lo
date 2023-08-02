@@ -17,8 +17,8 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from directives.directive_provider import DirectiveProvider
-from directives.directive import Directive
-from directives.embed_script import EmbedScript
-from directives.embed_lib import EmbedLib
-from directives.include import Include
+from directives.directive_provider import DirectiveProvider  # noqa
+from directives.directive import Directive  # noqa
+from directives.embed_script import EmbedScript  # noqa
+from directives.embed_lib import EmbedLib  # noqa
+from directives.include import Include  # noqa

@@ -21,9 +21,9 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 
-############################
-## DO NOT EMBED THIS FILE ##
-############################
+##############################
+# # DO NOT EMBED THIS FILE # #
+##############################
 class DataType(enum.Enum):
     BIT = -7
     TINYINT = -6

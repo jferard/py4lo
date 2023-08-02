@@ -35,7 +35,6 @@ try:
     # noinspection PyUnresolvedReferences
     from com.sun.star.lang import Locale
 
-
     class NumberFormat:
         # noinspection PyUnresolvedReferences
         from com.sun.star.util.NumberFormat import (DATE, TIME, DATETIME,
@@ -217,8 +216,7 @@ class dict_reader:
 def find_number_format_style(oFormats: UnoService, format_id: NumberFormat,
                              oLocale: Locale = Locale()) -> int:
     """
-    
-    @param oFormats: the formats 
+    @param oFormats: the formats
     @param format_id: a NumberFormat
     @param oLocale: the locale
     @return: the id of the format
@@ -373,21 +371,29 @@ class dict_writer:
 ###
 class Filter(str, Enum):
     XML = "StarOffice XML (Calc)"  # Standard XML filter
-    XML_TEMPLATE = "calc_StarOffice_XML_Calc_Template"  # XML filter for templates
+    # XML filter for templates
+    XML_TEMPLATE = "calc_StarOffice_XML_Calc_Template"
     STARCALC_5 = "StarCalc 5.0"  # The binary format of StarOffice Calc 5.x
-    STARCALC_5_TEMPLATE = "StarCalc 5.0 Vorlage/Template"  # StarOffice Calc 5.x templates
+    # StarOffice Calc 5.x templates
+    STARCALC_5_TEMPLATE = "StarCalc 5.0 Vorlage/Template"
     STARCALC_4 = "StarCalc 4.0"  # The binary format of StarCalc 4.x
-    STARCALC_4_TEMPLATE = "StarCalc 4.0 Vorlage/Template"  # StarCalc 4.x templates
+    # StarCalc 4.x templates
+    STARCALC_4_TEMPLATE = "StarCalc 4.0 Vorlage/Template"
     STARCALC_3 = "StarCalc 3.0"  # The binary format of StarCalc 3.x
-    STARCALC_3_TEMPLATE = "StarCalc 3.0 Vorlage/Template"  # StarCalc 3.x templates
+    # StarCalc 3.x templates
+    STARCALC_3_TEMPLATE = "StarCalc 3.0 Vorlage/Template"
     HTML = "HTML (StarCalc)"  # HTML filter
-    HTML_WEBQUERY = "calc_HTML_WebQuery"  # HTML filter for external data queries
+    # HTML filter for external data queries
+    HTML_WEBQUERY = "calc_HTML_WebQuery"
     EXCEL_97 = "MS Excel 97"  # Microsoft Excel 97/2000/XP
-    EXCEL_97_TEMPLATE = "MS Excel 97 Vorlage/Template"  # Microsoft Excel 97/2000/XP templates
+    # Microsoft Excel 97/2000/XP templates
+    EXCEL_97_TEMPLATE = "MS Excel 97 Vorlage/Template"
     EXCEL_95 = "MS Excel 95"  # Microsoft Excel 5.0/95
-    EXCEL_95_TEMPLATE = "MS Excel 95 Vorlage/Template"  # Microsoft Excel 5.0/95 templates
+    # Microsoft Excel 5.0/95 templates
+    EXCEL_95_TEMPLATE = "MS Excel 95 Vorlage/Template"
     EXCEL_2_3_4 = "MS Excel 4.0"  # Microsoft Excel 2.1/3.0/4.0
-    EXCEL_2_3_4_TEMPLATE = "MS Excel 4.0 Vorlage/Template"  # Microsoft Excel 2.1/3.0/4.0 templates
+    # Microsoft Excel 2.1/3.0/4.0 templates
+    EXCEL_2_3_4_TEMPLATE = "MS Excel 4.0 Vorlage/Template"
     LOTUS = "Lotus"  # Lotus 1-2-3
     CSV = "Text - txt - csv (StarCalc)"  # Comma separated values
     RTF = "Rich Text Format (StarCalc)"  #
@@ -396,7 +402,8 @@ class Filter(str, Enum):
     DIF = "DIF"  # Data Interchange Format
 
 
-# see https://api.libreoffice.org/docs/cpp/ref/a00391_source.html (rtl/textenc.h)
+# see https://api.libreoffice.org/docs/cpp/ref/a00391_source.html
+# (rtl/textenc.h)
 CHARSET_ID_BY_NAME = {
     'unknown': 0,
     'cp1252': 1,
@@ -507,7 +514,8 @@ FORMAT_YY_MM_DD = 5
 FORMAT_IGNORE = 9
 FORMAT_US_ENGLISH = 10
 
-# see https://docs.microsoft.com/en-us/openspecs/office_standards/ms-oe376/6c085406-a698-4e12-9d4d-c3b0ee3dbc4a
+# see https://docs.microsoft.com/en-us/openspecs/office_standards
+# /ms-oe376/6c085406-a698-4e12-9d4d-c3b0ee3dbc4a
 LANGUAGE_ID_BY_CODE = {
     "ar_SA": 1025,
     "bg_BG": 1026,
@@ -799,7 +807,8 @@ def _create_import_filter_options(
         format_by_idx: Optional[Mapping[int, Format]] = None,
         detect_special_numbers: bool = False) -> str:
     """
-    # See https://wiki.openoffice.org/wiki/Documentation/DevGuide/Spreadsheets/Filter_Options
+    # See https://wiki.openoffice.org/wiki/Documentation
+    /DevGuide/Spreadsheets/Filter_Options
     @param delimiter: the delimiter
     @param quotechar: the quotechar
     @param quoted_field_as_text: see checkbox
@@ -864,10 +873,11 @@ def _build_field_formats(format_by_idx: Optional[Mapping[int, int]]) -> str:
 
 def _base_filter_tokens(
         delimiter: str, quotechar: str, encoding: str, language_code: str,
-        first_line: int, format_by_idx: Optional[Mapping[int, int]]) -> List[
-    str]:
+        first_line: int, format_by_idx: Optional[Mapping[int, int]]
+) -> List[str]:
     """
-    See: https://wiki.openoffice.org/wiki/Documentation/DevGuide/Spreadsheets/Filter_Options
+    See: https://wiki.openoffice.org/wiki/Documentation
+    /DevGuide/Spreadsheets/Filter_Options
     Common to import/export
 
     @param delimiter: the delimiter
@@ -886,7 +896,8 @@ def _base_filter_tokens(
 
 def create_export_filter_options(*args, **kwargs) -> str:
     """
-    See https://wiki.openoffice.org/wiki/Documentation/DevGuide/Spreadsheets/Filter_Options
+    See https://wiki.openoffice.org/wiki/Documentation
+    /DevGuide/Spreadsheets/Filter_Options
 
     @param dialect: the Python csv dialect
     @param encoding: the source file encoding

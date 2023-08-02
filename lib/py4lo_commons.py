@@ -23,8 +23,8 @@ from pathlib import Path
 import logging
 import configparser
 import datetime as dt
-from typing import (Union, Any, cast, List, Optional, TextIO, Iterable, Mapping,
-                    Callable)
+from typing import (
+    Union, Any, cast, List, Optional, TextIO, Iterable, Mapping, Callable)
 
 from py4lo_typing import UnoXScriptContext, StrPath
 
@@ -33,6 +33,7 @@ try:
     import uno
 except (ModuleNotFoundError, ImportError):
     from mock_constants import uno
+
 
 def uno_url_to_path(url: str) -> Optional[Path]:
     """
@@ -194,16 +195,18 @@ class Commons:
                 return f.read()
 
 
-def init_logger(logger: logging.Logger,
-                file: Optional[Union[StrPath, TextIO]] = None,
-                mode: str = "a", level: int = logging.DEBUG,
-                fmt: str = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
+def init_logger(
+        logger: logging.Logger,
+        file: Optional[Union[StrPath, TextIO]] = None,
+        mode: str = "a", level: int = logging.DEBUG,
+        fmt: str = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
     fh = _get_handler(file, mode, level, fmt)
     logger.addHandler(fh)
     logger.setLevel(level)
 
+
 def _get_handler(file: Union[StrPath, TextIO], mode: str, level: int,
-                fmt: str):
+                 fmt: str):
     if isinstance(file, (str, Path)):
         fh = logging.FileHandler(str(file), mode)
     else:
@@ -293,4 +296,3 @@ def int_to_date(days: int) -> dt.datetime:
 
 def float_to_date(days: float) -> dt.datetime:
     return ORIGIN + dt.timedelta(days)
-

@@ -20,10 +20,11 @@
 """
 These are callbacks for the ZipUpdater
 """
-from callbacks.callback import BeforeCallback, ItemCallback, AfterCallback
-from callbacks.add_readme_with import AddReadmeWith
-from callbacks.add_assets import AddAssets
-from callbacks.add_debug_content import AddDebugContent
-from callbacks.add_scripts import AddScripts, ARC_SCRIPTS_PATH
-from callbacks.ignore_item import IgnoreItem
-from callbacks.rewrite_manifest import RewriteManifest
+from callbacks.callback import (  # noqa
+    BeforeCallback, ItemCallback, AfterCallback)
+from callbacks.add_readme_with import AddReadmeWith  # noqa
+from callbacks.add_assets import AddAssets  # noqa
+from callbacks.add_debug_content import AddDebugContent  # noqa
+from callbacks.add_scripts import AddScripts, ARC_SCRIPTS_PATH  # noqa
+from callbacks.ignore_item import IgnoreItem  # noqa
+from callbacks.rewrite_manifest import RewriteManifest  # noqa

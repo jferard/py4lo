@@ -34,7 +34,6 @@ try:
             OBJECT, DISTINCT, STRUCT, ARRAY, BLOB, CLOB, REF, BOOLEAN
         )
 
-
     class ColumnValue:
         # noinspection PyUnresolvedReferences
         from com.sun.star.sdbc.ColumnValue import (
@@ -42,7 +41,10 @@ try:
         )
 
 except (ModuleNotFoundError, ImportError):
-    from mock_constants import (DataType, ColumnValue)
+    from mock_constants import ( # noqa
+        DataType,
+        ColumnValue
+    )
 
 
 class BaseTableBuilder:
@@ -210,11 +212,12 @@ class BaseDB:
         Drop all tables from the connection. Try 3 times.
         """
         for i in range(3):
+            # noinspection PyBroadException
             try:
                 oTables = self.get_tables()
                 for name, oTable in to_items(oTables):
                     self._drop_table(oTables, name)
-            except:
+            except Exception:
                 time.sleep(1)
             else:
                 break
@@ -262,15 +265,17 @@ class BaseDB:
         try:
             self._oDB.QueryDefinitions.insertByName(name, oQuery)
         except Exception:
-            self._logger.exception("insert query %s => %s", repr(name), repr(sql))
+            self._logger.exception("insert query %s => %s", repr(name),
+                                   repr(sql))
 
 
 def open_or_create_db(path: Path) -> "BaseDB":
     oDBContext = create_uno_service("com.sun.star.sdb.DatabaseContext")
     url = uno_path_to_url(path)
+    # noinspection PyBroadException
     try:
         oDB = oDBContext.getByName(url)
-    except:
+    except Exception:
         oDB = oDBContext.createInstance()
         oDB.URL = "sdbc:embedded:firebird"
         oDocument = oDB.DatabaseDocument

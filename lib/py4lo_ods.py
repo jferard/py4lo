@@ -24,7 +24,12 @@ from pathlib import Path
 from typing import (List, cast, Dict, Callable, IO, Iterator,
                     Optional, Union)
 
-ACTIVE_TABLE_XPATH = "./office:settings/config:config-item-set[@config:name='ooo:view-settings']/config:config-item-map-indexed[@config:name='Views']/config:config-item-map-entry/config:config-item[@config:name='ActiveTable']"
+ACTIVE_TABLE_XPATH = (
+    "./office:settings"
+    "/config:config-item-set[@config:name='ooo:view-settings']"
+    "/config:config-item-map-indexed[@config:name='Views']"
+    "/config:config-item-map-entry"
+    "/config:config-item[@config:name='ActiveTable']")
 
 OFFICE_NS_DICT = {
     "office": "urn:oasis:names:tc:opendocument:xmlns:office:1.0",
@@ -115,7 +120,8 @@ def dont_sort(*_args, **_kwargs) -> SortFunc:
     return sort_func
 
 
-def put_active_first(z: zipfile.ZipFile, ns: NameSpace = OFFICE_NS) -> SortFunc:
+def put_active_first(z: zipfile.ZipFile, ns: NameSpace = OFFICE_NS
+                     ) -> SortFunc:
     """
     :param z: the zip file
     :param ns: the name space
@@ -162,9 +168,10 @@ class OdsRows:
     below.
     """
 
-    def __init__(self, table: ET.Element,
-                 omit: Optional[Callable[[ET.Element, NameSpace], bool]] = None,
-                 ns: NameSpace = OFFICE_NS):
+    def __init__(
+            self, table: ET.Element,
+            omit: Optional[Callable[[ET.Element, NameSpace], bool]] = None,
+            ns: NameSpace = OFFICE_NS):
         self._table = table
         self._ns = ns
         self._omit = omit

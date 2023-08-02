@@ -42,38 +42,31 @@ try:
     # noinspection PyUnresolvedReferences
     from com.sun.star.datatransfer import XTransferable
 
-
     class FrameSearchFlag:
         # noinspection PyUnresolvedReferences
         from com.sun.star.frame.FrameSearchFlag import (
             AUTO, PARENT, SELF, CHILDREN, CREATE, SIBLINGS, TASKS, ALL, GLOBAL)
 
-
     class BorderLineStyle:
         # noinspection PyUnresolvedReferences
         from com.sun.star.table.BorderLineStyle import (SOLID, )
-
 
     class ConditionOperator:
         # noinspection PyUnresolvedReferences
         from com.sun.star.sheet.ConditionOperator import (FORMULA, )
 
-
     class FontWeight:
         # noinspection PyUnresolvedReferences
         from com.sun.star.awt.FontWeight import (BOLD, )
-
 
     class ValidationType:
         # noinspection PyUnresolvedReferences
         from com.sun.star.sheet.ValidationType import (LIST, )
 
-
     class TableValidationVisibility:
         # noinspection PyUnresolvedReferences
         from com.sun.star.sheet.TableValidationVisibility import (
             SORTEDASCENDING, UNSORTED)
-
 
     # noinspection PyUnresolvedReferences
     from com.sun.star.script.provider import ScriptFrameworkErrorException
@@ -87,7 +80,7 @@ try:
            AMBIGUOUS_VALUE, DIRECT_VALUE)
 
 except (ModuleNotFoundError, ImportError):
-    from mock_constants import (
+    from mock_constants import (  # noqa
         unohelper, uno, XTransferable, FrameSearchFlag, BorderLineStyle,
         ConditionOperator, FontWeight, ValidationType,
         TableValidationVisibility, ScriptFrameworkErrorException,
@@ -614,7 +607,8 @@ def right_void_row_count(data_array: DATA_ARRAY) -> int:
 ###############################################################################
 
 def set_validation_list_by_cell(
-        oCell: UnoCell, values: List[Any], default_string: Optional[str] = None,
+        oCell: UnoCell, values: List[Any],
+        default_string: Optional[str] = None,
         ignore_blank: bool = True, sorted_values: bool = False,
         show_error: bool = True):
     factory = ValidationFactory().list().values(values)
@@ -1072,7 +1066,8 @@ class DocBuilder:
 
         return self
 
-    def make_base_sheet(self, func: Callable[[UnoSheet], None]) -> "DocBuilder":
+    def make_base_sheet(self, func: Callable[[UnoSheet], None]
+                        ) -> "DocBuilder":
         oSheets = self._oDoc.Sheets
         oBaseSheet = oSheets.getByIndex(0)
         func(oBaseSheet)
