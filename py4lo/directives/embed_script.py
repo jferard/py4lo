@@ -27,8 +27,9 @@ class EmbedScript(Directive):
     """
     Embed a script in the archive and... do nothing else.
     It's up to the user to import it if it is a module
-    """
 
+    embed script <name> [<path>]
+    """
     @staticmethod
     def sig_elements() -> List[str]:
         return ["embed", "script"]
@@ -39,7 +40,10 @@ class EmbedScript(Directive):
     def execute(self, processor: "DirectiveProcessor",
                 _line_processor: "DirectiveLineProcessor", args: List[str]):
         script_ref = args[0]
-        script_path = self._opt_dir.joinpath(script_ref)
+        if len(args) == 2:
+            script_path = Path(args[1])
+        else:
+            script_path = self._opt_dir.joinpath(script_ref)
         temp_scripts = self._embed(script_path)
         for temp_script in temp_scripts:
             processor.add_script(temp_script)
