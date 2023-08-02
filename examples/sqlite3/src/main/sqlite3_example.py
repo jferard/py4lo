@@ -37,9 +37,9 @@ try:
 except NameError:
     pass
 else:
-    commons.init_logger(CUR_PATH / "sqlite3.log")
+    logger = logging.getLogger()
+    commons.init_logger(logger, CUR_PATH / "sqlite3.log")
 
-logger = logging.getLogger()
 
 def sqlite_example(*_args):
     path = CUR_PATH / "temp.sqlite3"

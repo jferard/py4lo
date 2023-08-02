@@ -128,24 +128,9 @@ class Commons:
     ) -> logging.Logger:
         if file is None:
             file = self.join_current_dir("py4lo.log")
-        fh = Commons._get_handler(file, mode, level, fmt)
-
         logger = logging.getLogger()
-        logger.addHandler(fh)
-        logger.setLevel(level)
+        init_logger(logger, file, fmt, level, mode)
         return logger
-
-    @staticmethod
-    def _get_handler(file: Union[StrPath, TextIO], mode: str, level: int,
-                     fmt: str):
-        if isinstance(file, (str, Path)):
-            fh = logging.FileHandler(str(file), mode)
-        else:
-            fh = logging.StreamHandler(file)
-        formatter = logging.Formatter(fmt)
-        fh.setFormatter(formatter)
-        fh.setLevel(level)
-        return fh
 
     def logger(self) -> logging.Logger:
         if self._logger is None:
@@ -207,6 +192,26 @@ class Commons:
         with zipfile.ZipFile(path, 'r') as z:
             with z.open(filename) as f:
                 return f.read()
+
+
+def init_logger(logger: logging.Logger,
+                file: Optional[Union[StrPath, TextIO]] = None,
+                mode: str = "a", level: int = logging.DEBUG,
+                fmt: str = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
+    fh = _get_handler(file, mode, level, fmt)
+    logger.addHandler(fh)
+    logger.setLevel(level)
+
+def _get_handler(file: Union[StrPath, TextIO], mode: str, level: int,
+                fmt: str):
+    if isinstance(file, (str, Path)):
+        fh = logging.FileHandler(str(file), mode)
+    else:
+        fh = logging.StreamHandler(file)
+    formatter = logging.Formatter(fmt)
+    fh.setFormatter(formatter)
+    fh.setLevel(level)
+    return fh
 
 
 def create_bus() -> Bus:
