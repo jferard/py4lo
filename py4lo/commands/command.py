@@ -17,15 +17,15 @@
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from abc import ABC, abstractmethod
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Any
 
 from core.properties import PropertiesProvider
 
 
 class Command(ABC):
     @staticmethod
-    def create_executor(args: List[str],
-                        provider: PropertiesProvider) -> "CommandExecutor":
+    def create_executor(args: List[str], provider: PropertiesProvider
+                        ) -> Any:  # "CommandExecutor":
         pass
 
     @abstractmethod

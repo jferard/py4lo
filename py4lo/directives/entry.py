@@ -17,7 +17,7 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from pathlib import Path
-from typing import Set, List
+from typing import Set, List, Any
 
 from directives.directive import Directive
 from directives.include import Include
@@ -47,10 +47,11 @@ class Entry(Directive):
         self._include_directive = Include(inc_dir)
         self._module_names = module_names
 
-    def execute(self, _processor: "DirectiveProcessor",
-                line_processor: "DirectiveLineProcessor", args):
-        execute = self._include_directive.execute(_processor, line_processor,
-                                                  ["py4lo_import.py", True])
+    def execute(self, _processor: Any,  # "DirectiveProcessor"
+                line_processor: Any,  # "DirectiveLineProcessor"
+                args):
+        execute = self._include_directive.execute(
+            _processor, line_processor, ["py4lo_import.py", True])
         line_processor.append(
             UNLOAD_MODULES_FORMAT.format(self._module_names | LIB_SET))
         return execute

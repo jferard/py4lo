@@ -63,8 +63,8 @@ class Destinations:
     dest_dir: Path
     assets_dest_dir: Path
 
-    def to_destination_scripts(self, temp_scripts: List[TempScript]) -> List[
-        DestinationScript]:
+    def to_destination_scripts(self, temp_scripts: List[TempScript]
+                               ) -> List[DestinationScript]:
         return [ts.to_destination(self.dest_dir) for ts in
                 temp_scripts]
 

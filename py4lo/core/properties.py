@@ -115,15 +115,16 @@ class PropertiesProviderFactory:
             dest_ods_file = Path(dest["dest_ods_file"])
             if "suffix" in dest:
                 self.get_logger().debug(
-                    "Property dest_name set to `%s`, ignore suffix `%s`".format(
-                        dest_ods_file, dest["suffix"]))
+                    "Property dest_name set to `%s`, ignore suffix `%s`",
+                    dest_ods_file, dest["suffix"])
         else:
             suffix = dest["suffix"]
             if source_ods_file is None:
                 dest_ods_file = Path("new-project.ods")
             else:
-                dest_ods_file = source_ods_file.parent.joinpath(
-                    source_ods_file.stem + "-" + suffix + source_ods_file.suffix)
+                name = (source_ods_file.stem + "-"
+                        + suffix + source_ods_file.suffix)
+                dest_ods_file = source_ods_file.parent.joinpath(name)
 
         return dest_ods_file
 

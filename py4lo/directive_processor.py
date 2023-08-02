@@ -17,13 +17,12 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import shlex
-from typing import List, Optional
+from typing import List, Optional, Any
 
 from branch_processor import BranchProcessor
 from comparator import Comparator
 from core.script import SourceScript, TempScript
 from directives import DirectiveProvider
-from directives.include import IncludeStripper
 
 
 class DirectiveProcessor:
@@ -32,8 +31,10 @@ class DirectiveProcessor:
     directive, which may use some helpers: import2, ..."""
 
     @staticmethod
-    def create(scripts_processor: "ScriptSetProcessor", directive_provider: DirectiveProvider, python_version: str,
-               source_script: SourceScript):
+    def create(
+            scripts_processor: Any,  # "ScriptSetProcessor",
+            directive_provider: DirectiveProvider, python_version: str,
+            source_script: SourceScript):
         comparator = Comparator({'python_version': python_version})
 
         def local_is_true(args: List[str]):
@@ -44,7 +45,7 @@ class DirectiveProcessor:
         return DirectiveProcessor(scripts_processor, branch_processor,
                                   directive_provider)
 
-    def __init__(self, script_set_processor: "ScriptSetProcessor",
+    def __init__(self, script_set_processor: Any,  # "ScriptSetProcessor",
                  branch_processor: BranchProcessor,
                  directive_provider: DirectiveProvider):
         """
@@ -97,7 +98,7 @@ class DirectiveLineProcessor:
 
         try:
             directive = self._get_directive()
-            if directive is None: # that's maybe a simple comment
+            if directive is None:  # that's maybe a simple comment
                 self._comment_or_write()
             else:
                 self._process_directive(self._line, directive)
@@ -138,5 +139,3 @@ class DirectiveLineProcessor:
     def append(self, line: str):
         """Called by directives"""
         self._target_lines.append(line)
-
-

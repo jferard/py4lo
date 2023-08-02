@@ -23,7 +23,6 @@ from commands.command_executor import CommandExecutor
 from core.properties import PropertiesProvider
 from commands.real_command_factory_by_name import real_command_factory_by_name
 from commands.help_command import HelpCommand
-import logging
 
 
 class Commands:
@@ -35,7 +34,7 @@ class Commands:
             provider: PropertiesProvider) -> CommandExecutor:
         try:
             command = self._command_factory_by_name[command_name]
-        except KeyError as e:
+        except KeyError:
             logger = provider.get_logger()
             logger.warning(
                 "Command `%s` not found. Available commands are %s",

@@ -129,7 +129,7 @@ class Commons:
         if file is None:
             file = self.join_current_dir("py4lo.log")
         logger = logging.getLogger()
-        init_logger(logger, file, fmt, level, mode)
+        init_logger(logger, file, mode, level, fmt)
         return logger
 
     def logger(self) -> logging.Logger:

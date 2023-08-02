@@ -24,8 +24,9 @@ from core.properties import PropertiesProviderFactory
 
 
 def get_args(argv: List[str] = sys.argv[1:]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Python for LibreOffice",
-                                     formatter_class=argparse.RawTextHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description="Python for LibreOffice",
+        formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("-t", "--toml", help="the toml file",
                         default="py4lo.toml", type=str)
     parser.add_argument("command",

@@ -33,7 +33,8 @@ class TestCommand(Command):
     __test__ = False
 
     @staticmethod
-    def create_executor(_args, provider: PropertiesProvider) -> CommandExecutor:
+    def create_executor(_args, provider: PropertiesProvider
+                        ) -> CommandExecutor:
         python_exe = provider.get("python_exe")
         logger = provider.get_logger()
         return CommandExecutor(logger,
@@ -47,10 +48,10 @@ class TestCommand(Command):
         self._env = None
 
     def execute(self):
-        final_status = self._execute_all_tests(self._src_paths(),
-                                               self._execute_doctests)
-        final_status = self._execute_all_tests(self._test_paths(),
-                                               self._execute_unittests) or final_status
+        final_status = self._execute_all_tests(
+            self._src_paths(), self._execute_doctests)
+        final_status = self._execute_all_tests(
+            self._test_paths(), self._execute_unittests) or final_status
         return final_status,
 
     def _execute_all_tests(self, paths: Iterator[Path],

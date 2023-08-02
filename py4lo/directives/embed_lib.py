@@ -17,7 +17,7 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from pathlib import Path
-from typing import Sequence
+from typing import Sequence, Any
 
 from core.script import SourceScript
 from directives.directive import Directive
@@ -26,6 +26,8 @@ from directives.directive import Directive
 class EmbedLib(Directive):
     """
     Embed a py4lo library
+
+    embed lib <name>
     """
 
     @staticmethod
@@ -35,8 +37,9 @@ class EmbedLib(Directive):
     def __init__(self, lib_dir: Path):
         self._lib_dir = lib_dir
 
-    def execute(self, processor: "DirectiveProcessor",
-                line_processor: "DirectiveLineProcessor", args):
+    def execute(self, processor: Any,  # "DirectiveProcessor",
+                line_processor: Any,  # "DirectiveLineProcessor",
+                args):
         lib_ref = args[0]
         lib_path = self._lib_dir.joinpath(lib_ref)
         source_scripts = self._embed(lib_path)
@@ -66,9 +69,8 @@ finally:
                 stack.extend(lib_path.glob("*.py"))
             elif path.suffix == "" or path.suffix == ".py":
                 path = path.with_suffix(".py")
-                with path.open('rb') as f:
-                    temp_script = SourceScript(
-                        path, self._lib_dir, False)
+                temp_script = SourceScript(
+                    path, self._lib_dir, False)
                 ret.append(temp_script)
 
         return ret

@@ -3,7 +3,7 @@ from typing import List
 
 from core.asset import DestinationAsset
 from core.source_dest import Sources, Destinations
-from core.script import TempScript, SourceScript, DestinationScript
+from core.script import TempScript, DestinationScript
 from directives import DirectiveProvider
 from script_set_processor import ScriptSetProcessor
 

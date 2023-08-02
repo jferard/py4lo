@@ -49,7 +49,8 @@ class ZipUpdaterBuilder:
         return self
 
     def build(self):
-        return ZipUpdater(self._logger, self._before_callbacks, self._item_callbacks,
+        return ZipUpdater(self._logger, self._before_callbacks,
+                          self._item_callbacks,
                           self._after_callbacks)
 
 
@@ -74,7 +75,9 @@ class ZipUpdater:
         :param zip_source: a source zip archive
         :param zip_dest: a dest path
         """
-        ZipUpdater._logger.debug("Update zip: input %s, output %s", zip_source, zip_dest)
+        ZipUpdater._logger.debug(
+            "Update zip: input %s, output %s", zip_source,
+            zip_dest)
         print("Update zip: input %s, output %s", zip_source, zip_dest)
         with ZipFile(zip_dest, 'w', compression=ZIP_DEFLATED) as zout:
             self._do_before(zout)

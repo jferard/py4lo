@@ -56,7 +56,7 @@ class HelpCommand(Command):
             try:
                 msg = self._command_factory_by_name[
                     self._command_name].get_help()
-            except KeyError as e:
+            except KeyError:
                 msg = self.get_help()
         else:
             msg = self.get_help()

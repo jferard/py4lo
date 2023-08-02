@@ -37,8 +37,8 @@ class AddReadmeWith(AfterCallback):
                    "Basic/script-lc.xml")
         zout.write(self._inc_path.joinpath("script-lb.xml"),
                    "Basic/Standard/script-lb.xml")
-        with self._inc_path.joinpath("py4lo.xml.tpl").open('r',
-                                                           encoding='utf-8') as f:
+        with self._inc_path.joinpath("py4lo.xml.tpl").open(
+                'r', encoding='utf-8') as f:
             tpl = f.read()
             xml = tpl.format(contact=self._contact)
             zout.writestr("Basic/Standard/py4lo.xml", xml)

@@ -17,7 +17,7 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from pathlib import Path
-from typing import List, Sequence
+from typing import List, Sequence, Any
 
 from core.script import TempScript
 from directives.directive import Directive
@@ -30,6 +30,7 @@ class EmbedScript(Directive):
 
     embed script <name> [<path>]
     """
+
     @staticmethod
     def sig_elements() -> List[str]:
         return ["embed", "script"]
@@ -37,8 +38,9 @@ class EmbedScript(Directive):
     def __init__(self, opt_dir: Path):
         self._opt_dir = opt_dir
 
-    def execute(self, processor: "DirectiveProcessor",
-                _line_processor: "DirectiveLineProcessor", args: List[str]):
+    def execute(self, processor: Any,  # "DirectiveProcessor",
+                _line_processor: Any,  # "DirectiveLineProcessor",
+                args: List[str]):
         script_ref = args[0]
         if len(args) == 2:
             script_path = Path(args[1])

@@ -23,7 +23,8 @@ class ParsedScriptContent:
 @dataclass(eq=True, frozen=True)
 class DestinationScript:
     """A target script has a file name, a content (the file was processed),
-    some exported functions and the exceptions encountered by the interpreter"""
+    some exported functions and the exceptions encountered by the
+    interpreter"""
     script_path: Path
     script_content: bytes
     dest_dir: Path
@@ -43,7 +44,8 @@ class DestinationScript:
 @dataclass(eq=True, frozen=True)
 class TempScript:
     """A target script has a file name, a content (the file was processed),
-    some exported functions and the exceptions encountered by the interpreter"""
+    some exported functions and the exceptions encountered by the
+    interpreter"""
     script_path: Path
     script_content: bytes
     temp_dir: Path

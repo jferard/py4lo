@@ -16,9 +16,8 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import os
 from pathlib import Path
-from typing import List
+from typing import List, Any
 
 from directives.directive import Directive
 
@@ -36,8 +35,9 @@ class Include(Directive):
     def __init__(self, inc_dir: Path):
         self._inc_dir = inc_dir
 
-    def execute(self, _processor: "DirectiveProcessor",
-                line_processor: "DirectiveLineProcessor", args: List[str]):
+    def execute(self, _processor: Any,  # "DirectiveProcessor",
+                line_processor: Any,  # "DirectiveLineProcessor",
+                args: List[str]):
         path = self._inc_dir.joinpath(args[0])
         if len(args) >= 2:
             strip = bool(args[1])
@@ -94,25 +94,29 @@ class IncludeStripper:
             if stripped_line.startswith('#'):
                 pass
             elif stripped_line.startswith(IncludeStripper.DOC_STRING_OPEN):
-                if self.is_open_doc_string(stripped_line,
-                                           IncludeStripper.DOC_STRING_OPEN,
-                                           IncludeStripper.DOC_STRING_CLOSE):
+                if self.is_open_doc_string(
+                        stripped_line,
+                        IncludeStripper.DOC_STRING_OPEN,
+                        IncludeStripper.DOC_STRING_CLOSE):
                     self._state = IncludeStripper.IN_DOC_STRING
             elif stripped_line.startswith(
                     IncludeStripper.DOC_STRING_SINGLE_OPEN):
-                if self.is_open_doc_string(stripped_line,
-                                           IncludeStripper.DOC_STRING_SINGLE_OPEN,
-                                           IncludeStripper.DOC_STRING_SINGLE_CLOSE):
+                if self.is_open_doc_string(
+                        stripped_line,
+                        IncludeStripper.DOC_STRING_SINGLE_OPEN,
+                        IncludeStripper.DOC_STRING_SINGLE_CLOSE):
                     self._state = IncludeStripper.IN_DOC_STRING_SINGLE
             else:
                 self._inc_lines.append(line)
 
-        elif (self.is_close_doc_string(stripped_line,
-                                       IncludeStripper.IN_DOC_STRING,
-                                       IncludeStripper.DOC_STRING_CLOSE)
-              or self.is_close_doc_string(stripped_line,
-                                          IncludeStripper.IN_DOC_STRING_SINGLE,
-                                          IncludeStripper.DOC_STRING_SINGLE_CLOSE)):
+        elif (self.is_close_doc_string(
+                stripped_line,
+                IncludeStripper.IN_DOC_STRING,
+                IncludeStripper.DOC_STRING_CLOSE)
+              or self.is_close_doc_string(
+                    stripped_line,
+                    IncludeStripper.IN_DOC_STRING_SINGLE,
+                    IncludeStripper.DOC_STRING_SINGLE_CLOSE)):
             self._state = IncludeStripper.NORMAL
 
     def is_open_doc_string(self, stripped_line: str, string_open: str,

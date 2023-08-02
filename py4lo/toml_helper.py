@@ -27,15 +27,18 @@ class TomlLoader:
         self._data: Dict[str, object] = {}
 
     def load(self) -> Dict[str, object]:
-        TomlLoader._logger.debug("Load TOML : %s (default=%s)", self._project_py4lo_toml, self._default_py4lo_toml)
-        print("*** Load TOML : %s (default=%s)", self._project_py4lo_toml, self._default_py4lo_toml)
+        TomlLoader._logger.debug(
+            "Load TOML : %s (default=%s)", self._project_py4lo_toml,
+            self._default_py4lo_toml)
+        print("*** Load TOML : %s (default=%s)", self._project_py4lo_toml,
+              self._default_py4lo_toml)
         self._load_toml(self._default_py4lo_toml)
         self._load_toml(self._project_py4lo_toml, skip_on_error=True)
         self._check_python_target_version()
         self._check_level()
         return self._data
 
-    def _load_toml(self, path: Path, skip_on_error: bool=False):
+    def _load_toml(self, path: Path, skip_on_error: bool = False):
         try:
             with path.open('r', encoding="utf-8") as s:
                 content = s.read()
@@ -74,5 +77,6 @@ class TomlLoader:
     def _check_level(self):
         if "log_level" not in self._data or self._data["log_level"] not in [
             "CRITICAL", "DEBUG", "ERROR", "FATAL",
-            "INFO", "NOTSET", "WARN", "WARNING"]:
+            "INFO", "NOTSET", "WARN", "WARNING"
+        ]:
             self._data["log_level"] = "INFO"

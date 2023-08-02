@@ -161,14 +161,6 @@ class uno:
     def Any(name, value) -> None:
         pass
 
-    @staticmethod
-    def systemPathToFileUrl(systemPath):
-        return ""
-
-    @staticmethod
-    def fileUrlToSystemPath(url):
-        return ""
-
 
 class unohelper:
     class Base:

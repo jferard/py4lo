@@ -16,13 +16,14 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from abc import ABC, abstractmethod
-from pathlib import Path
-from typing import List
+from typing import List, Any
 
 
 class Directive(ABC):
     @abstractmethod
-    def execute(self, processor: "DirectiveProcessor", line_processor: "DirectiveLineProcessor", args: List[str]):
+    def execute(self, processor: Any,  # "DirectiveProcessor",
+                line_processor: Any,  # "DirectiveLineProcessor",
+                args: List[str]):
         """Execute the directive. May append a script to process"""
         pass
 

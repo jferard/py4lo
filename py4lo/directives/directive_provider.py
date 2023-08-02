@@ -70,15 +70,15 @@ class DirectiveProvider:
     Takes a full directive line (as shlex args) and splits between the
     directive id and the args. Then return the directive and the args.
     """
+
     @staticmethod
     def create(logger: Logger, sources: Sources):
-        return _DirectiveProviderFactory(logger,
-                                         Entry(sources.inc_dir,
-                                               sources.get_module_names()),
-                                         Include(sources.inc_dir),
-                                         EmbedLib(sources.lib_dir),
-                                         EmbedScript(
-                                             sources.opt_dir)).create_provider()
+        entry = Entry(sources.inc_dir, sources.get_module_names())
+        return _DirectiveProviderFactory(
+            logger, entry,
+            Include(sources.inc_dir),
+            EmbedLib(sources.lib_dir),
+            EmbedScript(sources.opt_dir)).create_provider()
 
     def __init__(self, logger: Logger, directives_tree: T):
         self._logger = logger

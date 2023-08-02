@@ -20,7 +20,7 @@ import logging
 import py_compile
 import re
 from pathlib import Path
-from typing import List, Optional, Dict, Sequence
+from typing import List, Optional, Sequence
 
 from core.script import TempScript, ParsedScriptContent, SourceScript
 from directive_processor import DirectiveProcessor
@@ -68,7 +68,8 @@ class ScriptSetProcessor:
 
     def _process_script(self, source_script: SourceScript):
         directive_processor = DirectiveProcessor.create(
-            self, self._directive_provider, self._python_version, source_script)
+            self, self._directive_provider, self._python_version,
+            source_script)
         script_processor = ScriptProcessor(self._logger, directive_processor,
                                            source_script,
                                            self._target_dir)

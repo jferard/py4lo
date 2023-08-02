@@ -26,17 +26,26 @@ from core.asset import DestinationAsset
 from core.script import DestinationScript
 
 BASIC_ENTRIES = [
-    """<manifest:file-entry manifest:full-path="Basic/" manifest:media-type="application/binary"/>""",
-    """<manifest:file-entry manifest:full-path="Basic/Standard/" manifest:media-type="application/binary"/>""",
-    """<manifest:file-entry manifest:full-path="Basic/Standard/py4lo.xml" manifest:media-type="text/xml"/>""",
-    """<manifest:file-entry manifest:full-path="Basic/Standard/script-lb.xml" manifest:media-type="text/xml"/>""",
-    """<manifest:file-entry manifest:full-path="Basic/script-lc.xml" manifest:media-type="text/xml"/>""",
+    ('<manifest:file-entry manifest:full-path="Basic/" '
+     'manifest:media-type="application/binary"/>'),
+    ('<manifest:file-entry manifest:full-path="Basic/Standard/" '
+     'manifest:media-type="application/binary"/>'),
+    ('<manifest:file-entry manifest:full-path="Basic/Standard/py4lo.xml" '
+     ' manifest:media-type="text/xml"/>'),
+    ('<manifest:file-entry  '
+     'manifest:full-path="Basic/Standard/script-lb.xml" '
+     ' manifest:media-type="text/xml"/>'),
+    ('<manifest:file-entry manifest:full-path="Basic/script-lc.xml" '
+     ' manifest:media-type="text/xml"/>'),
 ]
 
-PYTHON_ENTRY_TPL = """<manifest:file-entry manifest:full-path="{0}" manifest:media-type=""/>"""
-DIR_TPL = """<manifest:file-entry manifest:full-path="{0}" manifest:media-type="application/binary"/>"""
-ASSET_ENTRY_TPL = """<manifest:file-entry manifest:full-path="{0}" manifest:media-type="application/octet-stream"/>"""
-MANIFEST_CLOSE_TAG = """</manifest:manifest>"""
+PYTHON_ENTRY_TPL = ('<manifest:file-entry manifest:full-path="{0}" '
+                    'manifest:media-type=""/>')
+DIR_TPL = ('<manifest:file-entry manifest:full-path="{0}" '
+           'manifest:media-type="application/binary"/>')
+ASSET_ENTRY_TPL = ('<manifest:file-entry manifest:full-path="{0}" '
+                   'manifest:media-type="application/octet-stream"/>')
+MANIFEST_CLOSE_TAG = '</manifest:manifest>'
 
 
 class RewriteManifest(ItemCallback):
@@ -54,8 +63,8 @@ class RewriteManifest(ItemCallback):
             return False
 
     def _rewrite_manifest(self, zin: ZipFile, manifest_item: ZipInfo):
-        pretty_manifest = RewriteManifest._prettyfy_xml(zin,
-                                                        manifest_item.filename)
+        pretty_manifest = RewriteManifest._prettyfy_xml(
+            zin, manifest_item.filename)
         lines = RewriteManifest._strip_close(pretty_manifest)
         lines += self._script_lines()
         return "\n".join(lines).encode("utf-8")
@@ -85,10 +94,12 @@ class RewriteManifest(ItemCallback):
                 posix += "/"
             lines.append("    " + DIR_TPL.format(posix))
         for script in self._scripts:
-            lines.append(
-                "    " + PYTHON_ENTRY_TPL.format(script.script_path.as_posix()))
+            new_line = "    " + PYTHON_ENTRY_TPL.format(
+                script.script_path.as_posix())
+            lines.append(new_line)
         for asset in self._assets:
-            lines.append("    " + ASSET_ENTRY_TPL.format(asset.path.as_posix()))
+            new_line = "    " + ASSET_ENTRY_TPL.format(asset.path.as_posix())
+            lines.append(new_line)
 
         lines.append(MANIFEST_CLOSE_TAG)
         return lines
