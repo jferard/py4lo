@@ -23,11 +23,11 @@ try:
 except:
     pass
 else:
-    import unohelper
+    import uno
     import sys
     # add path/to/doc.os/Scripts/python to sys.path, to import Python
     # modules (*.py, *.py[co]) and packages from a ZIP-format archive.
     doc = XSCRIPTCONTEXT.getDocument()
-    spath = unohelper.fileUrlToSystemPath(doc.URL+'/Scripts/python')
+    spath = uno.fileUrlToSystemPath(doc.URL+'/Scripts/python')
     if spath not in sys.path:
         sys.path.insert(0, spath)
