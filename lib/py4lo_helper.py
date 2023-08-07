@@ -214,14 +214,38 @@ uno_service = create_uno_service
 uno_service_ctxt = create_uno_service_ctxt
 
 
-def to_iter(oXIndexAccess: UnoObject) -> Iterator[UnoObject]:
-    for i in range(oXIndexAccess.Count):
-        yield oXIndexAccess.getByIndex(i)
+def to_iter(o: UnoObject) -> Iterator[UnoObject]:
+    """
+    @param o: an XIndexAccess or XEnumerationAccession object
+    @return: an iterator on `o`
+    """
+    try:
+        count = o.Count
+    except AttributeError:
+        oEnum = o.createEnumeration()
+        while oEnum.hasMoreElements():
+            yield oEnum.nextElement()
+    else:
+        for i in range(count):
+            yield o.getByIndex(i)
 
 
-def to_enumerate(oXIndexAccess: UnoObject) -> Iterator[Tuple[int, UnoObject]]:
-    for i in range(oXIndexAccess.Count):
-        yield i, oXIndexAccess.getByIndex(i)
+def to_enumerate(o: UnoObject) -> Iterator[Tuple[int, UnoObject]]:
+    """
+    @param o: an XIndexAccess or XEnumerationAccession object
+    @return: an enumerate iterator on `o`
+    """
+    try:
+        count = o.Count
+    except AttributeError:
+        oEnum = o.createEnumeration()
+        i = 0
+        while oEnum.hasMoreElements():
+            yield i, oEnum.nextElement()
+            i += 1
+    else:
+        for i in range(count):
+            yield i, o.getByIndex(i)
 
 
 def to_dict(oXNameAccess: UnoObject) -> Mapping[str, UnoObject]:
