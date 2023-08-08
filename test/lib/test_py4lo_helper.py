@@ -157,7 +157,7 @@ class HelperBaseTestCase(unittest.TestCase):
         self.assertEqual(ref, actual_ref1)
         self.assertEqual(ref, actual_ref2)
 
-    def test_to_iter(self):
+    def test_to_iter_count(self):
         # prepare
         index_access = Mock()
         index_access.Count = 3
@@ -168,6 +168,46 @@ class HelperBaseTestCase(unittest.TestCase):
 
         # verify
         self.assertEqual([1, 4, 9], ret)
+
+    def test_to_enumerate_count(self):
+        # prepare
+        index_access = Mock()
+        index_access.Count = 3
+        index_access.getByIndex.side_effect = [1, 4, 9]
+
+        # play
+        ret = list(to_enumerate(index_access))
+
+        # verify
+        self.assertEqual([(0, 1), (1, 4), (2, 9)], ret)
+
+    def test_to_iter_enum(self):
+        # prepare
+        oEnum = Mock()
+        enum_access = Mock(spec=["createEnumeration"])
+        enum_access.createEnumeration.side_effect = [oEnum]
+        oEnum.hasMoreElements.side_effect = [True, True, True, False]
+        oEnum.nextElement.side_effect = [1, 4, 9]
+
+        # play
+        ret = list(to_iter(enum_access))
+
+        # verify
+        self.assertEqual([1, 4, 9], ret)
+
+    def test_to_enumerate_enum(self):
+        # prepare
+        oEnum = Mock()
+        enum_access = Mock(spec=["createEnumeration"])
+        enum_access.createEnumeration.side_effect = [oEnum]
+        oEnum.hasMoreElements.side_effect = [True, True, True, False]
+        oEnum.nextElement.side_effect = [1, 4, 9]
+
+        # play
+        ret = list(to_enumerate(enum_access))
+
+        # verify
+        self.assertEqual([(0, 1), (1, 4), (2, 9)], ret)
 
     def test_to_dict(self):
         # prepare
