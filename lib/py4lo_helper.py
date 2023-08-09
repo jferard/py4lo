@@ -25,7 +25,7 @@ from typing import (Any, Optional, List, cast, Callable, Mapping, Tuple,
                     Iterator, Union, Iterable)
 
 from py4lo_commons import uno_path_to_url
-from py4lo_typing import (UnoSpreadsheet, UnoController, UnoContext,
+from py4lo_typing import (UnoSpreadsheetDocument, UnoController, UnoContext,
                           UnoService, UnoSheet, UnoRangeAddress, UnoRange,
                           UnoCell, UnoObject, DATA_ARRAY, UnoCellAddress,
                           UnoPropertyValue, DATA_ROW, UnoXScriptContext,
@@ -126,7 +126,7 @@ class _ObjectProvider:
         return _ObjectProvider(doc, controller, frame, parent_win,
                                script_provider, ctxt, service_manager, desktop)
 
-    def __init__(self, doc: UnoSpreadsheet, controller: UnoController, frame,
+    def __init__(self, doc: UnoSpreadsheetDocument, controller: UnoController, frame,
                  parent_win, script_provider,
                  ctxt: UnoContext, service_manager, desktop):
         self.doc = doc
@@ -271,7 +271,7 @@ def remove_all(oXAccess: UnoObject):
             oXAccess.removeByIndex(0)
 
 
-def parent_doc(oRange: UnoRange) -> UnoSpreadsheet:
+def parent_doc(oRange: UnoRange) -> UnoSpreadsheetDocument:
     """
     Find the document that owns this range.
 
@@ -294,11 +294,11 @@ def get_cell_type(oCell: UnoCell) -> str:
     return cell_type
 
 
-def get_named_cells(oDoc: UnoSpreadsheet, name: str) -> UnoRange:
+def get_named_cells(oDoc: UnoSpreadsheetDocument, name: str) -> UnoRange:
     return oDoc.NamedRanges.getByName(name).ReferredCells
 
 
-def get_named_cell(oDoc: UnoSpreadsheet, name: str) -> UnoCell:
+def get_named_cell(oDoc: UnoSpreadsheetDocument, name: str) -> UnoCell:
     return get_named_cells(oDoc, name).getCellByPosition(0, 0)
 
 
@@ -765,7 +765,7 @@ def get_conditional_entry(
 
 # from Andrew Pitonyak 5.14
 # www.openoffice.org/documentation/HOW_TO/various_topics/AndrewMacro.odt
-def find_or_create_number_format_style(oDoc: UnoSpreadsheet, fmt: str,
+def find_or_create_number_format_style(oDoc: UnoSpreadsheetDocument, fmt: str,
                                        locale: Optional[UnoStruct] = None
                                        ) -> int:
     oFormats = oDoc.NumberFormats
@@ -975,7 +975,7 @@ class Target(str, Enum):
 
 def open_in_calc(filename: Union[str, Path], target: str = Target.BLANK,
                  frame_flags=FrameSearchFlag.AUTO,
-                 **kwargs) -> UnoSpreadsheet:
+                 **kwargs) -> UnoSpreadsheetDocument:
     """
     Open a document in calc
     :param filename: the name of the file to open
@@ -1010,7 +1010,7 @@ def doc_builder(
 def new_doc(url: NewDocumentUrl = NewDocumentUrl.Calc,
             taget_frame_name: Target = Target.BLANK,
             search_flags: FrameSearchFlag = FrameSearchFlag.AUTO,
-            pvs: Optional[UnoPropertyValues] = None) -> UnoSpreadsheet:
+            pvs: Optional[UnoPropertyValues] = None) -> UnoSpreadsheetDocument:
     """Create a blank new doc"""
     return doc_builder(url, taget_frame_name, search_flags, pvs).build()
 
@@ -1028,7 +1028,7 @@ class DocBuilder:
             url, taget_frame_name, search_flags, pvs)
         self._oDoc.lockControllers()
 
-    def build(self) -> UnoSpreadsheet:
+    def build(self) -> UnoSpreadsheetDocument:
         self._oDoc.unlockControllers()
         return self._oDoc
 
@@ -1117,7 +1117,7 @@ class DocBuilder:
 ###############################################################################
 # MISC
 ###############################################################################
-def read_options(oSheet: UnoSpreadsheet, aAddress: UnoRangeAddress,
+def read_options(oSheet: UnoSpreadsheetDocument, aAddress: UnoRangeAddress,
                  apply: Union[
                      Callable[[str, str], Tuple[str, str]],
                      Callable[[str, List[str]], Tuple[str, List[str]]]
@@ -1161,7 +1161,7 @@ def rtrim_row(row: DATA_ROW, null="") -> Union[DATA_ROW, DATA_VALUE]:
 
 
 def read_options_from_sheet_name(
-        oDoc: UnoSpreadsheet, sheet_name: str,
+        oDoc: UnoSpreadsheetDocument, sheet_name: str,
         apply: Union[
             Callable[[str, str], Tuple[str, str]],
             Callable[[str, List[str]], Tuple[str, List[str]]]

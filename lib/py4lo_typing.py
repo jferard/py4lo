@@ -31,7 +31,12 @@ UnoService = NewType("UnoService", UnoObject)
 ######
 # services
 ######
-UnoSpreadsheet = NewType("UnoSpreadsheet", UnoService)
+UnoOfficeDocument = NewType("UnoOfficeDocument", UnoService)
+
+# Calc
+UnoSpreadsheetDocument = NewType("UnoSpreadsheetDocument", UnoOfficeDocument)
+# deprecated: use UnoSpreadsheetDocument
+UnoSpreadsheet = UnoSpreadsheetDocument
 UnoRange = NewType("UnoRange", UnoService)
 UnoSheet = NewType("UnoSheet", UnoRange)
 UnoCell = NewType("UnoCell", UnoRange)
@@ -39,6 +44,12 @@ UnoRow = NewType("UnoRow", UnoRange)
 UnoColumn = NewType("UnoColumn", UnoRange)
 UnoCellAddress = NewType("UnoCellAddress", UnoService)
 
+# Writer
+UnoTextDocument = NewType("UnoTextDocument", UnoOfficeDocument)
+
+# Other
+UnoDrawingDocument = NewType("UnoDrawingDocument", UnoOfficeDocument)
+UnoPresentationDocument = NewType("UnoPresentationDocument", UnoOfficeDocument)
 
 UnoController = NewType("UnoController", UnoService)
 UnoContext = NewType("UnoContext", UnoService)

@@ -29,7 +29,8 @@ from py4lo_commons import float_to_date, date_to_float, uno_path_to_url
 from py4lo_helper import (provider as pr, make_pvs, parent_doc, get_cell_type,
                           get_used_range_address, Target,
                           FrameSearchFlag)
-from py4lo_typing import UnoCell, UnoSheet, UnoSpreadsheet, StrPath, UnoService
+from py4lo_typing import (UnoCell, UnoSheet, UnoSpreadsheetDocument,
+                          StrPath, UnoService)
 
 try:
     # noinspection PyUnresolvedReferences
@@ -752,7 +753,7 @@ class Format(IntEnum):
     US = 10  # US-English
 
 
-def import_from_csv(oDoc: UnoSpreadsheet, sheet_name: str, dest_position: int,
+def import_from_csv(oDoc: UnoSpreadsheetDocument, sheet_name: str, dest_position: int,
                     path: StrPath, *args, **kwargs):
     """
     @param sheet_name: the sheet name
