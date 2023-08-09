@@ -126,8 +126,8 @@ class _ObjectProvider:
         return _ObjectProvider(doc, controller, frame, parent_win,
                                script_provider, ctxt, service_manager, desktop)
 
-    def __init__(self, doc: UnoSpreadsheetDocument, controller: UnoController, frame,
-                 parent_win, script_provider,
+    def __init__(self, doc: UnoSpreadsheetDocument, controller: UnoController,
+                 frame, parent_win, script_provider,
                  ctxt: UnoContext, service_manager, desktop):
         self.doc = doc
         self.controller = controller
