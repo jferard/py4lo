@@ -19,7 +19,7 @@
 import unittest
 from logging import Logger
 from pathlib import Path
-from unittest.mock import Mock, call, patch
+from unittest import mock
 
 from commands.ods_updater import OdsUpdaterHelper
 from commands.update_command import UpdateCommand
@@ -27,12 +27,12 @@ from zip_updater import ZipUpdaterBuilder
 
 
 class TestUpdateCommand(unittest.TestCase):
-    @patch("commands.update_command.ZipUpdaterBuilder", autospec=True)
+    @mock.patch("commands.update_command.ZipUpdaterBuilder", autospec=True)
     def test_execute(self, ZubMock):
         # mocks
-        logger: Logger = Mock()
-        helper: OdsUpdaterHelper = Mock()
-        zub: ZipUpdaterBuilder = Mock()
+        logger: Logger = mock.Mock()
+        helper: OdsUpdaterHelper = mock.Mock()
+        zub: ZipUpdaterBuilder = mock.Mock()
 
         ZubMock.return_value = zub
 
@@ -44,14 +44,15 @@ class TestUpdateCommand(unittest.TestCase):
         # verify
         self.assertEqual((10, Path("dest.ods")), execute)
         self.assertEqual(
-            [call.info("Update. Generating '%s' (source: %s) for Python '%s'",
+            [mock.call.info(
+                "Update. Generating '%s' (source: %s) for Python '%s'",
                        Path('dest.ods'), Path('source.ods'), '3.1')],
             logger.mock_calls)
         self.assertEqual(
-            [call.get_destination_scripts(), call.get_assets()],
+            [mock.call.get_destination_scripts(), mock.call.get_assets()],
             helper.mock_calls)
         self.assertEqual(
-            call.build().update(Path('source.ods'), Path('dest.ods')),
+            mock.call.build().update(Path('source.ods'), Path('dest.ods')),
             zub.mock_calls[-1])
 
     # @patch('zip_updater.ZipUpdaterBuilder', autospec=True)

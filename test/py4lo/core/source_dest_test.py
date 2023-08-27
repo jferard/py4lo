@@ -19,12 +19,12 @@
 import io
 import unittest
 from pathlib import Path
-from unittest.mock import Mock, patch, call
+from unittest import mock
 
 from core.asset import SourceAsset, DestinationAsset
 from core.script import SourceScript, DestinationScript, TempScript
 from core.source_dest import Sources, Destinations
-from tst_env import file_path_mock
+from test.test_helper import file_path_mock
 
 class TestSourcesDests(unittest.TestCase):
     def setUp(self):
@@ -32,25 +32,25 @@ class TestSourcesDests(unittest.TestCase):
                                 Path("src"), [], Path("opt"), Path("asset"), [],
                                 Path("test"))
         self._destinations = Destinations(Path("ods_file"), Path("temp"),
-                                          Path("dest"), Mock())
+                                          Path("dest"), mock.Mock())
 
-    @patch("core.source_dest._get_paths", autospec=True)
+    @mock.patch("core.source_dest._get_paths", autospec=True)
     def test_sources_src(self, gp_mock):
         gp_mock.return_value = [Path("a")]
 
         self.assertEqual([Path("a")], self._sources.get_src_paths())
-        self.assertEqual([call(Path('src'), [], '*.py')], gp_mock.mock_calls)
+        self.assertEqual([mock.call(Path('src'), [], '*.py')], gp_mock.mock_calls)
 
-    @patch("core.source_dest._get_paths", autospec=True)
+    @mock.patch("core.source_dest._get_paths", autospec=True)
     def test_sources_assets(self, gp_mock):
         gp_mock.return_value = [Path("b")]
 
         self.assertEqual(
             [SourceAsset(path=Path('b'), assets_dir=Path('asset'))],
             self._sources.get_assets())
-        self.assertEqual([call(Path('asset'), [])], gp_mock.mock_calls)
+        self.assertEqual([mock.call(Path('asset'), [])], gp_mock.mock_calls)
 
-    @patch("core.source_dest._get_paths", autospec=True)
+    @mock.patch("core.source_dest._get_paths", autospec=True)
     def test_sources_scripts(self, gp_mock):
         gp_mock.return_value = [Path("c")]
 
@@ -58,7 +58,7 @@ class TestSourcesDests(unittest.TestCase):
             [SourceScript(script_path=Path('c'), source_dir=Path('src'),
                           export_funcs=True)],
             self._sources.get_src_scripts())
-        self.assertEqual([call(Path('src'), [], '*.py')], gp_mock.mock_calls)
+        self.assertEqual([mock.call(Path('src'), [], '*.py')], gp_mock.mock_calls)
 
     def test_destinations_scripts(self):
         dscript = DestinationScript(Path('dest/scr'), b'abc', Path('dest'),
@@ -70,7 +70,7 @@ class TestSourcesDests(unittest.TestCase):
 
     def test_destinations_assets(self):
         path = file_path_mock(io.BytesIO(b'asset content'))
-        assets_dir: Path = Mock()
+        assets_dir: Path = mock.Mock()
 
         self._destinations.assets_dest_dir.joinpath.return_value = Path(
             "dest_s")

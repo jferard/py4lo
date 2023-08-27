@@ -17,7 +17,7 @@
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest
 from pathlib import Path
-from unittest.mock import Mock, call
+from unittest import mock
 from zipfile import ZipFile
 
 from callbacks import AddAssets
@@ -26,17 +26,18 @@ from core.asset import DestinationAsset
 
 class AddAssetsTest(unittest.TestCase):
     def test_empty(self):
-        zout: ZipFile = Mock()
+        zout: ZipFile = mock.Mock()
         cb = AddAssets([])
         cb.call(zout)
 
         self.assertEqual([], zout.mock_calls)
 
-    def test_empty(self):
-        zout: ZipFile = Mock()
-        asset: DestinationAsset = Mock(path=Path("asset"), content=bytes())
+    def test_empty2(self):
+        zout: ZipFile = mock.Mock()
+        asset: DestinationAsset = mock.Mock(path=Path("asset"), content=bytes())
 
         cb = AddAssets([asset])
         cb.call(zout)
 
-        self.assertEqual([call.writestr('asset', b'')], zout.mock_calls)
+        self.assertEqual([mock.call.writestr('asset', b'')],
+                         zout.mock_calls)

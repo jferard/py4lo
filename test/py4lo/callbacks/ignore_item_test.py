@@ -18,18 +18,18 @@
 
 import unittest
 from pathlib import Path
-from unittest.mock import Mock, call
+from unittest import mock
 
 from callbacks import IgnoreItem
 
 
 class TestIgnoreScripts(unittest.TestCase):
     def setUp(self):
-        self.zin = Mock()
-        self.zout = Mock()
+        self.zin = mock.Mock()
+        self.zout = mock.Mock()
 
     def test_ignore(self):
-        item = Mock()
+        item = mock.Mock()
         item.filename = "Scripts/a"
         path = Path("Scripts")
         a = IgnoreItem(path)
@@ -38,7 +38,7 @@ class TestIgnoreScripts(unittest.TestCase):
                          self.zin.mock_calls + self.zout.mock_calls + item.mock_calls)
 
     def test_dont_ignore(self):
-        item = Mock()
+        item = mock.Mock()
         item.filename = "manifest"
         path = Path("Scripts")
         a = IgnoreItem(path)

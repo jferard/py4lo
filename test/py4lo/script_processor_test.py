@@ -19,31 +19,34 @@
 import io
 import unittest
 from logging import Logger
-from unittest.mock import Mock, call, MagicMock
+from pathlib import Path
+from unittest import mock
 
-from script_set_processor import *
-
-from tst_env import file_path_mock, verify_open_path
+from core.script import SourceScript
+from directive_processor import DirectiveProcessor
+from script_set_processor import ScriptProcessor
+from test.test_helper import file_path_mock, verify_open_path
 
 
 class TestScriptsProcessor(unittest.TestCase):
     def test(self):
-        logger: Logger = Mock()
-        dp: DirectiveProcessor = Mock()
-        source_script: SourceScript = Mock(relative_path="fname",
-                                           script_path=file_path_mock(
-                                               io.StringIO("some line")),
-                                           export_funcs=True)
-        target_dir: Path = Mock()
+        logger: Logger = mock.Mock()
+        dp: DirectiveProcessor = mock.Mock()
+        source_script: SourceScript = mock.Mock(
+            relative_path="fname",
+            script_path=file_path_mock(
+                io.StringIO("some line")),
+            export_funcs=True)
+        target_dir: Path = mock.Mock()
         target_dir.joinpath.side_effect = [Path('t')]
 
         sp = ScriptProcessor(logger, dp, source_script, target_dir)
         sp.parse_script()
 
         self.assertEqual(
-            [call.debug('Parsing script: %s (%s)', 'fname',
+            [mock.call.debug('Parsing script: %s (%s)', 'fname',
                         source_script),
-             call.debug('Temp output script is: %s (%s)', Path('t'), [])],
+             mock.call.debug('Temp output script is: %s (%s)', Path('t'), [])],
             logger.mock_calls)
-        self.assertEqual([call.ignore_lines(), call.end()], dp.mock_calls)
+        self.assertEqual([mock.call.ignore_lines(), mock.call.end()], dp.mock_calls)
         verify_open_path(self, source_script.script_path, 'r', encoding='utf-8')

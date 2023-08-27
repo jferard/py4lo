@@ -18,7 +18,7 @@
 
 import unittest
 from pathlib import Path
-from unittest.mock import Mock, call
+from unittest import mock
 
 from core.script import SourceScript
 from directives import EmbedLib
@@ -33,18 +33,27 @@ class TestEmbedLib(unittest.TestCase):
         self.assertEqual(["embed", "lib"], self._directive.sig_elements())
 
     def test_execute(self):
-        proc = Mock()
+        proc =  mock.Mock()
         s = []
         self.assertEqual(True,
                          self._directive.execute(proc, s, ["py4lo_helper"]))
         py4lo_path = Path(__file__).parent.parent.parent.parent
-        self.assertEqual([call.append_script(
+        self.assertEqual([mock.call.append_script(
             SourceScript(
                 py4lo_path / 'lib/py4lo_helper.py',
                 py4lo_path / 'lib', False))],
             proc.mock_calls)
 
-        self.assertEqual(['# begin py4lo: init py4lo_helper\nimport py4lo_helper\ntry:\n    py4lo_helper.init(XSCRIPTCONTEXT)\nexcept NameError:\n    pass\nfinally:\n    del py4lo_helper  # does not wipe cache, but remove the access.\n# end py4lo: init py4lo_helper'], s)
+        expected = """# begin py4lo: init py4lo_helper
+import py4lo_helper
+try:
+    py4lo_helper.init(XSCRIPTCONTEXT)
+except NameError:
+    pass
+finally:
+    del py4lo_helper  # does not wipe cache, but remove the access.
+# end py4lo: init py4lo_helper""" # noqa: E501
+        self.assertEqual([expected], s)
 
 if __name__ == '__main__':
     unittest.main()

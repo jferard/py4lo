@@ -195,7 +195,7 @@ class TestCommons(unittest.TestCase):
         t = tempfile.mkdtemp()
         c = Commons((Path(t) / "file.ods").as_uri())
         with self.assertRaises(Exception):
-            logger = c.logger()
+            _ = c.logger()
 
         os.rmdir(t)
 

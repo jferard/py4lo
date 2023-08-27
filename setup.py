@@ -29,7 +29,8 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 setup(
     name='py4lo',
     version='0.1.0',
-    description='Py4LO is a simple toolkit to help you write Python scripts for LibreOffice',
+    description='Py4LO is a simple toolkit to help you '
+                'write Python scripts for LibreOffice',
     long_description=long_description,
     url='https://github.com/jferard/py4lo',
     author='Julien Férard',
@@ -40,7 +41,8 @@ setup(
         'Intended Audience :: Developers',
         'Topic :: Software Development :: Build Tools',
         'Topic :: Utilities',
-        'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
+        'License :: OSI Approved :: '
+        'GNU General Public License v3 or later (GPLv3+)',
         'Programming Language :: Python :: 3',
     ],
 

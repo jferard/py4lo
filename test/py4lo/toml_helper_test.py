@@ -20,10 +20,10 @@
 import io
 import sys
 import unittest
-from unittest.mock import Mock
 
 from toml_helper import TomlLoader, load_toml
-from tst_env import file_path_mock, file_path_error_mock, verify_open_path
+from test.test_helper import (
+    file_path_mock, file_path_error_mock, verify_open_path)
 
 
 class TestTomlHelper(unittest.TestCase):

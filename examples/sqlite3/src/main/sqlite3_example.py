@@ -54,7 +54,9 @@ def sqlite_example(*_args):
         path.unlink(True)
 
         with sqlite_open(path, "crw") as db:
-            db.execute_update("CREATE TABLE persons (name TEXT, age INTEGER, percentage DOUBLE)")
+            db.execute_update(
+                "CREATE TABLE persons "
+                "(name TEXT, age INTEGER, percentage DOUBLE)")
             with db.transaction():
                 with db.prepare("INSERT INTO persons VALUES(?, ?, ?)") as stmt:
                     for data_row in data_array:
@@ -73,7 +75,7 @@ def sqlite_example(*_args):
         arr = list(oSheet.getCellRangeByName("output_rows").DataArray)
         arr = new_data_array[:len(new_data_array)] + arr[len(new_data_array):]
         oSheet.getCellRangeByName("output_rows").DataArray = arr
-    except Exception as e:
+    except Exception:
         logger.exception("EXC")
     finally:
         path.unlink(True)

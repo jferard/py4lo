@@ -34,7 +34,7 @@ from py4lo_helper import provider as pr, xray, mri, parent_doc
 from py4lo_io import (dict_reader, dict_writer, export_to_csv,
                       import_from_csv, CellTyping)
 
-o = example_lib.O(pr)
+o = example_lib.Example(pr)
 
 
 def message_example(*_args):

@@ -18,7 +18,7 @@
 
 import unittest
 from logging import Logger
-from unittest.mock import Mock, call
+from unittest import mock
 from zipfile import ZipFile
 
 from callbacks import AddScripts
@@ -27,16 +27,19 @@ from core.script import DestinationScript
 
 class TestAddScripts(unittest.TestCase):
     def test_add_two_scripts(self):
-        logger:Logger = Mock()
-        zout: ZipFile = Mock()
-        t1: DestinationScript = Mock(script_path="Scripts/python/t1", script_content="c1")
-        t2: DestinationScript = Mock(script_path="Scripts/python/t2", script_content="c2")
+        logger: Logger = mock.Mock()
+        zout: ZipFile = mock.Mock()
+        t1: DestinationScript = mock.Mock(
+            script_path="Scripts/python/t1", script_content="c1")
+        t2: DestinationScript = mock.Mock(
+            script_path="Scripts/python/t2", script_content="c2")
 
         a = AddScripts(logger, [t1, t2])
         a.call(zout)
-        self.assertEqual([call.writestr('Scripts/python/t1', 'c1'),
-                          call.writestr('Scripts/python/t2', 'c2')],
-                         zout.mock_calls)
+        self.assertEqual([
+            mock.call.writestr('Scripts/python/t1', 'c1'),
+            mock.call.writestr('Scripts/python/t2', 'c2')
+        ], zout.mock_calls)
 
 
 if __name__ == '__main__':

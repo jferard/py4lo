@@ -91,15 +91,15 @@ class FrameSearchFlag:
 
 
 class BorderLineStyle:
-    SOLID = None
+    SOLID = 0
 
 
 class ConditionOperator:
-    FORMULA = None
+    FORMULA = 9
 
 
 class ValidationType:
-    LIST = None
+    LIST = 6
 
 
 class TableValidationVisibility:

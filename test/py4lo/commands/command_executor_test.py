@@ -18,7 +18,7 @@
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest
 from logging import Logger
-from unittest.mock import Mock, call
+from unittest import mock
 
 from commands import Command
 from commands.command_executor import CommandExecutor
@@ -26,21 +26,21 @@ from commands.command_executor import CommandExecutor
 
 class TestCommandExecutor(unittest.TestCase):
     def setUp(self):
-        self._logger: Logger = Mock()
-        self._command: Command = Mock()
+        self._logger: Logger = mock.Mock()
+        self._command: Command = mock.Mock()
 
     def test_without_previous(self):
         ce = CommandExecutor(self._logger, self._command, None)
         ce.execute(["1", "2"])
-        self.assertEqual([call.execute()], self._command.mock_calls)
+        self.assertEqual([mock.call.execute()], self._command.mock_calls)
 
     def test_with_previous(self):
-        previous = Mock()
+        previous = mock.Mock()
 
         previous.execute.return_value = ["3", "4"]
 
         ce = CommandExecutor(self._logger, self._command, previous)
         ce.execute(["1", "2"])
 
-        self.assertEqual([call.execute(["1", "2"])], previous.mock_calls)
-        self.assertEqual([call.execute("3", "4")], self._command.mock_calls)
+        self.assertEqual([mock.call.execute(["1", "2"])], previous.mock_calls)
+        self.assertEqual([mock.call.execute("3", "4")], self._command.mock_calls)

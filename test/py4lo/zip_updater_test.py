@@ -17,35 +17,36 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest
-from unittest.mock import *
-import tst_env
-from zip_updater import *
-from tst_env import file_path_mock, verify_open_path
+from logging import Logger
+from pathlib import Path
+from unittest import mock
+from callbacks import BeforeCallback
+from zip_updater import ZipUpdaterBuilder
+
 
 class TestZipUpdater(unittest.TestCase):
-    @patch('zip_updater.ZipFile', autospec=True)
+    @mock.patch('zip_updater.ZipFile', autospec=True)
     def test(self, zf):
-        logger: Logger = Mock()
+        logger: Logger = mock.Mock()
         zub = ZipUpdaterBuilder(logger)
-        cbs = []
 
-        b1: BeforeCallback = Mock()
-        b2: BeforeCallback = Mock()
-        i1 = Mock()
-        i2 = Mock()
-        a1 = Mock()
-        a2 = Mock()
+        b1: BeforeCallback = mock.Mock()
+        b2: BeforeCallback = mock.Mock()
+        i1 = mock.Mock()
+        i2 = mock.Mock()
+        a1 = mock.Mock()
+        a2 = mock.Mock()
 
-        zout = Mock()
-        p = PropertyMock()
+        zout = mock.Mock()
+        p = mock.PropertyMock()
         type(zout).comment = p
-        zin = Mock(comment="a")
+        zin = mock.Mock(comment="a")
         zin.infolist.return_value = [1, 2]
 
-        rout = MagicMock()
+        rout = mock.MagicMock()
         rout.__enter__.return_value = zout
         rout.__exit__.return_value = False
-        rin = MagicMock()
+        rin = mock.MagicMock()
         rin.__enter__.return_value = zin
         rin.__exit__.return_value = False
 
@@ -65,9 +66,11 @@ class TestZipUpdater(unittest.TestCase):
         p.assert_called_once_with("a")
         b1.call.assert_called_once_with(zout)
         b2.call.assert_called_once_with(zout)
-        self.assertEqual([call(zin, zout, 1), call(zin, zout, 2)],
-                          i1.call.mock_calls)
-        self.assertEqual([call(zin, zout, 1), call(zin, zout, 2)],
-                          i2.call.mock_calls)
+        self.assertEqual([
+            mock.call(zin, zout, 1), mock.call(zin, zout, 2)],
+            i1.call.mock_calls)
+        self.assertEqual([
+            mock.call(zin, zout, 1), mock.call(zin, zout, 2)],
+            i2.call.mock_calls)
         a1.call.assert_called_once_with(zout)
         a2.call.assert_called_once_with(zout)

@@ -23,7 +23,7 @@ from alib import TEXT
 from py4lo_dialogs import message_box
 
 
-class O(unohelper.Base):
+class Example(unohelper.Base):
     def __init__(self, provider):
         self._provider = provider
 

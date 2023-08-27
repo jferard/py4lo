@@ -17,21 +17,22 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest
-from unittest.mock import Mock, patch, call
+from pathlib import Path
+from unittest import mock
 
-from commands.run_command import *
+from commands.run_command import RunCommand
 from core.properties import PropertiesProvider
 
 
 class TestRunCommand(unittest.TestCase):
     def setUp(self):
-        self.provider: PropertiesProvider = Mock()
+        self.provider: PropertiesProvider = mock.Mock()
 
     def test_with_empty_tdata(self):
         self.provider.get.return_value = {}
         RunCommand.create_executor([], self.provider)
 
-    @patch("subprocess.call", autospec=True)
+    @mock.patch("subprocess.call", autospec=True)
     def test_create(self, call_mock):
         self.provider.get.return_value = {"log_level": 0, "python_exe": "py",
                                           "python_version": 3.7,
@@ -44,8 +45,8 @@ class TestRunCommand(unittest.TestCase):
                                           "assets_dest_dir": ".",
                                           "assets_ignore": "*"}
 
-    @patch("subprocess.call", autospec=True)
+    @mock.patch("subprocess.call", autospec=True)
     def test(self, call_mock):
         h = RunCommand("calc")
         h.execute(0, Path(""))
-        self.assertEqual([call(['calc', '.'])], call_mock.mock_calls)
+        self.assertEqual([mock.call(['calc', '.'])], call_mock.mock_calls)

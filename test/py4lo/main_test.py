@@ -17,15 +17,14 @@
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
-from unittest.mock import MagicMock
+from unittest import mock
 
-import tst_env
 import main
 
 
 class MainTest(unittest.TestCase):
     def test(self):
-        factory = MagicMock()
+        factory = mock.MagicMock()
         main.main(factory, ["py4lo", "help"])
 
 

@@ -18,24 +18,25 @@
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest
 from logging import Logger
-from unittest.mock import Mock, patch, call
+from pathlib import Path
+from unittest import mock
 
-from commands.debug_command import *
 from commands.debug_command import DebugCommand
+from commands.ods_updater import OdsUpdaterHelper
 from core.source_dest import Sources, Destinations
 from core.script import TempScript
 
 
 class TestDebugCommand(unittest.TestCase):
-    @patch('zip_updater.ZipUpdater', autospec=True)
+    @mock.patch('zip_updater.ZipUpdater', autospec=True)
     def test(self, Zupdater):
         # mocks
-        logger: Logger = Mock()
-        helper: OdsUpdaterHelper = Mock()
-        t1: TempScript = Mock()
-        t2: TempScript = Mock()
-        sources: Sources = Mock()
-        destinations: Destinations = Mock()
+        logger: Logger = mock.Mock()
+        helper: OdsUpdaterHelper = mock.Mock()
+        t1: TempScript = mock.Mock()
+        t2: TempScript = mock.Mock()
+        sources: Sources = mock.Mock()
+        destinations: Destinations = mock.Mock()
 
         dest_path = Path("dest.ods")
         inc_path = Path("inc/debug.ods")
@@ -47,10 +48,11 @@ class TestDebugCommand(unittest.TestCase):
 
         d.execute([])
 
-        self.assertEqual([call.info(
+        self.assertEqual([mock.call.info(
             "Debug or init. Generating '%s' for Python '%s'", Path('dest.ods'),
             '3.1')],
             logger.mock_calls)
         print(Zupdater.mock_calls)
-        self.assertEqual(call().update(Path('inc/debug.ods'), Path('dest.ods')),
+        self.assertEqual(mock.call().update(Path('inc/debug.ods'),
+                                            Path('dest.ods')),
                          Zupdater.mock_calls[-1])

@@ -18,16 +18,18 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
+# noinspection PyBroadException
 try:
-    XSCRIPTCONTEXT
-except:
+    # noinspection PyUnresolvedReferences
+    XSCRIPTCONTEXT  # noqa: F821
+except: # noqa: E722
     pass
 else:
     import uno
     import sys
     # add path/to/doc.os/Scripts/python to sys.path, to import Python
     # modules (*.py, *.py[co]) and packages from a ZIP-format archive.
-    doc = XSCRIPTCONTEXT.getDocument()
+    doc = XSCRIPTCONTEXT.getDocument() # noqa: F821
     spath = uno.fileUrlToSystemPath(doc.URL+'/Scripts/python')
     if spath not in sys.path:
         sys.path.insert(0, spath)

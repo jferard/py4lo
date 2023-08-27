@@ -17,36 +17,40 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest
-from unittest.mock import Mock, patch, call
+from unittest import mock
 
-from commands.help_command import *
+from commands import HelpCommand
 from core.properties import PropertiesProvider
 
 
 class TestHelpCommand(unittest.TestCase):
     def setUp(self):
-        self.provider: PropertiesProvider = Mock()
+        self.provider: PropertiesProvider = mock.Mock()
 
-    @patch("__main__.__builtins__.print", autospec=True)
+    @mock.patch("__main__.__builtins__.print", autospec=True)
     def test_without_command(self, print_mock):
         h = HelpCommand.create_executor([], self.provider)
         h.execute()
         self.assertEqual(
-            [call('help [command]: Specific help message about command')],
+            [
+                mock.call('help [command]: Specific help message about command')
+            ],
             print_mock.mock_calls)
 
-    @patch("__main__.__builtins__.print", autospec=True)
+    @mock.patch("__main__.__builtins__.print", autospec=True)
     def test_with_command(self, print_mock):
         h = HelpCommand.create_executor(["run"], self.provider)
         h.execute()
         self.assertEqual(
-            [call('Update + open the created file')],
+            [mock.call('Update + open the created file')],
             print_mock.mock_calls)
 
-    @patch("__main__.__builtins__.print", autospec=True)
+    @mock.patch("__main__.__builtins__.print", autospec=True)
     def test_with_grabage(self, print_mock):
         h = HelpCommand.create_executor(["a", "b", "c"], self.provider)
         h.execute()
         self.assertEqual(
-            [call('help [command]: Specific help message about command')],
+            [
+                mock.call('help [command]: Specific help message about command')
+            ],
             print_mock.mock_calls)

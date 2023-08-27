@@ -18,8 +18,9 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import unittest
 
-from py4lo_ods import *
-import py4lo_ods
+from py4lo_ods import (
+    OFFICE_NS_DICT, OdsRows, _find_active_table_name,
+)
 import xml.etree.ElementTree as ET
 
 SETTINGS_XML = """<?xml version="1.0" encoding="UTF-8"?>
@@ -52,7 +53,7 @@ SETTINGS_XML = """<?xml version="1.0" encoding="UTF-8"?>
     </office:settings>
 </office:document-settings>
 
-"""
+"""  # noqa: E501
 
 CONTENT_XML = """<?xml version="1.0" encoding="UTF-8"?>
 <office:document-content
@@ -132,7 +133,7 @@ CONTENT_XML = """<?xml version="1.0" encoding="UTF-8"?>
                 </table:table-row>
             </table:table><table:named-expressions/></office:spreadsheet>
     </office:body>
-</office:document-content>"""
+</office:document-content>"""  # noqa: E501
 
 CONTENT_XML2 = """<?xml version="1.0" encoding="UTF-8"?>
 <office:document-content
@@ -188,7 +189,7 @@ CONTENT_XML2 = """<?xml version="1.0" encoding="UTF-8"?>
                 </table:table-row>
             </table:table><table:named-expressions/></office:spreadsheet>
     </office:body>
-</office:document-content>"""
+</office:document-content>"""  # noqa: E501
 
 CONTENT_XML3 = """<?xml version="1.0" encoding="UTF-8"?>
 <office:document-content
@@ -247,7 +248,7 @@ CONTENT_XML3 = """<?xml version="1.0" encoding="UTF-8"?>
                 </table:table-row>
             </table:table><table:named-expressions/></office:spreadsheet>
     </office:body>
-</office:document-content>"""
+</office:document-content>"""  # noqa: E501
 
 
 class TestOds1(unittest.TestCase):
@@ -283,7 +284,7 @@ class TestOds1(unittest.TestCase):
     def test_active_table_name(self):
         import io
         settings = io.BytesIO(SETTINGS_XML.encode("utf-8"))
-        self.assertEqual("Sheet2", py4lo_ods._find_active_table_name(settings))
+        self.assertEqual("Sheet2", _find_active_table_name(settings))
 
 
 class TestOds2(unittest.TestCase):

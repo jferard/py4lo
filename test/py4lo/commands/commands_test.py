@@ -16,7 +16,7 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest
-from unittest.mock import Mock
+from unittest import mock
 
 from commands import commands
 from core.properties import PropertiesProvider
@@ -24,18 +24,19 @@ from core.properties import PropertiesProvider
 
 class TestCommands(unittest.TestCase):
     def setUp(self):
-        self.provider: PropertiesProvider = Mock()
+        self.provider: PropertiesProvider = mock.Mock()
 
     def test(self):
-        executor = commands.get("run", ["arg1", "arg2"], self.provider)
+        _ = commands.get("run", ["arg1", "arg2"], self.provider)
         # print(progress_executor.execute(["arg1", "arg2"]))
 
     def test_non_existing(self):
-        executor = commands.get("foo", ["arg1", "arg2"], self.provider)
+        _ = commands.get("foo", ["arg1", "arg2"], self.provider)
         # print(progress_executor.execute([["arg1", "arg2"]]))
 
     def test_help(self):
-        self.assertEqual("""a command = debug | init | test | run | update | help
+        self.assertEqual(
+            """a command = debug | init | test | run | update | help
 debug: Create a debug.ods file with button for each function
 init: Create a new document from script
 test: Do the test of the scripts to add to the spreadsheet

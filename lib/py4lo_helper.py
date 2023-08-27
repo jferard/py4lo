@@ -358,7 +358,7 @@ def make_full_pv(name: str, value: str, handle: int = -1,
     return pv
 
 
-def make_pvs(d: Optional[Mapping[str, str]] = None
+def make_pvs(d: Optional[Mapping[str, Any]] = None
              ) -> Tuple[UnoPropertyValue, ...]:
     if d is None:
         return tuple()

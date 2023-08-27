@@ -22,7 +22,7 @@ import sys
 import unittest
 from pathlib import Path
 from typing import IO
-from unittest.mock import Mock, MagicMock, call
+from unittest import mock
 
 
 def any_object():
@@ -46,8 +46,8 @@ for p in map(str, [py4lo_dir, lib_dir, inc_dir]):
 
 
 def file_path_mock(content: IO, **kwargs) -> Path:
-    s = MagicMock(**kwargs)
-    manager = MagicMock()
+    s = mock.MagicMock(**kwargs)
+    manager = mock.MagicMock()
     s.open.return_value = manager
     manager.__enter__.return_value = content
     return s
@@ -57,8 +57,8 @@ def file_path_error_mock(**kwargs):
     def mock_enter(*_args, **_kwargs):
         raise FileNotFoundError("")
 
-    s = MagicMock(**kwargs)
-    manager = MagicMock()
+    s = mock.MagicMock(**kwargs)
+    manager = mock.MagicMock()
     s.open.return_value = manager
     manager.__enter__ = mock_enter
     return s
@@ -67,8 +67,8 @@ def file_path_error_mock(**kwargs):
 def verify_open_path(tc: unittest.TestCase, s: Path, *args, **kwargs):
     tc.assertTrue(
         all(x in s.mock_calls for x in
-            [call.open(*args, **kwargs), call.open().__enter__(),
-             call.open().__exit__(None, None, None)]))
+            [mock.call.open(*args, **kwargs), mock.call.open().__enter__(),
+             mock.call.open().__exit__(None, None, None)]))
 
 
 def compare_xml_strings(s1, s2):

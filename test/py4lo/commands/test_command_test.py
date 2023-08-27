@@ -21,50 +21,53 @@ import subprocess
 import unittest
 from pathlib import Path
 from unittest import mock
-from unittest.mock import *
 
 from commands.test_command import TestCommand
 
 
 class TestCommandTest(unittest.TestCase):
-    @patch('subprocess.run', spec=subprocess.run)
+    @mock.patch('subprocess.run', spec=subprocess.run)
     def test(self, subprocess_run_mock):
-        completed_process1 = MagicMock(returncode=0)
+        completed_process1 = mock.MagicMock(returncode=0)
         completed_process1.stdout.decode.return_value = "ok"
-        completed_process2 = MagicMock(returncode=1)
+        completed_process2 = mock.MagicMock(returncode=1)
         completed_process2.stdout.decode.return_value = "not ok"
         completed_process2.stderr.decode.return_value = "err"
-        completed_process3 = MagicMock(returncode=0)
+        completed_process3 = mock.MagicMock(returncode=0)
         completed_process3.stdout.decode.return_value = "s ok"
         subprocess_run_mock.side_effect = [completed_process1,
-                                            completed_process2,
-                                            completed_process3]
-        logger = MagicMock()
-        sources = MagicMock()
+                                           completed_process2,
+                                           completed_process3]
+        logger = mock.MagicMock()
+        sources = mock.MagicMock()
         sources.test_dir.rglob.side_effect = [[Path("/test_dir/c_test.py"),
-                                       Path("/test_dir/b/d_test.py")]]
+                                               Path("/test_dir/b/d_test.py")]]
         sources.src_dir.__truediv__.side_effect = [[Path("/src_dir/main.py")]]
         sources.src_dir.rglob.side_effect = [[Path("/src_dir/src_a.py")]]
         tc = TestCommand(logger, "test_py_exe", sources)
         status = tc.execute()
 
         self.assertEqual([
-            call.info('execute doctests: %s', '"test_py_exe" -m doctest /src_dir/src_a.py'),
-            call.debug('PYTHONPATH = %s', mock.ANY),
-            call.info('output: ok'),
-            call.info('execute unittests: "test_py_exe" /test_dir/c_test.py'),
-            call.info('output: not ok'),
-            call.error('error: err'),
-            call.info('execute unittests: "test_py_exe" /test_dir/b/d_test.py'),
-            call.info('output: s ok'),
+            mock.call.info(
+                'execute doctests: %s',
+                '"test_py_exe" -m doctest /src_dir/src_a.py'),
+            mock.call.debug('PYTHONPATH = %s', mock.ANY),
+            mock.call.info('output: ok'),
+            mock.call.info(
+                'execute unittests: "test_py_exe" /test_dir/c_test.py'),
+            mock.call.info('output: not ok'),
+            mock.call.error('error: err'),
+            mock.call.info(
+                'execute unittests: "test_py_exe" /test_dir/b/d_test.py'),
+            mock.call.info('output: s ok'),
         ], logger.mock_calls)
         self.assertEqual([
-            call(["test_py_exe", "-m", "doctest", "/src_dir/src_a.py"], env=unittest.mock.ANY,
-                 stderr=-1, stdout=-1),
-            call(["test_py_exe", "/test_dir/c_test.py"], env=unittest.mock.ANY,
-                 stderr=-1, stdout=-1),
-            call(["test_py_exe", "/test_dir/b/d_test.py"], env=unittest.mock.ANY,
-                 stderr=-1, stdout=-1),
+            mock.call(["test_py_exe", "-m", "doctest", "/src_dir/src_a.py"],
+                      env=unittest.mock.ANY, stderr=-1, stdout=-1),
+            mock.call(["test_py_exe", "/test_dir/c_test.py"],
+                      env=mock.ANY, stderr=-1, stdout=-1),
+            mock.call(["test_py_exe", "/test_dir/b/d_test.py"],
+                      env=mock.ANY, stderr=-1, stdout=-1),
         ], subprocess_run_mock.mock_calls)
         self.assertEqual((1,), status)
 

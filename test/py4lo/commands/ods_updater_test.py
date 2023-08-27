@@ -20,7 +20,6 @@ from logging import Logger
 from pathlib import Path
 from typing import List
 from unittest import mock
-from unittest.mock import Mock, MagicMock, patch, call
 
 from commands.ods_updater import OdsUpdaterHelper
 from core.asset import SourceAsset, DestinationAsset
@@ -31,10 +30,10 @@ from core.script import TempScript, SourceScript, DestinationScript
 class TestOdsUpdaterHelper(unittest.TestCase):
     def test_assets(self):
         # mocks
-        logger: Logger = Mock()
-        sources: Sources = Mock()
-        destinations: Destinations = Mock()
-        source_assets: List[SourceAsset] = Mock()
+        logger: Logger = mock.Mock()
+        sources: Sources = mock.Mock()
+        destinations: Destinations = mock.Mock()
+        source_assets: List[SourceAsset] = mock.Mock()
         destination_asset = DestinationAsset(Path("asset"), bytes())
 
         # play
@@ -47,19 +46,19 @@ class TestOdsUpdaterHelper(unittest.TestCase):
         # verify
         self.assertEqual([destination_asset], assets)
         self.assertEqual([], logger.mock_calls)
-        self.assertEqual([call.get_assets()], sources.mock_calls)
-        self.assertEqual([call.to_destination_assets(source_assets)],
+        self.assertEqual([mock.call.get_assets()], sources.mock_calls)
+        self.assertEqual([mock.call.to_destination_assets(source_assets)],
                          destinations.mock_calls)
 
-    @patch("commands.ods_updater.ScriptSetProcessor", autospec=True)
+    @mock.patch("commands.ods_updater.ScriptSetProcessor", autospec=True)
     def test_destination_scripts(self, SSPMock):
         # mocks
-        logger: Logger = Mock()
-        sources: Sources = Mock()
-        destinations: Destinations = Mock()
-        source_scripts: List[SourceScript] = Mock()
-        destination_script: DestinationScript = Mock()
-        temp_script: TempScript = Mock()
+        logger: Logger = mock.Mock()
+        sources: Sources = mock.Mock()
+        destinations: Destinations = mock.Mock()
+        source_scripts: List[SourceScript] = mock.Mock()
+        destination_script: DestinationScript = mock.Mock()
+        temp_script: TempScript = mock.Mock()
 
         # play
         sources.get_src_scripts.return_value = source_scripts
@@ -69,10 +68,10 @@ class TestOdsUpdaterHelper(unittest.TestCase):
         scripts = h.get_destination_scripts()
 
         # verify
-        self.assertEqual([call.debug('Directives tree: %s', mock.ANY)],
+        self.assertEqual([mock.call.debug('Directives tree: %s', mock.ANY)],
                          logger.mock_calls)
         self.assertEqual([destination_script], scripts)
-        self.assertEqual([call.get_src_scripts(), call.get_module_names()],
+        self.assertEqual([mock.call.get_src_scripts(), mock.call.get_module_names()],
                          sources.mock_calls)
-        self.assertEqual([call.to_destination_scripts([temp_script])],
+        self.assertEqual([mock.call.to_destination_scripts([temp_script])],
                          destinations.mock_calls)

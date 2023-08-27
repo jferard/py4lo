@@ -19,7 +19,7 @@ import csv
 import datetime as dt
 import unittest
 from typing import Any
-from unittest.mock import Mock, patch, call, ANY
+from unittest import mock
 
 from py4lo_helper import (make_pv)
 from py4lo_io import (create_import_filter_options,
@@ -34,7 +34,7 @@ from mock_constants import NumberFormat
 class Py4LOIOTestCase(unittest.TestCase):
     def test_create_read_cell_none(self):
         # prepare
-        oCell = Mock(String="foo")
+        oCell = mock.Mock(String="foo")
 
         # play
         rc = create_read_cell(CellTyping.String)
@@ -42,10 +42,10 @@ class Py4LOIOTestCase(unittest.TestCase):
         # verify
         self.assertEqual("foo", rc(oCell))
 
-    @patch("py4lo_io.get_cell_type")
+    @mock.patch("py4lo_io.get_cell_type")
     def test_create_read_cell_minimal_empty(self, gct):
         # prepare
-        oCell = Mock()
+        oCell = mock.Mock()
         gct.side_effect = ['EMPTY']
 
         # play
@@ -54,10 +54,10 @@ class Py4LOIOTestCase(unittest.TestCase):
         # verify
         self.assertIsNone(rc(oCell))
 
-    @patch("py4lo_io.get_cell_type")
+    @mock.patch("py4lo_io.get_cell_type")
     def test_create_read_cell_minimal_text(self, gct):
         # prepare
-        oCell = Mock(String="foo")
+        oCell = mock.Mock(String="foo")
         gct.side_effect = ['TEXT']
 
         # play
@@ -66,10 +66,10 @@ class Py4LOIOTestCase(unittest.TestCase):
         # verify
         self.assertEqual("foo", rc(oCell))
 
-    @patch("py4lo_io.get_cell_type")
+    @mock.patch("py4lo_io.get_cell_type")
     def test_create_read_cell_minimal_value(self, gct):
         # prepare
-        oCell = Mock(Value=3.14)
+        oCell = mock.Mock(Value=3.14)
         gct.side_effect = ['VALUE']
 
         # play
@@ -78,10 +78,10 @@ class Py4LOIOTestCase(unittest.TestCase):
         # verify
         self.assertEqual(3.14, rc(oCell))
 
-    @patch("py4lo_io.get_cell_type")
+    @mock.patch("py4lo_io.get_cell_type")
     def test_create_read_cell_minimal_other(self, gct):
         # prepare
-        oCell = Mock()
+        oCell = mock.Mock()
         gct.side_effect = ['OTHER']
 
         # play
@@ -91,11 +91,11 @@ class Py4LOIOTestCase(unittest.TestCase):
         with self.assertRaises(ValueError):
             rc(oCell)
 
-    @patch("py4lo_io.get_cell_type")
+    @mock.patch("py4lo_io.get_cell_type")
     def test_create_read_cell_accurate_empty(self, gct):
         # prepare
-        oCell = Mock()
-        oFormats = Mock()
+        oCell = mock.Mock()
+        oFormats = mock.Mock()
         gct.side_effect = ['EMPTY']
 
         # play
@@ -104,11 +104,11 @@ class Py4LOIOTestCase(unittest.TestCase):
         # verify
         self.assertIsNone(rc(oCell))
 
-    @patch("py4lo_io.get_cell_type")
+    @mock.patch("py4lo_io.get_cell_type")
     def test_create_read_cell_accurate_text(self, gct):
         # prepare
-        oCell = Mock(String="foo")
-        oFormats = Mock()
+        oCell = mock.Mock(String="foo")
+        oFormats = mock.Mock()
         gct.side_effect = ['TEXT']
 
         # play
@@ -117,12 +117,12 @@ class Py4LOIOTestCase(unittest.TestCase):
         # verify
         self.assertEqual("foo", rc(oCell))
 
-    @patch("py4lo_io.get_cell_type")
+    @mock.patch("py4lo_io.get_cell_type")
     def test_create_read_cell_accurate_date(self, gct):
         # prepare
-        oCell = Mock(Value=44000, NumberFormat=3)
-        oFormats = Mock()
-        oFormats.getByKey.side_effect = [Mock(Type=NumberFormat.DATE)]
+        oCell = mock.Mock(Value=44000, NumberFormat=3)
+        oFormats = mock.Mock()
+        oFormats.getByKey.side_effect = [mock.Mock(Type=NumberFormat.DATE)]
         gct.side_effect = ['VALUE']
 
         # play
@@ -131,12 +131,12 @@ class Py4LOIOTestCase(unittest.TestCase):
         # verify
         self.assertEqual(dt.datetime(2020, 6, 18, 0, 0), rc(oCell))
 
-    @patch("py4lo_io.get_cell_type")
+    @mock.patch("py4lo_io.get_cell_type")
     def test_create_read_cell_accurate_logical(self, gct):
         # prepare
-        oCell = Mock(Value=1, NumberFormat=3)
-        oFormats = Mock()
-        oFormats.getByKey.side_effect = [Mock(Type=NumberFormat.LOGICAL)]
+        oCell = mock.Mock(Value=1, NumberFormat=3)
+        oFormats = mock.Mock()
+        oFormats.getByKey.side_effect = [mock.Mock(Type=NumberFormat.LOGICAL)]
         gct.side_effect = ['VALUE']
 
         # play
@@ -145,12 +145,12 @@ class Py4LOIOTestCase(unittest.TestCase):
         # verify
         self.assertIs(True, rc(oCell))
 
-    @patch("py4lo_io.get_cell_type")
+    @mock.patch("py4lo_io.get_cell_type")
     def test_create_read_cell_accurate_number(self, gct):
         # prepare
-        oCell = Mock(Value=10, NumberFormat=3)
-        oFormats = Mock()
-        oFormats.getByKey.side_effect = [Mock(Type=NumberFormat.NUMBER)]
+        oCell = mock.Mock(Value=10, NumberFormat=3)
+        oFormats = mock.Mock()
+        oFormats.getByKey.side_effect = [mock.Mock(Type=NumberFormat.NUMBER)]
         gct.side_effect = ['VALUE']
 
         # play
@@ -159,11 +159,11 @@ class Py4LOIOTestCase(unittest.TestCase):
         # verify
         self.assertEqual(10, rc(oCell))
 
-    @patch("py4lo_io.get_cell_type")
+    @mock.patch("py4lo_io.get_cell_type")
     def test_create_read_cell_accurate_other(self, gct):
         # prepare
-        oCell = Mock()
-        oFormats = Mock()
+        oCell = mock.Mock()
+        oFormats = mock.Mock()
         gct.side_effect = ['']
 
         # play
@@ -181,11 +181,12 @@ class Py4LOIOTestCase(unittest.TestCase):
         with self.assertRaises(ValueError):
             create_read_cell(object())
 
-    @patch("py4lo_io.get_used_range_address")
+    @mock.patch("py4lo_io.get_used_range_address")
     def test_reader_rc(self, gura):
         # prepare
-        oSheet = Mock()
-        oRangeAddress = Mock(StartColumn=0, StartRow=0, EndColumn=1, EndRow=2)
+        oSheet = mock.Mock()
+        oRangeAddress = mock.Mock(StartColumn=0, StartRow=0, EndColumn=1,
+                                  EndRow=2)
         gura.side_effect = [oRangeAddress]
 
         # play
@@ -198,16 +199,17 @@ class Py4LOIOTestCase(unittest.TestCase):
             [15, 15]
         ], list(r))
 
-    @patch("py4lo_io.get_used_range_address")
+    @mock.patch("py4lo_io.get_used_range_address")
     def test_reader(self, gura):
         # prepare
-        oSheet = Mock()
+        oSheet = mock.Mock()
         oSheet.getCellByPosition.side_effect = [
-            Mock(String="A1"), Mock(String="B1"),
-            Mock(String="A2"), Mock(String="B2"),
-            Mock(String="A3"), Mock(String="B3"),
+            mock.Mock(String="A1"), mock.Mock(String="B1"),
+            mock.Mock(String="A2"), mock.Mock(String="B2"),
+            mock.Mock(String="A3"), mock.Mock(String="B3"),
         ]
-        oRangeAddress = Mock(StartColumn=0, StartRow=0, EndColumn=1, EndRow=2)
+        oRangeAddress = mock.Mock(StartColumn=0, StartRow=0, EndColumn=1,
+                                  EndRow=2)
         gura.side_effect = [oRangeAddress]
 
         # play
@@ -218,19 +220,20 @@ class Py4LOIOTestCase(unittest.TestCase):
             ['A1', 'B1'], ['A2', 'B2'], ['A3', 'B3']
         ], list(r))
 
-    @patch("py4lo_io.get_cell_type")
-    @patch("py4lo_io.get_used_range_address")
+    @mock.patch("py4lo_io.get_cell_type")
+    @mock.patch("py4lo_io.get_used_range_address")
     def test_reader_accurate(self, gura, gct):
         # prepare
         gct.side_effect = ['TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'EMPTY']
-        oSheet = Mock()
+        oSheet = mock.Mock()
         oSheet.getCellByPosition.side_effect = [
-            Mock(String="A1"), Mock(String="B1"),
-            Mock(String="A2"), Mock(String="B2"),
-            Mock(String="A3"), Mock(),
+            mock.Mock(String="A1"), mock.Mock(String="B1"),
+            mock.Mock(String="A2"), mock.Mock(String="B2"),
+            mock.Mock(String="A3"), mock.Mock(),
         ]
-        oFormats = Mock()
-        oRangeAddress = Mock(StartColumn=0, StartRow=0, EndColumn=1, EndRow=2)
+        oFormats = mock.Mock()
+        oRangeAddress = mock.Mock(StartColumn=0, StartRow=0, EndColumn=1,
+                                  EndRow=2)
         gura.side_effect = [oRangeAddress]
 
         # play
@@ -241,16 +244,17 @@ class Py4LOIOTestCase(unittest.TestCase):
             ['A1', 'B1'], ['A2', 'B2'], ['A3']
         ], list(r))
 
-    @patch("py4lo_io.get_used_range_address")
+    @mock.patch("py4lo_io.get_used_range_address")
     def test_dict_reader(self, gura):
         # prepare
-        oSheet = Mock()
+        oSheet = mock.Mock()
         oSheet.getCellByPosition.side_effect = [
-            Mock(String="A1"), Mock(String="B1"),
-            Mock(String="A2"), Mock(String="B2"),
-            Mock(String="A3"), Mock(String="B3"),
+            mock.Mock(String="A1"), mock.Mock(String="B1"),
+            mock.Mock(String="A2"), mock.Mock(String="B2"),
+            mock.Mock(String="A3"), mock.Mock(String="B3"),
         ]
-        oRangeAddress = Mock(StartColumn=0, StartRow=0, EndColumn=1, EndRow=2)
+        oRangeAddress = mock.Mock(StartColumn=0, StartRow=0, EndColumn=1,
+                                  EndRow=2)
         gura.side_effect = [oRangeAddress]
 
         # play
@@ -261,16 +265,17 @@ class Py4LOIOTestCase(unittest.TestCase):
             {'A1': 'A2', 'B1': 'B2'}, {'A1': 'A3', 'B1': 'B3'}
         ], list(r))
 
-    @patch("py4lo_io.get_used_range_address")
+    @mock.patch("py4lo_io.get_used_range_address")
     def test_dict_reader_fieldnames(self, gura):
         # prepare
-        oSheet = Mock()
+        oSheet = mock.Mock()
         oSheet.getCellByPosition.side_effect = [
-            Mock(String="A1"), Mock(String="B1"),
-            Mock(String="A2"), Mock(String="B2"),
-            Mock(String="A3"), Mock(String="B3"),
+            mock.Mock(String="A1"), mock.Mock(String="B1"),
+            mock.Mock(String="A2"), mock.Mock(String="B2"),
+            mock.Mock(String="A3"), mock.Mock(String="B3"),
         ]
-        oRangeAddress = Mock(StartColumn=0, StartRow=0, EndColumn=1, EndRow=2)
+        oRangeAddress = mock.Mock(StartColumn=0, StartRow=0, EndColumn=1,
+                                  EndRow=2)
         gura.side_effect = [oRangeAddress]
 
         # play
@@ -283,17 +288,19 @@ class Py4LOIOTestCase(unittest.TestCase):
             {'bar': 'B3', 'foo': 'A3'}
         ], list(r))
 
-    @patch("py4lo_io.get_cell_type")
-    @patch("py4lo_io.get_used_range_address")
+    @mock.patch("py4lo_io.get_cell_type")
+    @mock.patch("py4lo_io.get_used_range_address")
     def test_dict_reader_fieldnames_rest(self, gura, gct):
         # prepare
-        oSheet = Mock()
+        oSheet = mock.Mock()
         oSheet.getCellByPosition.side_effect = [
-            Mock(String="A1"), Mock(), Mock(),
-            Mock(String="A2"), Mock(String="B2"), Mock(String="C2"),
+            mock.Mock(String="A1"), mock.Mock(), mock.Mock(),
+            mock.Mock(String="A2"), mock.Mock(String="B2"),
+            mock.Mock(String="C2"),
         ]
         gct.side_effect = ['TEXT', 'EMPTY', 'EMPTY', 'TEXT', 'TEXT', 'TEXT']
-        oRangeAddress = Mock(StartColumn=0, StartRow=0, EndColumn=2, EndRow=1)
+        oRangeAddress = mock.Mock(StartColumn=0, StartRow=0, EndColumn=2,
+                                  EndRow=1)
         gura.side_effect = [oRangeAddress]
 
         # play
@@ -307,8 +314,8 @@ class Py4LOIOTestCase(unittest.TestCase):
 
     def test_find_number_format_style(self):
         # prepare
-        oFormats = Mock()
-        oLocale = Mock()
+        oFormats = mock.Mock()
+        oLocale = mock.Mock()
         oFormats.getStandardFormat.side_effect = [1]
 
         # play
@@ -317,12 +324,13 @@ class Py4LOIOTestCase(unittest.TestCase):
 
         # verify
         self.assertEqual(1, act_n)
-        self.assertEqual([call.getStandardFormat(NumberFormat.NUMBER, oLocale)],
-                         oFormats.mock_calls)
+        self.assertEqual([
+            mock.call.getStandardFormat(NumberFormat.NUMBER, oLocale)],
+            oFormats.mock_calls)
 
     def test_create_write_cell_string(self):
         # prepare
-        oCell = Mock()
+        oCell = mock.Mock()
 
         # play
         wc = create_write_cell(CellTyping.String)
@@ -333,7 +341,7 @@ class Py4LOIOTestCase(unittest.TestCase):
 
     def test_create_write_cell_minimal_none(self):
         # prepare
-        oCell = Mock()
+        oCell = mock.Mock()
 
         # play
         wc = create_write_cell(CellTyping.Minimal)
@@ -344,7 +352,7 @@ class Py4LOIOTestCase(unittest.TestCase):
 
     def test_create_write_cell_minimal_string(self):
         # prepare
-        oCell = Mock()
+        oCell = mock.Mock()
 
         # play
         wc = create_write_cell(CellTyping.Minimal)
@@ -355,7 +363,7 @@ class Py4LOIOTestCase(unittest.TestCase):
 
     def test_create_write_cell_minimal_date(self):
         # prepare
-        oCell = Mock()
+        oCell = mock.Mock()
 
         # play
         wc = create_write_cell(CellTyping.Minimal)
@@ -366,7 +374,7 @@ class Py4LOIOTestCase(unittest.TestCase):
 
     def test_create_write_cell_minimal_bool(self):
         # prepare
-        oCell = Mock()
+        oCell = mock.Mock()
 
         # play
         wc = create_write_cell(CellTyping.Minimal)
@@ -377,7 +385,7 @@ class Py4LOIOTestCase(unittest.TestCase):
 
     def test_create_write_cell_minimal_number(self):
         # prepare
-        oCell = Mock()
+        oCell = mock.Mock()
 
         # play
         wc = create_write_cell(CellTyping.Minimal)
@@ -388,8 +396,8 @@ class Py4LOIOTestCase(unittest.TestCase):
 
     def test_create_write_cell_accurate_none(self):
         # prepare
-        oCell = Mock()
-        oFormats = Mock()
+        oCell = mock.Mock()
+        oFormats = mock.Mock()
 
         # play
         wc = create_write_cell(CellTyping.Accurate, oFormats)
@@ -400,8 +408,8 @@ class Py4LOIOTestCase(unittest.TestCase):
 
     def test_create_write_cell_accurate_string(self):
         # prepare
-        oCell = Mock()
-        oFormats = Mock()
+        oCell = mock.Mock()
+        oFormats = mock.Mock()
 
         # play
         wc = create_write_cell(CellTyping.Accurate, oFormats)
@@ -412,8 +420,8 @@ class Py4LOIOTestCase(unittest.TestCase):
 
     def test_create_write_cell_accurate_number(self):
         # prepare
-        oCell = Mock()
-        oFormats = Mock()
+        oCell = mock.Mock()
+        oFormats = mock.Mock()
 
         # play
         wc = create_write_cell(CellTyping.Accurate, oFormats)
@@ -424,8 +432,8 @@ class Py4LOIOTestCase(unittest.TestCase):
 
     def test_create_write_cell_accurate_date(self):
         # prepare
-        oCell = Mock()
-        oFormats = Mock()
+        oCell = mock.Mock()
+        oFormats = mock.Mock()
         oFormats.getStandardFormat.side_effect = [1, 2, 3]
 
         # play
@@ -438,8 +446,8 @@ class Py4LOIOTestCase(unittest.TestCase):
 
     def test_create_write_cell_accurate_datetime(self):
         # prepare
-        oCell = Mock()
-        oFormats = Mock()
+        oCell = mock.Mock()
+        oFormats = mock.Mock()
         oFormats.getStandardFormat.side_effect = [1, 2, 3]
 
         # play
@@ -452,8 +460,8 @@ class Py4LOIOTestCase(unittest.TestCase):
 
     def test_create_write_cell_accurate_bool(self):
         # prepare
-        oCell = Mock()
-        oFormats = Mock()
+        oCell = mock.Mock()
+        oFormats = mock.Mock()
         oFormats.getStandardFormat.side_effect = [1, 2, 3]
 
         # play
@@ -474,8 +482,8 @@ class Py4LOIOTestCase(unittest.TestCase):
 
     def test_writer_wc(self):
         # prepare
-        oSheet = Mock()
-        cells = [Mock() for _ in range(6)]
+        oSheet = mock.Mock()
+        cells = [mock.Mock() for _ in range(6)]
         oSheet.getCellByPosition.side_effect = cells
 
         # play
@@ -490,21 +498,21 @@ class Py4LOIOTestCase(unittest.TestCase):
 
         #
         self.assertEqual([
-            call.getCellByPosition(0, 0),
-            call.getCellByPosition(1, 0),
-            call.getCellByPosition(2, 0),
-            call.getCellByPosition(0, 1),
-            call.getCellByPosition(1, 1),
-            call.getCellByPosition(2, 1)
+            mock.call.getCellByPosition(0, 0),
+            mock.call.getCellByPosition(1, 0),
+            mock.call.getCellByPosition(2, 0),
+            mock.call.getCellByPosition(0, 1),
+            mock.call.getCellByPosition(1, 1),
+            mock.call.getCellByPosition(2, 1)
         ], oSheet.mock_calls)
         self.assertEqual(['a', 'b', 'c', 1, 2, 3], [c.t for c in cells])
 
     def test_writer_formats(self):
         # prepare
-        oSheet = Mock()
-        cells = [Mock() for _ in range(6)]
+        oSheet = mock.Mock()
+        cells = [mock.Mock() for _ in range(6)]
         oSheet.getCellByPosition.side_effect = cells
-        oFormats = Mock()
+        oFormats = mock.Mock()
 
         # play
         w = writer(oSheet, CellTyping.Accurate, oFormats=oFormats)
@@ -515,22 +523,21 @@ class Py4LOIOTestCase(unittest.TestCase):
 
         #
         self.assertEqual([
-            call.getCellByPosition(0, 0),
-            call.getCellByPosition(1, 0),
-            call.getCellByPosition(2, 0),
-            call.getCellByPosition(0, 1),
-            call.getCellByPosition(1, 1),
-            call.getCellByPosition(2, 1)
+            mock.call.getCellByPosition(0, 0),
+            mock.call.getCellByPosition(1, 0),
+            mock.call.getCellByPosition(2, 0),
+            mock.call.getCellByPosition(0, 1),
+            mock.call.getCellByPosition(1, 1),
+            mock.call.getCellByPosition(2, 1)
         ], oSheet.mock_calls)
         self.assertEqual(['a', 'b', 'c'], [c.String for c in cells[:3]])
         self.assertEqual([1, 2, 3], [c.Value for c in cells[3:]])
 
     def test_writer_no_formats(self):
         # prepare
-        oSheet = Mock()
-        cells = [Mock() for _ in range(6)]
+        oSheet = mock.Mock()
+        cells = [mock.Mock() for _ in range(6)]
         oSheet.getCellByPosition.side_effect = cells
-        oLocale = Mock()
 
         # play
         w = writer(oSheet, CellTyping.Accurate)
@@ -541,24 +548,26 @@ class Py4LOIOTestCase(unittest.TestCase):
 
         # verify
         self.assertEqual([
-            call.DrawPage.Forms.Parent.NumberFormats.getStandardFormat(2, ANY),
-            call.DrawPage.Forms.Parent.NumberFormats.getStandardFormat(6, ANY),
-            call.DrawPage.Forms.Parent.NumberFormats.getStandardFormat(1024,
-                                                                       ANY),
-            call.getCellByPosition(0, 0),
-            call.getCellByPosition(1, 0),
-            call.getCellByPosition(2, 0),
-            call.getCellByPosition(0, 1),
-            call.getCellByPosition(1, 1),
-            call.getCellByPosition(2, 1)
+            mock.call.DrawPage.Forms.Parent.NumberFormats.getStandardFormat(
+                2, mock.ANY),
+            mock.call.DrawPage.Forms.Parent.NumberFormats.getStandardFormat(
+                6, mock.ANY),
+            mock.call.DrawPage.Forms.Parent.NumberFormats.getStandardFormat(
+                1024, mock.ANY),
+            mock.call.getCellByPosition(0, 0),
+            mock.call.getCellByPosition(1, 0),
+            mock.call.getCellByPosition(2, 0),
+            mock.call.getCellByPosition(0, 1),
+            mock.call.getCellByPosition(1, 1),
+            mock.call.getCellByPosition(2, 1)
         ], oSheet.mock_calls)
         self.assertEqual(['a', 'b', 'c'], [c.String for c in cells[:3]])
         self.assertEqual([1, 2, 3], [c.Value for c in cells[3:]])
 
     def test_dict_writer_wc(self):
         # prepare
-        oSheet = Mock()
-        cells = [Mock() for _ in range(9)]
+        oSheet = mock.Mock()
+        cells = [mock.Mock() for _ in range(9)]
         oSheet.getCellByPosition.side_effect = cells
 
         # play
@@ -575,23 +584,23 @@ class Py4LOIOTestCase(unittest.TestCase):
 
         #
         self.assertEqual([
-            call.getCellByPosition(0, 0),
-            call.getCellByPosition(1, 0),
-            call.getCellByPosition(2, 0),
-            call.getCellByPosition(0, 1),
-            call.getCellByPosition(1, 1),
-            call.getCellByPosition(2, 1),
-            call.getCellByPosition(0, 2),
-            call.getCellByPosition(1, 2),
-            call.getCellByPosition(2, 2)
+            mock.call.getCellByPosition(0, 0),
+            mock.call.getCellByPosition(1, 0),
+            mock.call.getCellByPosition(2, 0),
+            mock.call.getCellByPosition(0, 1),
+            mock.call.getCellByPosition(1, 1),
+            mock.call.getCellByPosition(2, 1),
+            mock.call.getCellByPosition(0, 2),
+            mock.call.getCellByPosition(1, 2),
+            mock.call.getCellByPosition(2, 2)
         ], oSheet.mock_calls)
         self.assertEqual(['a', 'b', 'c', 1, 2, 3, 4, 5, 6],
                          [c.t for c in cells])
 
     def test_dict_writer_wc_raise(self):
         # prepare
-        oSheet = Mock()
-        cells = [Mock() for _ in range(3)]
+        oSheet = mock.Mock()
+        cells = [mock.Mock() for _ in range(3)]
         oSheet.getCellByPosition.side_effect = cells
 
         # play
@@ -606,16 +615,16 @@ class Py4LOIOTestCase(unittest.TestCase):
 
         #
         self.assertEqual([
-            call.getCellByPosition(0, 0),
-            call.getCellByPosition(1, 0),
-            call.getCellByPosition(2, 0),
+            mock.call.getCellByPosition(0, 0),
+            mock.call.getCellByPosition(1, 0),
+            mock.call.getCellByPosition(2, 0),
         ], oSheet.mock_calls)
         self.assertEqual(['a', 'b', 'c'], [c.t for c in cells])
 
     def test_dict_writer_wc_restval(self):
         # prepare
-        oSheet = Mock()
-        cells = [Mock() for _ in range(6)]
+        oSheet = mock.Mock()
+        cells = [mock.Mock() for _ in range(6)]
         oSheet.getCellByPosition.side_effect = cells
 
         # play
@@ -629,38 +638,38 @@ class Py4LOIOTestCase(unittest.TestCase):
 
         #
         self.assertEqual([
-            call.getCellByPosition(0, 0),
-            call.getCellByPosition(1, 0),
-            call.getCellByPosition(2, 0),
-            call.getCellByPosition(0, 1),
-            call.getCellByPosition(1, 1),
-            call.getCellByPosition(2, 1),
+            mock.call.getCellByPosition(0, 0),
+            mock.call.getCellByPosition(1, 0),
+            mock.call.getCellByPosition(2, 0),
+            mock.call.getCellByPosition(0, 1),
+            mock.call.getCellByPosition(1, 1),
+            mock.call.getCellByPosition(2, 1),
         ], oSheet.mock_calls)
         self.assertEqual(['a', 'b', 'c', 1, 2, 'foo'], [c.t for c in cells])
 
 
 class IOCSVTestCase(unittest.TestCase):
-    @patch("py4lo_io.uno_path_to_url")
-    @patch("py4lo_io.pr")
+    @mock.patch("py4lo_io.uno_path_to_url")
+    @mock.patch("py4lo_io.pr")
     def test_import_from_csv(self, pr, ptu):
         # prepare
-        oSheets = Mock()
-        oDoc = Mock(Sheets=oSheets)
-        p = Mock()
+        oSheets = mock.Mock()
+        oDoc = mock.Mock(Sheets=oSheets)
+        p = mock.Mock()
         ptu.side_effect = ["url"]
-        oOtherSheets = Mock(ElementNames=["a", "b", "c"])
-        oOtherDoc = Mock(Sheets=oOtherSheets)
+        oOtherSheets = mock.Mock(ElementNames=["a", "b", "c"])
+        oOtherDoc = mock.Mock(Sheets=oOtherSheets)
         pr.desktop.loadComponentFromURL.side_effect = [oOtherDoc]
 
         # play
         import_from_csv(oDoc, "foo", 2, p, language_code="en_US")
 
         # verify
-        self.assertEqual([call.getByIndex(0)], oOtherSheets.mock_calls)
-        self.assertEqual([call.importSheet(oOtherDoc, 'a', 2)],
+        self.assertEqual([mock.call.getByIndex(0)], oOtherSheets.mock_calls)
+        self.assertEqual([mock.call.importSheet(oOtherDoc, 'a', 2)],
                          oSheets.mock_calls)
         self.assertEqual([
-            call.desktop.loadComponentFromURL(
+            mock.call.desktop.loadComponentFromURL(
                 'url', '_blank', 0, (
                     make_pv("FilterName", "Text - txt - csv (StarCalc)"),
                     make_pv("FilterOptions", "44,34,76,1,,1033,false,false"),
@@ -687,15 +696,15 @@ class IOCSVTestCase(unittest.TestCase):
                                                       format_by_idx={
                                                           1: Format.TEXT}))
 
-    @patch("py4lo_io.uno_path_to_url")
-    @patch("py4lo_io.parent_doc")
+    @mock.patch("py4lo_io.uno_path_to_url")
+    @mock.patch("py4lo_io.parent_doc")
     def test_export_to_csv(self, pd, ptu):
         # prepare
-        oSheet = Mock()
-        path = Mock()
+        oSheet = mock.Mock()
+        path = mock.Mock()
         ptu.side_effect = ['url']
-        oCurSheet = Mock()
-        oDoc = Mock(CurrentController=Mock(ActiveSheet=oCurSheet))
+        oCurSheet = mock.Mock()
+        oDoc = mock.Mock(CurrentController=mock.Mock(ActiveSheet=oCurSheet))
         pd.side_effect = [oDoc]
 
         # play
@@ -704,13 +713,13 @@ class IOCSVTestCase(unittest.TestCase):
         # verify
         self.assertEqual([], oSheet.mock_calls)
         self.assertEqual([
-            call.lockControllers(),
-            call.storeToURL(
+            mock.call.lockControllers(),
+            mock.call.storeToURL(
                 'url',
                 (make_pv("FilterName", "Text - txt - csv (StarCalc)"),
                  make_pv("FilterOptions", "44,34,76,1,,1033,false,false,true"),
                  make_pv("Overwrite", True))),
-            call.unlockControllers()
+            mock.call.unlockControllers()
         ], oDoc.mock_calls)
 
     def test_empty_export_options(self):

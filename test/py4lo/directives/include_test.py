@@ -17,17 +17,17 @@
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import io
 import unittest
-from unittest.mock import Mock, call, MagicMock
+from unittest import mock
 
 from directives import Include
 
-from tst_env import file_path_mock, verify_open_path
+from test.test_helper import file_path_mock, verify_open_path
 
 
 class TestInclude(unittest.TestCase):
     def test_without_strip(self):
-        proc = Mock()
-        path = Mock()
+        proc = mock.Mock()
+        path = mock.Mock()
         inc_path = file_path_mock(io.StringIO("some line"))
 
         path.joinpath.return_value = inc_path
@@ -36,16 +36,20 @@ class TestInclude(unittest.TestCase):
         d = Include(path)
         self.assertEqual(["include"], d.sig_elements())
         self.assertEqual(True, d.execute(None, proc, ["a.py"]))
-        self.assertEqual([call.append(
+        self.assertEqual([mock.call.append(
             '# begin py4lo include: [to inc]\nsome line\n# end py4lo include\n')],
             proc.mock_calls)
 
         verify_open_path(self, inc_path, 'r', encoding="utf-8")
 
     def test_with_strip(self):
-        proc = Mock()
-        path = Mock()
-        inc_path = file_path_mock(io.StringIO('"""docstring"""\n\'\'\'\nother docstring\'\'\'\n  #comment\nsome line'))
+        proc = mock.Mock()
+        path = mock.Mock()
+        inc_path = file_path_mock(
+            io.StringIO(
+                '"""docstring"""\n\'\'\'\nother docstring\'\'\'\n  #comment\nsome line'  # noqa: E501
+            )
+        )
 
         path.joinpath.return_value = inc_path
         inc_path.__str__.return_value = "[to inc]"
@@ -53,7 +57,7 @@ class TestInclude(unittest.TestCase):
         d = Include(path)
         self.assertEqual(["include"], d.sig_elements())
         self.assertEqual(True, d.execute(None, proc, ["a.py", "True"]))
-        self.assertEqual([call.append(
+        self.assertEqual([mock.call.append(
             '# begin py4lo include: [to inc]\nsome line\n# end py4lo include\n')],
             proc.mock_calls)
 

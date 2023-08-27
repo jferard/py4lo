@@ -19,12 +19,12 @@
 import io
 import unittest
 import zipfile
+from pathlib import Path
 
-from callbacks import *
+from callbacks import RewriteManifest
 from core.asset import DestinationAsset
 from core.script import DestinationScript
-
-from tst_env import *
+from test.test_helper import compare_xml_strings
 
 
 class TestRewriteManifest(unittest.TestCase):
@@ -33,9 +33,10 @@ class TestRewriteManifest(unittest.TestCase):
         self._temp = io.BytesIO()
         ztemp = zipfile.ZipFile(self._temp, 'w')
         ztemp.writestr("x", "y")
-        ztemp.writestr("META-INF/manifest.xml", """<?xml version="1.0" encoding="UTF-8"?>
+        data = """<?xml version="1.0" encoding="UTF-8"?>
         <manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.2">
-        </manifest:manifest>""")
+        </manifest:manifest>"""  # noqa: E501
+        ztemp.writestr("META-INF/manifest.xml", data)
         ztemp.close()
 
     def test_rewrite_manifest_empty(self):
@@ -50,13 +51,17 @@ class TestRewriteManifest(unittest.TestCase):
 
         RewriteManifest([], []).call(zin, zout,
                                      zin.getinfo("META-INF/manifest.xml"))
-        self.assertTrue(compare_xml_strings("""<?xml version="1.0" ?><manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.2">
+        expected = """<?xml version="1.0" ?><manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.2">
     <manifest:file-entry manifest:full-path="Basic/" manifest:media-type="application/binary"/>
     <manifest:file-entry manifest:full-path="Basic/Standard/" manifest:media-type="application/binary"/>
     <manifest:file-entry manifest:full-path="Basic/Standard/py4lo.xml" manifest:media-type="text/xml"/>
     <manifest:file-entry manifest:full-path="Basic/Standard/script-lb.xml" manifest:media-type="text/xml"/>
     <manifest:file-entry manifest:full-path="Basic/script-lc.xml" manifest:media-type="text/xml"/>
-</manifest:manifest>""", zout.read("META-INF/manifest.xml").decode("utf-8")))
+</manifest:manifest>"""  # noqa: E501
+        self.assertTrue(compare_xml_strings(
+            expected,
+            zout.read("META-INF/manifest.xml").decode("utf-8")
+        ))
 
     def test_rewrite_manifest_one_script(self):
         zin = zipfile.ZipFile(self._temp, 'r')
@@ -64,11 +69,14 @@ class TestRewriteManifest(unittest.TestCase):
         zout = zipfile.ZipFile(out, 'w')
 
         RewriteManifest(
-            [DestinationScript(Path("s/script"), bytes(), Path("s"), [], None)],
-            [DestinationAsset(Path("a/asset"), bytes())]).call(zin, zout,
-                                                               zin.getinfo(
-                                                                   "META-INF/manifest.xml"))
-        self.assertTrue(compare_xml_strings("""<?xml version="1.0" ?><manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.2">
+            [DestinationScript(
+                Path("s/script"), bytes(), Path("s"), [], None)
+            ],
+            [DestinationAsset(
+                Path("a/asset"), bytes())
+            ]).call(zin, zout, zin.getinfo(
+            "META-INF/manifest.xml"))
+        expected = """<?xml version="1.0" ?><manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.2">
     <manifest:file-entry manifest:full-path="Basic/" manifest:media-type="application/binary"/>
     <manifest:file-entry manifest:full-path="Basic/Standard/" manifest:media-type="application/binary"/>
     <manifest:file-entry manifest:full-path="Basic/Standard/py4lo.xml" manifest:media-type="text/xml"/>
@@ -78,7 +86,9 @@ class TestRewriteManifest(unittest.TestCase):
     <manifest:file-entry manifest:full-path="s/" manifest:media-type="application/binary"/>
     <manifest:file-entry manifest:full-path="s/script" manifest:media-type=""/>
     <manifest:file-entry manifest:full-path="a/asset" manifest:media-type="application/octet-stream"/>
-</manifest:manifest>""", zout.read("META-INF/manifest.xml").decode("utf-8")))
+</manifest:manifest>"""  # noqa: E501
+        self.assertTrue(compare_xml_strings(expected, zout.read(
+            "META-INF/manifest.xml").decode("utf-8")))
 
 
 if __name__ == '__main__':

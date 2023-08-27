@@ -16,18 +16,21 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import subprocess
 import unittest
-from unittest.mock import patch, call, Mock
+from pathlib import Path
+from unittest import mock
 
-from tools import *
+from tools import open_with_calc, nested_merge
 
 
 class TestTools(unittest.TestCase):
-    @patch('subprocess.call', spec=subprocess.call)
+    @mock.patch('subprocess.call', spec=subprocess.call)
     def test_open_with_calc(self, subprocess_call_mock):
         open_with_calc(Path("myfile.ods"), "mycalc.exe")
-        self.assertEqual([call(['mycalc.exe', 'myfile.ods'])],
-                         subprocess_call_mock.mock_calls)
+        self.assertEqual([
+            mock.call(['mycalc.exe', 'myfile.ods'])],
+            subprocess_call_mock.mock_calls)
 
     def test_merge(self):
         for expected, d1, d2, func in [

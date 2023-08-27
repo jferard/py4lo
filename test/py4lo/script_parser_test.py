@@ -18,18 +18,18 @@
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import io
 import unittest
-from unittest.mock import *
+from unittest import mock
 
 import script_set_processor
 from core.script import ParsedScriptContent
-from tst_env import file_path_mock, verify_open_path
+from test.test_helper import file_path_mock, verify_open_path
 
 
 class TestScriptParser(unittest.TestCase):
     def setUp(self):
         self.maxDiff = None
-        self._logger = Mock()
-        self._dp = Mock()
+        self._logger = mock.Mock()
+        self._dp = mock.Mock()
 
     def test_script_parser_normal_line_dont_ignore(self):
         self._dp.ignore_lines.return_value = False
@@ -38,11 +38,13 @@ class TestScriptParser(unittest.TestCase):
         sp = script_set_processor._ContentParser(self._logger, self._dp, path)
         self.assertEqual(
             ParsedScriptContent(
-                '# parsed by py4lo (https://github.com/jferard/py4lo)\nsome line',
+                """# parsed by py4lo (https://github.com/jferard/py4lo)
+some line""",
                 []), sp.parse(True))
 
         self.assertEqual([], self._logger.mock_calls)
-        self.assertEqual([call.ignore_lines(), call.end()], self._dp.mock_calls)
+        self.assertEqual([mock.call.ignore_lines(), mock.call.end()],
+                         self._dp.mock_calls)
         self.verify_open(path)
 
     def verify_open(self, path):
@@ -53,12 +55,13 @@ class TestScriptParser(unittest.TestCase):
         path = file_path_mock(io.StringIO("some line"))
 
         sp = script_set_processor._ContentParser(self._logger, self._dp, path)
+        line = '# parsed by py4lo (https://github.com/jferard/py4lo)\n### py4lo ignore: some line'  # noqa: E501
         self.assertEqual(ParsedScriptContent(
-            '# parsed by py4lo (https://github.com/jferard/py4lo)\n### py4lo ignore: some line',
-            []), sp.parse(True))
+            line, []), sp.parse(True))
 
         self.assertEqual([], self._logger.mock_calls)
-        self.assertEqual([call.ignore_lines(), call.end()], self._dp.mock_calls)
+        self.assertEqual([mock.call.ignore_lines(), mock.call.end()],
+                         self._dp.mock_calls)
         self.verify_open(path)
 
     def test_script_parser_directve_line(self):
@@ -71,7 +74,8 @@ class TestScriptParser(unittest.TestCase):
             []), sp.parse(True))
 
         self.assertEqual([], self._logger.mock_calls)
-        self.assertEqual([call.process_line('#some line'), call.end()],
+        self.assertEqual([mock.call.process_line('#some line'),
+                          mock.call.end()],
                          self._dp.mock_calls)
         self.verify_open(path)
 

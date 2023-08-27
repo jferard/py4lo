@@ -18,7 +18,6 @@
 import time
 import unittest
 from unittest import mock
-from unittest.mock import Mock, call
 
 from py4lo_dialogs import (MessageBoxType, ExecutableDialogResults)
 from py4lo_dialogs import (message_box, place_widget,
@@ -31,7 +30,7 @@ from py4lo_dialogs import (message_box, place_widget,
 class Py4LODialogsTestCase(unittest.TestCase):
     def test_place_widget(self):
         # prepare
-        oModel = Mock()
+        oModel = mock.Mock()
 
         # play
         place_widget(oModel, 1, 2, 3, 4)
@@ -45,10 +44,10 @@ class Py4LODialogsTestCase(unittest.TestCase):
     @mock.patch("py4lo_dialogs.create_uno_service")
     def test_get_text_size(self, us):
         # prepare
-        oModel = Mock()
-        oDialogModel = Mock()
+        oModel = mock.Mock()
+        oDialogModel = mock.Mock()
         oDialogModel.createInstance.side_effect = [oModel]
-        oControl = Mock(MinimumSize=Mock(Width=11, Height=17))
+        oControl = mock.Mock(MinimumSize=mock.Mock(Width=11, Height=17))
         us.side_effect = [oControl]
 
         # play
@@ -58,10 +57,11 @@ class Py4LODialogsTestCase(unittest.TestCase):
         self.assertEqual(Size(5.5, 8.5), actual_size)
         self.assertEqual("test", oModel.Label)
         self.assertEqual([
-            call.createInstance('com.sun.star.awt.UnoControlFixedTextModel')
+            mock.call.createInstance(
+                'com.sun.star.awt.UnoControlFixedTextModel')
         ], oDialogModel.mock_calls)
         self.assertEqual([
-            call.setModel(oModel)
+            mock.call.setModel(oModel)
         ], oControl.mock_calls)
 
     @mock.patch("py4lo_dialogs.create_uno_service_ctxt")
@@ -93,7 +93,7 @@ class Py4LODialogsTestCase(unittest.TestCase):
         # prepare
         toolkit = mock.Mock()
         usc.return_value = toolkit
-        pw = Mock()
+        pw = mock.Mock()
 
         # play
         message_box("title", "text", parent_win=pw)
@@ -111,7 +111,7 @@ class Py4LODialogsTestCase(unittest.TestCase):
     def test_file_dialog_single(self, us):
         # prepare
         ddir = "baz"
-        oPicker = Mock(SelectedFiles=["foo"])
+        oPicker = mock.Mock(SelectedFiles=["foo"])
         oPicker.execute.side_effect = [ExecutableDialogResults.OK]
         us.side_effect = [oPicker]
 
@@ -123,7 +123,7 @@ class Py4LODialogsTestCase(unittest.TestCase):
         self.assertEqual("baz", oPicker.DisplayDirectory)
         self.assertFalse(oPicker.MultiSelectionMode)
         self.assertEqual([
-            call.appendFilter('bar', '*.bar'), call.execute(),
+            mock.call.appendFilter('bar', '*.bar'), mock.call.execute(),
         ], oPicker.mock_calls)
         self.assertEqual("foo", actual)
 
@@ -131,7 +131,7 @@ class Py4LODialogsTestCase(unittest.TestCase):
     def test_file_dialog_single_no_filter(self, us):
         # prepare
         ddir = "baz"
-        oPicker = Mock(SelectedFiles=["foo"])
+        oPicker = mock.Mock(SelectedFiles=["foo"])
         oPicker.execute.side_effect = [ExecutableDialogResults.OK]
         us.side_effect = [oPicker]
 
@@ -143,7 +143,7 @@ class Py4LODialogsTestCase(unittest.TestCase):
         self.assertEqual("baz", oPicker.DisplayDirectory)
         self.assertFalse(oPicker.MultiSelectionMode)
         self.assertEqual([
-            call.execute(),
+            mock.call.execute(),
         ], oPicker.mock_calls)
         self.assertEqual("foo", actual)
 
@@ -151,7 +151,7 @@ class Py4LODialogsTestCase(unittest.TestCase):
     def test_file_dialog_single_none(self, us):
         # prepare
         ddir = "baz"
-        oPicker = Mock()
+        oPicker = mock.Mock()
         oPicker.execute.side_effect = [ExecutableDialogResults.CANCEL]
         us.side_effect = [oPicker]
 
@@ -163,7 +163,7 @@ class Py4LODialogsTestCase(unittest.TestCase):
         self.assertEqual("baz", oPicker.DisplayDirectory)
         self.assertFalse(oPicker.MultiSelectionMode)
         self.assertEqual([
-            call.appendFilter('bar', '*.bar'), call.execute()
+            mock.call.appendFilter('bar', '*.bar'), mock.call.execute()
         ], oPicker.mock_calls)
         self.assertIsNone(actual)
 
@@ -171,7 +171,7 @@ class Py4LODialogsTestCase(unittest.TestCase):
     def test_file_dialog_multiple(self, us):
         # prepare
         ddir = "baz"
-        oPicker = Mock(SelectedFiles=["foo", "bar"])
+        oPicker = mock.Mock(SelectedFiles=["foo", "bar"])
         oPicker.execute.side_effect = [ExecutableDialogResults.OK]
         us.side_effect = [oPicker]
 
@@ -184,7 +184,7 @@ class Py4LODialogsTestCase(unittest.TestCase):
         self.assertEqual("baz", oPicker.DisplayDirectory)
         self.assertTrue(oPicker.MultiSelectionMode)
         self.assertEqual([
-            call.appendFilter('bar', '*.bar'), call.execute(),
+            mock.call.appendFilter('bar', '*.bar'), mock.call.execute(),
         ], oPicker.mock_calls)
         self.assertEqual(["foo", "bar"], actual)
 
@@ -192,7 +192,7 @@ class Py4LODialogsTestCase(unittest.TestCase):
     def test_file_dialog_multiple_empty(self, us):
         # prepare
         ddir = "baz"
-        oPicker = Mock()
+        oPicker = mock.Mock()
         oPicker.execute.side_effect = [ExecutableDialogResults.CANCEL]
         us.side_effect = [oPicker]
 
@@ -205,7 +205,7 @@ class Py4LODialogsTestCase(unittest.TestCase):
         self.assertEqual("baz", oPicker.DisplayDirectory)
         self.assertTrue(oPicker.MultiSelectionMode)
         self.assertEqual([
-            call.appendFilter('bar', '*.bar'), call.execute()
+            mock.call.appendFilter('bar', '*.bar'), mock.call.execute()
         ], oPicker.mock_calls)
         self.assertEqual([], actual)
 
@@ -213,7 +213,7 @@ class Py4LODialogsTestCase(unittest.TestCase):
     def test_folder_dialog(self, us):
         # prepare
         ddir = "baz"
-        oPicker = Mock(Directory="d")
+        oPicker = mock.Mock(Directory="d")
         oPicker.execute.side_effect = [ExecutableDialogResults.OK]
         us.side_effect = [oPicker]
 
@@ -224,7 +224,7 @@ class Py4LODialogsTestCase(unittest.TestCase):
         self.assertEqual("foo", oPicker.Title)
         self.assertEqual("baz", oPicker.DisplayDirectory)
         self.assertEqual([
-            call.execute()
+            mock.call.execute()
         ], oPicker.mock_calls)
         self.assertEqual("d", actual)
 
@@ -232,7 +232,7 @@ class Py4LODialogsTestCase(unittest.TestCase):
     def test_folder_dialog_none(self, us):
         # prepare
         ddir = "baz"
-        oPicker = Mock()
+        oPicker = mock.Mock()
         oPicker.execute.side_effect = [ExecutableDialogResults.CANCEL]
         us.side_effect = [oPicker]
 
@@ -243,7 +243,7 @@ class Py4LODialogsTestCase(unittest.TestCase):
         self.assertEqual("foo", oPicker.Title)
         self.assertEqual("baz", oPicker.DisplayDirectory)
         self.assertEqual([
-            call.execute()
+            mock.call.execute()
         ], oPicker.mock_calls)
         self.assertIsNone(actual)
 
@@ -252,16 +252,16 @@ class ProgressExecutorTestCase(unittest.TestCase):
     @mock.patch("py4lo_dialogs.create_uno_service")
     def test_simple(self, us):
         # prepare
-        oBarModel = Mock()
-        oTextModel = Mock()
-        oDialogModel = Mock()
+        oBarModel = mock.Mock()
+        oTextModel = mock.Mock()
+        oDialogModel = mock.Mock()
         oDialogModel.createInstance.side_effect = [oBarModel, oTextModel]
 
-        oBar = Mock()
-        oText = Mock()
-        oDialog = Mock()
+        oBar = mock.Mock()
+        oText = mock.Mock()
+        oDialog = mock.Mock()
         oDialog.getControl.side_effect = [oBar, oText]
-        oTK = Mock()
+        oTK = mock.Mock()
         us.side_effect = [oDialogModel, oDialog, oTK]
 
         # play
@@ -276,23 +276,23 @@ class ProgressExecutorTestCase(unittest.TestCase):
 
         # verify
         self.assertEqual([
-            call('com.sun.star.awt.UnoControlDialogModel'),
-            call('com.sun.star.awt.UnoControlDialog'),
-            call('com.sun.star.awt.Toolkit')
+            mock.call('com.sun.star.awt.UnoControlDialogModel'),
+            mock.call('com.sun.star.awt.UnoControlDialog'),
+            mock.call('com.sun.star.awt.Toolkit')
         ], us.mock_calls)
         self.assertEqual([
-            call.createInstance('com.sun.star.awt.UnoControlProgressBarModel'),
-            call.createInstance('com.sun.star.awt.UnoControlFixedTextModel'),
-            call.insertByName('bar', oBarModel),
-            call.insertByName('text', oTextModel),
+            mock.call.createInstance('com.sun.star.awt.UnoControlProgressBarModel'),
+            mock.call.createInstance('com.sun.star.awt.UnoControlFixedTextModel'),
+            mock.call.insertByName('bar', oBarModel),
+            mock.call.insertByName('text', oTextModel),
         ], oDialogModel.mock_calls)
         self.assertEqual([
-            call.setModel(oDialogModel),
-            call.getControl('bar'),
-            call.getControl('text'),
-            call.setVisible(True),
-            call.createPeer(oTK, None),
-            call.dispose()
+            mock.call.setModel(oDialogModel),
+            mock.call.getControl('bar'),
+            mock.call.getControl('text'),
+            mock.call.setVisible(True),
+            mock.call.createPeer(oTK, None),
+            mock.call.dispose()
         ], oDialog.mock_calls)
         self.assertEqual(10, oBar.Value)
         self.assertEqual("foo", oText.Text)
@@ -300,16 +300,16 @@ class ProgressExecutorTestCase(unittest.TestCase):
     @mock.patch("py4lo_dialogs.create_uno_service")
     def test_build(self, us):
         # prepare
-        oBarModel = Mock()
-        oTextModel = Mock()
-        oDialogModel = Mock()
+        oBarModel = mock.Mock()
+        oTextModel = mock.Mock()
+        oDialogModel = mock.Mock()
         oDialogModel.createInstance.side_effect = [oBarModel, oTextModel]
 
-        oBar = Mock()
-        oText = Mock()
-        oDialog = Mock()
+        oBar = mock.Mock()
+        oText = mock.Mock()
+        oDialog = mock.Mock()
         oDialog.getControl.side_effect = [oBar, oText]
-        oTK = Mock()
+        oTK = mock.Mock()
         us.side_effect = [oDialogModel, oDialog, oTK]
 
         # play
@@ -327,23 +327,23 @@ class ProgressExecutorTestCase(unittest.TestCase):
 
         # verify
         self.assertEqual([
-            call('com.sun.star.awt.UnoControlDialogModel'),
-            call('com.sun.star.awt.UnoControlDialog'),
-            call('com.sun.star.awt.Toolkit')
+            mock.call('com.sun.star.awt.UnoControlDialogModel'),
+            mock.call('com.sun.star.awt.UnoControlDialog'),
+            mock.call('com.sun.star.awt.Toolkit')
         ], us.mock_calls)
         self.assertEqual([
-            call.createInstance('com.sun.star.awt.UnoControlProgressBarModel'),
-            call.createInstance('com.sun.star.awt.UnoControlFixedTextModel'),
-            call.insertByName('bar', oBarModel),
-            call.insertByName('text', oTextModel),
+            mock.call.createInstance('com.sun.star.awt.UnoControlProgressBarModel'),
+            mock.call.createInstance('com.sun.star.awt.UnoControlFixedTextModel'),
+            mock.call.insertByName('bar', oBarModel),
+            mock.call.insertByName('text', oTextModel),
         ], oDialogModel.mock_calls)
         self.assertEqual([
-            call.setModel(oDialogModel),
-            call.getControl('bar'),
-            call.getControl('text'),
-            call.setVisible(True),
-            call.createPeer(oTK, None),
-            call.execute()
+            mock.call.setModel(oDialogModel),
+            mock.call.getControl('bar'),
+            mock.call.getControl('text'),
+            mock.call.setVisible(True),
+            mock.call.createPeer(oTK, None),
+            mock.call.execute()
         ], oDialog.mock_calls)
         self.assertEqual(1000, oBar.Value)
         self.assertEqual("foo", oText.Text)
@@ -353,14 +353,14 @@ class ConsoleExecutorTestCase(unittest.TestCase):
     @mock.patch("py4lo_dialogs.create_uno_service")
     def test_simple(self, us):
         # prepare
-        oTextModel = Mock()
-        oDialogModel = Mock()
+        oTextModel = mock.Mock()
+        oDialogModel = mock.Mock()
         oDialogModel.createInstance.side_effect = [oTextModel]
 
-        oText = Mock()
-        oDialog = Mock()
+        oText = mock.Mock()
+        oDialog = mock.Mock()
         oDialog.getControl.side_effect = [oText]
-        oTK = Mock()
+        oTK = mock.Mock()
         us.side_effect = [oDialogModel, oDialog, oTK]
 
         # play
@@ -378,20 +378,20 @@ class ConsoleExecutorTestCase(unittest.TestCase):
         #     call.insertText(ANY,  'foo\n')
         # ], oText.mock_calls)
         self.assertEqual([
-            call('com.sun.star.awt.UnoControlDialogModel'),
-            call('com.sun.star.awt.UnoControlDialog'),
-            call('com.sun.star.awt.Toolkit')
+            mock.call('com.sun.star.awt.UnoControlDialogModel'),
+            mock.call('com.sun.star.awt.UnoControlDialog'),
+            mock.call('com.sun.star.awt.Toolkit')
         ], us.mock_calls)
         self.assertEqual([
-            call.createInstance('com.sun.star.awt.UnoControlEditModel'),
-            call.insertByName('text', oTextModel),
+            mock.call.createInstance('com.sun.star.awt.UnoControlEditModel'),
+            mock.call.insertByName('text', oTextModel),
         ], oDialogModel.mock_calls)
         self.assertEqual([
-            call.setModel(oDialogModel),
-            call.getControl('text'),
-            call.setVisible(True),
-            call.createPeer(oTK, None),
-            call.execute()
+            mock.call.setModel(oDialogModel),
+            mock.call.getControl('text'),
+            mock.call.setVisible(True),
+            mock.call.createPeer(oTK, None),
+            mock.call.execute()
         ], oDialog.mock_calls)
         self.assertEqual(5, oTextModel.PositionX)
         self.assertEqual(5, oTextModel.PositionY)

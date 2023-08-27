@@ -16,16 +16,18 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import io
+import logging
 import unittest
-from unittest.mock import patch, call, Mock
+from unittest import mock
 from zipfile import ZipFile
+from pathlib import Path
 
-from core.properties import *
+from core.properties import PropertiesProviderFactory, PropertiesProvider
 from core.source_dest import _get_paths
 
 
 class TestProperties(unittest.TestCase):
-    @patch("core.properties.load_toml", autospec=True)
+    @mock.patch("core.properties.load_toml", autospec=True)
     def test_provider_factory(self, toml_mock):
         toml_mock.return_value = {"a": 1, "log_level": -1,
                                   "src": {"source_ods_file": "s.ods",
@@ -45,9 +47,9 @@ class TestProperties(unittest.TestCase):
 
     def test_provider(self):
         logger = logging.getLogger()
-        sources = Mock(get_assets_paths=lambda: Path("assets"),
+        sources = mock.Mock(get_assets_paths=lambda: Path("assets"),
                        get_src_paths=lambda: Path("src"))
-        destinations = Mock()
+        destinations = mock.Mock()
         provider = PropertiesProvider(logger, Path("base"), sources,
                                       destinations, {'a': 1})
         self.assertEqual(logger, provider.get_logger())
@@ -63,9 +65,9 @@ class TestProperties(unittest.TestCase):
 
     def test_readme(self):
         logger = logging.getLogger()
-        sources = Mock(get_assets_paths=lambda: Path("assets"),
+        sources = mock.Mock(get_assets_paths=lambda: Path("assets"),
                        get_src_paths=lambda: Path("src"))
-        destinations = Mock()
+        destinations = mock.Mock()
         self.maxDiff = None
         provider = PropertiesProvider(logger, Path("."), sources,
                                       destinations, {'add_readme': True})
@@ -78,18 +80,18 @@ class TestProperties(unittest.TestCase):
                               'Basic/Standard/py4lo.xml'], zin.namelist())
 
     def test_get_paths(self):
-        source_dir: Path = Mock()
-        path_a: Path = Mock()
-        path_b: Path = Mock()
+        source_dir: Path = mock.Mock()
+        path_a: Path = mock.Mock()
+        path_b: Path = mock.Mock()
 
         source_dir.rglob.side_effect = [[path_a, path_b, Path("./c")],
                                         [Path("c")]]
         path_a.is_file.return_value = True
         path_b.is_file.return_value = False
 
-        self.assertEqual(set([path_a]),
+        self.assertEqual({path_a},
                          _get_paths(source_dir, ["c"], "*"))
-        self.assertEqual([call.rglob('*'), call.rglob('c')],
+        self.assertEqual([mock.call.rglob('*'), mock.call.rglob('c')],
                          source_dir.mock_calls)
 
 
