@@ -179,3 +179,9 @@ class PropertyState:
     DIRECT_VALUE = 0
     DEFAULT_VALUE = 1
     AMBIGUOUS_VALUE = 2
+
+
+class FontSlant:
+    NONE = 0
+    OBLIQUE = 1
+    ITALIC = 2

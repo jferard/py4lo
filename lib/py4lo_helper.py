@@ -24,7 +24,7 @@ from pathlib import Path
 from typing import (Any, Optional, List, cast, Callable, Mapping, Tuple,
                     Iterator, Union, Iterable)
 
-from py4lo_commons import uno_path_to_url
+from py4lo_commons import uno_path_to_url, CharProperties, Text
 from py4lo_typing import (UnoSpreadsheetDocument, UnoController, UnoContext,
                           UnoService, UnoSheet, UnoRangeAddress, UnoRange,
                           UnoCell, UnoObject, DATA_ARRAY, UnoCellAddress,
@@ -87,12 +87,16 @@ try:
         from com.sun.star.beans.PropertyState import (
             AMBIGUOUS_VALUE, DIRECT_VALUE)
 
+    class FontSlant:
+        # noinspection PyUnresolvedReferences
+        from com.sun.star.awt.FontSlant import (NONE, OBLIQUE, ITALIC)
+
 except (ModuleNotFoundError, ImportError):
     from mock_constants import (  # noqa
         unohelper, uno, XTransferable, FrameSearchFlag, BorderLineStyle,
         ConditionOperator, FontWeight, ValidationType,
         TableValidationVisibility, ScriptFrameworkErrorException,
-        UnoRuntimeException, UnoException, PropertyState
+        UnoRuntimeException, UnoException, PropertyState, FontSlant
     )
 
 ###############################################################################
@@ -1310,53 +1314,27 @@ def char_iter(oXSimpleText) -> Iterator[UnoTextRange]:
         oCursor.goRight(0, False)
 
 
-class CharProperties:
-    """
-    A simplified representation of com.sun.star.style.CharacterProperties
-    """
-    @staticmethod
-    def from_uno_text_range(c: UnoTextRange) -> "CharProperties":
-        return CharProperties(
-            c.CharFontName, c.CharHeight, c.CharWeight, c.CharPosture,
-            c.CharBackColor, c.CharColor, c.CharOverline, c.CharStrikeout,
-            c.CharUnderline, c.CharEscapement, c.CharEscapementHeight
-        )
-
-    def __init__(self, font_name: str, height: float, weight: float,
-                 posture: int, back_color: int, color: int, overline: bool,
-                 strikeout: bool, underline: bool, escapement: int,
-                 escapement_height: int):
-        self.font_name = font_name
-        self.height = height
-        self.weight = weight
-        self.posture = posture
-        self.back_color = back_color
-        self.color = color
-        self.overline = overline
-        self.strikeout = strikeout
-        self.underline = underline
-        self.escapement = escapement
-        self.escapement_height = escapement_height
-
-    def __repr__(self) -> str:
-        return "CharProperties({})".format(self.__dict__)
-
-    def __eq__(self, other: "CharProperties") -> bool:
-        return self.__dict__ == other.__dict__
+def char_properties_from_uno_text_range(
+        text_range: UnoTextRange) -> CharProperties:
+    """Create a new CharProperties object from a text range"""
+    italic = text_range.CharPosture == FontSlant.OBLIQUE or text_range.CharPosture == FontSlant.ITALIC
+    script = None
+    if text_range.CharEscapementHeight < 100:
+        if text_range.CharEscapement < 0:
+            script = "sub"
+        elif text_range.CharEscapement > 0:
+            script = "sup"
+    return CharProperties(
+        text_range.CharFontName, text_range.CharHeight, text_range.CharWeight,
+        italic, text_range.CharBackColor, text_range.CharColor,
+        text_range.CharOverline, text_range.CharStrikeout,
+        text_range.CharUnderline, script
+    )
 
 
-class Text:
-    """Representation of a cell range"""
-    @staticmethod
-    def from_uno_text_range(c: UnoTextRange) -> "Text":
-        return Text(
-            c.String,
-            CharProperties.from_uno_text_range(c)
-        )
-
-    def __init__(self, string: str, properties: CharProperties):
-        self.string = string
-        self.properties = properties
-
-    def __repr__(self) -> str:
-        return "Text({}, {})".format(self.string, self.properties)
+def text_from_uno_text_range(texct_range: UnoTextRange) -> Text:
+    """Create a new Text object from a text range"""
+    return Text(
+        texct_range.String,
+        char_properties_from_uno_text_range(texct_range)
+    )

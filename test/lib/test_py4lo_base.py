@@ -46,7 +46,7 @@ class Py4LOBaseTestCase(unittest.TestCase):
 
         db = open_or_create_db(Path("./test.odb"))
         builder = db.get_table_builder("ok")
-        builder.add_column("c", DataType.NUMERIC)
+        builder.add_column("text_range", DataType.NUMERIC)
         builder.build()
 
         self.assertEqual([

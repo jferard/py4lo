@@ -753,7 +753,7 @@ class HelperDataArrayTestCase(unittest.TestCase):
         data_array = [
             ("", "", "", "", "", "", "",),
             ("", "", "a", "", "", "b", "",),
-            ("", "", "", "c", "d", "", "",),
+            ("", "", "", "text_range", "d", "", "",),
             ("", "", "", "", "", "", "",),
             ("", "", "", "", "e", "", "",),
             ("", "", "", "", "", "", "",),
@@ -796,7 +796,7 @@ class HelperDataArrayTestCase(unittest.TestCase):
         data_array = [
             ("", "", "", "", "", "", "",),
             ("", "", "a", "", "", "b", "",),
-            ("", "", "", "c", "d", "", "",),
+            ("", "", "", "text_range", "d", "", "",),
             ("", "", "", "", "", "", "",),
             ("", "", "", "", "e", "", "",),
             ("", "", "", "", "", "", "",),
@@ -895,14 +895,14 @@ class HelperFormattingTestCase(unittest.TestCase):
         oCell = mock.Mock(Validation=oVal)
 
         # play
-        set_validation_list_by_cell(oCell, ["a", "b", "c"])
+        set_validation_list_by_cell(oCell, ["a", "b", "text_range"])
 
         # verify
         self.assertEqual(ValidationType.LIST, oVal.Type)
         self.assertEqual(2, oVal.ShowList)
         self.assertTrue(oVal.ShowErrorMessage)
         self.assertTrue(oVal.IgnoreBlankCells)
-        self.assertEqual('"a";"b";"c"', oVal.Formula1)
+        self.assertEqual('"a";"b";"text_range"', oVal.Formula1)
         self.assertIsNotNone(oCell.String)
 
     def test_set_validation_list2(self):
@@ -1500,7 +1500,7 @@ class HelperOpenTestCase(unittest.TestCase):
         ], oDoc.mock_calls)
         self.assertEqual('a', sheets[0].Name)
         self.assertEqual('b', sheets[1].Name)
-        self.assertEqual('c', sheets[2].Name)
+        self.assertEqual('text_range', sheets[2].Name)
 
     def test_doc_builder_sheet_names_four(self):
         # prepare
@@ -1525,12 +1525,12 @@ class HelperOpenTestCase(unittest.TestCase):
             mock.call.Sheets.getByIndex(0),
             mock.call.Sheets.getByIndex(1),
             mock.call.Sheets.getByIndex(2),
-            mock.call.Sheets.insertNewByName('c', 3),
+            mock.call.Sheets.insertNewByName('text_range', 3),
             mock.call.unlockControllers()
         ], oDoc.mock_calls)
         self.assertEqual('a', sheets[0].Name)
         self.assertEqual('b', sheets[1].Name)
-        self.assertEqual('c', sheets[2].Name)
+        self.assertEqual('text_range', sheets[2].Name)
 
     def test_doc_builder_apply(self):
         # prepare
@@ -1627,7 +1627,7 @@ class HelperOpenTestCase(unittest.TestCase):
             mock.call.Sheets.getByIndex(0),
             mock.call.Sheets.copyByName('0', 'a', 1),
             mock.call.Sheets.copyByName('0', 'b', 2),
-            mock.call.Sheets.copyByName('0', 'c', 3),
+            mock.call.Sheets.copyByName('0', 'text_range', 3),
             mock.call.unlockControllers()
         ], oDoc.mock_calls)
         for s in sheets:

@@ -72,12 +72,12 @@ def example_from_lib(*_args):
 
 def writer_example(*_args):
     w = dict_writer(pr.controller.getActiveSheet(),
-                    ["a", "b", "c", "d", "e"],
+                    ["a", "b", "text_range", "d", "e"],
                     cell_typing=CellTyping.Accurate)
     w.writeheader()
-    for row in [{"a": "value", "b": 1, "c": True,
+    for row in [{"a": "value", "b": 1, "text_range": True,
                  "d": datetime(2020, 11, 21, 12, 36, 50)},
-                {"a": "other value", "b": 2, "c": False,
+                {"a": "other value", "b": 2, "text_range": False,
                  "d": datetime(2020, 11, 21, 12, 36, 50)}]:
         w.writerow(row)
 

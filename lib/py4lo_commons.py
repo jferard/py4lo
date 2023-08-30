@@ -24,7 +24,8 @@ import logging
 import configparser
 import datetime as dt
 from typing import (
-    Union, Any, cast, List, Optional, TextIO, Iterable, Mapping, Callable)
+    Union, Any, cast, List, Optional, TextIO, Iterable, Mapping, Callable,
+    Iterator)
 
 from py4lo_typing import UnoXScriptContext, StrPath
 
@@ -296,3 +297,122 @@ def int_to_date(days: int) -> dt.datetime:
 
 def float_to_date(days: float) -> dt.datetime:
     return ORIGIN + dt.timedelta(days)
+
+
+class CharProperties:
+    """
+    A simplified representation of com.sun.star.style.CharacterProperties
+    """
+    def __init__(self, font_name: str, height: float, weight: float,
+                 italic: bool, back_color: int, color: int, overline: bool,
+                 strikeout: bool, underline: bool, script: str):
+        self.font_name = font_name
+        self.height = height
+        self.weight = weight
+        self.italic = italic
+        self.back_color = back_color
+        self.color = color
+        self.overline = overline
+        self.strikeout = strikeout
+        self.underline = underline
+        self.script = script
+
+    def __repr__(self) -> str:
+        return "CharProperties({})".format(self.__dict__)
+
+    def __eq__(self, other: "CharProperties") -> bool:
+        return self.__dict__ == other.__dict__
+
+
+class Text:
+    """Representation of a cell range"""
+    def __init__(self, string: str, properties: CharProperties):
+        self.string = string
+        self.properties = properties
+
+    def __repr__(self) -> str:
+        return "Text({}, {})".format(self.string, self.properties)
+
+
+class HTMLConverter:
+    """
+    Minimalist chars to HTML converter
+    """
+    _logger = logging.getLogger(__name__)
+
+    def convert(self, chars: Iterable[Text]) -> str:
+        """Convert a sequence of chars to HTML"""
+        lines = self._split_lines(chars)
+        html = "<br>".join(self._convert_to_html(line) for line in lines)
+        return html
+
+    def _split_lines(self, chars: Iterable[Text]) -> Iterator[List[Text]]:
+        buf = []
+        for c in chars:
+            if c.string == "\r\n" or c.string == "\n":
+                yield buf
+                buf = []
+            else:
+                buf.append(c)
+        yield buf
+
+    def _convert_to_html(self, line: List[Text]) -> str:
+        texts = self._group_texts(line)
+        ret = []
+        for text in texts:
+            ret.append(self._to_html(text))
+        return "".join(ret)
+
+    def _group_texts(self, line: List[Text]) -> Iterator[Text]:
+        cur_text = None
+        for c in line:
+            if cur_text is None:
+                cur_text = c
+            else:
+                if c.properties == cur_text.properties:
+                    cur_text.string += c.string
+                else:
+                    yield cur_text
+                    cur_text = c
+
+        if cur_text is not None:
+            yield cur_text
+
+    def _to_html(self, text: Text) -> str:
+        properties = text.properties
+        tag = self._get_tag(properties)
+
+        statements = []
+        if properties.font_name != "Liberation Sans":
+            statements.append("font-family: \"{}\"".format(properties.font_name))
+        if properties.height != 10:
+            statements.append("font-size: {}pt".format(properties.height))
+        if properties.weight != 100:
+            statements.append("font-weight: {}".format(int(properties.weight*4)))
+        if properties.italic:
+            statements.append("font-style: italic")
+        if properties.color != -1:
+            statements.append("color: #{:02x}".format(properties.color))
+        if properties.back_color != -1:
+            statements.append(
+                "background-color: #{:02x}".format(properties.back_color))
+        if properties.overline != 0:
+            statements.append("text-decoration: overline")
+        if properties.strikeout != 0:
+            statements.append("text-decoration: line-through")
+        if properties.underline != 0:
+            statements.append("text-decoration: underline")
+
+        if statements:
+            return "<{tag} style='{style}'>{text}</{tag}>".format(
+                tag=tag, style="; ".join(statements), text=text.string
+            )
+        elif tag == "span":
+            return text.string
+        else:
+            return "<{tag}>{text}</{tag}>".format(
+                tag=tag, text=text.string
+            )
+
+    def _get_tag(self, properties: CharProperties) -> str:
+        return "span" if properties.script is None else properties.script
