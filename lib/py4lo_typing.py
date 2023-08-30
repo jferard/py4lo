@@ -43,6 +43,7 @@ UnoCell = NewType("UnoCell", UnoRange)
 UnoRow = NewType("UnoRow", UnoRange)
 UnoColumn = NewType("UnoColumn", UnoRange)
 UnoCellAddress = NewType("UnoCellAddress", UnoService)
+UnoTextRange = NewType("UnoTextRange", UnoService)
 
 # Writer
 UnoTextDocument = NewType("UnoTextDocument", UnoOfficeDocument)

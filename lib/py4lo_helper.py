@@ -30,7 +30,7 @@ from py4lo_typing import (UnoSpreadsheetDocument, UnoController, UnoContext,
                           UnoCell, UnoObject, DATA_ARRAY, UnoCellAddress,
                           UnoPropertyValue, DATA_ROW, UnoXScriptContext,
                           UnoColumn, UnoStruct, UnoEnum, UnoRow, DATA_VALUE,
-                          UnoPropertyValues)
+                          UnoPropertyValues, UnoTextRange)
 
 try:
     # noinspection PyUnresolvedReferences
@@ -1295,7 +1295,7 @@ class Transferable(unohelper.Base, XTransferable):
         return aFlavor.MimeType == self._flavor[0]
 
 
-def char_iter(oXSimpleText) -> Iterator[Any]:
+def char_iter(oXSimpleText) -> Iterator[UnoTextRange]:
     """
     Iterator over the chars of a text.
     Beware: the cursor is always the same.
@@ -1308,3 +1308,55 @@ def char_iter(oXSimpleText) -> Iterator[Any]:
     while oCursor.goRight(1, True):
         yield oCursor
         oCursor.goRight(0, False)
+
+
+class CharProperties:
+    """
+    A simplified representation of com.sun.star.style.CharacterProperties
+    """
+    @staticmethod
+    def from_uno_text_range(c: UnoTextRange) -> "CharProperties":
+        return CharProperties(
+            c.CharFontName, c.CharHeight, c.CharWeight, c.CharPosture,
+            c.CharBackColor, c.CharColor, c.CharOverline, c.CharStrikeout,
+            c.CharUnderline, c.CharEscapement, c.CharEscapementHeight
+        )
+
+    def __init__(self, font_name: str, height: float, weight: float,
+                 posture: int, back_color: int, color: int, overline: bool,
+                 strikeout: bool, underline: bool, escapement: int,
+                 escapement_height: int):
+        self.font_name = font_name
+        self.height = height
+        self.weight = weight
+        self.posture = posture
+        self.back_color = back_color
+        self.color = color
+        self.overline = overline
+        self.strikeout = strikeout
+        self.underline = underline
+        self.escapement = escapement
+        self.escapement_height = escapement_height
+
+    def __repr__(self) -> str:
+        return "CharProperties({})".format(self.__dict__)
+
+    def __eq__(self, other: "CharProperties") -> bool:
+        return self.__dict__ == other.__dict__
+
+
+class Text:
+    """Representation of a cell range"""
+    @staticmethod
+    def from_uno_text_range(c: UnoTextRange) -> "Text":
+        return Text(
+            c.String,
+            CharProperties.from_uno_text_range(c)
+        )
+
+    def __init__(self, string: str, properties: CharProperties):
+        self.string = string
+        self.properties = properties
+
+    def __repr__(self) -> str:
+        return "Text({}, {})".format(self.string, self.properties)
