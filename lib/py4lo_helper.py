@@ -24,7 +24,7 @@ from pathlib import Path
 from typing import (Any, Optional, List, cast, Callable, Mapping, Tuple,
                     Iterator, Union, Iterable)
 
-from py4lo_commons import uno_path_to_url, CharProperties, Text
+from py4lo_commons import uno_path_to_url, CharProperties, Text, HTMLConverter
 from py4lo_typing import (UnoSpreadsheetDocument, UnoController, UnoContext,
                           UnoService, UnoSheet, UnoRangeAddress, UnoRange,
                           UnoCell, UnoObject, DATA_ARRAY, UnoCellAddress,
@@ -1332,9 +1332,15 @@ def char_properties_from_uno_text_range(
     )
 
 
-def text_from_uno_text_range(texct_range: UnoTextRange) -> Text:
+def text_from_uno_text_range(text_range: UnoTextRange) -> Text:
     """Create a new Text object from a text range"""
     return Text(
-        texct_range.String,
-        char_properties_from_uno_text_range(texct_range)
+        text_range.String,
+        char_properties_from_uno_text_range(text_range)
     )
+
+
+def convert_to_html(text_range: UnoTextRange) -> str:
+    uno_chars = char_iter(text_range)
+    return HTMLConverter().convert(
+        [text_from_uno_text_range(uno_char) for uno_char in uno_chars])
