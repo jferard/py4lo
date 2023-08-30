@@ -42,31 +42,38 @@ try:
     # noinspection PyUnresolvedReferences
     from com.sun.star.datatransfer import XTransferable
 
+
     class FrameSearchFlag:
         # noinspection PyUnresolvedReferences
         from com.sun.star.frame.FrameSearchFlag import (
             AUTO, PARENT, SELF, CHILDREN, CREATE, SIBLINGS, TASKS, ALL, GLOBAL)
 
+
     class BorderLineStyle:
         # noinspection PyUnresolvedReferences
         from com.sun.star.table.BorderLineStyle import (SOLID, )
+
 
     class ConditionOperator:
         # noinspection PyUnresolvedReferences
         from com.sun.star.sheet.ConditionOperator import (FORMULA, )
 
+
     class FontWeight:
         # noinspection PyUnresolvedReferences
         from com.sun.star.awt.FontWeight import (BOLD, )
+
 
     class ValidationType:
         # noinspection PyUnresolvedReferences
         from com.sun.star.sheet.ValidationType import (LIST, )
 
+
     class TableValidationVisibility:
         # noinspection PyUnresolvedReferences
         from com.sun.star.sheet.TableValidationVisibility import (
             SORTEDASCENDING, UNSORTED)
+
 
     # noinspection PyUnresolvedReferences
     from com.sun.star.script.provider import ScriptFrameworkErrorException
@@ -74,10 +81,11 @@ try:
     from com.sun.star.uno import (RuntimeException as UnoRuntimeException,
                                   Exception as UnoException)
 
+
     class PropertyState:
         # noinspection PyUnresolvedReferences
         from com.sun.star.beans.PropertyState import (
-           AMBIGUOUS_VALUE, DIRECT_VALUE)
+            AMBIGUOUS_VALUE, DIRECT_VALUE)
 
 except (ModuleNotFoundError, ImportError):
     from mock_constants import (  # noqa
@@ -1244,6 +1252,7 @@ class _Inspector:
 
 
 TEXT_FLAVOR = ("text/plain;charset=utf-16", "Unicode-text")
+HTML_FLAVOR = ("text/html;charset=utf-8", "HTML")
 
 
 def copy_to_clipboard(value: Any, flavor: Tuple[str, str] = TEXT_FLAVOR):
@@ -1284,3 +1293,18 @@ class Transferable(unohelper.Base, XTransferable):
 
     def isDataFlavorSupported(self, aFlavor: UnoObject) -> bool:
         return aFlavor.MimeType == self._flavor[0]
+
+
+def char_iter(oXSimpleText) -> Iterator[Any]:
+    """
+    Iterator over the chars of a text.
+    Beware: the cursor is always the same.
+
+    @param oXSimpleText: the text
+    @return: the iterator
+    """
+    oCursor = oXSimpleText.createTextCursor()
+    oCursor.gotoStart(False)
+    while oCursor.goRight(1, True):
+        yield oCursor
+        oCursor.goRight(0, False)
