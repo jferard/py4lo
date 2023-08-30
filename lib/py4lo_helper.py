@@ -1317,7 +1317,8 @@ def char_iter(oXSimpleText) -> Iterator[UnoTextRange]:
 def char_properties_from_uno_text_range(
         text_range: UnoTextRange) -> CharProperties:
     """Create a new CharProperties object from a text range"""
-    italic = text_range.CharPosture == FontSlant.OBLIQUE or text_range.CharPosture == FontSlant.ITALIC
+    italic = (text_range.CharPosture == FontSlant.OBLIQUE
+              or text_range.CharPosture == FontSlant.ITALIC)
     script = None
     if text_range.CharEscapementHeight < 100:
         if text_range.CharEscapement < 0:

@@ -1500,7 +1500,7 @@ class HelperOpenTestCase(unittest.TestCase):
         ], oDoc.mock_calls)
         self.assertEqual('a', sheets[0].Name)
         self.assertEqual('b', sheets[1].Name)
-        self.assertEqual('text_range', sheets[2].Name)
+        self.assertEqual('c', sheets[2].Name)
 
     def test_doc_builder_sheet_names_four(self):
         # prepare
@@ -1525,12 +1525,12 @@ class HelperOpenTestCase(unittest.TestCase):
             mock.call.Sheets.getByIndex(0),
             mock.call.Sheets.getByIndex(1),
             mock.call.Sheets.getByIndex(2),
-            mock.call.Sheets.insertNewByName('text_range', 3),
+            mock.call.Sheets.insertNewByName('c', 3),
             mock.call.unlockControllers()
         ], oDoc.mock_calls)
         self.assertEqual('a', sheets[0].Name)
         self.assertEqual('b', sheets[1].Name)
-        self.assertEqual('text_range', sheets[2].Name)
+        self.assertEqual('c', sheets[2].Name)
 
     def test_doc_builder_apply(self):
         # prepare
@@ -1627,7 +1627,7 @@ class HelperOpenTestCase(unittest.TestCase):
             mock.call.Sheets.getByIndex(0),
             mock.call.Sheets.copyByName('0', 'a', 1),
             mock.call.Sheets.copyByName('0', 'b', 2),
-            mock.call.Sheets.copyByName('0', 'text_range', 3),
+            mock.call.Sheets.copyByName('0', 'c', 3),
             mock.call.unlockControllers()
         ], oDoc.mock_calls)
         for s in sheets:

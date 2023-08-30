@@ -315,13 +315,13 @@ class TestDate(unittest.TestCase):
             self._create_char("G", weight=150),
         ])
         self.assertEqual(
-            ("""<span style='font-family: "Liberation Avec"'>A</span>
-            <br>
-            <span style='font-style: italic'>B</span>
-            <sub style='font-weight: 600'>C</sub>
-            <sup style='font-weight: 600'>C</sup>
-            <span style='color: #ff0000'>D</span>
-            <span style='font-weight: 600'>EFG</span>"""),
+            ("""<span style='font-family: "Liberation Avec"'>A</span>"""
+            "<br>"
+            "<span style='font-style: italic'>B</span>"
+            "<sub style='font-weight: 600'>C</sub>"
+            "<sup style='font-weight: 600'>C</sup>"
+            "<span style='color: #ff0000'>D</span>"
+            "<span style='font-weight: 600'>EFG</span>"),
             HTMLConverter().convert(chars))
 
     def _create_char(self, letter: str, **kwargs) -> Text:
