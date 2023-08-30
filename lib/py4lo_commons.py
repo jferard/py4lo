@@ -63,7 +63,7 @@ def uno_path_to_url(path: Union[str, Path]) -> str:
     return uno.systemPathToFileUrl(str(path))
 
 
-ORIGIN = dt.datetime(1899, 12, 30)
+ORIGIN = dt.datetime(1899, 12, 30) # TODO: oDoc.NullDate
 
 
 def init(xsc):
