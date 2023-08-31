@@ -28,22 +28,34 @@ try:
     # noinspection PyUnresolvedReferences
     import uno
 
+
     class MessageBoxType:
         # noinspection PyUnresolvedReferences
-        from com.sun.star.awt.MessageBoxType import (ERRORBOX, MESSAGEBOX)
+        from com.sun.star.awt.MessageBoxType import (
+            MESSAGEBOX, INFOBOX, WARNINGBOX, ERRORBOX, QUERYBOX, )
+
 
     class MessageBoxButtons:
         # noinspection PyUnresolvedReferences
-        from com.sun.star.awt.MessageBoxButtons import (BUTTONS_OK, )
+        from com.sun.star.awt.MessageBoxButtons import (
+            BUTTONS_OK, BUTTONS_OK_CANCEL, BUTTONS_YES_NO,
+            BUTTONS_YES_NO_CANCEL, BUTTONS_RETRY_CANCEL,
+            BUTTONS_ABORT_IGNORE_RETRY, DEFAULT_BUTTON_OK,
+            DEFAULT_BUTTON_CANCEL, DEFAULT_BUTTON_RETRY, DEFAULT_BUTTON_YES,
+            DEFAULT_BUTTON_NO, DEFAULT_BUTTON_IGNORE,
+        )
+
 
     class FontWeight:
         # noinspection PyUnresolvedReferences
         from com.sun.star.awt.FontWeight import (BOLD, )
 
+
     class ExecutableDialogResults:
         # noinspection PyUnresolvedReferences
         from com.sun.star.ui.dialogs.ExecutableDialogResults import (
             OK, CANCEL)
+
 
     class PushButtonType:
         # noinspection PyUnresolvedReferences
