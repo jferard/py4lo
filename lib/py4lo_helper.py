@@ -18,13 +18,13 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """py4lo_helper deals with LO objects."""
-
+import logging
 from enum import Enum
 from pathlib import Path
 from typing import (Any, Optional, List, cast, Callable, Mapping, Tuple,
                     Iterator, Union, Iterable)
 
-from py4lo_commons import uno_path_to_url, CharProperties, Text, HTMLConverter
+from py4lo_commons import uno_path_to_url
 from py4lo_typing import (UnoSpreadsheetDocument, UnoController, UnoContext,
                           UnoService, UnoSheet, UnoRangeAddress, UnoRange,
                           UnoCell, UnoObject, DATA_ARRAY, UnoCellAddress,
@@ -86,6 +86,7 @@ try:
         # noinspection PyUnresolvedReferences
         from com.sun.star.beans.PropertyState import (
             AMBIGUOUS_VALUE, DIRECT_VALUE)
+
 
     class FontSlant:
         # noinspection PyUnresolvedReferences
@@ -1299,49 +1300,78 @@ class Transferable(unohelper.Base, XTransferable):
         return aFlavor.MimeType == self._flavor[0]
 
 
-def char_iter(oXSimpleText) -> Iterator[UnoTextRange]:
-    """
-    Iterator over the chars of a text.
-    Beware: the cursor is always the same.
-
-    @param oXSimpleText: the text
-    @return: the iterator
-    """
-    oCursor = oXSimpleText.createTextCursor()
-    oCursor.gotoStart(False)
-    while oCursor.goRight(1, True):
-        yield oCursor
-        oCursor.goRight(0, False)
-
-
-def char_properties_from_uno_text_range(
-        text_range: UnoTextRange) -> CharProperties:
-    """Create a new CharProperties object from a text range"""
-    italic = (text_range.CharPosture == FontSlant.OBLIQUE
-              or text_range.CharPosture == FontSlant.ITALIC)
-    script = None
-    if text_range.CharEscapementHeight < 100:
-        if text_range.CharEscapement < 0:
-            script = "sub"
-        elif text_range.CharEscapement > 0:
-            script = "sup"
-    return CharProperties(
-        text_range.CharFontName, text_range.CharHeight, text_range.CharWeight,
-        italic, text_range.CharBackColor, text_range.CharColor,
-        text_range.CharOverline, text_range.CharStrikeout,
-        text_range.CharUnderline, script
-    )
-
-
-def text_from_uno_text_range(text_range: UnoTextRange) -> Text:
-    """Create a new Text object from a text range"""
-    return Text(
-        text_range.String,
-        char_properties_from_uno_text_range(text_range)
-    )
-
-
 def convert_to_html(text_range: UnoTextRange) -> str:
-    uno_chars = char_iter(text_range)
-    return HTMLConverter().convert(
-        [text_from_uno_text_range(uno_char) for uno_char in uno_chars])
+    return HTMLConverter().convert(text_range)
+
+
+class HTMLConverter:
+    """
+    Minimalist chars to HTML converter
+    """
+    _logger = logging.getLogger(__name__)
+
+    def convert(self, text_range: UnoTextRange) -> str:
+        """Convert a sequence of chars to HTML"""
+        html = "<br>\r\n".join(
+            self._par_to_html(par_text_range) for par_text_range in
+            to_iter(text_range))
+        return html
+
+    def _par_to_html(self, par_text_range: UnoTextRange) -> str:
+        return "".join(
+            [self._to_html(chunk) for chunk in to_iter(par_text_range)])
+
+    def _to_html(self, text_range: UnoTextRange) -> str:
+        tag = self._get_tag(text_range)
+
+        statements = []
+        if text_range.CharFontName != "Liberation Sans":
+            statements.append(
+                "font-family: \"{}\"".format(text_range.CharFontName))
+        if text_range.CharHeight != 10:
+            statements.append("font-size: {}pt".format(text_range.CharHeight))
+        if text_range.CharWeight != 100:
+            statements.append(
+                "font-weight: {}".format(int(text_range.CharWeight * 4)))
+        italic = (text_range.CharPosture == FontSlant.OBLIQUE
+                  or text_range.CharPosture == FontSlant.ITALIC)
+        if italic:
+            statements.append("font-style: italic")
+        if text_range.CharColor != -1:
+            statements.append("color: #{:02x}".format(text_range.CharColor))
+        if text_range.CharBackColor != -1:
+            statements.append(
+                "background-color: #{:02x}".format(text_range.CharBackColor))
+        if text_range.CharOverline != 0:
+            statements.append("text-decoration: overline")
+        if text_range.CharStrikeout != 0:
+            statements.append("text-decoration: line-through")
+        if text_range.CharUnderline != 0:
+            statements.append("text-decoration: underline")
+
+        if (text_range.TextPortionType == "TextField"
+                and text_range.TextField.supportsService(
+                    "com.sun.star.text.TextField.URL")
+        ):
+            text = "<a href='{}'>{}</a>".format(
+                text_range.TextField.URL, text_range.TextField.Representation)
+        else:
+            text = text_range.String
+        if statements:
+            return "<{tag} style='{style}'>{text}</{tag}>".format(
+                tag=tag, style="; ".join(statements), text=text
+            )
+        elif tag == "span":
+            return text
+        else:
+            return "<{tag}>{text}</{tag}>".format(
+                tag=tag, text=text
+            )
+
+    def _get_tag(self, text_range: UnoTextRange) -> str:
+        if text_range.CharEscapementHeight < 100:
+            if text_range.CharEscapement < 0:
+                return "sub"
+            elif text_range.CharEscapement > 0:
+                return "sup"
+        return "span"

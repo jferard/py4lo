@@ -51,8 +51,6 @@ def message_example(*_args):
         "Current dir is: {}".format(os.path.abspath("../../../../py4lo")),
         "Current doc name is: {}".format(oDoc.Title),
         "Current sheet name is: {}".format(oSheet.Name),
-        "Some HTML: " + convert_to_html(
-            oDoc.Sheets.getByIndex(0).getCellByPosition(0, 0))
     ]
 
     message_box("py4lo", "\n".join(lines))

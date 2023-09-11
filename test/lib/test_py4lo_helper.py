@@ -39,6 +39,7 @@ from py4lo_helper import (
     new_doc, NewDocumentUrl, doc_builder, create_uno_service_ctxt,
     create_uno_service, read_options, rtrim_row, read_options_from_sheet_name,
     copy_row_at_index)
+from py4lo_typing import UnoTextRange
 
 
 # noinspection PyUnresolvedReferences
@@ -2008,6 +2009,38 @@ class MiscTestCase(unittest.TestCase):
             'language=Basic&location=application')
         self.oSP.getScript.return_value.invoke.assert_has_calls(
             [mock.call((1,), (), ()), mock.call((2,), (), ())])
+
+    def test_html_converter(self):
+        return # TODO
+        self.maxDiff = None
+        chars = iter([
+            self._create_char("A", font_name="Liberation Avec"),
+            self._create_char("\n", font_name="Liberation Avec"),
+            self._create_char("B", italic=True),
+            self._create_char("C", weight=150, script="sub"),
+            self._create_char("C", weight=150, script="sup"),
+            self._create_char("D", color=0xFF0000),
+            self._create_char("E", weight=150),
+            self._create_char("F", weight=150),
+            self._create_char("G", weight=150),
+        ])
+        self.assertEqual(
+            ("""<span style='font-family: "Liberation Avec"'>A</span>"""
+            "<br>"
+            "<span style='font-style: italic'>B</span>"
+            "<sub style='font-weight: 600'>C</sub>"
+            "<sup style='font-weight: 600'>C</sup>"
+            "<span style='color: #ff0000'>D</span>"
+            "<span style='font-weight: 600'>EFG</span>"),
+            HTMLConverter().convert(chars))
+
+    def _create_char(self, letter: str, **kwargs) -> UnoTextRange:
+        d = {
+            'font_name': 'Liberation Sans', 'height': 10,
+            'weight': 100, 'italic': False, 'back_color': -1, 'color': -1,
+            'overline': 0, 'strikeout': 0, 'underline': 0, 'script': None,
+            **kwargs
+        }
 
 
 if __name__ == '__main__':

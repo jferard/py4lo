@@ -30,8 +30,8 @@ from unittest import mock
 
 from py4lo_commons import (
     uno_url_to_path, uno_path_to_url, create_bus, Commons, init, sanitize,
-    read_config, date_to_int, date_to_float, int_to_date, float_to_date,
-    HTMLConverter, Text, CharProperties)
+    read_config, date_to_int, date_to_float, int_to_date, float_to_date)
+from py4lo_helper import HTMLConverter
 
 
 # from py4lo_commons import *
@@ -300,39 +300,6 @@ class TestDate(unittest.TestCase):
             2022, 3, 19, 17, 21, 10), float_to_date(44639.723032407404))
         self.assertEqual(dt.datetime(
             1899, 12, 30, 17, 21, 10), float_to_date(0.723032407404))
-
-    def test_html_converter(self):
-        self.maxDiff = None
-        chars = iter([
-            self._create_char("A", font_name="Liberation Avec"),
-            self._create_char("\n", font_name="Liberation Avec"),
-            self._create_char("B", italic=True),
-            self._create_char("C", weight=150, script="sub"),
-            self._create_char("C", weight=150, script="sup"),
-            self._create_char("D", color=0xFF0000),
-            self._create_char("E", weight=150),
-            self._create_char("F", weight=150),
-            self._create_char("G", weight=150),
-        ])
-        self.assertEqual(
-            ("""<span style='font-family: "Liberation Avec"'>A</span>"""
-            "<br>"
-            "<span style='font-style: italic'>B</span>"
-            "<sub style='font-weight: 600'>C</sub>"
-            "<sup style='font-weight: 600'>C</sup>"
-            "<span style='color: #ff0000'>D</span>"
-            "<span style='font-weight: 600'>EFG</span>"),
-            HTMLConverter().convert(chars))
-
-    def _create_char(self, letter: str, **kwargs) -> Text:
-        d = {
-            'font_name': 'Liberation Sans', 'height': 10,
-            'weight': 100, 'italic': False, 'back_color': -1, 'color': -1,
-            'overline': 0, 'strikeout': 0, 'underline': 0, 'script': None,
-            **kwargs
-        }
-        properties = CharProperties(**d)
-        return Text(letter, properties)
 
 
 if __name__ == '__main__':
