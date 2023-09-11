@@ -31,7 +31,6 @@ from unittest import mock
 from py4lo_commons import (
     uno_url_to_path, uno_path_to_url, create_bus, Commons, init, sanitize,
     read_config, date_to_int, date_to_float, int_to_date, float_to_date)
-from py4lo_helper import HTMLConverter
 
 
 # from py4lo_commons import *

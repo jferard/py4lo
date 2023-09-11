@@ -38,7 +38,7 @@ from py4lo_helper import (
     get_page_style, set_paper, add_link, _wrap_text, open_in_calc, Target,
     new_doc, NewDocumentUrl, doc_builder, create_uno_service_ctxt,
     create_uno_service, read_options, rtrim_row, read_options_from_sheet_name,
-    copy_row_at_index)
+    copy_row_at_index, FontSlant)
 from py4lo_typing import UnoTextRange
 
 
@@ -125,7 +125,8 @@ class HelperBaseTestCase(unittest.TestCase):
         # verify
         self.assertEqual(
             [
-                mock.call.createInstance('com.sun.star.reflection.CoreReflection')
+                mock.call.createInstance(
+                    'com.sun.star.reflection.CoreReflection')
             ],
             self.sm.mock_calls)
         self.assertEqual(ref, actual_ref)
@@ -142,7 +143,8 @@ class HelperBaseTestCase(unittest.TestCase):
         # verify
         self.assertEqual(
             [
-                mock.call.createInstance('com.sun.star.reflection.CoreReflection')
+                mock.call.createInstance(
+                    'com.sun.star.reflection.CoreReflection')
             ],
             self.sm.mock_calls)
         self.assertEqual(ref, actual_ref1)
@@ -160,7 +162,7 @@ class HelperBaseTestCase(unittest.TestCase):
         self.assertEqual(
             [
                 mock.call.createInstance('com.sun.star.frame.DispatchHelper')
-             ],
+            ],
             self.sm.mock_calls)
         self.assertEqual(ref, actual_ref)
 
@@ -271,7 +273,7 @@ class HelperBaseTestCase(unittest.TestCase):
     def test_get_cell_type_formula(self):
         # prepare
         oCell = mock.Mock(Type=mock.Mock(value="FORMULA"),
-                     FormulaResultType=mock.Mock(value="bar"))
+                          FormulaResultType=mock.Mock(value="bar"))
 
         # play
         ret = get_cell_type(oCell)
@@ -627,12 +629,12 @@ class HelperRangesTestCase(unittest.TestCase):
         self.assertEqual([
             mock.call.executeDispatch(
                 oController, '.uno:InsertContents', '', 0,
-                                 make_pvs({
-                                     "Flags": "SVDT", "FormulaCommand": 0,
-                                     "SkipEmptyCells": False,
-                                     "Transpose": False, "AsLink": False,
-                                     "MoveMode": 4
-                                 }))
+                make_pvs({
+                    "Flags": "SVDT", "FormulaCommand": 0,
+                    "SkipEmptyCells": False,
+                    "Transpose": False, "AsLink": False,
+                    "MoveMode": 4
+                }))
         ], oDisp.mock_calls)
 
     @mock.patch("py4lo_helper.parent_doc")
@@ -1236,7 +1238,7 @@ class HelperFormattingTestCase(unittest.TestCase):
         self.assertEqual(sy, oPageStyle.ScaleToPagesY)
         self.assertEqual([
             mock.call('com.sun.star.awt.Size', Width=pw, Height=ph)],
-                         ms.mock_calls)
+            ms.mock_calls)
 
     @mock.patch("py4lo_helper.parent_doc")
     def test_add_link(self, pd):
@@ -1402,8 +1404,9 @@ class HelperOpenTestCase(unittest.TestCase):
 
         # verify
         self.assertEqual([
-            mock.call.loadComponentFromURL('private:factory/scalc', Target.BLANK, 0,
-                                      (make_pv("Hidden", True),))
+            mock.call.loadComponentFromURL('private:factory/scalc',
+                                           Target.BLANK, 0,
+                                           (make_pv("Hidden", True),))
         ], py4lo_helper.provider.desktop.mock_calls)
         self.assertEqual([
             mock.call.lockControllers, mock.call.unlockControllers
@@ -2011,36 +2014,54 @@ class MiscTestCase(unittest.TestCase):
             [mock.call((1,), (), ()), mock.call((2,), (), ())])
 
     def test_html_converter(self):
-        return # TODO
         self.maxDiff = None
-        chars = iter([
-            self._create_char("A", font_name="Liberation Avec"),
-            self._create_char("\n", font_name="Liberation Avec"),
-            self._create_char("B", italic=True),
-            self._create_char("C", weight=150, script="sub"),
-            self._create_char("C", weight=150, script="sup"),
-            self._create_char("D", color=0xFF0000),
-            self._create_char("E", weight=150),
-            self._create_char("F", weight=150),
-            self._create_char("G", weight=150),
-        ])
+        oPar1Enum = mock.Mock(name="oPar1Enum")
+        oPar1Enum.hasMoreElements.side_effect = [True, False]
+        oPar1Enum.nextElement.side_effect = [
+            self._create_chunk("A", CharFontName="Liberation Avec")]
+        oPar1 = mock.Mock(name="oPar1", spec=['createEnumeration'])
+        oPar1.createEnumeration.side_effect = [oPar1Enum]
+
+        oPar2Enum = mock.Mock()
+        oPar2Enum.hasMoreElements.side_effect = [True, True, True, True, True,
+                                                 False]
+        oPar2Enum.nextElement.side_effect = [
+            self._create_chunk("B", CharPosture=FontSlant.ITALIC),
+            self._create_chunk("C", CharWeight=150, CharEscapementHeight=58,
+                               CharEscapement=-15),
+            self._create_chunk("C", CharWeight=150, CharEscapementHeight=58,
+                               CharEscapement=15),  # script="sup"),
+            self._create_chunk("D", CharColor=0xFF0000),
+            self._create_chunk("EFG", CharWeight=150)
+        ]
+        oPar2 = mock.Mock(name="oPar2", spec=['createEnumeration'])
+        oPar2.createEnumeration.side_effect = [oPar2Enum]
+        oParEnum = mock.Mock(name="oParEnum")
+        oParEnum.hasMoreElements.side_effect = [True, True, False]
+        oParEnum.nextElement.side_effect = [oPar1, oPar2]
+        text_range = mock.Mock(name="text_range", spec=['createEnumeration'])
+        text_range.createEnumeration.side_effect = [oParEnum]
+
         self.assertEqual(
             ("""<span style='font-family: "Liberation Avec"'>A</span>"""
-            "<br>"
-            "<span style='font-style: italic'>B</span>"
-            "<sub style='font-weight: 600'>C</sub>"
-            "<sup style='font-weight: 600'>C</sup>"
-            "<span style='color: #ff0000'>D</span>"
-            "<span style='font-weight: 600'>EFG</span>"),
-            HTMLConverter().convert(chars))
+             "<br>\r\n"
+             "<span style='font-style: italic'>B</span>"
+             "<sub style='font-weight: 600'>C</sub>"
+             "<sup style='font-weight: 600'>C</sup>"
+             "<span style='color: #ff0000'>D</span>"
+             "<span style='font-weight: 600'>EFG</span>"),
+            py4lo_helper.HTMLConverter().convert(text_range))
 
-    def _create_char(self, letter: str, **kwargs) -> UnoTextRange:
+    def _create_chunk(self, string: str, **kwargs) -> UnoTextRange:
         d = {
-            'font_name': 'Liberation Sans', 'height': 10,
-            'weight': 100, 'italic': False, 'back_color': -1, 'color': -1,
-            'overline': 0, 'strikeout': 0, 'underline': 0, 'script': None,
+            'CharFontName': 'Liberation Sans', 'CharHeight': 10,
+            'CharWeight': 100, 'CharBackColor': -1,
+            'CharColor': -1, 'CharEscapementHeight': 100, 'CharEscapement': 0,
+            'CharOverline': 0, 'CharStrikeout': 0, 'CharUnderline': 0,
+            'CharPosture': 0,
             **kwargs
         }
+        return mock.Mock(String=string, **d)
 
 
 if __name__ == '__main__':
