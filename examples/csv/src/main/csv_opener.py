@@ -26,11 +26,8 @@ from codecs import (BOM_UTF32_BE, BOM_UTF32_LE, BOM_UTF16_BE, BOM_UTF16_LE,
                     BOM_UTF8, getincrementaldecoder)
 
 from py4lo_dialogs import FileFilter, file_dialog
-from py4lo_helper import (make_pvs, provider, Target,
-                          FrameSearchFlag, create_filter, row_as_header,
-                          set_print_area, to_iter,
-                          column_optimal_width, make_sort_field, sort_range,
-                          SheetFormatter)
+from py4lo_helper import (make_pvs, provider, Target, FrameSearchFlag,
+                          make_sort_field, sort_range, SheetFormatter)
 from py4lo_commons import uno_url_to_path
 from py4lo_io import create_import_filter_options, Filter
 
@@ -69,7 +66,7 @@ def open_csv(*_args):
         formatter.set_print_area()
 
     formatter.set_format("# ##0,00", 0, 1, 2, 3)
-    formatter.set_optimal_width(0, 1, 2, 3, min_width=4*100)
+    formatter.set_optimal_width(0, 1, 2, 3, min_width=4 * 100)
 
 
 def guess_encoding(data: bytes, default: str = "iso8859_15") -> str:
