@@ -29,7 +29,8 @@ from py4lo_dialogs import FileFilter, file_dialog
 from py4lo_helper import (make_pvs, provider, Target,
                           FrameSearchFlag, create_filter, row_as_header,
                           set_print_area, to_iter,
-                          column_optimal_width, make_sort_field, sort_range)
+                          column_optimal_width, make_sort_field, sort_range,
+                          SheetFormatter)
 from py4lo_commons import uno_url_to_path
 from py4lo_io import create_import_filter_options, Filter
 
@@ -59,15 +60,16 @@ def open_csv(*_args):
     # just for testing purpose
     sort_range(oCSVSheet, (make_sort_field(0),), has_header)
 
-    create_filter(oCSVSheet)
+    formatter = SheetFormatter(oCSVSheet)
     if has_header:
-        row_as_header(oCSVSheet.Rows.getByIndex(0))
-        set_print_area(oCSVSheet, oCSVSheet.Rows.getByIndex(0))
+        formatter.first_row_as_header()
+        formatter.fix_first_row()
+        formatter.create_filter()
     else:
-        set_print_area(oCSVSheet)
+        formatter.set_print_area()
 
-    for oColumn in to_iter(oCSVSheet.Columns):
-        column_optimal_width(oColumn)
+    formatter.set_format("# ##0,00", 0, 1, 2, 3)
+    formatter.set_optimal_width(0, 1, 2, 3, min_width=4*100)
 
 
 def guess_encoding(data: bytes, default: str = "iso8859_15") -> str:

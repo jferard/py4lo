@@ -20,6 +20,7 @@
 """py4lo_helper deals with LO objects."""
 import logging
 from enum import Enum
+from locale import getlocale
 from pathlib import Path
 from typing import (Any, Optional, List, cast, Callable, Mapping, Tuple,
                     Iterator, Union, Iterable)
@@ -1375,3 +1376,54 @@ class HTMLConverter:
             elif text_range.CharEscapement > 0:
                 return "sup"
         return "span"
+
+
+class SheetFormatter:
+    def __init__(self, oSheet: UnoSheet, locale=None):
+        self._oSheet = oSheet
+        oDoc = parent_doc(oSheet)
+        self._oFormats = oDoc.NumberFormats
+        if locale is None:
+            self._locale = self._find_locale()
+        else:
+            self._locale = locale
+
+    @staticmethod
+    def _find_locale():
+        try:
+            language_code = getlocale()[0]
+            region, language = language_code.split("_")
+            return make_locale(language, region)
+        except (IndexError, ValueError):
+            return make_locale("EN", "us")
+
+    def first_row_as_header(self):
+        oRows = self._oSheet.Rows
+        row_as_header(oRows.getByIndex(0))
+
+
+    def set_format(self, fmt: str, *col_indices: int):
+        number_format_id = self._oFormats.queryKey(
+            fmt, self._locale, True)
+        if number_format_id == -1:
+            number_format_id = self._oFormats.addNew(fmt, self._locale)
+
+        oColumns = self._oSheet.Columns
+        for i in col_indices:
+            oColumns.getByIndex(i).NumberFormat = number_format_id
+
+    def fix_first_row(self):
+        set_print_area(self._oSheet, self._oSheet.Rows.getByIndex(0))
+
+    def set_print_area(self):
+        set_print_area(self._oSheet)
+
+    def set_optimal_width(self, *col_indices: int, min_width: int = 2 * 1000,
+                         max_width: int = 10 * 1000):
+        oColumns = self._oSheet.Columns
+        for i in col_indices:
+            column_optimal_width(oColumns.getByIndex(i), min_width, max_width)
+
+    def create_filter(self):
+        create_filter(self._oSheet)
+
