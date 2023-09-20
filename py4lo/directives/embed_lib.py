@@ -66,7 +66,7 @@ finally:
         while stack:
             path = stack.pop()
             if path.is_dir():
-                stack.extend(lib_path.glob("*.py"))
+                stack.extend(path.glob("*.py"))
             elif path.suffix == "" or path.suffix == ".py":
                 path = path.with_suffix(".py")
                 temp_script = SourceScript(
