@@ -67,6 +67,7 @@ class MessageBoxType:
     ERRORBOX = 3
     QUERYBOX = 4
 
+
 class MessageBoxButtons:
     BUTTONS_OK = 1
     BUTTONS_OK_CANCEL = 2
@@ -82,13 +83,22 @@ class MessageBoxButtons:
     DEFAULT_BUTTON_IGNORE = 0x60000
 
 
-class FontWeight:
-    BOLD = None
+class MessageBoxResults:
+    CANCEL = 0
+    OK = 1
+    YES = 2
+    NO = 3
+    RETRY = 4
+    IGNORE = 5
 
 
 class ExecutableDialogResults:
-    OK = None,
-    CANCEL = None
+    OK = 1,
+    CANCEL = 0
+
+
+class FontWeight:
+    BOLD = None
 
 
 class PushButtonType:

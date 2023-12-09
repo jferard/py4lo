@@ -46,9 +46,11 @@ try:
         )
 
 
-    class FontWeight:
+    class MessageBoxResults:
         # noinspection PyUnresolvedReferences
-        from com.sun.star.awt.FontWeight import (BOLD, )
+        from com.sun.star.awt.MessageBoxResults import (
+            CANCEL, OK, YES, NO, RETRY, IGNORE
+        )
 
 
     class ExecutableDialogResults:
@@ -56,6 +58,9 @@ try:
         from com.sun.star.ui.dialogs.ExecutableDialogResults import (
             OK, CANCEL)
 
+    class FontWeight:
+        # noinspection PyUnresolvedReferences
+        from com.sun.star.awt.FontWeight import (BOLD, )
 
     class PushButtonType:
         # noinspection PyUnresolvedReferences
