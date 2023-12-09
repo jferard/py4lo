@@ -1311,9 +1311,12 @@ class HTMLConverter:
     """
     _logger = logging.getLogger(__name__)
 
+    def __init__(self, html_line_break: str = "<br>"):
+        self._html_line_break = html_line_break
+
     def convert(self, text_range: UnoTextRange) -> str:
         """Convert a sequence of chars to HTML"""
-        html = "<br>\r\n".join(
+        html = self._html_line_break.join(
             self._par_to_html(par_text_range) for par_text_range in
             to_iter(text_range))
         return html
@@ -1401,7 +1404,6 @@ class SheetFormatter:
         oRows = self._oSheet.Rows
         row_as_header(oRows.getByIndex(0))
 
-
     def set_format(self, fmt: str, *col_indices: int):
         number_format_id = self._oFormats.queryKey(
             fmt, self._locale, True)
@@ -1419,11 +1421,10 @@ class SheetFormatter:
         set_print_area(self._oSheet)
 
     def set_optimal_width(self, *col_indices: int, min_width: int = 2 * 1000,
-                         max_width: int = 10 * 1000):
+                          max_width: int = 10 * 1000):
         oColumns = self._oSheet.Columns
         for i in col_indices:
             column_optimal_width(oColumns.getByIndex(i), min_width, max_width)
 
     def create_filter(self):
         create_filter(self._oSheet)
-
