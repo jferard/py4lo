@@ -18,6 +18,7 @@
 import enum
 import os
 from pathlib import Path
+from typing import Any
 from urllib.parse import urlparse
 
 
@@ -178,11 +179,11 @@ class uno:
         return Path(path).as_uri()
 
     @staticmethod
-    def createUnoStruct(struct_id: str) -> None:
+    def createUnoStruct(struct_id: str) -> Any:
         pass
 
     @staticmethod
-    def Any(name, value) -> None:
+    def Any(name: str, value: Any) -> Any:
         pass
 
 
