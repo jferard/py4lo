@@ -21,7 +21,7 @@ import unittest
 
 class ExampleTest(unittest.TestCase):
     def test(self):
-        self.assertEqual('py4lo', 'py4lo')
+        self.assertEqual("py4lo", "py4lo")
 
 
 if __name__ == '__main__':
