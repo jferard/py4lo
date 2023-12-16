@@ -16,7 +16,7 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from logging import Logger
-from typing import List, Dict, Union, TypeVar
+from typing import List, Dict, Union, TypeVar, cast, Tuple
 
 from core.source_dest import Sources
 from directives.directive import Directive
@@ -27,6 +27,7 @@ from directives.entry import Entry
 
 GET_DIRECTIVE = "@"
 U = TypeVar('U', bound=Directive)
+DirectiveTree = Dict[str, Union["DirectiveTree", Directive]]
 
 
 class _DirectiveProviderFactory:
@@ -34,7 +35,7 @@ class _DirectiveProviderFactory:
                  *directives: Directive):
         self._logger = logger
         self._directives = directives
-        self._directives_tree = {}
+        self._directives_tree = cast(DirectiveTree, {})
 
     def create_provider(self) -> "DirectiveProvider":
         """
@@ -57,12 +58,11 @@ class _DirectiveProviderFactory:
         for fst in sig_elements:
             if fst not in cur_directives_tree:
                 cur_directives_tree[fst] = {}
-            cur_directives_tree = cur_directives_tree[fst]
+            next_tree = cast(DirectiveTree, cur_directives_tree[fst])
+            cur_directives_tree = next_tree
 
         cur_directives_tree.update({GET_DIRECTIVE: directive})
 
-
-T = Dict[str, Union["T", Directive]]
 
 
 class DirectiveProvider:
@@ -80,11 +80,11 @@ class DirectiveProvider:
             EmbedLib(sources.lib_dir),
             EmbedScript(sources.opt_dir)).create_provider()
 
-    def __init__(self, logger: Logger, directives_tree: T):
+    def __init__(self, logger: Logger, directives_tree: DirectiveTree):
         self._logger = logger
         self._directives_tree = directives_tree
 
-    def get(self, args: List[str]) -> (Directive, List[str]):
+    def get(self, args: List[str]) -> Tuple[Directive, List[str]]:
         """
         args are the shlex result
         @return the directive + the list of args.
@@ -95,13 +95,15 @@ class DirectiveProvider:
         for i in range(len(args)):
             arg = args[i]
             if arg in cur_directives_tree:
-                cur_directives_tree = cur_directives_tree[arg]
+                next_tree = cast(DirectiveTree, cur_directives_tree[arg])
+                cur_directives_tree = next_tree
             elif GET_DIRECTIVE in cur_directives_tree:
-                return cur_directives_tree[GET_DIRECTIVE], args[i:]
+                directive = cast(Directive, cur_directives_tree[GET_DIRECTIVE])
+                return directive, args[i:]
             else:
                 raise KeyError(args)
 
         if GET_DIRECTIVE in cur_directives_tree:
-            return cur_directives_tree[GET_DIRECTIVE], args[i:]
+            return cast(Directive, cur_directives_tree[GET_DIRECTIVE]), args[i:]
 
         assert False, "no args"

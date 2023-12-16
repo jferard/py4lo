@@ -16,6 +16,8 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+from typing import Any, Tuple
+
 from commands.command import Command
 from commands.command_executor import CommandExecutor
 from core.properties import PropertiesProvider
@@ -51,7 +53,7 @@ class HelpCommand(Command):
         self._command_factory_by_name = command_factory_by_name
         self._command_name = command_name
 
-    def execute(self) -> None:
+    def execute(self, *_args: Any) -> Tuple[Any, ...]:
         if self._command_name:
             try:
                 msg = self._command_factory_by_name[
@@ -61,6 +63,7 @@ class HelpCommand(Command):
         else:
             msg = self.get_help()
         print(msg)
+        return tuple()
 
     @staticmethod
     def get_help():

@@ -18,7 +18,7 @@
 import csv
 import datetime as dt
 import unittest
-from typing import Any
+from typing import Any, cast
 from unittest import mock
 
 from py4lo_helper import (make_pv)
@@ -27,7 +27,7 @@ from py4lo_io import (create_import_filter_options,
                       CellTyping, reader, dict_reader, find_number_format_style,
                       create_write_cell, writer, dict_writer, import_from_csv,
                       export_to_csv)
-from py4lo_typing import UnoCell
+from py4lo_typing import UnoCell, UnoSheet
 from mock_constants import NumberFormat
 
 
@@ -482,13 +482,13 @@ class Py4LOIOTestCase(unittest.TestCase):
 
     def test_writer_wc(self):
         # prepare
-        oSheet = mock.Mock()
-        cells = [mock.Mock() for _ in range(6)]
+        oSheet = cast(UnoSheet, mock.Mock())
+        cells = [cast(UnoCell, mock.Mock()) for _ in range(6)]
         oSheet.getCellByPosition.side_effect = cells
 
         # play
         def wc(oCell: UnoCell, value: Any):
-            oCell.t = value
+            oCell.Value = value
 
         w = writer(oSheet, write_cell=wc)
         w.writerows([
@@ -505,7 +505,7 @@ class Py4LOIOTestCase(unittest.TestCase):
             mock.call.getCellByPosition(1, 1),
             mock.call.getCellByPosition(2, 1)
         ], oSheet.mock_calls)
-        self.assertEqual(['a', 'b', 'text_range', 1, 2, 3], [c.t for c in cells])
+        self.assertEqual(['a', 'b', 'text_range', 1, 2, 3], [c.Value for c in cells])
 
     def test_writer_formats(self):
         # prepare
@@ -566,13 +566,13 @@ class Py4LOIOTestCase(unittest.TestCase):
 
     def test_dict_writer_wc(self):
         # prepare
-        oSheet = mock.Mock()
-        cells = [mock.Mock() for _ in range(9)]
+        oSheet = cast(UnoSheet, mock.Mock())
+        cells = [cast(UnoCell, mock.Mock()) for _ in range(9)]
         oSheet.getCellByPosition.side_effect = cells
 
         # play
         def wc(oCell: UnoCell, value: Any):
-            oCell.t = value
+            oCell.Value = value
 
         w = dict_writer(oSheet, ['a', 'b', 'text_range'], write_cell=wc)
 
@@ -595,17 +595,17 @@ class Py4LOIOTestCase(unittest.TestCase):
             mock.call.getCellByPosition(2, 2)
         ], oSheet.mock_calls)
         self.assertEqual(['a', 'b', 'text_range', 1, 2, 3, 4, 5, 6],
-                         [c.t for c in cells])
+                         [c.Value for c in cells])
 
     def test_dict_writer_wc_raise(self):
         # prepare
-        oSheet = mock.Mock()
-        cells = [mock.Mock() for _ in range(3)]
+        oSheet = cast(UnoSheet, mock.Mock())
+        cells = [cast(UnoCell, mock.Mock()) for _ in range(3)]
         oSheet.getCellByPosition.side_effect = cells
 
         # play
         def wc(oCell: UnoCell, value: Any):
-            oCell.t = value
+            oCell.Value = value
 
         w = dict_writer(oSheet, ['a', 'b', 'text_range'], write_cell=wc)
 
@@ -619,17 +619,17 @@ class Py4LOIOTestCase(unittest.TestCase):
             mock.call.getCellByPosition(1, 0),
             mock.call.getCellByPosition(2, 0),
         ], oSheet.mock_calls)
-        self.assertEqual(['a', 'b', 'text_range'], [c.t for c in cells])
+        self.assertEqual(['a', 'b', 'text_range'], [c.Value for c in cells])
 
     def test_dict_writer_wc_restval(self):
         # prepare
-        oSheet = mock.Mock()
-        cells = [mock.Mock() for _ in range(6)]
+        oSheet = cast(UnoSheet, mock.Mock())
+        cells = [cast(UnoCell, mock.Mock()) for _ in range(6)]
         oSheet.getCellByPosition.side_effect = cells
 
         # play
         def wc(oCell: UnoCell, value: Any):
-            oCell.t = value
+            oCell.Value = value
 
         w = dict_writer(oSheet, ['a', 'b', 'text_range'], restval="foo", write_cell=wc)
 
@@ -645,7 +645,7 @@ class Py4LOIOTestCase(unittest.TestCase):
             mock.call.getCellByPosition(1, 1),
             mock.call.getCellByPosition(2, 1),
         ], oSheet.mock_calls)
-        self.assertEqual(['a', 'b', 'text_range', 1, 2, 'foo'], [c.t for c in cells])
+        self.assertEqual(['a', 'b', 'text_range', 1, 2, 'foo'], [c.Value for c in cells])
 
 
 class IOCSVTestCase(unittest.TestCase):

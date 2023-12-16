@@ -22,18 +22,22 @@
 # py4lo: embed lib py4lo_sqlite3
 import logging
 from pathlib import Path
+from typing import cast
 
 from py4lo_helper import provider
 from py4lo_commons import Commons, uno_url_to_path
 from py4lo_sqlite3 import sqlite_open
 
 try:
-    CUR_PATH = uno_url_to_path(provider.doc.URL).parent
-except AttributeError:
+    assert provider is not None
+    doc_path = uno_url_to_path(provider.doc.URL)
+    assert doc_path is not None
+    CUR_PATH = doc_path.parent
+except (AssertionError, AttributeError):
     CUR_PATH = Path.cwd()
 
 try:
-    commons = Commons.create(XSCRIPTCONTEXT)
+    commons = Commons.create(XSCRIPTCONTEXT) # type: ignore[name-defined]
 except NameError:
     pass
 else:

@@ -20,7 +20,7 @@ import logging
 import py_compile
 import re
 from pathlib import Path
-from typing import List, Optional, Sequence
+from typing import List, Optional, Sequence, cast, Set
 
 from core.script import TempScript, ParsedScriptContent, SourceScript
 from directive_processor import DirectiveProcessor
@@ -44,7 +44,7 @@ class ScriptSetProcessor:
         self._logger.debug("Scripts to process: %s", source_scripts)
         self._scripts: List[TempScript] = []
         self._cur_source_scripts = list(source_scripts)  # our stack.
-        self._visited = set()  # avoid cycles
+        self._visited = cast(Set[SourceScript], set())  # avoid cycles
 
     def process(self) -> List[TempScript]:
         """Explore the scripts. Since a script may import another script, we
@@ -159,7 +159,7 @@ class _ContentParser:
         self._directive_processor = directive_processor
         self._script_path = script_path
         self._script = None
-        self._exported_func_names = []
+        self._exported_func_names = cast(List[str], [])
         self._lines = ["# parsed by py4lo (https://github.com/jferard/py4lo)"]
 
     def parse(self, export_funcs: bool) -> ParsedScriptContent:

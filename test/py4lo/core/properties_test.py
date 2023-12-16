@@ -47,8 +47,7 @@ class TestProperties(unittest.TestCase):
 
     def test_provider(self):
         logger = logging.getLogger()
-        sources = mock.Mock(get_assets_paths=lambda: Path("assets"),
-                       get_src_paths=lambda: Path("src"))
+        sources = mock.Mock(get_src_paths=lambda: Path("src"))
         destinations = mock.Mock()
         provider = PropertiesProvider(logger, Path("base"), sources,
                                       destinations, {'a': 1})
@@ -58,7 +57,6 @@ class TestProperties(unittest.TestCase):
         self.assertEqual(10, provider.get('b', 10))
         self.assertEqual(Path("base"), provider.get_base_path())
         self.assertEqual(sources, provider.get_sources())
-        self.assertEqual(Path("assets"), provider.get_assets_paths())
         self.assertEqual(Path("src"), provider.get_src_paths())
         self.assertEqual(destinations, provider.get_destinations())
         self.assertEqual(None, provider.get_readme_callback())

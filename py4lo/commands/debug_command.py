@@ -64,7 +64,7 @@ class DebugCommand(Command):
         self._debug_path = destinations.dest_ods_file.parent.joinpath(
             doc_name)
 
-    def execute(self, *_args: List[str]) -> Tuple[Path]:
+    def execute(self) -> Tuple[Path]:
         self._logger.info("Debug or init. Generating '%s' for Python '%s'",
                           self._debug_path, self._python_version)
 

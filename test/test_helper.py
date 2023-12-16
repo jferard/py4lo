@@ -64,7 +64,7 @@ def file_path_error_mock(**kwargs):
     return s
 
 
-def verify_open_path(tc: unittest.TestCase, s: Path, *args, **kwargs):
+def verify_open_path(tc: unittest.TestCase, s: mock.Mock, *args, **kwargs):
     tc.assertTrue(
         all(x in s.mock_calls for x in
             [mock.call.open(*args, **kwargs), mock.call.open().__enter__(),

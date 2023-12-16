@@ -17,7 +17,7 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from pathlib import Path
-from typing import List, Any
+from typing import List, Any, cast
 
 from directives.directive import Directive
 
@@ -40,7 +40,7 @@ class Include(Directive):
                 args: List[str]):
         path = self._inc_dir.joinpath(args[0])
         if len(args) >= 2:
-            strip = bool(args[1])
+            strip = (args[1] == "True")
         else:
             strip = False
 
@@ -70,7 +70,7 @@ class IncludeStripper:
 
     def __init__(self, path: Path):
         self._path = path
-        self._inc_lines = []
+        self._inc_lines = cast(List[str], [])
         self._state = IncludeStripper.NORMAL
 
     def process(self) -> List[str]:

@@ -29,7 +29,7 @@ class Command(ABC):
         pass
 
     @abstractmethod
-    def execute(self, *args: List[str]) -> Optional[Tuple]:
+    def execute(self, *args: Any) -> Tuple[Any, ...]:
         pass
 
     @staticmethod

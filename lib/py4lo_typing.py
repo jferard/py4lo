@@ -119,8 +119,23 @@ class UnoConditionalFormat(UnoService):
 
 class UnoFilterDescriptor(UnoService): ...
 
+class UnoCharacterProperties(UnoService):
+    CharFontName: str
+    CharHeight: float
+    CharWeight: float
+    CharWeightAsian: float
+    CharWeightComplex: float
+    CharPosture: int
+    CharColor: int
+    CharBackColor: int
+    CharOverline: int
+    CharStrikeout: int
+    CharUnderline: int
+    CharEscapementHeight: float
+    CharEscapement: float
 
-class UnoRange("UnoCharacterProperties"):
+
+class UnoRange(UnoCharacterProperties):
     Spreadsheet: "UnoSheet"
     Columns: "UnoTableColumns"
     Rows: "UnoTableRows"
@@ -323,22 +338,6 @@ class UnoCellAddress(UnoService):
 class UnoTextField(UnoService):
     URL: str
     Representation: str
-
-
-class UnoCharacterProperties(UnoService):
-    CharFontName: str
-    CharHeight: float
-    CharWeight: float
-    CharWeightAsian: float
-    CharWeightComplex: float
-    CharPosture: int
-    CharColor: int
-    CharBackColor: int
-    CharOverline: int
-    CharStrikeout: int
-    CharUnderline: int
-    CharEscapementHeight: float
-    CharEscapement: float
 
 
 class UnoText(UnoEnumerationAccess["UnoText"], UnoCharacterProperties):

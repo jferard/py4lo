@@ -51,7 +51,7 @@ class Entry(Directive):
                 line_processor: Any,  # "DirectiveLineProcessor"
                 args):
         execute = self._include_directive.execute(
-            _processor, line_processor, ["py4lo_import.py", True])
+            _processor, line_processor, ["py4lo_import.py", "True"])
         line_processor.append(
             UNLOAD_MODULES_FORMAT.format(self._module_names | LIB_SET))
         return execute

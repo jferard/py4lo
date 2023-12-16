@@ -19,7 +19,7 @@
 import logging
 from logging import Logger
 from pathlib import Path
-from typing import List
+from typing import List, cast
 from zipfile import ZipFile, ZipInfo, ZIP_DEFLATED
 
 from callbacks.callback import AfterCallback, BeforeCallback, ItemCallback
@@ -32,9 +32,9 @@ class ZipUpdaterBuilder:
 
     def __init__(self, logger: Logger):
         self._logger = logger
-        self._before_callbacks = []
-        self._item_callbacks = []
-        self._after_callbacks = []
+        self._before_callbacks = cast(List[BeforeCallback], [])
+        self._item_callbacks = cast(List[ItemCallback], [])
+        self._after_callbacks = cast(List[AfterCallback], [])
 
     def before(self, callback: BeforeCallback):
         self._before_callbacks.append(callback)

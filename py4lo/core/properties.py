@@ -56,9 +56,6 @@ class PropertiesProvider:
     def get_src_paths(self) -> Set[Path]:
         return self._sources.get_src_paths()
 
-    def get_assets_paths(self) -> Set[Path]:
-        return self._sources.get_assets_paths()
-
     def get_readme_callback(self) -> Optional[AddReadmeWith]:
         add_readme = self.get("add_readme", False)
         if add_readme:

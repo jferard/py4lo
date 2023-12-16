@@ -27,6 +27,7 @@ from commands.command import Command
 from commands.command_executor import CommandExecutor
 from core.properties import PropertiesProvider
 from core.source_dest import Sources
+from py4lo_typing import lazy
 
 
 class TestCommand(Command):
@@ -45,7 +46,7 @@ class TestCommand(Command):
         self._logger = logger
         self._python_exe = python_exe
         self._sources = sources
-        self._env = None
+        self._env = lazy(Dict[str, str])
 
     def execute(self):
         final_status = self._execute_all_tests(

@@ -18,7 +18,7 @@
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import xml.dom.minidom
 from pathlib import Path
-from typing import List
+from typing import List, cast
 from zipfile import ZipFile, ZipInfo
 
 from callbacks.callback import ItemCallback
@@ -77,7 +77,7 @@ class RewriteManifest(ItemCallback):
 
     @staticmethod
     def _strip_close(pretty_manifest: str):
-        lines = []
+        lines = cast(List[str], [])
         for line in pretty_manifest.splitlines():
             if line.strip() == MANIFEST_CLOSE_TAG:  # end of manifest
                 return lines
