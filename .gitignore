@@ -7,6 +7,7 @@ py4lo/__pycache__/*
 .idea
 venv
 history
+megalinter-reports
 
 # generated files
 examples/**/*.ods
