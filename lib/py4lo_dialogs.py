@@ -15,14 +15,17 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# mypy: disable-error-code="import-untyped,import-not-found"
 from collections import namedtuple
 from enum import Enum
 from threading import Thread
-from typing import Any, Callable, Optional, List, Union, NamedTuple
+from typing import Any, Callable, Optional, List, Union, NamedTuple, cast
 
 from py4lo_helper import (create_uno_service_ctxt, provider,
                           create_uno_service, create_uno_struct)
-from py4lo_typing import UnoControlModel, UnoControl, StrPath
+from py4lo_typing import UnoControlModel, UnoControl, StrPath, \
+    UnoTextControlModel, UnoTextControl, UnoFolderPicker, UnoFilePicker, \
+    UnoButtonControlModel, UnoToolKit
 
 try:
     # noinspection PyUnresolvedReferences
@@ -67,7 +70,7 @@ try:
         from com.sun.star.awt.PushButtonType import (OK, CANCEL)
 
 except (ModuleNotFoundError, ImportError):
-    from mock_constants import (  # noqa
+    from mock_constants import (  # type:ignore[assignment]
         uno, MessageBoxType, MessageBoxButtons, FontWeight,
         ExecutableDialogResults, PushButtonType
     )
@@ -160,7 +163,7 @@ def get_text_size(oDialogModel: UnoControlModel, text: str) -> Size:
     @param text: the text
     @return: the text size
     """
-    oTextControl = create_uno_service(Control.FixedText)
+    oTextControl = cast(UnoTextControl, create_uno_service(Control.FixedText))
     oTextModel = oDialogModel.createInstance(ControlModel.FixedText)
     oTextModel.Label = text
     oTextControl.setModel(oTextModel)
@@ -176,10 +179,13 @@ def message_box(msg_title: str, msg_text: str,
     """Create a message box"""
     # from https://forum.openoffice.org/fr/forum/viewtopic.php?f=15&t=47603#
     # (thanks Bernard !)
-    toolkit = create_uno_service_ctxt("com.sun.star.awt.Toolkit")
+    toolkit = cast(UnoToolKit, create_uno_service_ctxt("com.sun.star.awt.Toolkit"))
     if parent_win is None:
-        parent_win = provider.parent_win
-    mb = toolkit.createMessageBox(parent_win, msg_type, msg_buttons, msg_title,
+        assert provider is not None
+        new_parent_win = provider.parent_win
+    else:
+        new_parent_win = parent_win
+    mb = toolkit.createMessageBox(new_parent_win, msg_type, msg_buttons, msg_title,
                                   msg_text)
     return mb.execute()
 
@@ -210,7 +216,9 @@ class InputBox:
               parent_win=None, x: Optional[int] = None,
               y: Optional[int] = None) -> Optional[str]:
         if parent_win is None:
+            assert provider is not None
             parent_win = provider.parent_win
+        assert parent_win is not None
         toolkit = create_uno_service_ctxt("com.sun.star.awt.Toolkit")
 
         if x is None or y is None:
@@ -220,7 +228,7 @@ class InputBox:
             if y is None:
                 y = (ps.Height - self.height) / 2
 
-        oDialogModel = create_uno_service(ControlModel.Dialog)
+        oDialogModel = cast(UnoControlModel, create_uno_service(ControlModel.Dialog))
         oDialogModel.Title = msg_title
         place_widget(oDialogModel, x, y, self.width, self.height)
 
@@ -230,7 +238,7 @@ class InputBox:
         self._create_cancel_model(oDialogModel, "btn_cancel")
         self._create_ok_model(oDialogModel, "btn_ok")
 
-        dialog = create_uno_service(Control.Dialog)
+        dialog = cast(UnoControl, create_uno_service(Control.Dialog))
         dialog.setModel(oDialogModel)
 
         dialog.createPeer(toolkit, parent_win)
@@ -250,7 +258,7 @@ class InputBox:
 
     def _create_label_model(self, oDialogModel: UnoControlModel, name: str,
                             msg_text: str) -> UnoControlModel:
-        oLabelModel = oDialogModel.createInstance(ControlModel.FixedText)
+        oLabelModel = cast(UnoTextControlModel, oDialogModel.createInstance(ControlModel.FixedText))
         place_widget(oLabelModel, self.hori_margin, self.vert_margin,
                      self.label_width, self.label_height)
         oLabelModel.Label = msg_text
@@ -272,7 +280,7 @@ class InputBox:
 
     def _create_cancel_model(self, oDialogModel: UnoControlModel,
                              name: str) -> UnoControlModel:
-        oCancelModel = oDialogModel.createInstance(ControlModel.Button)
+        oCancelModel = cast(UnoButtonControlModel, oDialogModel.createInstance(ControlModel.Button))
         place_widget(oCancelModel,
                      self.width - (
                              self.hori_margin + self.button_width
@@ -287,7 +295,7 @@ class InputBox:
 
     def _create_ok_model(self, oDialogModel: UnoControlModel,
                          name: str) -> UnoControlModel:
-        oOkModel = oDialogModel.createInstance(ControlModel.Button)
+        oOkModel = cast(UnoButtonControlModel, oDialogModel.createInstance(ControlModel.Button))
         place_widget(oOkModel,
                      self.width - (self.hori_margin + self.button_width),
                      (self.vert_margin + self.label_height
@@ -347,7 +355,7 @@ class InputBoxBuilder:
 
 def input_box(msg_title: str, msg_text: str, msg_default="", parent_win=None,
               x: Optional[int] = None,
-              y: Optional[int] = None) -> str:
+              y: Optional[int] = None) -> Optional[str]:
     """Create an input box"""
     return InputBoxBuilder().build().input(msg_title, msg_text, msg_default,
                                            parent_win, x, y)
@@ -363,7 +371,7 @@ def file_dialog(title: str, filters: Optional[List[FileFilter]] = None,
     Open a file dialog
     @return: if single, url or None, else a list of urls
     """
-    oFilePicker = create_uno_service("com.sun.star.ui.dialogs.FilePicker")
+    oFilePicker = cast(UnoFilePicker, create_uno_service("com.sun.star.ui.dialogs.FilePicker"))
     if filters is not None:
         for flt in filters:
             oFilePicker.appendFilter(flt.title, flt.filter)
@@ -391,7 +399,7 @@ def folder_dialog(title: str,
     Open a file dialog
     @return: url or None
     """
-    oFolder = create_uno_service("com.sun.star.ui.dialogs.FolderPicker")
+    oFolder = cast(UnoFolderPicker, create_uno_service("com.sun.star.ui.dialogs.FolderPicker"))
     oFolder.Title = title
     oFolder.DisplayDirectory = str(display_dir)
     if oFolder.execute() == ExecutableDialogResults.OK:
@@ -407,12 +415,12 @@ Progress = namedtuple('Progress', ['min', 'max'])
 
 class ProgressExecutorBuilder:
     def __init__(self):
-        self._oDialogModel = create_uno_service(ControlModel.Dialog)
+        self._oDialogModel = cast(UnoControlModel, create_uno_service(ControlModel.Dialog))
         self._oBarModel = self._oDialogModel.createInstance(
             ControlModel.ProgressBar)
         self._oTextModel = self._oDialogModel.createInstance(
             ControlModel.FixedText)
-        self._oDialog = create_uno_service(Control.Dialog)
+        self._oDialog = cast(UnoControl, create_uno_service(Control.Dialog))
         self.title("Please wait...")
         self._dialog_rectangle = Rectangle(150, 150, 150, 30)
         self._bar_dimensions = Size(140, 12)
@@ -443,7 +451,7 @@ class ProgressExecutorBuilder:
         return ProgressExecutor(self._oDialog, self._autoclose,
                                 self._oDialog.getControl("bar"),
                                 self._bar_progress.min, self._bar_progress.max,
-                                self._oDialog.getControl("text"))
+                                cast(UnoTextControl, self._oDialog.getControl("text")))
 
     def _centered(self, outer_w: int, inner_w: int) -> int:
         if outer_w <= inner_w:
@@ -558,8 +566,8 @@ class VoidProgressHandler:
 
 
 class ProgressHandler(VoidProgressHandler):
-    def __init__(self, oBar: UnoControlModel, bar_progress_min: int,
-                 bar_progress_max: int, oText: UnoControlModel):
+    def __init__(self, oBar: UnoControl, bar_progress_min: int,
+                 bar_progress_max: int, oText: UnoTextControl):
         self._oBar = oBar
         self._oBar.Value = bar_progress_min
         self._bar_progress_min = bar_progress_min
@@ -587,9 +595,9 @@ class ProgressHandler(VoidProgressHandler):
 
 class ProgressExecutor:
     def __init__(self, oDialog: UnoControl, autoclose: bool,
-                 oBar: UnoControlModel, bar_progress_min: int,
+                 oBar: UnoControl, bar_progress_min: int,
                  bar_progress_max: int,
-                 oText: UnoControlModel):
+                 oText: UnoTextControl):
         self._oDialog = oDialog
         self._autoclose = autoclose
         self._progress_handler = ProgressHandler(oBar, bar_progress_min,
@@ -626,10 +634,10 @@ class ProgressExecutor:
 
 class ConsoleExecutorBuilder:
     def __init__(self):
-        self._oDialogModel = create_uno_service(ControlModel.Dialog)
+        self._oDialogModel = cast(UnoControlModel, create_uno_service(ControlModel.Dialog))
         self._oDialogModel.Closeable = True
-        self._oDialog = create_uno_service(Control.Dialog)
-        self._oTextModel = self._oDialogModel.createInstance(ControlModel.Edit)
+        self._oDialog = cast(UnoControl, create_uno_service(Control.Dialog))
+        self._oTextModel = cast(UnoTextControlModel, self._oDialogModel.createInstance(ControlModel.Edit))
         self._oTextModel.ReadOnly = True
         self._oTextModel.MultiLine = True
         self._oTextModel.VScroll = True
@@ -678,8 +686,9 @@ class ConsoleExecutorBuilder:
             MARGIN, MARGIN,
             self._console_rectangle.w - MARGIN * 2,
             self._console_rectangle.h - MARGIN * 2))
-        return ConsoleExecutor(self._oDialog, self._autoclose,
-                               self._oDialog.getControl("text"))
+        return (
+            ConsoleExecutor(self._oDialog, self._autoclose,
+                               cast(UnoTextControl, self._oDialog.getControl("text"))))
 
 
 class VoidConsoleHandler:
@@ -696,7 +705,7 @@ class VoidConsoleHandler:
 
 
 class ConsoleHandler(VoidConsoleHandler):
-    def __init__(self, oText: UnoControlModel):
+    def __init__(self, oText: UnoTextControl):
         self._oText = oText
         self.response = None
         self._cur_pos = 0
@@ -715,7 +724,7 @@ class ConsoleHandler(VoidConsoleHandler):
 
 class ConsoleExecutor:
     def __init__(self, oDialog: UnoControl, autoclose: bool,
-                 oText: UnoControlModel):
+                 oText: UnoTextControl):
         self._oDialog = oDialog
         self._autoclose = autoclose
         self._console_handler = ConsoleHandler(oText)

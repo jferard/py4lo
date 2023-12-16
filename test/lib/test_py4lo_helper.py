@@ -39,7 +39,7 @@ from py4lo_helper import (
     new_doc, NewDocumentUrl, doc_builder, create_uno_service_ctxt,
     create_uno_service, read_options, rtrim_row, read_options_from_sheet_name,
     copy_row_at_index, FontSlant)
-from py4lo_typing import UnoTextRange
+from py4lo_typing import UnoText
 
 
 # noinspection PyUnresolvedReferences
@@ -2052,7 +2052,7 @@ class MiscTestCase(unittest.TestCase):
              "<span style='font-weight: 600'>EFG</span>"),
             py4lo_helper.HTMLConverter().convert(text_range))
 
-    def _create_chunk(self, string: str, **kwargs) -> UnoTextRange:
+    def _create_chunk(self, string: str, **kwargs) -> UnoText:
         d = {
             'CharFontName': 'Liberation Sans', 'CharHeight': 10,
             'CharWeight': 100, 'CharBackColor': -1,

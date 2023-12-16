@@ -22,10 +22,11 @@ from logging import Logger
 from pathlib import Path
 from unittest import mock
 
+from test.test_helper import file_path_mock, verify_open_path
+
 from core.script import SourceScript
 from directive_processor import DirectiveProcessor
 from script_set_processor import ScriptProcessor
-from test.test_helper import file_path_mock, verify_open_path
 
 
 class TestScriptsProcessor(unittest.TestCase):

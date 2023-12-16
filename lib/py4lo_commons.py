@@ -19,6 +19,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """py4lo_commons deals with ordinary Python objects (POPOs ?)."""
+# mypy: disable-error-code="import-untyped"
+import sys
 from pathlib import Path
 import logging
 import configparser
@@ -26,7 +28,7 @@ import datetime as dt
 from typing import (
     Union, Any, cast, List, Optional, TextIO, Iterable, Mapping, Callable)
 
-from py4lo_typing import UnoXScriptContext, StrPath
+from py4lo_typing import UnoXScriptContext, StrPath, lazy
 
 try:
     # noinspection PyUnresolvedReferences
@@ -34,6 +36,7 @@ try:
 except (ModuleNotFoundError, ImportError):
     from mock_constants import uno
 
+_xsc = None
 
 def uno_url_to_path(url: str) -> Optional[Path]:
     """
@@ -66,8 +69,9 @@ def uno_path_to_url(path: Union[str, Path]) -> str:
 ORIGIN = dt.datetime(1899, 12, 30) # TODO: oDoc.NullDate
 
 
-def init(xsc):
-    Commons.xsc = xsc
+def init(xsc: UnoXScriptContext):
+    global _xsc
+    _xsc = xsc
 
 
 class Bus:
@@ -94,13 +98,15 @@ class Commons:
     def create(xsc: Optional[UnoXScriptContext] = None):
         if xsc is None:
             # noinspection PyUnresolvedReferences
-            xsc = Commons.xsc
+            xsc = _xsc
+        if xsc is None:
+            raise ValueError()
         doc = xsc.getDocument()
         return Commons(doc.URL)
 
     def __init__(self, url: str):
         self._url = url
-        self._logger = None
+        self._logger = lazy(logging.Logger)
 
     def __del__(self):
         if self._logger is not None:
@@ -108,9 +114,11 @@ class Commons:
                 h.flush()
                 h.close()
 
-    def cur_dir(self) -> Path:
+    def cur_dir(self) -> Optional[Path]:
         """return the directory of the current document"""
         path = uno_url_to_path(self._url)
+        if path is None:
+            return None
         return path.parent
 
     def init_logger(
@@ -139,7 +147,11 @@ class Commons:
         return self._logger
 
     def join_current_dir(self, filename: str) -> Path:
-        return self.cur_dir() / filename
+        cur_dir_path = self.cur_dir()
+        if cur_dir_path is None:
+            return Path(filename)
+        else:
+            return cur_dir_path / filename
 
     def read_internal_config(self, filenames: Union[
         StrPath, Iterable[StrPath]], args=None,
@@ -166,11 +178,11 @@ class Commons:
         reader = codecs.getreader(encoding)
 
         path = uno_url_to_path(self._url)
-        path = str(path)  # py < 3.6.2
-        with zipfile.ZipFile(path, 'r') as z:
+        str_path = str(path)  # py < 3.6.2
+        with zipfile.ZipFile(str_path, 'r') as z:
             for filename in filenames:
                 try:
-                    file = z.open(filename)
+                    file = z.open(str(filename))
                     config.read_file(reader(file))
                 except KeyError:  # ignore non existing files
                     pass
@@ -189,8 +201,8 @@ class Commons:
         """
         import zipfile
         path = uno_url_to_path(self._url)
-        path = str(path)  # py < 3.6.2
-        with zipfile.ZipFile(path, 'r') as z:
+        str_path = str(path)  # py < 3.6.2
+        with zipfile.ZipFile(str_path, 'r') as z:
             with z.open(filename) as f:
                 return f.read()
 
@@ -200,7 +212,11 @@ def init_logger(
         file: Optional[Union[StrPath, TextIO]] = None,
         mode: str = "a", level: int = logging.DEBUG,
         fmt: str = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
-    fh = _get_handler(file, mode, level, fmt)
+    if file is None:
+        fh = _get_handler(sys.stdout, mode, level, fmt)
+    else:
+        fh = _get_handler(file, mode, level, fmt)
+
     logger.addHandler(fh)
     logger.setLevel(level)
 
@@ -208,9 +224,9 @@ def init_logger(
 def _get_handler(file: Union[StrPath, TextIO], mode: str, level: int,
                  fmt: str):
     if isinstance(file, (str, Path)):
-        fh = logging.FileHandler(str(file), mode)
+        fh = cast(logging.Handler, logging.FileHandler(str(file), mode))
     else:
-        fh = logging.StreamHandler(file)
+        fh = cast(logging.Handler, logging.StreamHandler(file))
     formatter = logging.Formatter(fmt)
     fh.setFormatter(formatter)
     fh.setLevel(level)

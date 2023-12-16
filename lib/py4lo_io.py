@@ -15,6 +15,7 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# mypy: disable-error-code="import-untyped,import-not-found"
 import csv
 import encodings
 import locale
@@ -22,7 +23,7 @@ import sys
 from datetime import (date, datetime, time)
 from enum import IntEnum, Enum
 from typing import (Any, Callable, List, Iterator, Optional, Mapping, Tuple,
-                    Iterable)
+                    Iterable, cast)
 
 # values of cell_typing
 from py4lo_commons import float_to_date, date_to_float, uno_path_to_url
@@ -30,7 +31,7 @@ from py4lo_helper import (provider as pr, make_pvs, parent_doc, get_cell_type,
                           get_used_range_address, Target,
                           FrameSearchFlag)
 from py4lo_typing import (UnoCell, UnoSheet, UnoSpreadsheetDocument,
-                          StrPath, UnoService)
+                          StrPath, UnoService, UnoNumberFormats)
 
 try:
     # noinspection PyUnresolvedReferences
@@ -41,7 +42,7 @@ try:
         from com.sun.star.util.NumberFormat import (DATE, TIME, DATETIME,
                                                     LOGICAL)
 except (ModuleNotFoundError, ImportError):
-    from mock_constants import (Locale, NumberFormat)
+    from mock_constants import (Locale, NumberFormat) # type:ignore[assignment]
 
 
 class CellTyping(Enum):
@@ -55,7 +56,7 @@ class CellTyping(Enum):
 ##########
 
 def create_read_cell(cell_typing: CellTyping = CellTyping.Minimal,
-                     oFormats: Optional[UnoService] = None
+                     oFormats: Optional[UnoNumberFormats] = None
                      ) -> Callable[[UnoCell], Any]:
     """
     Create a function to read a cell
@@ -104,6 +105,7 @@ def create_read_cell(cell_typing: CellTyping = CellTyping.Minimal,
         elif cell_type == 'TEXT':
             return oCell.String
         elif cell_type == 'VALUE':
+            assert oFormats is not None
             key = oCell.NumberFormat
             cell_data_type = oFormats.getByKey(key).Type
             value = oCell.Value
@@ -136,7 +138,7 @@ class reader(Iterator[List[Any]]):
 
     def __init__(self, oSheet: UnoSheet,
                  cell_typing: CellTyping = CellTyping.Minimal,
-                 oFormats: Optional[UnoService] = None,
+                 oFormats: Optional[UnoNumberFormats] = None,
                  read_cell: Optional[Callable[[UnoCell], Any]] = None):
         if read_cell is not None:
             self._read_cell = read_cell
@@ -181,7 +183,7 @@ class dict_reader:
                  read_cell=None):
         self._reader = reader(oSheet, cell_typing, oFormats, read_cell)
         if fieldnames is None:
-            self.fieldnames = next(self._reader)
+            self.fieldnames = tuple([v if isinstance(str, v) else "" for v in next(self._reader)])
         else:
             self.fieldnames = fieldnames
         self._width = len(self.fieldnames)
@@ -214,7 +216,7 @@ class dict_reader:
 ##########
 # Writer #
 ##########
-def find_number_format_style(oFormats: UnoService, format_id: NumberFormat,
+def find_number_format_style(oFormats: UnoNumberFormats, format_id: NumberFormat,
                              oLocale: Locale = Locale()) -> int:
     """
     @param oFormats: the formats
@@ -226,7 +228,7 @@ def find_number_format_style(oFormats: UnoService, format_id: NumberFormat,
 
 
 def create_write_cell(cell_typing: CellTyping = CellTyping.Minimal,
-                      oFormats: Optional[UnoService] = None
+                      oFormats: Optional[UnoNumberFormats] = None
                       ) -> Callable[[UnoCell, Any], None]:
     """
     Create a cell writer
@@ -260,7 +262,7 @@ def create_write_cell(cell_typing: CellTyping = CellTyping.Minimal,
         else:
             oCell.Value = value
 
-    def create_write_cell_all(oFormats: UnoService
+    def create_write_cell_all(oFormats: UnoNumberFormats
                               ) -> Callable[[UnoCell, Any], None]:
         # todo: Add locale parameter
         date_id = find_number_format_style(oFormats, NumberFormat.DATE)
@@ -311,7 +313,7 @@ class writer:
 
     def __init__(self, oSheet: UnoSheet,
                  cell_typing: CellTyping = CellTyping.Minimal,
-                 oFormats: Optional[UnoService] = None,
+                 oFormats: Optional[UnoNumberFormats] = None,
                  write_cell: Optional[Callable[[UnoCell, Any], None]] = None,
                  initial_pos: Tuple[int, int] = (0, 0)):
         self._oSheet = oSheet
@@ -342,7 +344,7 @@ class dict_writer:
     def __init__(self, oSheet: UnoSheet, fieldnames: List[str],
                  restval: str = '', extrasaction: str = 'raise',
                  cell_typing: CellTyping = CellTyping.Minimal,
-                 oFormats: Optional[UnoService] = None,
+                 oFormats: Optional[UnoNumberFormats] = None,
                  write_cell: Optional[Callable[[UnoCell, Any], None]] = None):
         self.writer = writer(oSheet, cell_typing, oFormats, write_cell)
         self.fieldnames = fieldnames
@@ -767,14 +769,16 @@ def import_from_csv(oDoc: UnoSpreadsheetDocument, sheet_name: str, dest_position
     @param detect_special_numbers: if true, detect numbers
     @return: the sheet
     """
+    assert pr is not None
     filter_options = create_import_filter_options(*args, **kwargs)
     pvs = make_pvs({"FilterName": Filter.CSV, "FilterOptions": filter_options,
                     "Hidden": True})
 
     oDoc.lockControllers()
     url = uno_path_to_url(path)
-    oSource = pr.desktop.loadComponentFromURL(url, Target.BLANK,
-                                              FrameSearchFlag.AUTO, pvs)
+    desktop = pr.desktop
+    oSource = cast(UnoSpreadsheetDocument, desktop.loadComponentFromURL(
+        url, Target.BLANK, FrameSearchFlag.AUTO, pvs))
     oSource.Sheets.getByIndex(0).Name = sheet_name
     name = oSource.Sheets.ElementNames[0]
     oDoc.Sheets.importSheet(oSource, name, dest_position)

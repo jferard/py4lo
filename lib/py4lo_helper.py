@@ -18,20 +18,26 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """py4lo_helper deals with LO objects."""
+# mypy: disable-error-code="import-untyped,import-not-found"
 import logging
 from enum import Enum
 from locale import getlocale
 from pathlib import Path
 from typing import (Any, Optional, List, cast, Callable, Mapping, Tuple,
-                    Iterator, Union, Iterable)
+                    Iterator, Union, Iterable, TypeVar)
 
 from py4lo_commons import uno_path_to_url
 from py4lo_typing import (UnoSpreadsheetDocument, UnoController, UnoContext,
-                          UnoService, UnoSheet, UnoRangeAddress, UnoRange,
+                          UnoService, UnoSheet, UnoCellRangeAddress, UnoRange,
                           UnoCell, UnoObject, DATA_ARRAY, UnoCellAddress,
                           UnoPropertyValue, DATA_ROW, UnoXScriptContext,
                           UnoColumn, UnoStruct, UnoEnum, UnoRow, DATA_VALUE,
-                          UnoPropertyValues, UnoTextRange)
+                          UnoPropertyValues, UnoText, UnoSize,
+                          UnoOfficeDocument, UnoDesktop, UnoServiceManager,
+                          UnoScriptProvider, UnoFrame, UnoWindow,
+                          UnoIndexAccess, UnoEnumerationAccess, UO,
+                          UnoNameAccess, UnoPageStyle, UnoComponentContext,
+                          UnoTextURL, UnoScript, lazy, UnoClipboard, DataFlavor)
 
 try:
     # noinspection PyUnresolvedReferences
@@ -94,7 +100,7 @@ try:
         from com.sun.star.awt.FontSlant import (NONE, OBLIQUE, ITALIC)
 
 except (ModuleNotFoundError, ImportError):
-    from mock_constants import (  # noqa
+    from mock_constants import (  # type:ignore[assignment]
         unohelper, uno, XTransferable, FrameSearchFlag, BorderLineStyle,
         ConditionOperator, FontWeight, ValidationType,
         TableValidationVisibility, ScriptFrameworkErrorException,
@@ -128,7 +134,7 @@ class _ObjectProvider:
     """
 
     @staticmethod
-    def create(xsc: UnoXScriptContext):
+    def create(xsc: UnoXScriptContext) -> "_ObjectProvider":
         doc = xsc.getDocument()
         controller = doc.CurrentController
         frame = controller.Frame
@@ -140,9 +146,11 @@ class _ObjectProvider:
         return _ObjectProvider(doc, controller, frame, parent_win,
                                script_provider, ctxt, service_manager, desktop)
 
-    def __init__(self, doc: UnoSpreadsheetDocument, controller: UnoController,
-                 frame, parent_win, script_provider,
-                 ctxt: UnoContext, service_manager, desktop):
+    def __init__(self, doc: UnoOfficeDocument, controller: UnoController,
+                 frame: UnoFrame, parent_win: UnoWindow,
+                 script_provider: UnoScriptProvider,
+                 ctxt: UnoComponentContext, service_manager: UnoServiceManager,
+                 desktop: UnoDesktop):
         self.doc = doc
         self.controller = controller
         self.frame = frame
@@ -206,7 +214,9 @@ class _ObjectProvider:
 
 
 def create_uno_service(sname: str, args: Optional[List[Any]] = None,
-                       ctxt: Optional[UnoContext] = None) -> UnoService:
+                       ctxt: Optional[
+                           UnoComponentContext] = None) -> UnoService:
+    assert provider is not None
     sm = provider.service_manager
     if ctxt is None:
         return sm.createInstance(sname)
@@ -219,6 +229,7 @@ def create_uno_service(sname: str, args: Optional[List[Any]] = None,
 
 def create_uno_service_ctxt(sname: str,
                             args: Optional[List[Any]] = None) -> UnoService:
+    assert provider is not None
     return create_uno_service(sname, args, provider.ctxt)
 
 
@@ -228,61 +239,71 @@ uno_service = create_uno_service
 uno_service_ctxt = create_uno_service_ctxt
 
 
-def to_iter(o: UnoObject) -> Iterator[UnoObject]:
+#####
+# Containers
+#####
+
+def to_iter(o: Union[UnoIndexAccess[UO], UnoEnumerationAccess[UO]]) -> Iterator[
+    UO]:
     """
     @param o: an XIndexAccess or XEnumerationAccession object
     @return: an iterator on `o`
     """
-    try:
-        count = o.Count
-    except AttributeError:
-        oEnum = o.createEnumeration()
+    if o.supportsService("com.sun.star.container.XIndexAccess"):
+        count = o.Count  # type: ignore[union-attr]
+        for i in range(count):
+            yield o.getByIndex(i)  # type: ignore[union-attr]
+    elif o.supportsService("com.sun.star.container.XEnumerationAccess"):
+        oEnum = o.createEnumeration()  # type: ignore[union-attr]
         while oEnum.hasMoreElements():
             yield oEnum.nextElement()
     else:
-        for i in range(count):
-            yield o.getByIndex(i)
+        raise TypeError(repr(o))
 
 
-def to_enumerate(o: UnoObject) -> Iterator[Tuple[int, UnoObject]]:
+def to_enumerate(o: Union[UnoIndexAccess[UO], UnoEnumerationAccess[UO]]
+                 ) -> Iterator[Tuple[int, UO]]:
     """
     @param o: an XIndexAccess or XEnumerationAccession object
     @return: an enumerate iterator on `o`
     """
-    try:
-        count = o.Count
-    except AttributeError:
-        oEnum = o.createEnumeration()
+    if o.supportsService("com.sun.star.container.XIndexAccess"):
+        count = o.Count  # type: ignore[union-attr]
+        for i in range(count):
+            yield i, o.getByIndex(i)  # type: ignore[union-attr]
+    elif o.supportsService("com.sun.star.container.XEnumerationAccess"):
+        oEnum = o.createEnumeration()  # type: ignore[union-attr]
         i = 0
         while oEnum.hasMoreElements():
             yield i, oEnum.nextElement()
             i += 1
     else:
-        for i in range(count):
-            yield i, o.getByIndex(i)
+        raise TypeError(repr(o))
 
 
-def to_dict(oXNameAccess: UnoObject) -> Mapping[str, UnoObject]:
+def to_dict(o: UnoNameAccess[UO]) -> Mapping[str, UO]:
     return {
-        name: oXNameAccess.getByName(name)
-        for name in oXNameAccess.getElementNames()
+        name: o.getByName(name)
+        for name in o.ElementNames
     }
 
 
-def to_items(oXNameAccess: UnoObject) -> Iterator[Tuple[str, UnoObject]]:
+def to_items(o: UnoNameAccess[UO]) -> Iterator[Tuple[str, UO]]:
     return (
-        (name, oXNameAccess.getByName(name))
-        for name in oXNameAccess.ElementNames
+        (name, o.getByName(name))
+        for name in o.ElementNames
     )
 
 
-def remove_all(oXAccess: UnoObject):
-    try:
-        for name in oXAccess.ElementNames:
-            oXAccess.removeByName(name)
-    except AttributeError:
-        while oXAccess.Count:
-            oXAccess.removeByIndex(0)
+def remove_all(o: Union[UnoIndexAccess[UO], UnoNameAccess[UO]]):
+    if o.supportsService("com.sun.star.container.XIndexContainer"):
+        while o.Count:  # type: ignore[union-attr]
+            o.removeByIndex(0)  # type: ignore[union-attr]
+    elif o.supportsService("com.sun.star.container.XNameContainer"):
+        for name in o.ElementNames:  # type: ignore[union-attr]
+            o.removeByName(name)  # type: ignore[union-attr]
+    else:
+        raise TypeError(repr(o))
 
 
 def parent_doc(oRange: UnoRange) -> UnoSpreadsheetDocument:
@@ -445,7 +466,7 @@ def get_last_used_row(oSheet: UnoSheet) -> int:
     return get_used_range_address(oSheet).EndRow
 
 
-def get_used_range_address(oSheet: UnoSheet) -> UnoRangeAddress:
+def get_used_range_address(oSheet: UnoSheet) -> UnoCellRangeAddress:
     """
     @param oSheet: the sheet
     @return: the used range address
@@ -462,7 +483,7 @@ def get_used_range(oSheet: UnoSheet) -> UnoRange:
 
 
 def narrow_range_to_address(
-        oSheet: UnoSheet, oRangeAddress: UnoRangeAddress) -> UnoRange:
+        oSheet: UnoSheet, oRangeAddress: UnoCellRangeAddress) -> UnoRange:
     """
     Useful to copy a data array from one sheet to another
     @param oSheet:
@@ -492,6 +513,7 @@ def copy_range(oSourceRange: UnoRange):
     Copy a range to the clipboard
     :param oSourceRange the range (may be a sheet)
     """
+    assert provider is not None
     oSourceDoc = parent_doc(oSourceRange)
     oSourceController = oSourceDoc.CurrentController
     oSourceController.select(oSourceRange)
@@ -506,6 +528,7 @@ def paste_range(oDestSheet: UnoSheet, oDestAddress: UnoCellAddress,
                 formulas: bool = False):
     """
     """
+    assert provider is not None
     oDestDoc = parent_doc(oDestSheet)
     oDestController = oDestDoc.CurrentController
     oDestCell = oDestSheet.getCellByPosition(oDestAddress.Column,
@@ -582,7 +605,7 @@ def top_void_row_count(data_array: DATA_ARRAY) -> int:
     """
     r0 = 0
     row_count = len(data_array)
-    while r0 < row_count and all(v.strip() == "" for v in data_array[r0]):
+    while r0 < row_count and all(is_empty_da_value(v) for v in data_array[r0]):
         r0 += 1
     return r0
 
@@ -596,9 +619,13 @@ def bottom_void_row_count(data_array: DATA_ARRAY) -> int:
     r1 = 0
     # r1 < row_count => row_count - r1 > 0 => row_count - r1 - 1 >= 0
     while r1 < row_count and all(
-            v.strip() == "" for v in data_array[row_count - r1 - 1]):
+            is_empty_da_value(v) for v in data_array[row_count - r1 - 1]):
         r1 += 1
     return r1
+
+
+def is_empty_da_value(v: DATA_VALUE) -> bool:
+    return isinstance(v, str) and v.strip() == ""
 
 
 def left_void_row_count(data_array: DATA_ARRAY) -> int:
@@ -613,7 +640,7 @@ def left_void_row_count(data_array: DATA_ARRAY) -> int:
     c0 = len(data_array[0])
     for row in data_array:
         c = 0
-        while c < c0 and row[c].strip() == "":
+        while c < c0 and is_empty_da_value(row[c]):
             c += 1
         if c < c0:
             c0 = c
@@ -633,7 +660,7 @@ def right_void_row_count(data_array: DATA_ARRAY) -> int:
     c1 = width
     for row in data_array:
         c = 0
-        while c < c1 and row[width - c - 1].strip() == "":
+        while c < c1 and is_empty_da_value(row[width - c - 1]):
             c += 1
         if c < c1:
             c1 = c
@@ -799,6 +826,7 @@ def create_filter(oRange: UnoRange):
     Create a new filter
     @param oRange: the range to filter
     """
+    assert provider is not None
     oDoc = parent_doc(oRange)
     oController = oDoc.CurrentController
     oController.select(oRange)
@@ -870,7 +898,7 @@ A4_LARGE = A3_SMALL = 29700
 A4_SMALL = 21000
 
 
-def get_page_style(oSheet: UnoSheet) -> UnoService:
+def get_page_style(oSheet: UnoSheet) -> UnoPageStyle:
     """
     @param oSheet: a sheet
     @return: the page style of this sheet
@@ -879,7 +907,7 @@ def get_page_style(oSheet: UnoSheet) -> UnoService:
     oDoc = parent_doc(oSheet)
     oStyle = oDoc.StyleFamilies.getByName("PageStyles").getByName(
         page_style_name)
-    return oStyle
+    return oStyle  # type: ignore[return-value]
 
 
 def set_paper(oSheet: UnoSheet):
@@ -892,7 +920,7 @@ def set_paper(oSheet: UnoSheet):
     set_paper_to_size(oPageStyle, size)
 
 
-def set_paper_to_size(oPageStyle: UnoService, size: UnoStruct):
+def set_paper_to_size(oPageStyle: UnoPageStyle, size: UnoSize):
     """
     Make the paper of this style match this area.
     @param oPageStyle: the page style
@@ -938,10 +966,10 @@ def add_link(oCell: UnoCell, text: str, url: str, wrap_at: int = -1):
         lines = _wrap_text(text, wrap_at)
 
     for line in lines:
-        text_field = oDoc.createInstance("com.sun.star.text.TextField.URL")
-        text_field.Representation = line
-        text_field.URL = url
-        oCell.insertTextContent(oCursor, text_field, False)
+        text_field_url = cast(UnoTextURL, oDoc.createInstance("com.sun.star.text.TextField.URL"))
+        text_field_url.Representation = line
+        text_field_url.URL = url
+        oCell.insertTextContent(oCursor, text_field_url, False)
 
 
 def _wrap_text(text: str, wrap_at: int):
@@ -999,13 +1027,14 @@ def open_in_calc(filename: Union[str, Path], target: str = Target.BLANK,
     :param kwargs: les paramètres d'ouverture
     :return: a reference on the doc
     """
+    assert provider is not None
     url = uno_path_to_url(filename)
     if kwargs:
         params = make_pvs(kwargs)
     else:
         params = ()
-    return provider.desktop.loadComponentFromURL(url, target, frame_flags,
-                                                 params)
+    return provider.desktop.loadComponentFromURL(
+        url, target, frame_flags, params)  # type: ignore[return-value]
 
 
 # Create a document
@@ -1038,8 +1067,9 @@ class DocBuilder:
                  search_flags: FrameSearchFlag,
                  pvs: UnoPropertyValues):
         """Create a blank new doc"""
-        self._oDoc = provider.desktop.loadComponentFromURL(
-            url, taget_frame_name, search_flags, pvs)
+        assert provider is not None
+        self._oDoc = cast(UnoSpreadsheetDocument, provider.desktop.loadComponentFromURL(
+            url, taget_frame_name, search_flags, pvs))
         self._oDoc.lockControllers()
 
     def build(self) -> UnoSpreadsheetDocument:
@@ -1073,7 +1103,7 @@ class DocBuilder:
         except StopIteration:  # it
             if s > initial_count:
                 raise AssertionError("s={} vs oSheets.getCount()={}".format(
-                    s, oSheets.getCount()))
+                    s, oSheets.Count))
             if trunc_if_necessary:
                 self.trunc_to_count(s)
 
@@ -1131,12 +1161,12 @@ class DocBuilder:
 ###############################################################################
 # MISC
 ###############################################################################
-def read_options(oSheet: UnoSpreadsheetDocument, aAddress: UnoRangeAddress,
-                 apply: Union[
-                     Callable[[str, str], Tuple[str, str]],
-                     Callable[[str, List[str]], Tuple[str, List[str]]]
-                 ] = lambda k_v: k_v
-                 ) -> Mapping[str, DATA_VALUE]:
+
+_ApplyType = Callable[[str, Union[DATA_ROW, DATA_VALUE]], Tuple[str, Union[DATA_ROW, DATA_VALUE]]]
+
+def read_options(oSheet: UnoSheet, aAddress: UnoCellRangeAddress,
+                 apply: Optional[_ApplyType] = None
+                 ) -> Mapping[str, Union[DATA_VALUE, DATA_ROW]]:
     options = {}
     if aAddress.StartColumn == aAddress.EndColumn:
         return {}
@@ -1146,12 +1176,14 @@ def read_options(oSheet: UnoSpreadsheetDocument, aAddress: UnoRangeAddress,
         aAddress.EndColumn, aAddress.EndRow)
     data_array = oRange.DataArray
     for row in data_array:
-        k = row[0]
+        k = str(row[0])
         v = rtrim_row(row[1:])
-        k, v = apply(k, v)
-        if not k:
-            continue
-        options[k] = v
+        if apply is None:
+            new_k, new_v = k, v
+        else:
+            new_k, new_v = apply(k, v)
+        if new_k:
+            options[new_k] = new_v
     return options
 
 
@@ -1176,10 +1208,7 @@ def rtrim_row(row: DATA_ROW, null="") -> Union[DATA_ROW, DATA_VALUE]:
 
 def read_options_from_sheet_name(
         oDoc: UnoSpreadsheetDocument, sheet_name: str,
-        apply: Union[
-            Callable[[str, str], Tuple[str, str]],
-            Callable[[str, List[str]], Tuple[str, List[str]]]
-        ] = lambda k_v: k_v):
+        apply: Optional[_ApplyType] = None):
     oSheet = oDoc.Sheets.getByName(sheet_name)
     oRangeAddress = get_used_range_address(oSheet)
     return read_options(oSheet, oRangeAddress, apply)
@@ -1187,15 +1216,18 @@ def read_options_from_sheet_name(
 
 def copy_row_at_index(oSheet: UnoSheet, row: DATA_ROW, r: int):
     oRange = oSheet.getCellRangeByPosition(0, r, len(row) - 1, r)
-    oRange.DataArray = row
+    oRange.DataArray = [row]
 
+
+class _MRIType(UnoService):
+    def inspect(self, obj: Any): ...
 
 class _Inspector:
     def __init__(self, provider: _ObjectProvider):
         self._provider = provider
-        self._xray_script = None
+        self._xray_script = lazy(UnoScript)
         self._ignore_xray = False
-        self._oMRI = None
+        self._oMRI = lazy(_MRIType)
         self._ignore_mri = False
 
     def use_xray(self, fail_on_error: bool = False):
@@ -1232,6 +1264,7 @@ class _Inspector:
             if self._ignore_xray:
                 return
 
+        assert self._xray_script is not None
         self._xray_script.invoke((obj,), (), ())
 
     def mri(self, obj: Any, fail_on_error: bool = False):
@@ -1245,7 +1278,7 @@ class _Inspector:
 
         if self._oMRI is None:
             try:
-                self._oMRI = create_uno_service("mytools.Mri")
+                self._oMRI = cast(_MRIType, create_uno_service("mytools.Mri"))
             except UnoException:
                 self._ignore_mri = True
                 if fail_on_error:
@@ -1254,6 +1287,7 @@ class _Inspector:
         if self._ignore_mri:
             return
 
+        assert self._oMRI is not None
         self._oMRI.inspect(obj)
 
 
@@ -1263,15 +1297,15 @@ HTML_FLAVOR = ("text/html;charset=utf-8", "HTML")
 
 def copy_to_clipboard(value: Any, flavor: Tuple[str, str] = TEXT_FLAVOR):
     """See https://forum.openoffice.org/en/forum/viewtopic.php?t=93562"""
-    oClipboard = create_uno_service(
-        "com.sun.star.datatransfer.clipboard.SystemClipboard")
+    oClipboard = cast(UnoClipboard, create_uno_service(
+        "com.sun.star.datatransfer.clipboard.SystemClipboard"))
     oClipboard.setContents(Transferable(value, flavor), None)
 
 
 def get_from_clipboard(flavor: Tuple[str, str] = TEXT_FLAVOR) -> Optional[Any]:
     """See https://forum.openoffice.org/en/forum/viewtopic.php?t=93562"""
-    oClipboard = create_uno_service(
-        "com.sun.star.datatransfer.clipboard.SystemClipboard")
+    oClipboard = cast(UnoClipboard, create_uno_service(
+        "com.sun.star.datatransfer.clipboard.SystemClipboard"))
     oContents = oClipboard.getContents()
     oTypes = oContents.getTransferDataFlavors()
 
@@ -1287,7 +1321,7 @@ class Transferable(unohelper.Base, XTransferable):
         self._value = value
         self._flavor = flavor
 
-    def getTransferData(self, aFlavor: UnoObject):
+    def getTransferData(self, aFlavor: DataFlavor):
         if aFlavor.MimeType == self._flavor[0]:
             return self._value
 
@@ -1297,11 +1331,11 @@ class Transferable(unohelper.Base, XTransferable):
                                    HumanPresentableName=self._flavor[1])
         return [flavor]
 
-    def isDataFlavorSupported(self, aFlavor: UnoObject) -> bool:
+    def isDataFlavorSupported(self, aFlavor: DataFlavor) -> bool:
         return aFlavor.MimeType == self._flavor[0]
 
 
-def convert_to_html(text_range: UnoTextRange) -> str:
+def convert_to_html(text_range: UnoText) -> str:
     return HTMLConverter().convert(text_range)
 
 
@@ -1314,18 +1348,18 @@ class HTMLConverter:
     def __init__(self, html_line_break: str = "<br>"):
         self._html_line_break = html_line_break
 
-    def convert(self, text_range: UnoTextRange) -> str:
+    def convert(self, text_range: UnoText) -> str:
         """Convert a sequence of chars to HTML"""
         html = self._html_line_break.join(
             self._par_to_html(par_text_range) for par_text_range in
             to_iter(text_range))
         return html
 
-    def _par_to_html(self, par_text_range: UnoTextRange) -> str:
+    def _par_to_html(self, par_text_range: UnoText) -> str:
         return "".join(
             [self._to_html(chunk) for chunk in to_iter(par_text_range)])
 
-    def _to_html(self, text_range: UnoTextRange) -> str:
+    def _to_html(self, text_range: UnoText) -> str:
         tag = self._get_tag(text_range)
 
         statements = []
@@ -1372,7 +1406,7 @@ class HTMLConverter:
                 tag=tag, text=text
             )
 
-    def _get_tag(self, text_range: UnoTextRange) -> str:
+    def _get_tag(self, text_range: UnoText) -> str:
         if text_range.CharEscapementHeight < 100:
             if text_range.CharEscapement < 0:
                 return "sub"
@@ -1392,9 +1426,10 @@ class SheetFormatter:
             self._locale = locale
 
     @staticmethod
-    def _find_locale():
+    def _find_locale() -> UnoStruct:
         try:
             language_code = getlocale()[0]
+            assert isinstance(language_code, str)
             region, language = language_code.split("_")
             return make_locale(language, region)
         except (IndexError, ValueError):
@@ -1404,11 +1439,11 @@ class SheetFormatter:
         oRows = self._oSheet.Rows
         row_as_header(oRows.getByIndex(0))
 
-    def set_format(self, fmt: str, *col_indices: int):
+    def set_format(self, fmt_name: str, *col_indices: int):
         number_format_id = self._oFormats.queryKey(
-            fmt, self._locale, True)
+            fmt_name, self._locale, True)
         if number_format_id == -1:
-            number_format_id = self._oFormats.addNew(fmt, self._locale)
+            number_format_id = self._oFormats.addNew(fmt_name, self._locale)
 
         oColumns = self._oSheet.Columns
         for i in col_indices:

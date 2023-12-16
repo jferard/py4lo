@@ -27,9 +27,11 @@ from typing import Union, Generator, List, Any, Iterator, Mapping
 library_name = find_library('sqlite3')
 if library_name is None:
     path = Path.cwd() / "sqlite3.dll"
-    if not path.exists():
-        path = os.environ["SQLITE3_LIB"]  # will raise an error if not present
-    sqlite3_lib = CDLL(str(path))
+    if path.exists():
+        str_path = str(path)
+    else:
+        str_path = os.environ["SQLITE3_LIB"]  # will raise an error if not present
+    sqlite3_lib = CDLL(str_path)
 else:
     sqlite3_lib = cdll.LoadLibrary(library_name)
 
@@ -249,8 +251,8 @@ class Sqlite3Statement:
         self._stmt = stmt
 
     def bind_text(self, i: int, v: str):
-        v = v.encode("utf-8")
-        ret = sqlite3_bind_text(self._stmt, i, v, len(v), SQLITE_TRANSIENT)
+        bs = v.encode("utf-8")
+        ret = sqlite3_bind_text(self._stmt, i, bs, len(bs), SQLITE_TRANSIENT)
         if ret != SQLITE_OK:
             raise self._err(ret)
 
@@ -402,22 +404,28 @@ def sqlite_open(
         filepath: Union[str, Path], mode: str = "r"
 ) -> Generator[Sqlite3Database, None, None]:
     db = c_void_p()
+
+    if isinstance(filepath, str):
+        str_path = filepath
+        path = Path(filepath)
+    else:
+        str_path = str(filepath.absolute())
+        path = filepath
+
     if mode == "r":
         flags = SQLITE_OPEN_READONLY
-        if not filepath.exists():
-            raise FileNotFoundError(str(filepath))
+        if not path.exists():
+            raise FileNotFoundError(str_path)
     elif mode == "rw":
         flags = SQLITE_OPEN_READWRITE
-        if not filepath.exists():
-            raise FileNotFoundError(str(filepath))
+        if not path.exists():
+            raise FileNotFoundError(str_path)
     elif mode == "crw":
         flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE
     else:
         raise ValueError(mode)
 
-    if isinstance(filepath, Path):
-        filepath = str(filepath.absolute())
-    sqlite3_open_v2(filepath.encode("utf-8"), byref(db), flags, None)
+    sqlite3_open_v2(str_path.encode("utf-8"), byref(db), flags, None)
     try:
         yield Sqlite3Database(db)
     finally:

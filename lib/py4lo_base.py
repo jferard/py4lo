@@ -15,14 +15,17 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# mypy: disable-error-code="import-not-found"
 import logging
 import time
 from pathlib import Path
-from typing import Iterable, Union, Dict, Mapping
+from typing import Iterable, Union, Dict, Mapping, cast
 
 from py4lo_helper import (uno_path_to_url, create_uno_service, to_items,
                           remove_all)
-from py4lo_typing import UnoObject
+from py4lo_typing import (lazy, UnoStatement, UnoConnection,
+                          UnoDocumentDataSource, UnoContainer,
+                          UnoDatabaseContext, UnoTable)
 
 try:
     class DataType:
@@ -34,6 +37,7 @@ try:
             OBJECT, DISTINCT, STRUCT, ARRAY, BLOB, CLOB, REF, BOOLEAN
         )
 
+
     class ColumnValue:
         # noinspection PyUnresolvedReferences
         from com.sun.star.sdbc.ColumnValue import (
@@ -41,7 +45,7 @@ try:
         )
 
 except (ModuleNotFoundError, ImportError):
-    from mock_constants import ( # noqa
+    from mock_constants import (  # type:ignore[assignment]
         DataType,
         ColumnValue
     )
@@ -53,13 +57,13 @@ class BaseTableBuilder:
     """
     _logger = logging.getLogger(__name__)
 
-    def __init__(self, oConnection: UnoObject, name: str):
+    def __init__(self, oConnection: UnoConnection, name: str):
         """
         @param oConnection: the connection
         @param name: the name of the table
         """
         self._oConnection = oConnection
-        self._oTables = oConnection.getTables()
+        self._oTables = oConnection.Tables
         self._oTableDescriptor = self._oTables.createDataDescriptor()
         self._oTableDescriptor.Name = name
         self._oCols = self._oTableDescriptor.getColumns()
@@ -85,7 +89,7 @@ class BaseTableBuilder:
         self._oCols.appendByDescriptor(oCol)
 
 
-def drop_all(oDrop):
+def drop_all(oDrop: UnoContainer):
     """
     Drop all elements (count or name)
     @param oDrop: the container
@@ -104,14 +108,14 @@ class BaseDB:
     """
     _logger = logging.getLogger(__name__)
 
-    def __init__(self, oDB: UnoObject):
+    def __init__(self, oDB: UnoDocumentDataSource):
         self._oDB = oDB
-        self._oConnection = None
-        self._oStatement = None
-        self._sql_by_name = {}
+        self._oConnection = lazy(UnoConnection)
+        self._oStatement = lazy(UnoStatement)
+        self._sql_by_name = cast(Dict[str, str], {})
 
     @property
-    def connection(self) -> UnoObject:
+    def connection(self) -> UnoConnection:
         if self._oConnection is None or self._oConnection.isClosed():
             oHandler = create_uno_service(
                 "com.sun.star.sdb.InteractionHandler")
@@ -120,7 +124,7 @@ class BaseDB:
         return self._oConnection
 
     @property
-    def statement(self) -> UnoObject:
+    def statement(self) -> UnoStatement:
         if self._oStatement is None:
             self._oStatement = self.connection.createStatement()
         return self._oStatement
@@ -130,14 +134,14 @@ class BaseDB:
 
     def get_table_builder(self, name: str) -> BaseTableBuilder:
         oConnection = self.connection
-        oTables = oConnection.getTables()
+        oTables = oConnection.Tables
         if oTables.hasByName(name):
             raise ValueError("Exists")
 
         return BaseTableBuilder(oConnection, name)
 
-    def get_tables(self) -> UnoObject:
-        return self.connection.getTables()
+    def get_tables(self) -> UnoContainer:
+        return self.connection.Tables
 
     def execute_update(self, sql: str):
         self.statement.executeUpdate(sql)
@@ -222,7 +226,7 @@ class BaseDB:
             else:
                 break
 
-    def _drop_table(self, oTables: UnoObject, name: str):
+    def _drop_table(self, oTables: UnoContainer[UnoTable], name: str):
         oTable = oTables.getByName(name)
         drop_all(oTable.Keys)
         drop_all(oTable.Indexes)
@@ -270,7 +274,8 @@ class BaseDB:
 
 
 def open_or_create_db(path: Path) -> "BaseDB":
-    oDBContext = create_uno_service("com.sun.star.sdb.DatabaseContext")
+    oDBContext = cast(UnoDatabaseContext,
+                      create_uno_service("com.sun.star.sdb.DatabaseContext"))
     url = uno_path_to_url(path)
     # noinspection PyBroadException
     try:
