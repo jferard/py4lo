@@ -29,12 +29,12 @@ jobs:
           ruff --format=github --target-version=py38 .
       - name: set PYTHONPATH
         run: |
-          echo "PYTHONPATH=$PYTHONPATH:/usr/lib/python3/dist-packages/" >> $GITHUB_ENV
+          echo "PYTHONPATH=$PYTHONPATH:\"/usr/lib/python3/dist-packages/\"" >> $GITHUB_ENV
       - name: Test with pytest & generate coverage report
         run: |
           echo $PYTHONPATH
           python -m pytest --cov-report term-missing --ignore=examples --cov=py4lo --cov=lib --cov-report=xml
-          python -m pytest --cov-report term-missing --ignore=examples --ignore=test --ignore=py4lo/__main__.py --cov-append --doctest-modules --cov=lib --cov-report=xml
+          python -m pytest --cov-report term-missing --ignore=examples --ignore=test --ignore="py4lo/__main__.py" --cov-append --doctest-modules --cov=lib --cov-report=xml
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         with:
