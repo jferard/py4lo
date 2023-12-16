@@ -25,7 +25,7 @@ Features
 * Helpers to access cells, add filters, create new documents, get used rows or data arrays
 * Helpers to convert XNameAccess to dicts and XIndexAccess to lists
 * Access ODS files content without opening them
-* ...
+* …
 
 Installation
 ------------
@@ -83,7 +83,7 @@ Step 2
 
 Generate a debug document:
 
-.. code-block:: python
+.. code-block:: bash
 
     > python <py4lo dir>/py4lo init
 
