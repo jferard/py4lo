@@ -19,6 +19,7 @@
 import unittest
 from comparator import Comparator
 
+
 class TestComparator(unittest.TestCase):
     def test_simple_check(self):
         c = Comparator()
@@ -48,7 +49,7 @@ class TestComparator(unittest.TestCase):
             c.check("$x", "<", "2.0")
 
     def test_check_existing_var_but_number(self):
-        c = Comparator({"x" : 1})
+        c = Comparator({"x": 1})
 
         with self.assertRaises(TypeError):
             self.assertTrue(c.check("$x", "<", "2.0"))
@@ -57,5 +58,6 @@ class TestComparator(unittest.TestCase):
         c = Comparator()
         self.assertTrue(c.check("2.1f", ">", "2.0i"))
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

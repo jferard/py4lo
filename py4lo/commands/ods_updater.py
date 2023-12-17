@@ -9,9 +9,13 @@ from script_set_processor import ScriptSetProcessor
 
 
 class OdsUpdaterHelper:
-    def __init__(self, logger: logging.Logger, sources: Sources,
-                 destinations: Destinations,
-                 python_version: str):
+    def __init__(
+        self,
+        logger: logging.Logger,
+        sources: Sources,
+        destinations: Destinations,
+        python_version: str,
+    ):
         self._logger = logger
         self._sources = sources
         self._destinations = destinations
@@ -19,8 +23,7 @@ class OdsUpdaterHelper:
 
     def get_assets(self) -> List[DestinationAsset]:
         source_assets = self._sources.get_assets()
-        return self._destinations.to_destination_assets(
-            source_assets)
+        return self._destinations.to_destination_assets(source_assets)
 
     def get_destination_scripts(self) -> List[DestinationScript]:
         temp_scripts = self.get_temp_scripts()
@@ -28,8 +31,11 @@ class OdsUpdaterHelper:
 
     def get_temp_scripts(self) -> List[TempScript]:
         source_scripts = self._sources.get_src_scripts()
-        directive_provider = DirectiveProvider.create(self._logger,
-                                                      self._sources)
-        return ScriptSetProcessor(self._logger, self._destinations.temp_dir,
-                                  self._python_version, directive_provider,
-                                  source_scripts).process()
+        directive_provider = DirectiveProvider.create(self._logger, self._sources)
+        return ScriptSetProcessor(
+            self._logger,
+            self._destinations.temp_dir,
+            self._python_version,
+            directive_provider,
+            source_scripts,
+        ).process()

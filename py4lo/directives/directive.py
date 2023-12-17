@@ -21,9 +21,12 @@ from typing import List, Any
 
 class Directive(ABC):
     @abstractmethod
-    def execute(self, processor: Any,  # "DirectiveProcessor",
-                line_processor: Any,  # "DirectiveLineProcessor",
-                args: List[str]):
+    def execute(
+        self,
+        processor: Any,  # "DirectiveProcessor",
+        line_processor: Any,  # "DirectiveLineProcessor",
+        args: List[str],
+    ):
         """Execute the directive. May append a script to process"""
         pass
 

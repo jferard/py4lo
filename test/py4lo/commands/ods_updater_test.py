@@ -47,8 +47,9 @@ class TestOdsUpdaterHelper(unittest.TestCase):
         self.assertEqual([destination_asset], assets)
         self.assertEqual([], logger.mock_calls)
         self.assertEqual([mock.call.get_assets()], sources.mock_calls)
-        self.assertEqual([mock.call.to_destination_assets(source_assets)],
-                         destinations.mock_calls)
+        self.assertEqual(
+            [mock.call.to_destination_assets(source_assets)], destinations.mock_calls
+        )
 
     @mock.patch("commands.ods_updater.ScriptSetProcessor", autospec=True)
     def test_destination_scripts(self, SSPMock):
@@ -68,10 +69,14 @@ class TestOdsUpdaterHelper(unittest.TestCase):
         scripts = h.get_destination_scripts()
 
         # verify
-        self.assertEqual([mock.call.debug('Directives tree: %s', mock.ANY)],
-                         logger.mock_calls)
+        self.assertEqual(
+            [mock.call.debug("Directives tree: %s", mock.ANY)], logger.mock_calls
+        )
         self.assertEqual([destination_script], scripts)
-        self.assertEqual([mock.call.get_src_scripts(), mock.call.get_module_names()],
-                         sources.mock_calls)
-        self.assertEqual([mock.call.to_destination_scripts([temp_script])],
-                         destinations.mock_calls)
+        self.assertEqual(
+            [mock.call.get_src_scripts(), mock.call.get_module_names()],
+            sources.mock_calls,
+        )
+        self.assertEqual(
+            [mock.call.to_destination_scripts([temp_script])], destinations.mock_calls
+        )

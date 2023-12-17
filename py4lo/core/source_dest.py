@@ -43,13 +43,17 @@ class Sources:
         return _get_module_names(self.src_dir, self.src_ignore, "*.py")
 
     def get_all_module_names(self) -> Set[str]:
-        return {*_get_module_names(self.src_dir, self.src_ignore, "*.py"),
-                *_get_module_names(self.lib_dir, self.src_ignore),
-                *_get_module_names(self.opt_dir, self.src_ignore)}
+        return {
+            *_get_module_names(self.src_dir, self.src_ignore, "*.py"),
+            *_get_module_names(self.lib_dir, self.src_ignore),
+            *_get_module_names(self.opt_dir, self.src_ignore),
+        }
 
     def get_assets(self) -> List[SourceAsset]:
-        return [SourceAsset(p, self.assets_dir) for p in
-                _get_paths(self.assets_dir, self.assets_ignore)]
+        return [
+            SourceAsset(p, self.assets_dir)
+            for p in _get_paths(self.assets_dir, self.assets_ignore)
+        ]
 
     def get_src_scripts(self) -> List[SourceScript]:
         script_paths = self.get_src_paths()
@@ -63,10 +67,10 @@ class Destinations:
     dest_dir: Path
     assets_dest_dir: Path
 
-    def to_destination_scripts(self, temp_scripts: List[TempScript]
-                               ) -> List[DestinationScript]:
-        return [ts.to_destination(self.dest_dir) for ts in
-                temp_scripts]
+    def to_destination_scripts(
+        self, temp_scripts: List[TempScript]
+    ) -> List[DestinationScript]:
+        return [ts.to_destination(self.dest_dir) for ts in temp_scripts]
 
     def to_destination_assets(self, source_assets) -> List[DestinationAsset]:
         return [sa.to_dest(self.assets_dest_dir) for sa in source_assets]
@@ -79,8 +83,7 @@ def _get_paths(source_dir: Path, ignore: List[str], glob="*") -> Set[Path]:
     return set(p for p in paths if p.is_file())
 
 
-def _get_module_names(source_dir: Path, ignore: List[str], glob="*"
-                      ) -> Set[str]:
+def _get_module_names(source_dir: Path, ignore: List[str], glob="*") -> Set[str]:
     paths = _get_paths(source_dir, ignore, glob)
     module_names = set()
     for p in paths:

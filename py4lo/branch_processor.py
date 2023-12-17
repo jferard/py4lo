@@ -26,6 +26,7 @@ class BranchProcessor:
     and acts as a preprocessor. Skipped block wont be included in the LO
     document
     """
+
     def __init__(self, tester: Callable[[List[str]], bool]):
         """The tester will evaluate the arguments of 'if' or 'elif'"""
         self._assertion_is_true = tester
@@ -42,17 +43,17 @@ class BranchProcessor:
     def handle_directive(self, directive: str, args: List[Any]) -> bool:
         """Return True if the next block should be read, False otherwise"""
 
-        if directive == 'if':
+        if directive == "if":
             self._begin_block_and_skip_if_not(self._assertion_is_true(args))
-        elif directive == 'elif':
+        elif directive == "elif":
             if self._was_not_skipping():
                 self._start_skipping()
             elif self._assertion_is_true(args):
                 self._stop_skipping()
             # else : continue to skip
-        elif directive == 'else':
+        elif directive == "else":
             self._flip_skipping()
-        elif directive == 'endif':
+        elif directive == "endif":
             self._end_block()
         else:
             return False

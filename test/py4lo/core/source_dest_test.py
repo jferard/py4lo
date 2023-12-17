@@ -26,60 +26,77 @@ from core.script import SourceScript, DestinationScript, TempScript
 from core.source_dest import Sources, Destinations
 from test.test_helper import file_path_mock
 
+
 class TestSourcesDests(unittest.TestCase):
     def setUp(self):
-        self._sources = Sources(Path("ods_file"), Path("inc"), Path("lib"),
-                                Path("src"), [], Path("opt"), Path("asset"), [],
-                                Path("test"))
-        self._destinations = Destinations(Path("ods_file"), Path("temp"),
-                                          Path("dest"), mock.Mock())
+        self._sources = Sources(
+            Path("ods_file"),
+            Path("inc"),
+            Path("lib"),
+            Path("src"),
+            [],
+            Path("opt"),
+            Path("asset"),
+            [],
+            Path("test"),
+        )
+        self._destinations = Destinations(
+            Path("ods_file"), Path("temp"), Path("dest"), mock.Mock()
+        )
 
     @mock.patch("core.source_dest._get_paths", autospec=True)
     def test_sources_src(self, gp_mock):
         gp_mock.return_value = [Path("a")]
 
         self.assertEqual([Path("a")], self._sources.get_src_paths())
-        self.assertEqual([mock.call(Path('src'), [], '*.py')], gp_mock.mock_calls)
+        self.assertEqual([mock.call(Path("src"), [], "*.py")], gp_mock.mock_calls)
 
     @mock.patch("core.source_dest._get_paths", autospec=True)
     def test_sources_assets(self, gp_mock):
         gp_mock.return_value = [Path("b")]
 
         self.assertEqual(
-            [SourceAsset(path=Path('b'), assets_dir=Path('asset'))],
-            self._sources.get_assets())
-        self.assertEqual([mock.call(Path('asset'), [])], gp_mock.mock_calls)
+            [SourceAsset(path=Path("b"), assets_dir=Path("asset"))],
+            self._sources.get_assets(),
+        )
+        self.assertEqual([mock.call(Path("asset"), [])], gp_mock.mock_calls)
 
     @mock.patch("core.source_dest._get_paths", autospec=True)
     def test_sources_scripts(self, gp_mock):
         gp_mock.return_value = [Path("text_range")]
 
         self.assertEqual(
-            [SourceScript(script_path=Path('text_range'), source_dir=Path('src'),
-                          export_funcs=True)],
-            self._sources.get_src_scripts())
-        self.assertEqual([mock.call(Path('src'), [], '*.py')], gp_mock.mock_calls)
+            [
+                SourceScript(
+                    script_path=Path("text_range"),
+                    source_dir=Path("src"),
+                    export_funcs=True,
+                )
+            ],
+            self._sources.get_src_scripts(),
+        )
+        self.assertEqual([mock.call(Path("src"), [], "*.py")], gp_mock.mock_calls)
 
     def test_destinations_scripts(self):
-        dscript = DestinationScript(Path('dest/scr'), b'abc', Path('dest'),
-                                    [], None)
-        self.assertEqual([dscript],
-                         self._destinations.to_destination_scripts(
-                             [TempScript(Path('temp/scr'), b'abc', Path('temp'),
-                                         [], None)]))
+        dscript = DestinationScript(Path("dest/scr"), b"abc", Path("dest"), [], None)
+        self.assertEqual(
+            [dscript],
+            self._destinations.to_destination_scripts(
+                [TempScript(Path("temp/scr"), b"abc", Path("temp"), [], None)]
+            ),
+        )
 
     def test_destinations_assets(self):
-        path = file_path_mock(io.BytesIO(b'asset content'))
+        path = file_path_mock(io.BytesIO(b"asset content"))
         assets_dir: Path = mock.Mock()
 
-        self._destinations.assets_dest_dir.joinpath.return_value = Path(
-            "dest_s")
+        self._destinations.assets_dest_dir.joinpath.return_value = Path("dest_s")
 
         self.assertEqual(
-            [DestinationAsset(path=Path('dest_s'), content=b'asset content')],
-            self._destinations.to_destination_assets(
-                [SourceAsset(path, assets_dir)]))
+            [DestinationAsset(path=Path("dest_s"), content=b"asset content")],
+            self._destinations.to_destination_assets([SourceAsset(path, assets_dir)]),
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

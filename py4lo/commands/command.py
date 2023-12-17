@@ -24,8 +24,9 @@ from core.properties import PropertiesProvider
 
 class Command(ABC):
     @staticmethod
-    def create_executor(args: List[str], provider: PropertiesProvider
-                        ) -> Any:  # "CommandExecutor":
+    def create_executor(
+        args: List[str], provider: PropertiesProvider
+    ) -> Any:  # "CommandExecutor":
         pass
 
     @abstractmethod

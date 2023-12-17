@@ -40,28 +40,32 @@ class TestScriptParser(unittest.TestCase):
             ParsedScriptContent(
                 """# parsed by py4lo (https://github.com/jferard/py4lo)
 some line""",
-                []), sp.parse(True))
+                [],
+            ),
+            sp.parse(True),
+        )
 
         self.assertEqual([], self._logger.mock_calls)
-        self.assertEqual([mock.call.ignore_lines(), mock.call.end()],
-                         self._dp.mock_calls)
+        self.assertEqual(
+            [mock.call.ignore_lines(), mock.call.end()], self._dp.mock_calls
+        )
         self.verify_open(path)
 
     def verify_open(self, path):
-        verify_open_path(self, path, 'r', encoding="utf-8")
+        verify_open_path(self, path, "r", encoding="utf-8")
 
     def test_script_parser_normal_line_ignore(self):
         self._dp.ignore_lines.return_value = True
         path = file_path_mock(io.StringIO("some line"))
 
         sp = script_set_processor._ContentParser(self._logger, self._dp, path)
-        line = '# parsed by py4lo (https://github.com/jferard/py4lo)\n### py4lo ignore: some line'  # noqa: E501
-        self.assertEqual(ParsedScriptContent(
-            line, []), sp.parse(True))
+        line = "# parsed by py4lo (https://github.com/jferard/py4lo)\n### py4lo ignore: some line"  # noqa: E501
+        self.assertEqual(ParsedScriptContent(line, []), sp.parse(True))
 
         self.assertEqual([], self._logger.mock_calls)
-        self.assertEqual([mock.call.ignore_lines(), mock.call.end()],
-                         self._dp.mock_calls)
+        self.assertEqual(
+            [mock.call.ignore_lines(), mock.call.end()], self._dp.mock_calls
+        )
         self.verify_open(path)
 
     def test_script_parser_directve_line(self):
@@ -69,14 +73,17 @@ some line""",
         path = file_path_mock(io.StringIO("#some line"))
 
         sp = script_set_processor._ContentParser(self._logger, self._dp, path)
-        self.assertEqual(ParsedScriptContent(
-            '# parsed by py4lo (https://github.com/jferard/py4lo)\nline1\nline2',
-            []), sp.parse(True))
+        self.assertEqual(
+            ParsedScriptContent(
+                "# parsed by py4lo (https://github.com/jferard/py4lo)\nline1\nline2", []
+            ),
+            sp.parse(True),
+        )
 
         self.assertEqual([], self._logger.mock_calls)
-        self.assertEqual([mock.call.process_line('#some line'),
-                          mock.call.end()],
-                         self._dp.mock_calls)
+        self.assertEqual(
+            [mock.call.process_line("#some line"), mock.call.end()], self._dp.mock_calls
+        )
         self.verify_open(path)
 
     def test_one_line_function(self):
@@ -84,11 +91,17 @@ some line""",
         path = file_path_mock(io.StringIO("def f(x): return x"))
 
         sp = script_set_processor._ContentParser(self._logger, self._dp, path)
-        self.assertEqual(ParsedScriptContent("""# parsed by py4lo (https://github.com/jferard/py4lo)
+        self.assertEqual(
+            ParsedScriptContent(
+                """# parsed by py4lo (https://github.com/jferard/py4lo)
 def f(x): return x
 
 
-g_exportedScripts = (f,)""", ["f"]), sp.parse(True))
+g_exportedScripts = (f,)""",
+                ["f"],
+            ),
+            sp.parse(True),
+        )
         self.verify_open(path)
 
     def test_one_public_function(self):
@@ -96,10 +109,16 @@ g_exportedScripts = (f,)""", ["f"]), sp.parse(True))
         path = file_path_mock(io.StringIO("def f(x):\n    return x"))
 
         sp = script_set_processor._ContentParser(self._logger, self._dp, path)
-        self.assertEqual(ParsedScriptContent("""# parsed by py4lo (https://github.com/jferard/py4lo)
+        self.assertEqual(
+            ParsedScriptContent(
+                """# parsed by py4lo (https://github.com/jferard/py4lo)
 def f(x):
     return x
 
 
-g_exportedScripts = (f,)""", ["f"]), sp.parse(True))
+g_exportedScripts = (f,)""",
+                ["f"],
+            ),
+            sp.parse(True),
+        )
         self.verify_open(path)

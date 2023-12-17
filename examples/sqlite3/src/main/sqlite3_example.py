@@ -36,7 +36,7 @@ except (AssertionError, AttributeError):
     CUR_PATH = Path.cwd()
 
 try:
-    commons = Commons.create(XSCRIPTCONTEXT) # type: ignore[name-defined]
+    commons = Commons.create(XSCRIPTCONTEXT)  # type: ignore[name-defined]
 except NameError:
     pass
 else:
@@ -58,8 +58,8 @@ def sqlite_example(*_args):
 
         with sqlite_open(path, "crw") as db:
             db.execute_update(
-                "CREATE TABLE persons "
-                "(name TEXT, age INTEGER, percentage DOUBLE)")
+                "CREATE TABLE persons " "(name TEXT, age INTEGER, percentage DOUBLE)"
+            )
             with db.transaction():
                 with db.prepare("INSERT INTO persons VALUES(?, ?, ?)") as stmt:
                     for data_row in data_array:
@@ -76,7 +76,7 @@ def sqlite_example(*_args):
 
         logger.debug("Query result %s", new_data_array)
         arr = list(oSheet.getCellRangeByName("output_rows").DataArray)
-        arr = new_data_array[:len(new_data_array)] + arr[len(new_data_array):]
+        arr = new_data_array[: len(new_data_array)] + arr[len(new_data_array) :]
         oSheet.getCellRangeByName("output_rows").DataArray = arr
     except Exception:
         logger.exception("EXC")

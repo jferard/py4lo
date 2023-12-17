@@ -27,8 +27,9 @@ def open_with_calc(ods_path: Path, calc_exe: str):
     subprocess.call([calc_exe, str(ods_path)])
 
 
-def nested_merge(d1: Dict[str, Any], d2: Dict[str, Any],
-                 apply: Callable[[Any], Any]) -> Dict[str, Any]:
+def nested_merge(
+    d1: Dict[str, Any], d2: Dict[str, Any], apply: Callable[[Any], Any]
+) -> Dict[str, Any]:
     """
     Merge two dicts.
     >>> nested_merge({'a': 1}, {'b': 2}, lambda x: x*2)

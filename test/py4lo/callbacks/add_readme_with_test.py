@@ -30,7 +30,7 @@ class TestAddReadmeWith(unittest.TestCase):
 
     def test_add_readme_with(self):
         out = io.BytesIO()
-        zout = zipfile.ZipFile(out, 'w')
+        zout = zipfile.ZipFile(out, "w")
         print(test_helper.inc_dir, type(test_helper.inc_dir))
         AddReadmeWith(test_helper.inc_dir, "contact").call(zout)
         expected = """<?xml version="1.0" encoding="UTF-8"?>
@@ -39,17 +39,16 @@ class TestAddReadmeWith(unittest.TestCase):
     <library:library library:name="Standard" library:link="false"/>
 </library:libraries>
 """  # noqa: E501
-        self.assertEqual(expected,
-                         zout.read("Basic/script-lc.xml").decode("utf-8"))
+        self.assertEqual(expected, zout.read("Basic/script-lc.xml").decode("utf-8"))
         expected = """<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE library:library PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "library.dtd">
 <library:library xmlns:library="http://openoffice.org/2000/library" library:name="Standard" library:readonly="false" library:passwordprotected="false">
     <library:element library:name="py4lo"/>
 </library:library>
 """  # noqa: E501
-        self.assertEqual(expected,
-                         zout.read("Basic/Standard/script-lb.xml").decode(
-                             "utf-8"))
+        self.assertEqual(
+            expected, zout.read("Basic/Standard/script-lb.xml").decode("utf-8")
+        )
         expected = """<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
 <script:module xmlns:script="http://openoffice.org/2000/script" script:name="Module1" script:language="StarBasic">REM  *****  BASIC  *****
@@ -63,9 +62,10 @@ Sub Readme
     &amp; &quot;See https://github.com/jferard/py4lo/README.md&quot; &amp; chr(13) _
     &amp; &quot;Contact : contact&quot;, IDOK, &quot;py4lo&quot;\nEnd Sub\n</script:module>
 """  # noqa: E501
-        self.assertEqual(expected,
-                         zout.read("Basic/Standard/py4lo.xml").decode("utf-8"))
+        self.assertEqual(
+            expected, zout.read("Basic/Standard/py4lo.xml").decode("utf-8")
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

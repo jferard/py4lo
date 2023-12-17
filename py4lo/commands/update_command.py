@@ -20,8 +20,14 @@ from logging import Logger
 from pathlib import Path
 from typing import Optional, List, Tuple
 
-from callbacks import (AddReadmeWith, IgnoreItem, ARC_SCRIPTS_PATH,
-                       RewriteManifest, AddScripts, AddAssets)
+from callbacks import (
+    AddReadmeWith,
+    IgnoreItem,
+    ARC_SCRIPTS_PATH,
+    RewriteManifest,
+    AddScripts,
+    AddAssets,
+)
 from commands.command import Command
 from commands.command_executor import CommandExecutor
 from commands.ods_updater import OdsUpdaterHelper
@@ -41,23 +47,32 @@ class UpdateCommand(Command):
         return CommandExecutor(logger, update_command, test_executor)
 
     @staticmethod
-    def create(logger: Logger,
-               provider: PropertiesProvider) -> Command:
+    def create(logger: Logger, provider: PropertiesProvider) -> Command:
         sources = provider.get_sources()
         destinations = provider.get_destinations()
         add_readme_callback = provider.get_readme_callback()
         python_version = provider.get("python_version")
         source_ods_file = sources.source_ods_file
         dest_ods_file = destinations.dest_ods_file
-        helper = OdsUpdaterHelper(
-            logger, sources, destinations, python_version)
-        return UpdateCommand(logger, helper, source_ods_file, dest_ods_file,
-                             python_version, add_readme_callback)
+        helper = OdsUpdaterHelper(logger, sources, destinations, python_version)
+        return UpdateCommand(
+            logger,
+            helper,
+            source_ods_file,
+            dest_ods_file,
+            python_version,
+            add_readme_callback,
+        )
 
-    def __init__(self, logger: Logger, helper: OdsUpdaterHelper,
-                 source_ods_file: Path,
-                 dest_ods_file: Path, python_version: str,
-                 add_readme_callback: Optional[AddReadmeWith]):
+    def __init__(
+        self,
+        logger: Logger,
+        helper: OdsUpdaterHelper,
+        source_ods_file: Path,
+        dest_ods_file: Path,
+        python_version: str,
+        add_readme_callback: Optional[AddReadmeWith],
+    ):
         self._logger = logger
         self._helper = helper
         self._source_ods_file = source_ods_file
@@ -70,16 +85,17 @@ class UpdateCommand(Command):
             "Update. Generating '%s' (source: %s) for Python '%s'",
             self._dest_ods_file,
             self._source_ods_file,
-            self._python_version)
+            self._python_version,
+        )
         scripts = self._helper.get_destination_scripts()
         assets = self._helper.get_assets()
         zip_updater = self._create_updater(scripts, assets)
-        zip_updater.update(self._source_ods_file,
-                           self._dest_ods_file)
+        zip_updater.update(self._source_ods_file, self._dest_ods_file)
         return status, self._dest_ods_file
 
-    def _create_updater(self, scripts: List[DestinationScript],
-                        assets: List[DestinationAsset]) -> ZipUpdater:
+    def _create_updater(
+        self, scripts: List[DestinationScript], assets: List[DestinationAsset]
+    ) -> ZipUpdater:
         zip_updater_builder = ZipUpdaterBuilder(self._logger)
         (
             zip_updater_builder.item(IgnoreItem(ARC_SCRIPTS_PATH))

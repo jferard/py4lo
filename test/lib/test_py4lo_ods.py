@@ -19,7 +19,9 @@
 import unittest
 
 from py4lo_ods import (
-    OFFICE_NS_DICT, OdsRows, _find_active_table_name,
+    OFFICE_NS_DICT,
+    OdsRows,
+    _find_active_table_name,
 )
 import xml.etree.ElementTree as ET
 
@@ -254,19 +256,23 @@ CONTENT_XML3 = """<?xml version="1.0" encoding="UTF-8"?>
 class TestOds1(unittest.TestCase):
     def setUp(self):
         root = ET.fromstring(CONTENT_XML)
-        table = root.find("./office:body/office:spreadsheet/table:table",
-                          OFFICE_NS_DICT)
+        table = root.find(
+            "./office:body/office:spreadsheet/table:table", OFFICE_NS_DICT
+        )
         self.ods_rows = OdsRows(table)
 
     def test_list(self):
-        self.assertEqual([
-            ["A1:B1", "A1:B1", "C1", "D1"],
-            ["A2:A3", "B2:D3", "B2:D3", "B2:D3"],
-            ["", "", "", "", "E3"],
-            ["A4", "B4", "C4", "D4"],
-            ["A5", "B5", "C5", "D5"],
-            ["A6", "B6", "C6", "D6"],
-        ], list(self.ods_rows))
+        self.assertEqual(
+            [
+                ["A1:B1", "A1:B1", "C1", "D1"],
+                ["A2:A3", "B2:D3", "B2:D3", "B2:D3"],
+                ["", "", "", "", "E3"],
+                ["A4", "B4", "C4", "D4"],
+                ["A5", "B5", "C5", "D5"],
+                ["A6", "B6", "C6", "D6"],
+            ],
+            list(self.ods_rows),
+        )
 
     def test_get_item1(self):
         self.assertEqual(["A2:A3", "B2:D3", "B2:D3", "B2:D3"], self.ods_rows[1])
@@ -275,14 +281,18 @@ class TestOds1(unittest.TestCase):
         self.assertEqual(["A6", "B6", "C6", "D6"], self.ods_rows[-1])
 
     def test_get_slice(self):
-        self.assertEqual([
-            ["A2:A3", "B2:D3", "B2:D3", "B2:D3"],
-            ["A4", "B4", "C4", "D4"],
-            ["A6", "B6", "C6", "D6"],
-        ], self.ods_rows[1::2])
+        self.assertEqual(
+            [
+                ["A2:A3", "B2:D3", "B2:D3", "B2:D3"],
+                ["A4", "B4", "C4", "D4"],
+                ["A6", "B6", "C6", "D6"],
+            ],
+            self.ods_rows[1::2],
+        )
 
     def test_active_table_name(self):
         import io
+
         settings = io.BytesIO(SETTINGS_XML.encode("utf-8"))
         self.assertEqual("Sheet2", _find_active_table_name(settings))
 
@@ -290,36 +300,52 @@ class TestOds1(unittest.TestCase):
 class TestOds2(unittest.TestCase):
     def setUp(self):
         root = ET.fromstring(CONTENT_XML2)
-        table = root.find("./office:body/office:spreadsheet/table:table",
-                          OFFICE_NS_DICT)
+        table = root.find(
+            "./office:body/office:spreadsheet/table:table", OFFICE_NS_DICT
+        )
         self.ods_rows = OdsRows(table)
 
     def test_list(self):
-        self.assertEqual([
-            ["A1:D4", "A1:D4", "A1:D4", "A1:D4", "E1"],
-            ["", "", "", "", "E2"],
-            ["", "", "", "", "E3"],
-            ["", "", "", "", "E4"],
-            ["A5", "B5", "C5", "D5", "E5"]
-        ], list(self.ods_rows))
+        self.assertEqual(
+            [
+                ["A1:D4", "A1:D4", "A1:D4", "A1:D4", "E1"],
+                ["", "", "", "", "E2"],
+                ["", "", "", "", "E3"],
+                ["", "", "", "", "E4"],
+                ["A5", "B5", "C5", "D5", "E5"],
+            ],
+            list(self.ods_rows),
+        )
 
 
 class TestOds3(unittest.TestCase):
     def setUp(self):
         root = ET.fromstring(CONTENT_XML3)
-        table = root.find("./office:body/office:spreadsheet/table:table",
-                          OFFICE_NS_DICT)
+        table = root.find(
+            "./office:body/office:spreadsheet/table:table", OFFICE_NS_DICT
+        )
         self.ods_rows = OdsRows(table)
 
     def test_list(self):
-        self.assertEqual([
-            ['A1:D2', 'A1:D2', 'A1:D2', 'A1:D2',
-             'E1:E3',
-             'F1:I2', 'F1:I2', 'F1:I2', 'F1:I2'],
-            [],
-            ['A3', 'B3', 'C3', 'D3', '', 'F3', 'G3', 'H3', 'I3']
-        ], list(self.ods_rows))
+        self.assertEqual(
+            [
+                [
+                    "A1:D2",
+                    "A1:D2",
+                    "A1:D2",
+                    "A1:D2",
+                    "E1:E3",
+                    "F1:I2",
+                    "F1:I2",
+                    "F1:I2",
+                    "F1:I2",
+                ],
+                [],
+                ["A3", "B3", "C3", "D3", "", "F3", "G3", "H3", "I3"],
+            ],
+            list(self.ods_rows),
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

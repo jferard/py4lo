@@ -29,17 +29,27 @@ from core.source_dest import _get_paths
 class TestProperties(unittest.TestCase):
     @mock.patch("core.properties.load_toml", autospec=True)
     def test_provider_factory(self, toml_mock):
-        toml_mock.return_value = {"a": 1, "log_level": -1,
-                                  "src": {"source_ods_file": "s.ods",
-                                          "inc_dir": "inc", "lib_dir": "lib",
-                                          "src_dir": "src", "src_ignore": "",
-                                          "opt_dir": "opt",
-                                          "assets_dir": "assets",
-                                          "assets_ignore": "",
-                                          "test_dir": "test"},
-                                  "dest": {"suffix": "ok", "temp_dir": "temp",
-                                           "dest_dir": "dest",
-                                           "assets_dest_dir": "Assets"}}
+        toml_mock.return_value = {
+            "a": 1,
+            "log_level": -1,
+            "src": {
+                "source_ods_file": "s.ods",
+                "inc_dir": "inc",
+                "lib_dir": "lib",
+                "src_dir": "src",
+                "src_ignore": "",
+                "opt_dir": "opt",
+                "assets_dir": "assets",
+                "assets_ignore": "",
+                "test_dir": "test",
+            },
+            "dest": {
+                "suffix": "ok",
+                "temp_dir": "temp",
+                "dest_dir": "dest",
+                "assets_dest_dir": "Assets",
+            },
+        }
         p = PropertiesProviderFactory().create()
 
         self.assertEqual({"a", "log_level", "src", "dest"}, p.keys())
@@ -49,12 +59,13 @@ class TestProperties(unittest.TestCase):
         logger = logging.getLogger()
         sources = mock.Mock(get_src_paths=lambda: Path("src"))
         destinations = mock.Mock()
-        provider = PropertiesProvider(logger, Path("base"), sources,
-                                      destinations, {'a': 1})
+        provider = PropertiesProvider(
+            logger, Path("base"), sources, destinations, {"a": 1}
+        )
         self.assertEqual(logger, provider.get_logger())
-        self.assertEqual(1, provider.get('a'))
-        self.assertEqual(None, provider.get('b'))
-        self.assertEqual(10, provider.get('b', 10))
+        self.assertEqual(1, provider.get("a"))
+        self.assertEqual(None, provider.get("b"))
+        self.assertEqual(10, provider.get("b", 10))
         self.assertEqual(Path("base"), provider.get_base_path())
         self.assertEqual(sources, provider.get_sources())
         self.assertEqual(Path("src"), provider.get_src_paths())
@@ -63,35 +74,44 @@ class TestProperties(unittest.TestCase):
 
     def test_readme(self):
         logger = logging.getLogger()
-        sources = mock.Mock(get_assets_paths=lambda: Path("assets"),
-                       get_src_paths=lambda: Path("src"))
+        sources = mock.Mock(
+            get_assets_paths=lambda: Path("assets"), get_src_paths=lambda: Path("src")
+        )
         destinations = mock.Mock()
         self.maxDiff = None
-        provider = PropertiesProvider(logger, Path("."), sources,
-                                      destinations, {'add_readme': True})
+        provider = PropertiesProvider(
+            logger, Path("."), sources, destinations, {"add_readme": True}
+        )
         f = io.BytesIO()
         with ZipFile(f, "w") as zout:
             provider.get_readme_callback().call(zout)
         with ZipFile(f) as zin:
-            self.assertEqual(['Basic/script-lc.xml',
-                              'Basic/Standard/script-lb.xml',
-                              'Basic/Standard/py4lo.xml'], zin.namelist())
+            self.assertEqual(
+                [
+                    "Basic/script-lc.xml",
+                    "Basic/Standard/script-lb.xml",
+                    "Basic/Standard/py4lo.xml",
+                ],
+                zin.namelist(),
+            )
 
     def test_get_paths(self):
         source_dir: Path = mock.Mock()
         path_a: Path = mock.Mock()
         path_b: Path = mock.Mock()
 
-        source_dir.rglob.side_effect = [[path_a, path_b, Path("./text_range")],
-                                        [Path("text_range")]]
+        source_dir.rglob.side_effect = [
+            [path_a, path_b, Path("./text_range")],
+            [Path("text_range")],
+        ]
         path_a.is_file.return_value = True
         path_b.is_file.return_value = False
 
-        self.assertEqual({path_a},
-                         _get_paths(source_dir, ["text_range"], "*"))
-        self.assertEqual([mock.call.rglob('*'), mock.call.rglob('text_range')],
-                         source_dir.mock_calls)
+        self.assertEqual({path_a}, _get_paths(source_dir, ["text_range"], "*"))
+        self.assertEqual(
+            [mock.call.rglob("*"), mock.call.rglob("text_range")], source_dir.mock_calls
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

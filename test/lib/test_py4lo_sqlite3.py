@@ -6,8 +6,12 @@ from datetime import datetime
 from pathlib import Path
 
 from py4lo_sqlite3 import (
-    sqlite_open, SQLiteError, TransactionMode, SQLITE_BUSY, SQLITE_ERROR,
-    SQLITE_CONSTRAINT
+    sqlite_open,
+    SQLiteError,
+    TransactionMode,
+    SQLITE_BUSY,
+    SQLITE_ERROR,
+    SQLITE_CONSTRAINT,
 )
 
 
@@ -35,11 +39,14 @@ class Sqlite3TestCase(unittest.TestCase):
             data = [
                 (
                     random.randint(0, 100),
-                    "".join(random.choice(string.ascii_letters) for _ in
-                            range(random.randrange(10, 200))),
+                    "".join(
+                        random.choice(string.ascii_letters)
+                        for _ in range(random.randrange(10, 200))
+                    ),
                     random.random() * 100,
-                    randbytes(n)
-                ) for _ in range(10000)
+                    randbytes(n),
+                )
+                for _ in range(10000)
             ]
 
             t2 = datetime.now()
@@ -47,8 +54,12 @@ class Sqlite3TestCase(unittest.TestCase):
             t1 = t2
 
             print("-> create table")
-            self.assertEqual(0, db.execute_update(
-                "CREATE TABLE t(a INTEGER, b TEXT, text_range REAL, e BLOB)"))
+            self.assertEqual(
+                0,
+                db.execute_update(
+                    "CREATE TABLE t(a INTEGER, b TEXT, text_range REAL, e BLOB)"
+                ),
+            )
 
             t2 = datetime.now()
             print(t2 - t1)
@@ -104,20 +115,23 @@ class Sqlite3TestCase(unittest.TestCase):
         with sqlite_open(self._path, "crw") as db:
             db.execute_update("CREATE TABLE t(x INTEGER)")
 
-        with sqlite_open(self._path, "rw") as db, sqlite_open(self._path,
-                                                              "rw") as db2:
+        with sqlite_open(self._path, "rw") as db, sqlite_open(self._path, "rw") as db2:
             with db.transaction(TransactionMode.IMMEDIATE):
                 try:
                     with db2.transaction(TransactionMode.IMMEDIATE):
                         pass
                 except SQLiteError as exc:
                     self.assertEqual(SQLITE_BUSY, exc.result_code)
-                    self.assertEqual('database is locked', exc.msg)
+                    self.assertEqual("database is locked", exc.msg)
 
     def test_bindings(self):
         with sqlite_open(self._path, "crw") as db:
-            self.assertEqual(0, db.execute_update(
-                "CREATE TABLE t(a INTEGER, b TEXT, text_range REAL, e BLOB) STRICT"))
+            self.assertEqual(
+                0,
+                db.execute_update(
+                    "CREATE TABLE t(a INTEGER, b TEXT, text_range REAL, e BLOB) STRICT"
+                ),
+            )
             with self.assertRaises(SQLiteError) as cm:
                 with db.prepare("INSERT INTO t VALUES(?, ?, ?, ?)") as stmt:
                     with self.assertRaises(ctypes.ArgumentError):
@@ -129,15 +143,21 @@ class Sqlite3TestCase(unittest.TestCase):
                 exc = cm.exception
                 self.assertEqual(SQLITE_CONSTRAINT, exc.result_code)
                 self.assertEqual(
-                    'cannot store TEXT value in INTEGER column t.a', exc.msg)
+                    "cannot store TEXT value in INTEGER column t.a", exc.msg
+                )
 
     def test_index(self):
         with sqlite_open(self._path, "crw") as db:
-            self.assertEqual(0, db.execute_update(
-                "CREATE TABLE t(a INTEGER, b TEXT, text_range REAL, e BLOB) STRICT"))
-            self.assertEqual(0, db.execute_update(
-                "CREATE UNIQUE INDEX `id_UNIQUE` ON `t` (`a` ASC)"))
+            self.assertEqual(
+                0,
+                db.execute_update(
+                    "CREATE TABLE t(a INTEGER, b TEXT, text_range REAL, e BLOB) STRICT"
+                ),
+            )
+            self.assertEqual(
+                0, db.execute_update("CREATE UNIQUE INDEX `id_UNIQUE` ON `t` (`a` ASC)")
+            )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

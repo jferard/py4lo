@@ -26,13 +26,12 @@ from directives.include import Include
 from directives.entry import Entry
 
 GET_DIRECTIVE = "@"
-U = TypeVar('U', bound=Directive)
+U = TypeVar("U", bound=Directive)
 DirectiveTree = Dict[str, Union["DirectiveTree", Directive]]
 
 
 class _DirectiveProviderFactory:
-    def __init__(self, logger: Logger,
-                 *directives: Directive):
+    def __init__(self, logger: Logger, *directives: Directive):
         self._logger = logger
         self._directives = directives
         self._directives_tree = cast(DirectiveTree, {})
@@ -52,8 +51,7 @@ class _DirectiveProviderFactory:
         self._logger.debug("Directives tree: %s", self._directives_tree)
         return DirectiveProvider(self._logger, self._directives_tree)
 
-    def _insert_directive_class(self, sig_elements: List[str],
-                                directive: Directive):
+    def _insert_directive_class(self, sig_elements: List[str], directive: Directive):
         cur_directives_tree = self._directives_tree
         for fst in sig_elements:
             if fst not in cur_directives_tree:
@@ -62,7 +60,6 @@ class _DirectiveProviderFactory:
             cur_directives_tree = next_tree
 
         cur_directives_tree.update({GET_DIRECTIVE: directive})
-
 
 
 class DirectiveProvider:
@@ -75,10 +72,12 @@ class DirectiveProvider:
     def create(logger: Logger, sources: Sources):
         entry = Entry(sources.inc_dir, sources.get_module_names())
         return _DirectiveProviderFactory(
-            logger, entry,
+            logger,
+            entry,
             Include(sources.inc_dir),
             EmbedLib(sources.lib_dir),
-            EmbedScript(sources.opt_dir)).create_provider()
+            EmbedScript(sources.opt_dir),
+        ).create_provider()
 
     def __init__(self, logger: Logger, directives_tree: DirectiveTree):
         self._logger = logger

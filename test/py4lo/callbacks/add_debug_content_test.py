@@ -34,7 +34,7 @@ class TestAddDebugContent(unittest.TestCase):
 
     def test_add_debug_content_empty(self):
         out = io.BytesIO()
-        zout = zipfile.ZipFile(out, 'w')
+        zout = zipfile.ZipFile(out, "w")
         AddDebugContent({}).call(zout)
         expected = self._expected(
             """<office:forms form:automatic-focus="false" form:apply-design-mode="false"></office:forms><table:shapes></table:shapes>"""  # noqa: E501
@@ -46,43 +46,42 @@ class TestAddDebugContent(unittest.TestCase):
 
     def test_add_debug_content_one_empty_script(self):
         out = io.BytesIO()
-        zout = zipfile.ZipFile(out, 'w')
+        zout = zipfile.ZipFile(out, "w")
         AddDebugContent({"s1": []}).call(zout)
         expected = self._expected(
-            '<office:forms form:automatic-focus="false" form:apply-design-mode="false"></office:forms><table:shapes></table:shapes>' # noqa: E501
+            '<office:forms form:automatic-focus="false" form:apply-design-mode="false"></office:forms><table:shapes></table:shapes>'  # noqa: E501
         )
         self.assertEqual(expected, zout.read("content.xml").decode("utf-8"))
 
     def test_add_debug_content_two_empty_scripts(self):
         out = io.BytesIO()
-        zout = zipfile.ZipFile(out, 'w')
+        zout = zipfile.ZipFile(out, "w")
         AddDebugContent({"s1": [], "s2": []}).call(zout)
         expected = self._expected(
-            '<office:forms form:automatic-focus="false" form:apply-design-mode="false"></office:forms><table:shapes></table:shapes>' # noqa: E501
+            '<office:forms form:automatic-focus="false" form:apply-design-mode="false"></office:forms><table:shapes></table:shapes>'  # noqa: E501
         )
-        self.assertEqual(
-            expected, zout.read("content.xml").decode("utf-8"))
+        self.assertEqual(expected, zout.read("content.xml").decode("utf-8"))
 
     def test_add_debug_content_one_scripts_one_func(self):
         out = io.BytesIO()
-        zout = zipfile.ZipFile(out, 'w')
+        zout = zipfile.ZipFile(out, "w")
         AddDebugContent({"s1": ["f1"]}).call(zout)
         expected = self._expected(
-            '<office:forms form:automatic-focus="false" form:apply-design-mode="false"><form:form form:name="Formulaire" form:apply-filter="true" form:command-type="table" form:control-implementation="ooo:com.sun.star.form.component.Form" office:target-frame="" xlink:href="" xlink:type="simple"><form:properties><form:property form:property-name="PropertyChangeNotificationEnabled" office:value-type="boolean" office:boolean-value="true"/></form:properties><form:button form:name="name0" form:control-implementation="ooo:com.sun.star.form.component.CommandButton" xml:id="control0" form:id="control0" form:label="f1" office:target-frame="" xlink:href="" form:image-data="" form:delay-for-repeat="PT0.050000000S" form:image-dest_position="center"><form:properties><form:property form:property-name="DefaultControl" office:value-type="string" office:string-value="com.sun.star.form.control.CommandButton"/></form:properties><office:event-listeners><script:event-listener script:language="ooo:script" script:event-name="form:performaction" xlink:href="vnd.sun.star.script:s1$f1?language=Python&amp;location=document" xlink:type="simple"/></office:event-listeners></form:button></form:form></office:forms><table:shapes><draw:control draw:z-index="0" draw:text-style-name="P1" svg:width="80mm" svg:height="10mm" svg:x="10mm" svg:y="10mm" draw:control="control0"/></table:shapes>' # noqa: E501
+            '<office:forms form:automatic-focus="false" form:apply-design-mode="false"><form:form form:name="Formulaire" form:apply-filter="true" form:command-type="table" form:control-implementation="ooo:com.sun.star.form.component.Form" office:target-frame="" xlink:href="" xlink:type="simple"><form:properties><form:property form:property-name="PropertyChangeNotificationEnabled" office:value-type="boolean" office:boolean-value="true"/></form:properties><form:button form:name="name0" form:control-implementation="ooo:com.sun.star.form.component.CommandButton" xml:id="control0" form:id="control0" form:label="f1" office:target-frame="" xlink:href="" form:image-data="" form:delay-for-repeat="PT0.050000000S" form:image-dest_position="center"><form:properties><form:property form:property-name="DefaultControl" office:value-type="string" office:string-value="com.sun.star.form.control.CommandButton"/></form:properties><office:event-listeners><script:event-listener script:language="ooo:script" script:event-name="form:performaction" xlink:href="vnd.sun.star.script:s1$f1?language=Python&amp;location=document" xlink:type="simple"/></office:event-listeners></form:button></form:form></office:forms><table:shapes><draw:control draw:z-index="0" draw:text-style-name="P1" svg:width="80mm" svg:height="10mm" svg:x="10mm" svg:y="10mm" draw:control="control0"/></table:shapes>'  # noqa: E501
         )
-        self.assertEqual(
-            expected, zout.read("content.xml").decode("utf-8"))
+        self.assertEqual(expected, zout.read("content.xml").decode("utf-8"))
 
     def test_add_debug_content_many_scripts(self):
         out = io.BytesIO()
-        zout = zipfile.ZipFile(out, 'w')
+        zout = zipfile.ZipFile(out, "w")
         AddDebugContent({"s1": ["f11", "f12"], "s2": ["f21"]}).call(zout)
         self.assertEqual(
             self._expected(
                 """<office:forms form:automatic-focus="false" form:apply-design-mode="false"><form:form form:name="Formulaire" form:apply-filter="true" form:command-type="table" form:control-implementation="ooo:com.sun.star.form.component.Form" office:target-frame="" xlink:href="" xlink:type="simple"><form:properties><form:property form:property-name="PropertyChangeNotificationEnabled" office:value-type="boolean" office:boolean-value="true"/></form:properties><form:button form:name="name0" form:control-implementation="ooo:com.sun.star.form.component.CommandButton" xml:id="control0" form:id="control0" form:label="f11" office:target-frame="" xlink:href="" form:image-data="" form:delay-for-repeat="PT0.050000000S" form:image-dest_position="center"><form:properties><form:property form:property-name="DefaultControl" office:value-type="string" office:string-value="com.sun.star.form.control.CommandButton"/></form:properties><office:event-listeners><script:event-listener script:language="ooo:script" script:event-name="form:performaction" xlink:href="vnd.sun.star.script:s1$f11?language=Python&amp;location=document" xlink:type="simple"/></office:event-listeners></form:button></form:form><form:form form:name="Formulaire" form:apply-filter="true" form:command-type="table" form:control-implementation="ooo:com.sun.star.form.component.Form" office:target-frame="" xlink:href="" xlink:type="simple"><form:properties><form:property form:property-name="PropertyChangeNotificationEnabled" office:value-type="boolean" office:boolean-value="true"/></form:properties><form:button form:name="name1" form:control-implementation="ooo:com.sun.star.form.component.CommandButton" xml:id="control1" form:id="control1" form:label="f12" office:target-frame="" xlink:href="" form:image-data="" form:delay-for-repeat="PT0.050000000S" form:image-dest_position="center"><form:properties><form:property form:property-name="DefaultControl" office:value-type="string" office:string-value="com.sun.star.form.control.CommandButton"/></form:properties><office:event-listeners><script:event-listener script:language="ooo:script" script:event-name="form:performaction" xlink:href="vnd.sun.star.script:s1$f12?language=Python&amp;location=document" xlink:type="simple"/></office:event-listeners></form:button></form:form><form:form form:name="Formulaire" form:apply-filter="true" form:command-type="table" form:control-implementation="ooo:com.sun.star.form.component.Form" office:target-frame="" xlink:href="" xlink:type="simple"><form:properties><form:property form:property-name="PropertyChangeNotificationEnabled" office:value-type="boolean" office:boolean-value="true"/></form:properties><form:button form:name="name2" form:control-implementation="ooo:com.sun.star.form.component.CommandButton" xml:id="control2" form:id="control2" form:label="f21" office:target-frame="" xlink:href="" form:image-data="" form:delay-for-repeat="PT0.050000000S" form:image-dest_position="center"><form:properties><form:property form:property-name="DefaultControl" office:value-type="string" office:string-value="com.sun.star.form.control.CommandButton"/></form:properties><office:event-listeners><script:event-listener script:language="ooo:script" script:event-name="form:performaction" xlink:href="vnd.sun.star.script:s2$f21?language=Python&amp;location=document" xlink:type="simple"/></office:event-listeners></form:button></form:form></office:forms><table:shapes><draw:control draw:z-index="0" draw:text-style-name="P1" svg:width="80mm" svg:height="10mm" svg:x="10mm" svg:y="10mm" draw:control="control0"/><draw:control draw:z-index="0" draw:text-style-name="P1" svg:width="80mm" svg:height="10mm" svg:x="10mm" svg:y="25mm" draw:control="control1"/><draw:control draw:z-index="0" draw:text-style-name="P1" svg:width="80mm" svg:height="10mm" svg:x="10mm" svg:y="40mm" draw:control="control2"/></table:shapes>"""  # noqa: E501
             ),
-            zout.read("content.xml").decode("utf-8"))
+            zout.read("content.xml").decode("utf-8"),
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

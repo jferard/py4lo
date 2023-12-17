@@ -43,4 +43,5 @@ test: Do the test of the scripts to add to the spreadsheet
 run: Update + open the created file
 update: Update the file with all scripts
 help: help [command]: Specific help message about command""",
-                         commands.get_help_message())
+            commands.get_help_message(),
+        )

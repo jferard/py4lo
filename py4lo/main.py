@@ -26,13 +26,13 @@ from core.properties import PropertiesProviderFactory
 def get_args(argv: List[str] = sys.argv[1:]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Python for LibreOffice",
-        formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument("-t", "--toml", help="the toml file",
-                        default="py4lo.toml", type=str)
-    parser.add_argument("command",
-                        help=commands.get_help_message(), type=str)
-    parser.add_argument("parameter", nargs="*",
-                        help="command parameter")
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
+    parser.add_argument(
+        "-t", "--toml", help="the toml file", default="py4lo.toml", type=str
+    )
+    parser.add_argument("command", help=commands.get_help_message(), type=str)
+    parser.add_argument("parameter", nargs="*", help="command parameter")
     return parser.parse_args(argv)
 
 
@@ -44,8 +44,7 @@ def main(factory: PropertiesProviderFactory, argv: List[str] = sys.argv[1:]):
     logger.debug("Log Level is: %s", logger.getEffectiveLevel())
     logger.debug("Command line arguments are: %s", args)
 
-    command = commands.get(args.command, args.parameter,
-                           provider)
+    command = commands.get(args.command, args.parameter, provider)
     logger.debug("Command is %s", command)
 
     command.execute()

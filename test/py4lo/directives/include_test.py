@@ -36,18 +36,23 @@ class TestInclude(unittest.TestCase):
         d = Include(path)
         self.assertEqual(["include"], d.sig_elements())
         self.assertEqual(True, d.execute(None, proc, ["a.py"]))
-        self.assertEqual([mock.call.append(
-            '# begin py4lo include: [to inc]\nsome line\n# end py4lo include\n')],
-            proc.mock_calls)
+        self.assertEqual(
+            [
+                mock.call.append(
+                    "# begin py4lo include: [to inc]\nsome line\n# end py4lo include\n"
+                )
+            ],
+            proc.mock_calls,
+        )
 
-        verify_open_path(self, inc_path, 'r', encoding="utf-8")
+        verify_open_path(self, inc_path, "r", encoding="utf-8")
 
     def test_with_strip(self):
         proc = mock.Mock()
         path = mock.Mock()
         inc_path = file_path_mock(
             io.StringIO(
-                '"""docstring"""\n\'\'\'\nother docstring\'\'\'\n  #comment\nsome line'  # noqa: E501
+                "\"\"\"docstring\"\"\"\n'''\nother docstring'''\n  #comment\nsome line"  # noqa: E501
             )
         )
 
@@ -57,12 +62,17 @@ class TestInclude(unittest.TestCase):
         d = Include(path)
         self.assertEqual(["include"], d.sig_elements())
         self.assertEqual(True, d.execute(None, proc, ["a.py", "True"]))
-        self.assertEqual([mock.call.append(
-            '# begin py4lo include: [to inc]\nsome line\n# end py4lo include\n')],
-            proc.mock_calls)
+        self.assertEqual(
+            [
+                mock.call.append(
+                    "# begin py4lo include: [to inc]\nsome line\n# end py4lo include\n"
+                )
+            ],
+            proc.mock_calls,
+        )
 
-        verify_open_path(self, inc_path, 'r', encoding="utf-8")
+        verify_open_path(self, inc_path, "r", encoding="utf-8")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -21,15 +21,15 @@ import xml.etree.ElementTree as ET
 import zipfile
 from pathlib import Path
 
-from typing import (List, cast, Dict, Callable, IO, Iterator,
-                    Optional, Union)
+from typing import List, cast, Dict, Callable, IO, Iterator, Optional, Union
 
 ACTIVE_TABLE_XPATH = (
     "./office:settings"
     "/config:config-item-set[@config:name='ooo:view-settings']"
     "/config:config-item-map-indexed[@config:name='Views']"
     "/config:config-item-map-entry"
-    "/config:config-item[@config:name='ActiveTable']")
+    "/config:config-item[@config:name='ActiveTable']"
+)
 
 OFFICE_NS_DICT = {
     "office": "urn:oasis:names:tc:opendocument:xmlns:office:1.0",
@@ -52,8 +52,9 @@ class NameSpace:
     def attrib(self, attr: str) -> str:
         try:
             i = attr.index(":")
-            attr = "{{{}}}{}".format(self._ns_dict.get(attr[:i], attr[:i]),
-                                     attr[i + 1:])
+            attr = "{{{}}}{}".format(
+                self._ns_dict.get(attr[:i], attr[:i]), attr[i + 1 :]
+            )
         except ValueError:
             pass
 
@@ -72,15 +73,17 @@ class OdsTables:
     def create(fullpath: Union[str, Path], ns: NameSpace = OFFICE_NS):
         return OdsTablesBuilder(fullpath).ns(ns).build()
 
-    def __init__(self, root: ET.Element, sort_func: SortFunc,
-                 ns: NameSpace = OFFICE_NS):
+    def __init__(
+        self, root: ET.Element, sort_func: SortFunc, ns: NameSpace = OFFICE_NS
+    ):
         self._root = root
         self._sort_func = sort_func
         self._ns = ns
 
     def __iter__(self) -> Iterator[ET.Element]:
         tables = self._ns.findall(
-            self._root, "./office:body/office:spreadsheet/table:table")
+            self._root, "./office:body/office:spreadsheet/table:table"
+        )
         tables = self._sort_func(tables)
         for table in tables:
             yield table
@@ -99,15 +102,15 @@ class OdsTablesBuilder:
         self._ns = ns
         return self
 
-    def sort_func_creator(self, sort_func_creator: Callable[
-        [zipfile.ZipFile, NameSpace], SortFunc
-    ]):
+    def sort_func_creator(
+        self, sort_func_creator: Callable[[zipfile.ZipFile, NameSpace], SortFunc]
+    ):
         self._sort_func_creator = sort_func_creator
 
     def build(self) -> "OdsTables":
         with zipfile.ZipFile(self._fullpath) as z:
             sort_func = self._sort_func_creator(z, self._ns)
-            with z.open('content.xml') as content:
+            with z.open("content.xml") as content:
                 data = content.read().decode("utf-8")
                 root = ET.fromstring(data)
                 return OdsTables(root, sort_func, self._ns)
@@ -120,8 +123,7 @@ def dont_sort(*_args, **_kwargs) -> SortFunc:
     return sort_func
 
 
-def put_active_first(z: zipfile.ZipFile, ns: NameSpace = OFFICE_NS
-                     ) -> SortFunc:
+def put_active_first(z: zipfile.ZipFile, ns: NameSpace = OFFICE_NS) -> SortFunc:
     """
     :param z: the zip file
     :param ns: the name space
@@ -132,16 +134,17 @@ def put_active_first(z: zipfile.ZipFile, ns: NameSpace = OFFICE_NS
     def sort_func(tables: List[ET.Element]) -> List[ET.Element]:
         for i, table in enumerate(tables):
             if table.get(ns.attrib("table:name")) == active_table_name:
-                return [tables[i]] + tables[:i] + tables[i + 1:]
+                return [tables[i]] + tables[:i] + tables[i + 1 :]
 
         return tables
 
     return sort_func
 
 
-def _find_active_table_name_in_zip(z: zipfile.ZipFile,
-                                   ns: NameSpace = OFFICE_NS) -> str:
-    with z.open('settings.xml') as settings:
+def _find_active_table_name_in_zip(
+    z: zipfile.ZipFile, ns: NameSpace = OFFICE_NS
+) -> str:
+    with z.open("settings.xml") as settings:
         active_table_name = _find_active_table_name(settings, ns)
 
     return active_table_name
@@ -169,9 +172,11 @@ class OdsRows:
     """
 
     def __init__(
-            self, table: ET.Element,
-            omit: Optional[Callable[[ET.Element, NameSpace], bool]] = None,
-            ns: NameSpace = OFFICE_NS):
+        self,
+        table: ET.Element,
+        omit: Optional[Callable[[ET.Element, NameSpace], bool]] = None,
+        ns: NameSpace = OFFICE_NS,
+    ):
         self._table = table
         self._ns = ns
         self._omit = omit
@@ -181,9 +186,12 @@ class OdsRows:
             if self._omit is not None and self._omit(row, self._ns):
                 continue
 
-            count = int(row.get(self._ns.attrib("table:number-rows-repeated"),
-                                row.attrib.get(self._ns.attrib(
-                                    "table:number-rows-spanned"), "1")))
+            count = int(
+                row.get(
+                    self._ns.attrib("table:number-rows-repeated"),
+                    row.attrib.get(self._ns.attrib("table:number-rows-spanned"), "1"),
+                )
+            )
             cells = self._get_cells(row)
             for _ in range(count):
                 yield cells
@@ -199,8 +207,7 @@ class OdsRows:
             if e.tag not in (cell_tag, covered_cell_tag):
                 continue
 
-            v1 = '\n'.join(
-                p.text for p in self._ns.findall(e, "./text:p") if p.text)
+            v1 = "\n".join(p.text for p in self._ns.findall(e, "./text:p") if p.text)
             repeat_count = int(e.attrib.get(repeated_attr, "1"))
             if e.tag == cell_tag:
                 span_count = int(e.attrib.get(spanned_attr, "1"))
@@ -211,17 +218,18 @@ class OdsRows:
                 # other cells are empty cells (row-span).
                 if cells:
                     if repeat_count + 1 > span_count:
-                        cells.extend([''] * (repeat_count + 1 - span_count))
+                        cells.extend([""] * (repeat_count + 1 - span_count))
                     else:  # span_count >= repeat_count + 1
                         span_count -= repeat_count  # span_count >= 1
                 else:  # beginning of line
-                    cells.extend([''] * repeat_count)
+                    cells.extend([""] * repeat_count)
 
         cells = self._trim_list(cells)
         return cells
 
-    def __getitem__(self, index: Union[int, slice]
-                    ) -> Union[List[str], List[List[str]]]:
+    def __getitem__(
+        self, index: Union[int, slice]
+    ) -> Union[List[str], List[List[str]]]:
         if isinstance(index, int):
             if index >= 0:
                 for i, row in enumerate(self):
@@ -233,8 +241,7 @@ class OdsRows:
                 return all_rows[index]
         elif isinstance(index, slice):
             # use itertools.islice to avoid a list creation
-            return list(
-                itertools.islice(self, index.start, index.stop, index.step))
+            return list(itertools.islice(self, index.start, index.stop, index.step))
         else:
             raise TypeError("index must be int or slice")
 
@@ -243,7 +250,7 @@ class OdsRows:
             return lis
         for i in range(len(lis) - 1, -1, -1):
             if len(lis[i]):
-                return lis[:i + 1]
+                return lis[: i + 1]
         return []
 
 

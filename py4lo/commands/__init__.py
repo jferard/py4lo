@@ -30,22 +30,24 @@ class Commands:
         # assert "help" in command_factory_by_name
         self._command_factory_by_name = command_factory_by_name
 
-    def get(self, command_name: str, args: List[str],
-            provider: PropertiesProvider) -> CommandExecutor:
+    def get(
+        self, command_name: str, args: List[str], provider: PropertiesProvider
+    ) -> CommandExecutor:
         try:
             command = self._command_factory_by_name[command_name]
         except KeyError:
             logger = provider.get_logger()
             logger.warning(
                 "Command `%s` not found. Available commands are %s",
-                command_name, set(self._command_factory_by_name.keys()))
+                command_name,
+                set(self._command_factory_by_name.keys()),
+            )
             command = self._command_factory_by_name["help"]
 
         return command.create_executor(args, provider)
 
     def get_help_message(self):
-        lines = [
-            "a command = {}".format(" | ".join(self._command_factory_by_name))]
+        lines = ["a command = {}".format(" | ".join(self._command_factory_by_name))]
         for name, cf in self._command_factory_by_name.items():
             lines.append("{}: {}".format(name, cf.get_help()))
         return "\n".join(lines)
@@ -53,6 +55,6 @@ class Commands:
 
 cf_by_name = real_command_factory_by_name.copy()
 # add help now
-cf_by_name['help'] = cast(Command, HelpCommand)
+cf_by_name["help"] = cast(Command, HelpCommand)
 
 commands = Commands(cf_by_name)

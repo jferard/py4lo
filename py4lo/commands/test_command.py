@@ -34,13 +34,12 @@ class TestCommand(Command):
     __test__ = False
 
     @staticmethod
-    def create_executor(_args, provider: PropertiesProvider
-                        ) -> CommandExecutor:
+    def create_executor(_args, provider: PropertiesProvider) -> CommandExecutor:
         python_exe = provider.get("python_exe")
         logger = provider.get_logger()
-        return CommandExecutor(logger,
-                               TestCommand(logger, python_exe,
-                                           provider.get_sources()))
+        return CommandExecutor(
+            logger, TestCommand(logger, python_exe, provider.get_sources())
+        )
 
     def __init__(self, logger: Logger, python_exe: str, sources: Sources):
         self._logger = logger
@@ -50,42 +49,57 @@ class TestCommand(Command):
 
     def execute(self):
         final_status = self._execute_all_tests(
-            self._src_paths(), self._execute_doctests)
-        final_status = self._execute_all_tests(
-            self._test_paths(), self._execute_unittests) or final_status
-        return final_status,
+            self._src_paths(), self._execute_doctests
+        )
+        final_status = (
+            self._execute_all_tests(self._test_paths(), self._execute_unittests)
+            or final_status
+        )
+        return (final_status,)
 
-    def _execute_all_tests(self, paths: Iterator[Path],
-                           execute_tests: Callable[
-                               [Path], subprocess.CompletedProcess]) -> int:
+    def _execute_all_tests(
+        self,
+        paths: Iterator[Path],
+        execute_tests: Callable[[Path], subprocess.CompletedProcess],
+    ) -> int:
         final_status = 0
         for path in paths:
             completed_process = execute_tests(path)
             status = completed_process.returncode
             if completed_process.stdout:
-                self._logger.info("output: {0}".format(
-                    completed_process.stdout.decode('iso-8859-1')))
+                self._logger.info(
+                    "output: {0}".format(completed_process.stdout.decode("iso-8859-1"))
+                )
             if status != 0:
                 if completed_process.stderr:
-                    self._logger.error("error: {0}".format(
-                        completed_process.stderr.decode('iso-8859-1')))
+                    self._logger.error(
+                        "error: {0}".format(
+                            completed_process.stderr.decode("iso-8859-1")
+                        )
+                    )
                 final_status = 1
 
         return final_status
 
     def _execute_unittests(self, path: Path) -> subprocess.CompletedProcess:
-        cmd = "\"{}\" {}".format(self._python_exe, path)
+        cmd = '"{}" {}'.format(self._python_exe, path)
         self._logger.info("execute unittests: {0}".format(cmd))
-        return subprocess.run([self._python_exe, str(path)],
-                              stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                              env=self._get_env())
+        return subprocess.run(
+            [self._python_exe, str(path)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=self._get_env(),
+        )
 
     def _execute_doctests(self, path: Path) -> subprocess.CompletedProcess:
-        cmd = "\"{}\" -m doctest {}".format(self._python_exe, path)
+        cmd = '"{}" -m doctest {}'.format(self._python_exe, path)
         self._logger.info("execute doctests: %s", cmd)
-        return subprocess.run([self._python_exe, "-m", "doctest", str(path)],
-                              stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                              env=self._get_env())
+        return subprocess.run(
+            [self._python_exe, "-m", "doctest", str(path)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=self._get_env(),
+        )
 
     def _test_paths(self) -> Iterator[Path]:
         for path in self._sources.test_dir.rglob("*.py"):
@@ -100,9 +114,13 @@ class TestCommand(Command):
     def _get_env(self) -> Dict[str, str]:
         if self._env is None:
             env = dict(os.environ)
-            src_lib = [str(self._sources.src_dir), str(self._sources.test_dir),
-                       str(self._sources.opt_dir),
-                       str(self._sources.lib_dir), str(self._sources.inc_dir)]
+            src_lib = [
+                str(self._sources.src_dir),
+                str(self._sources.test_dir),
+                str(self._sources.opt_dir),
+                str(self._sources.lib_dir),
+                str(self._sources.inc_dir),
+            ]
             env["PYTHONPATH"] = os.pathsep.join(src_lib + sys.path)
             self._env = env
             self._logger.debug("PYTHONPATH = %s", env["PYTHONPATH"])

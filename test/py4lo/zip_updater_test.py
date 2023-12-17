@@ -25,7 +25,7 @@ from zip_updater import ZipUpdaterBuilder
 
 
 class TestZipUpdater(unittest.TestCase):
-    @mock.patch('zip_updater.ZipFile', autospec=True)
+    @mock.patch("zip_updater.ZipFile", autospec=True)
     def test(self, zf):
         logger: Logger = mock.Mock()
         zub = ZipUpdaterBuilder(logger)
@@ -66,11 +66,11 @@ class TestZipUpdater(unittest.TestCase):
         p.assert_called_once_with("a")
         b1.call.assert_called_once_with(zout)
         b2.call.assert_called_once_with(zout)
-        self.assertEqual([
-            mock.call(zin, zout, 1), mock.call(zin, zout, 2)],
-            i1.call.mock_calls)
-        self.assertEqual([
-            mock.call(zin, zout, 1), mock.call(zin, zout, 2)],
-            i2.call.mock_calls)
+        self.assertEqual(
+            [mock.call(zin, zout, 1), mock.call(zin, zout, 2)], i1.call.mock_calls
+        )
+        self.assertEqual(
+            [mock.call(zin, zout, 1), mock.call(zin, zout, 2)], i2.call.mock_calls
+        )
         a1.call.assert_called_once_with(zout)
         a2.call.assert_called_once_with(zout)

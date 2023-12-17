@@ -25,21 +25,23 @@ from tools import open_with_calc, nested_merge
 
 
 class TestTools(unittest.TestCase):
-    @mock.patch('subprocess.call', spec=subprocess.call)
+    @mock.patch("subprocess.call", spec=subprocess.call)
     def test_open_with_calc(self, subprocess_call_mock):
         open_with_calc(Path("myfile.ods"), "mycalc.exe")
-        self.assertEqual([
-            mock.call(['mycalc.exe', 'myfile.ods'])],
-            subprocess_call_mock.mock_calls)
+        self.assertEqual(
+            [mock.call(["mycalc.exe", "myfile.ods"])], subprocess_call_mock.mock_calls
+        )
 
     def test_merge(self):
         for expected, d1, d2, func in [
-            ({'a': 4}, {'a': 1}, {'a': 2}, lambda x: x * 2),
-            ({'a': 1, 'b': 4}, {'a': 1}, {'b': 2}, lambda x: x * 2),
-            ({'a': 1, 'b': [4, 6, 8]}, {'a': 1}, {'b': [2, 3, 4]},
-             lambda x: x * 2),
-            ({'a': {'b': [2, 4, 6, 8]}}, {'a': {'b': [1]}},
-             {'a': {'b': [2, 3, 4]}},
-             lambda x: x * 2)
+            ({"a": 4}, {"a": 1}, {"a": 2}, lambda x: x * 2),
+            ({"a": 1, "b": 4}, {"a": 1}, {"b": 2}, lambda x: x * 2),
+            ({"a": 1, "b": [4, 6, 8]}, {"a": 1}, {"b": [2, 3, 4]}, lambda x: x * 2),
+            (
+                {"a": {"b": [2, 4, 6, 8]}},
+                {"a": {"b": [1]}},
+                {"a": {"b": [2, 3, 4]}},
+                lambda x: x * 2,
+            ),
         ]:
             self.assertEqual(expected, nested_merge(d1, d2, func))

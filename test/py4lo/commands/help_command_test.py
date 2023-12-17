@@ -32,25 +32,23 @@ class TestHelpCommand(unittest.TestCase):
         h = HelpCommand.create_executor([], self.provider)
         h.execute()
         self.assertEqual(
-            [
-                mock.call('help [command]: Specific help message about command')
-            ],
-            print_mock.mock_calls)
+            [mock.call("help [command]: Specific help message about command")],
+            print_mock.mock_calls,
+        )
 
     @mock.patch("__main__.__builtins__.print", autospec=True)
     def test_with_command(self, print_mock):
         h = HelpCommand.create_executor(["run"], self.provider)
         h.execute()
         self.assertEqual(
-            [mock.call('Update + open the created file')],
-            print_mock.mock_calls)
+            [mock.call("Update + open the created file")], print_mock.mock_calls
+        )
 
     @mock.patch("__main__.__builtins__.print", autospec=True)
     def test_with_grabage(self, print_mock):
         h = HelpCommand.create_executor(["a", "b", "text_range"], self.provider)
         h.execute()
         self.assertEqual(
-            [
-                mock.call('help [command]: Specific help message about command')
-            ],
-            print_mock.mock_calls)
+            [mock.call("help [command]: Specific help message about command")],
+            print_mock.mock_calls,
+        )

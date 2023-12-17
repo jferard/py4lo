@@ -47,11 +47,16 @@ class Entry(Directive):
         self._include_directive = Include(inc_dir)
         self._module_names = module_names
 
-    def execute(self, _processor: Any,  # "DirectiveProcessor"
-                line_processor: Any,  # "DirectiveLineProcessor"
-                args):
+    def execute(
+        self,
+        _processor: Any,  # "DirectiveProcessor"
+        line_processor: Any,  # "DirectiveLineProcessor"
+        args,
+    ):
         execute = self._include_directive.execute(
-            _processor, line_processor, ["py4lo_import.py", "True"])
+            _processor, line_processor, ["py4lo_import.py", "True"]
+        )
         line_processor.append(
-            UNLOAD_MODULES_FORMAT.format(self._module_names | LIB_SET))
+            UNLOAD_MODULES_FORMAT.format(self._module_names | LIB_SET)
+        )
         return execute

@@ -39,5 +39,4 @@ class AddAssetsTest(unittest.TestCase):
         cb = AddAssets([asset])
         cb.call(zout)
 
-        self.assertEqual([mock.call.writestr('asset', b'')],
-                         zout.mock_calls)
+        self.assertEqual([mock.call.writestr("asset", b"")], zout.mock_calls)

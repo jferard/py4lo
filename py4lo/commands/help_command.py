@@ -45,9 +45,10 @@ class HelpCommand(Command):
             command_name = args[0]
         else:
             command_name = None
-        return CommandExecutor(provider.get_logger(),
-                               HelpCommand(real_command_factory_by_name,
-                                           command_name))
+        return CommandExecutor(
+            provider.get_logger(),
+            HelpCommand(real_command_factory_by_name, command_name),
+        )
 
     def __init__(self, command_factory_by_name, command_name=None):
         self._command_factory_by_name = command_factory_by_name
@@ -56,8 +57,7 @@ class HelpCommand(Command):
     def execute(self, *_args: Any) -> Tuple[Any, ...]:
         if self._command_name:
             try:
-                msg = self._command_factory_by_name[
-                    self._command_name].get_help()
+                msg = self._command_factory_by_name[self._command_name].get_help()
             except KeyError:
                 msg = self.get_help()
         else:

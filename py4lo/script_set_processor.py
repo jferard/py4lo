@@ -33,9 +33,14 @@ class ScriptSetProcessor:
     the target scripts to a target dir
     """
 
-    def __init__(self, logger: logging.Logger, target_dir: Path,
-                 python_version: str, directive_provider: DirectiveProvider,
-                 source_scripts: Sequence[SourceScript]):
+    def __init__(
+        self,
+        logger: logging.Logger,
+        target_dir: Path,
+        python_version: str,
+        directive_provider: DirectiveProvider,
+        source_scripts: Sequence[SourceScript],
+    ):
         self._logger = logger
         self._target_dir = target_dir
         self._python_version = python_version
@@ -68,17 +73,16 @@ class ScriptSetProcessor:
 
     def _process_script(self, source_script: SourceScript):
         directive_processor = DirectiveProcessor.create(
-            self, self._directive_provider, self._python_version,
-            source_script)
-        script_processor = ScriptProcessor(self._logger, directive_processor,
-                                           source_script,
-                                           self._target_dir)
+            self, self._directive_provider, self._python_version, source_script
+        )
+        script_processor = ScriptProcessor(
+            self._logger, directive_processor, source_script, self._target_dir
+        )
         temp_script = script_processor.parse_script()
         self.add_script(temp_script)
 
     def _raise_exceptions(self):
-        es = [script.exception for script in self._scripts if
-              script.exception]
+        es = [script.exception for script in self._scripts if script.exception]
         if not es:
             return
 
@@ -97,10 +101,10 @@ class ScriptSetProcessor:
 
     def _write_script(self, script: TempScript):
         self._ensure_dir_exists(script)
-        self._logger.debug("Writing temp script: %s (%s)",
-                           script.relative_path,
-                           script.script_path)
-        with script.script_path.open('wb') as f:
+        self._logger.debug(
+            "Writing temp script: %s (%s)", script.relative_path, script.script_path
+        )
+        with script.script_path.open("wb") as f:
             f.write(script.script_content)
 
     def _ensure_dir_exists(self, script: TempScript):
@@ -112,35 +116,47 @@ class ScriptSetProcessor:
 class ScriptProcessor:
     """A script processor"""
 
-    def __init__(self, logger: logging.Logger,
-                 directive_processor: DirectiveProcessor,
-                 source_script: SourceScript, target_dir: Path):
+    def __init__(
+        self,
+        logger: logging.Logger,
+        directive_processor: DirectiveProcessor,
+        source_script: SourceScript,
+        target_dir: Path,
+    ):
         self._logger = logger
         self._directive_processor = directive_processor
         self._source_script = source_script
         self._target_dir = target_dir
 
     def parse_script(self) -> TempScript:
-        self._logger.debug("Parsing script: %s (%s)",
-                           self._source_script.relative_path,
-                           self._source_script)
+        self._logger.debug(
+            "Parsing script: %s (%s)",
+            self._source_script.relative_path,
+            self._source_script,
+        )
         exception = self._get_exception()
-        parser = _ContentParser(self._logger, self._directive_processor,
-                                self._source_script.script_path)
+        parser = _ContentParser(
+            self._logger, self._directive_processor, self._source_script.script_path
+        )
         parsed_content = parser.parse(self._source_script.export_funcs)
-        target_path = self._target_dir.joinpath(
-            self._source_script.relative_path)
-        script = TempScript(target_path, parsed_content.text.encode("utf-8"),
-                            self._target_dir,
-                            parsed_content.exported_func_names, exception)
-        self._logger.debug("Temp output script is: %s (%s)",
-                           script.script_path, script.exported_func_names)
+        target_path = self._target_dir.joinpath(self._source_script.relative_path)
+        script = TempScript(
+            target_path,
+            parsed_content.text.encode("utf-8"),
+            self._target_dir,
+            parsed_content.exported_func_names,
+            exception,
+        )
+        self._logger.debug(
+            "Temp output script is: %s (%s)",
+            script.script_path,
+            script.exported_func_names,
+        )
         return script
 
     def _get_exception(self) -> Optional[Exception]:
         try:
-            py_compile.compile(str(self._source_script.script_path),
-                               doraise=True)
+            py_compile.compile(str(self._source_script.script_path), doraise=True)
         except Exception as e:
             return e
         else:
@@ -152,9 +168,12 @@ class _ContentParser:
 
     _PATTERN = re.compile("^def\\s+([^_].*?)\\(.*\\):.*$")
 
-    def __init__(self, logger: logging.Logger,
-                 directive_processor: DirectiveProcessor,
-                 script_path: Path):
+    def __init__(
+        self,
+        logger: logging.Logger,
+        directive_processor: DirectiveProcessor,
+        script_path: Path,
+    ):
         self._logger = logger
         self._directive_processor = directive_processor
         self._script_path = script_path
@@ -166,7 +185,7 @@ class _ContentParser:
         if self._script:
             return self._script
 
-        with self._script_path.open('r', encoding="utf-8") as f:
+        with self._script_path.open("r", encoding="utf-8") as f:
             self._process_lines(f)
 
         self._directive_processor.end()
@@ -187,7 +206,7 @@ class _ContentParser:
             raise e
 
     def _process_line(self, line: str):
-        if line and line[0] == '#':
+        if line and line[0] == "#":
             self._lines.extend(self._directive_processor.process_line(line))
         else:
             self._append_to_lines(line)
@@ -207,9 +226,12 @@ class _ContentParser:
 
     def _add_exported_func_names(self):
         if self._exported_func_names:
-            self._lines.extend([
-                "",
-                "",
-                "g_exportedScripts = ({},)".format(
-                    ", ".join(self._exported_func_names))
-            ])
+            self._lines.extend(
+                [
+                    "",
+                    "",
+                    "g_exportedScripts = ({},)".format(
+                        ", ".join(self._exported_func_names)
+                    ),
+                ]
+            )

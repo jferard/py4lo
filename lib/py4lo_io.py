@@ -20,18 +20,38 @@ import csv
 import encodings
 import locale
 import sys
-from datetime import (date, datetime, time)
+from datetime import date, datetime, time
 from enum import IntEnum, Enum
-from typing import (Any, Callable, List, Iterator, Optional, Mapping, Tuple,
-                    Iterable, cast)
+from typing import (
+    Any,
+    Callable,
+    List,
+    Iterator,
+    Optional,
+    Mapping,
+    Tuple,
+    Iterable,
+    cast,
+)
 
 # values of cell_typing
 from py4lo_commons import float_to_date, date_to_float, uno_path_to_url
-from py4lo_helper import (provider as pr, make_pvs, parent_doc, get_cell_type,
-                          get_used_range_address, Target,
-                          FrameSearchFlag)
-from py4lo_typing import (UnoCell, UnoSheet, UnoSpreadsheetDocument,
-                          StrPath, UnoNumberFormats)
+from py4lo_helper import (
+    provider as pr,
+    make_pvs,
+    parent_doc,
+    get_cell_type,
+    get_used_range_address,
+    Target,
+    FrameSearchFlag,
+)
+from py4lo_typing import (
+    UnoCell,
+    UnoSheet,
+    UnoSpreadsheetDocument,
+    StrPath,
+    UnoNumberFormats,
+)
 
 try:
     # noinspection PyUnresolvedReferences
@@ -39,10 +59,10 @@ try:
 
     class NumberFormat:
         # noinspection PyUnresolvedReferences
-        from com.sun.star.util.NumberFormat import (DATE, TIME, DATETIME,
-                                                    LOGICAL)
+        from com.sun.star.util.NumberFormat import DATE, TIME, DATETIME, LOGICAL
+
 except (ModuleNotFoundError, ImportError):
-    from mock_constants import (Locale, NumberFormat) # type:ignore[assignment]
+    from mock_constants import Locale, NumberFormat  # type:ignore[assignment]
 
 
 class CellTyping(Enum):
@@ -55,9 +75,11 @@ class CellTyping(Enum):
 # Reader #
 ##########
 
-def create_read_cell(cell_typing: CellTyping = CellTyping.Minimal,
-                     oFormats: Optional[UnoNumberFormats] = None
-                     ) -> Callable[[UnoCell], Any]:
+
+def create_read_cell(
+    cell_typing: CellTyping = CellTyping.Minimal,
+    oFormats: Optional[UnoNumberFormats] = None,
+) -> Callable[[UnoCell], Any]:
     """
     Create a function to read a cell
     @param cell_typing: one of `CellTyping.String` (return the String value),
@@ -83,11 +105,11 @@ def create_read_cell(cell_typing: CellTyping = CellTyping.Minimal,
         """
         cell_type = get_cell_type(oCell)
 
-        if cell_type == 'EMPTY':
+        if cell_type == "EMPTY":
             return None
-        elif cell_type == 'TEXT':
+        elif cell_type == "TEXT":
             return oCell.String
-        elif cell_type == 'VALUE':
+        elif cell_type == "VALUE":
             return oCell.Value
         else:
             raise ValueError()
@@ -100,17 +122,20 @@ def create_read_cell(cell_typing: CellTyping = CellTyping.Minimal,
         """
         cell_type = get_cell_type(oCell)
 
-        if cell_type == 'EMPTY':
+        if cell_type == "EMPTY":
             return None
-        elif cell_type == 'TEXT':
+        elif cell_type == "TEXT":
             return oCell.String
-        elif cell_type == 'VALUE':
+        elif cell_type == "VALUE":
             assert oFormats is not None
             key = oCell.NumberFormat
             cell_data_type = oFormats.getByKey(key).Type
             value = oCell.Value
-            if cell_data_type in {NumberFormat.DATE, NumberFormat.DATETIME,
-                                  NumberFormat.TIME}:
+            if cell_data_type in {
+                NumberFormat.DATE,
+                NumberFormat.DATETIME,
+                NumberFormat.TIME,
+            }:
                 return float_to_date(value)
             elif cell_data_type == NumberFormat.LOGICAL:
                 return bool(value)
@@ -136,10 +161,13 @@ class reader(Iterator[List[Any]]):
     A reader that returns rows as lists of values.
     """
 
-    def __init__(self, oSheet: UnoSheet,
-                 cell_typing: CellTyping = CellTyping.Minimal,
-                 oFormats: Optional[UnoNumberFormats] = None,
-                 read_cell: Optional[Callable[[UnoCell], Any]] = None):
+    def __init__(
+        self,
+        oSheet: UnoSheet,
+        cell_typing: CellTyping = CellTyping.Minimal,
+        oFormats: Optional[UnoNumberFormats] = None,
+        read_cell: Optional[Callable[[UnoCell], Any]] = None,
+    ):
         if read_cell is not None:
             self._read_cell = read_cell
         else:
@@ -159,15 +187,18 @@ class reader(Iterator[List[Any]]):
             raise StopIteration
 
         self.line_num += 1
-        row = [self._read_cell(self._oSheet.getCellByPosition(j, i))
-               for j in range(self._oRangeAddress.StartColumn,
-                              self._oRangeAddress.EndColumn + 1)]
+        row = [
+            self._read_cell(self._oSheet.getCellByPosition(j, i))
+            for j in range(
+                self._oRangeAddress.StartColumn, self._oRangeAddress.EndColumn + 1
+            )
+        ]
 
         # left strip the row
         i = len(row) - 1
         while row[i] is None and i > 0:
             i -= 1
-        return row[:i + 1]
+        return row[: i + 1]
 
 
 class dict_reader:
@@ -175,15 +206,21 @@ class dict_reader:
     A reader that returns rows as dicts.
     """
 
-    def __init__(self, oSheet: UnoSheet,
-                 fieldnames: Optional[Tuple[str, ...]] = None,
-                 restkey: Optional[str] = None,
-                 restval: Optional[Any] = None,
-                 cell_typing=CellTyping.Minimal, oFormats=None,
-                 read_cell=None):
+    def __init__(
+        self,
+        oSheet: UnoSheet,
+        fieldnames: Optional[Tuple[str, ...]] = None,
+        restkey: Optional[str] = None,
+        restval: Optional[Any] = None,
+        cell_typing=CellTyping.Minimal,
+        oFormats=None,
+        read_cell=None,
+    ):
         self._reader = reader(oSheet, cell_typing, oFormats, read_cell)
         if fieldnames is None:
-            self.fieldnames = tuple([v if isinstance(str, v) else "" for v in next(self._reader)])
+            self.fieldnames = tuple(
+                [v if isinstance(str, v) else "" for v in next(self._reader)]
+            )
         else:
             self.fieldnames = fieldnames
         self._width = len(self.fieldnames)
@@ -205,7 +242,7 @@ class dict_reader:
             return dict(zip(self.fieldnames, row))
         else:
             d = dict(zip(self.fieldnames, row))
-            d[self.restkey] = row[self._width:]
+            d[self.restkey] = row[self._width :]
             return d
 
     @property
@@ -216,8 +253,9 @@ class dict_reader:
 ##########
 # Writer #
 ##########
-def find_number_format_style(oFormats: UnoNumberFormats, format_id: NumberFormat,
-                             oLocale: Locale = Locale()) -> int:
+def find_number_format_style(
+    oFormats: UnoNumberFormats, format_id: NumberFormat, oLocale: Locale = Locale()
+) -> int:
     """
     @param oFormats: the formats
     @param format_id: a NumberFormat
@@ -227,9 +265,10 @@ def find_number_format_style(oFormats: UnoNumberFormats, format_id: NumberFormat
     return oFormats.getStandardFormat(format_id, oLocale)
 
 
-def create_write_cell(cell_typing: CellTyping = CellTyping.Minimal,
-                      oFormats: Optional[UnoNumberFormats] = None
-                      ) -> Callable[[UnoCell, Any], None]:
+def create_write_cell(
+    cell_typing: CellTyping = CellTyping.Minimal,
+    oFormats: Optional[UnoNumberFormats] = None,
+) -> Callable[[UnoCell, Any], None]:
     """
     Create a cell writer
     @param cell_typing: see `create_read_cell`
@@ -262,8 +301,9 @@ def create_write_cell(cell_typing: CellTyping = CellTyping.Minimal,
         else:
             oCell.Value = value
 
-    def create_write_cell_all(oFormats: UnoNumberFormats
-                              ) -> Callable[[UnoCell, Any], None]:
+    def create_write_cell_all(
+        oFormats: UnoNumberFormats,
+    ) -> Callable[[UnoCell, Any], None]:
         # todo: Add locale parameter
         date_id = find_number_format_style(oFormats, NumberFormat.DATE)
         datetime_id = find_number_format_style(oFormats, NumberFormat.DATETIME)
@@ -311,11 +351,14 @@ class writer:
     A writer that takes lists
     """
 
-    def __init__(self, oSheet: UnoSheet,
-                 cell_typing: CellTyping = CellTyping.Minimal,
-                 oFormats: Optional[UnoNumberFormats] = None,
-                 write_cell: Optional[Callable[[UnoCell, Any], None]] = None,
-                 initial_pos: Tuple[int, int] = (0, 0)):
+    def __init__(
+        self,
+        oSheet: UnoSheet,
+        cell_typing: CellTyping = CellTyping.Minimal,
+        oFormats: Optional[UnoNumberFormats] = None,
+        write_cell: Optional[Callable[[UnoCell, Any], None]] = None,
+        initial_pos: Tuple[int, int] = (0, 0),
+    ):
         self._oSheet = oSheet
         self._row, self._base_col = initial_pos
         if write_cell is not None:
@@ -341,11 +384,16 @@ class dict_writer:
     A writer that takes dicts
     """
 
-    def __init__(self, oSheet: UnoSheet, fieldnames: List[str],
-                 restval: str = '', extrasaction: str = 'raise',
-                 cell_typing: CellTyping = CellTyping.Minimal,
-                 oFormats: Optional[UnoNumberFormats] = None,
-                 write_cell: Optional[Callable[[UnoCell, Any], None]] = None):
+    def __init__(
+        self,
+        oSheet: UnoSheet,
+        fieldnames: List[str],
+        restval: str = "",
+        extrasaction: str = "raise",
+        cell_typing: CellTyping = CellTyping.Minimal,
+        oFormats: Optional[UnoNumberFormats] = None,
+        write_cell: Optional[Callable[[UnoCell, Any], None]] = None,
+    ):
         self.writer = writer(oSheet, cell_typing, oFormats, write_cell)
         self.fieldnames = fieldnames
         self._set_fieldnames = set(fieldnames)
@@ -356,7 +404,7 @@ class dict_writer:
         self.writer.writerow(self.fieldnames)
 
     def writerow(self, row: Mapping[str, Any]):
-        if self.extrasaction == 'raise' and set(row) - self._set_fieldnames:
+        if self.extrasaction == "raise" and set(row) - self._set_fieldnames:
             raise ValueError()
         flat_row = [row.get(name, self.restval) for name in self.fieldnames]
         self.writer.writerow(flat_row)
@@ -408,105 +456,105 @@ class Filter(str, Enum):
 # see https://api.libreoffice.org/docs/cpp/ref/a00391_source.html
 # (rtl/textenc.h)
 CHARSET_ID_BY_NAME = {
-    'unknown': 0,
-    'cp1252': 1,
-    'mac_roman': 2,
-    'cp437': 3,
-    'cp850': 4,
-    'cp860': 5,
-    'cp861': 6,
-    'cp863': 7,
-    'cp865': 8,
+    "unknown": 0,
+    "cp1252": 1,
+    "mac_roman": 2,
+    "cp437": 3,
+    "cp850": 4,
+    "cp860": 5,
+    "cp861": 6,
+    "cp863": 7,
+    "cp865": 8,
     sys.getdefaultencoding(): 9,
-    'symbol': 10,
-    'ascii': 11,
-    'iso8859_1': 12,
-    'iso8859_2': 13,
-    'iso8859_3': 14,
-    'iso8859_4': 15,
-    'iso8859_5': 16,
-    'iso8859_6': 17,
-    'iso8859_7': 18,
-    'iso8859_8': 19,
-    'iso8859_9': 20,
-    'iso8859_14': 21,
-    'iso8859_15': 22,
-    'cp737': 23,
-    'cp775': 24,
-    'cp852': 25,
-    'cp855': 26,
-    'cp857': 27,
-    'cp862': 28,
-    'cp864': 29,
-    'cp866': 30,
-    'cp869': 31,
-    'cp874': 32,
-    'cp1250': 33,
-    'cp1251': 34,
-    'cp1253': 35,
-    'cp1254': 36,
-    'cp1255': 37,
-    'cp1256': 38,
-    'cp1257': 39,
-    'cp1258': 40,
-    'mac_arabic': 41,
-    'mac_centeuro': 42,
-    'mac_croatian': 43,
-    'mac_cyrillic': 44,
-    'mac_devanagari': 45,
-    'mac_farsi': 46,
-    'mac_greek': 47,
-    'mac_gujarati': 48,
-    'mac_gurmukhi': 49,
-    'mac_hebrew': 50,
-    'mac_iceland': 51,
-    'mac_romanian': 52,
-    'mac_thai': 53,
-    'mac_turkish': 54,
-    'mac_ukrainian': 55,
-    'mac_chinsimp': 56,
-    'mac_chintrad': 57,
-    'mac_japanese': 58,
-    'mac_korean': 59,
-    'cp932': 60,
-    'cp936': 61,
-    'cp949': 62,
-    'cp950': 63,
-    'shift_jis': 64,
-    'gb2312': 65,
-    'gbt12345': 66,
-    'gbk': 67,
-    'big5': 68,
-    'euc_jp': 69,
-    'euc_cn': 70,
-    'euc_tw': 71,
-    'iso2022_jp': 72,
-    'iso2022_cn': 73,
-    'koi8_r': 74,
-    'utf_7': 75,
-    'utf_8': 76,
-    'iso8859_10': 77,
-    'iso8859_13': 78,
-    'euc_kr': 79,
-    'iso2022_kr': 80,
-    'jis_x_0201': 81,
-    'jis_x_0208': 82,
-    'jis_x_0212': 83,
-    'cp1361': 84,
-    'gb18030': 85,
-    'big5hkscs': 86,
-    'tis_620': 87,
-    'koi8_u': 88,
-    'iscii_devanagari': 89,
-    'java_utf8': 90,
-    'adobe_standard': 91,
-    'adobe_symbol': 92,
-    'ptcp154': 93,
-    'adobe_dingbats': 94,
-    'user_start': 32768,
-    'user_end': 61439,
-    'utf_32': 65534,
-    'utf_16': 65535,
+    "symbol": 10,
+    "ascii": 11,
+    "iso8859_1": 12,
+    "iso8859_2": 13,
+    "iso8859_3": 14,
+    "iso8859_4": 15,
+    "iso8859_5": 16,
+    "iso8859_6": 17,
+    "iso8859_7": 18,
+    "iso8859_8": 19,
+    "iso8859_9": 20,
+    "iso8859_14": 21,
+    "iso8859_15": 22,
+    "cp737": 23,
+    "cp775": 24,
+    "cp852": 25,
+    "cp855": 26,
+    "cp857": 27,
+    "cp862": 28,
+    "cp864": 29,
+    "cp866": 30,
+    "cp869": 31,
+    "cp874": 32,
+    "cp1250": 33,
+    "cp1251": 34,
+    "cp1253": 35,
+    "cp1254": 36,
+    "cp1255": 37,
+    "cp1256": 38,
+    "cp1257": 39,
+    "cp1258": 40,
+    "mac_arabic": 41,
+    "mac_centeuro": 42,
+    "mac_croatian": 43,
+    "mac_cyrillic": 44,
+    "mac_devanagari": 45,
+    "mac_farsi": 46,
+    "mac_greek": 47,
+    "mac_gujarati": 48,
+    "mac_gurmukhi": 49,
+    "mac_hebrew": 50,
+    "mac_iceland": 51,
+    "mac_romanian": 52,
+    "mac_thai": 53,
+    "mac_turkish": 54,
+    "mac_ukrainian": 55,
+    "mac_chinsimp": 56,
+    "mac_chintrad": 57,
+    "mac_japanese": 58,
+    "mac_korean": 59,
+    "cp932": 60,
+    "cp936": 61,
+    "cp949": 62,
+    "cp950": 63,
+    "shift_jis": 64,
+    "gb2312": 65,
+    "gbt12345": 66,
+    "gbk": 67,
+    "big5": 68,
+    "euc_jp": 69,
+    "euc_cn": 70,
+    "euc_tw": 71,
+    "iso2022_jp": 72,
+    "iso2022_cn": 73,
+    "koi8_r": 74,
+    "utf_7": 75,
+    "utf_8": 76,
+    "iso8859_10": 77,
+    "iso8859_13": 78,
+    "euc_kr": 79,
+    "iso2022_kr": 80,
+    "jis_x_0201": 81,
+    "jis_x_0208": 82,
+    "jis_x_0212": 83,
+    "cp1361": 84,
+    "gb18030": 85,
+    "big5hkscs": 86,
+    "tis_620": 87,
+    "koi8_u": 88,
+    "iscii_devanagari": 89,
+    "java_utf8": 90,
+    "adobe_standard": 91,
+    "adobe_symbol": 92,
+    "ptcp154": 93,
+    "adobe_dingbats": 94,
+    "user_start": 32768,
+    "user_end": 61439,
+    "utf_32": 65534,
+    "utf_16": 65535,
 }
 
 FORMAT_STANDARD = 1
@@ -741,7 +789,7 @@ LANGUAGE_ID_BY_CODE = {
     "es_PR": 20490,
     "es_US": 21514,
     "es_419": 58378,
-    "fr_015": 58380
+    "fr_015": 58380,
 }
 
 
@@ -755,8 +803,14 @@ class Format(IntEnum):
     US = 10  # US-English
 
 
-def import_from_csv(oDoc: UnoSpreadsheetDocument, sheet_name: str, dest_position: int,
-                    path: StrPath, *args, **kwargs):
+def import_from_csv(
+    oDoc: UnoSpreadsheetDocument,
+    sheet_name: str,
+    dest_position: int,
+    path: StrPath,
+    *args,
+    **kwargs
+):
     """
     @param sheet_name: the sheet name
     @param dest_position: position
@@ -771,14 +825,17 @@ def import_from_csv(oDoc: UnoSpreadsheetDocument, sheet_name: str, dest_position
     """
     assert pr is not None
     filter_options = create_import_filter_options(*args, **kwargs)
-    pvs = make_pvs({"FilterName": Filter.CSV, "FilterOptions": filter_options,
-                    "Hidden": True})
+    pvs = make_pvs(
+        {"FilterName": Filter.CSV, "FilterOptions": filter_options, "Hidden": True}
+    )
 
     oDoc.lockControllers()
     url = uno_path_to_url(path)
     desktop = pr.desktop
-    oSource = cast(UnoSpreadsheetDocument, desktop.loadComponentFromURL(
-        url, Target.BLANK, FrameSearchFlag.AUTO, pvs))
+    oSource = cast(
+        UnoSpreadsheetDocument,
+        desktop.loadComponentFromURL(url, Target.BLANK, FrameSearchFlag.AUTO, pvs),
+    )
     oSource.Sheets.getByIndex(0).Name = sheet_name
     name = oSource.Sheets.ElementNames[0]
     oDoc.Sheets.importSheet(oSource, name, dest_position)
@@ -791,10 +848,12 @@ def create_import_filter_options(*args, **kwargs) -> str:
         dialect = args[0]
         delimiter = kwargs.pop("delimiter", dialect.delimiter)
         quotechar = kwargs.pop("quotechar", dialect.quotechar)
-        quoted_field_as_text = kwargs.pop("quoted_field_as_text",
-                                          dialect.quoting == csv.QUOTE_ALL)
+        quoted_field_as_text = kwargs.pop(
+            "quoted_field_as_text", dialect.quoting == csv.QUOTE_ALL
+        )
         return _create_import_filter_options(
-            delimiter=delimiter, quotechar=quotechar,
+            delimiter=delimiter,
+            quotechar=quotechar,
             quoted_field_as_text=quoted_field_as_text,
             **kwargs
         )
@@ -805,12 +864,15 @@ def create_import_filter_options(*args, **kwargs) -> str:
 
 
 def _create_import_filter_options(
-        delimiter: str = ",", quotechar: str = '"',
-        quoted_field_as_text: bool = False,
-        encoding: str = "utf-8", language_code=locale.getlocale()[0],
-        first_line: int = 1,
-        format_by_idx: Optional[Mapping[int, Format]] = None,
-        detect_special_numbers: bool = False) -> str:
+    delimiter: str = ",",
+    quotechar: str = '"',
+    quoted_field_as_text: bool = False,
+    encoding: str = "utf-8",
+    language_code=locale.getlocale()[0],
+    first_line: int = 1,
+    format_by_idx: Optional[Mapping[int, Format]] = None,
+    detect_special_numbers: bool = False,
+) -> str:
     """
     # See https://wiki.openoffice.org/wiki/Documentation
     /DevGuide/Spreadsheets/Filter_Options
@@ -827,8 +889,7 @@ def _create_import_filter_options(
     quoting = "true" if quoted_field_as_text else "false"
     detect = "true" if detect_special_numbers else "false"
     tokens = _base_filter_tokens(
-        delimiter, quotechar, encoding, language_code, first_line,
-        format_by_idx
+        delimiter, quotechar, encoding, language_code, first_line, format_by_idx
     ) + [quoting, detect]
     return ",".join(tokens)
 
@@ -848,8 +909,13 @@ def export_to_csv(oSheet: UnoSheet, path: StrPath, *args, **kwargs):
     """
     overwrite = kwargs.pop("overwrite", True)
     filter_options = create_export_filter_options(*args, **kwargs)
-    pvs = make_pvs({"FilterName": Filter.CSV, "FilterOptions": filter_options,
-                    "Overwrite": overwrite})
+    pvs = make_pvs(
+        {
+            "FilterName": Filter.CSV,
+            "FilterOptions": filter_options,
+            "Overwrite": overwrite,
+        }
+    )
     oDoc = parent_doc(oSheet)
     oActive = oDoc.CurrentController.ActiveSheet
     oDoc.lockControllers()
@@ -862,8 +928,7 @@ def export_to_csv(oSheet: UnoSheet, path: StrPath, *args, **kwargs):
 
 def _get_charset_id(encoding: str) -> int:
     norm_encoding = encodings.normalize_encoding(encoding)
-    norm_encoding = encodings.aliases.aliases.get(
-        norm_encoding.lower(), norm_encoding)
+    norm_encoding = encodings.aliases.aliases.get(norm_encoding.lower(), norm_encoding)
     return CHARSET_ID_BY_NAME.get(norm_encoding, 0)
 
 
@@ -871,14 +936,19 @@ def _build_field_formats(format_by_idx: Optional[Mapping[int, int]]) -> str:
     if format_by_idx is None:
         field_formats = ""
     else:
-        field_formats = "/".join(["{}/{}".format(idx, fmt)
-                                  for idx, fmt in format_by_idx.items()])
+        field_formats = "/".join(
+            ["{}/{}".format(idx, fmt) for idx, fmt in format_by_idx.items()]
+        )
     return field_formats
 
 
 def _base_filter_tokens(
-        delimiter: str, quotechar: str, encoding: str, language_code: str,
-        first_line: int, format_by_idx: Optional[Mapping[int, int]]
+    delimiter: str,
+    quotechar: str,
+    encoding: str,
+    language_code: str,
+    first_line: int,
+    format_by_idx: Optional[Mapping[int, int]],
 ) -> List[str]:
     """
     See: https://wiki.openoffice.org/wiki/Documentation
@@ -895,8 +965,14 @@ def _base_filter_tokens(
     encoding_index = _get_charset_id(encoding)
     language_id = LANGUAGE_ID_BY_CODE.get(language_code, 0)
     field_formats = _build_field_formats(format_by_idx)
-    return [str(ord(delimiter)), str(ord(quotechar)), str(encoding_index),
-            str(first_line), field_formats, str(language_id)]
+    return [
+        str(ord(delimiter)),
+        str(ord(quotechar)),
+        str(encoding_index),
+        str(first_line),
+        field_formats,
+        str(language_id),
+    ]
 
 
 def create_export_filter_options(*args, **kwargs) -> str:
@@ -914,10 +990,12 @@ def create_export_filter_options(*args, **kwargs) -> str:
         dialect = args[0]
         delimiter = kwargs.pop("delimiter", dialect.delimiter)
         quotechar = kwargs.pop("quotechar", dialect.quotechar)
-        quote_all_text_cells = kwargs.pop("store_numeric_cells_as_text",
-                                          dialect.quoting == csv.QUOTE_ALL)
+        quote_all_text_cells = kwargs.pop(
+            "store_numeric_cells_as_text", dialect.quoting == csv.QUOTE_ALL
+        )
         return _create_export_filter_options(
-            delimiter=delimiter, quotechar=quotechar,
+            delimiter=delimiter,
+            quotechar=quotechar,
             store_numeric_cells_as_text=quote_all_text_cells,
             **kwargs
         )
@@ -928,16 +1006,18 @@ def create_export_filter_options(*args, **kwargs) -> str:
 
 
 def _create_export_filter_options(
-        delimiter: str = ",", quotechar: str = '"',
-        store_numeric_cells_as_text: bool = False,
-        encoding: str = "utf-8", language_code=locale.getlocale()[0],
-        first_line: int = 1,
-        format_by_idx: Optional[Mapping[int, Format]] = None,
-        save_cell_contents_as_shown: bool = True) -> str:
+    delimiter: str = ",",
+    quotechar: str = '"',
+    store_numeric_cells_as_text: bool = False,
+    encoding: str = "utf-8",
+    language_code=locale.getlocale()[0],
+    first_line: int = 1,
+    format_by_idx: Optional[Mapping[int, Format]] = None,
+    save_cell_contents_as_shown: bool = True,
+) -> str:
     store_as_text = "true" if store_numeric_cells_as_text else "false"
     save_as_shown = "true" if save_cell_contents_as_shown else "false"
     tokens = _base_filter_tokens(
-        delimiter, quotechar, encoding, language_code, first_line,
-        format_by_idx
+        delimiter, quotechar, encoding, language_code, first_line, format_by_idx
     ) + [store_as_text, store_as_text, save_as_shown]
     return ",".join(tokens)

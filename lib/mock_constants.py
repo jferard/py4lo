@@ -94,7 +94,7 @@ class MessageBoxResults:
 
 
 class ExecutableDialogResults:
-    OK = 1,
+    OK = (1,)
     CANCEL = 0
 
 
@@ -103,7 +103,7 @@ class FontWeight:
 
 
 class PushButtonType:
-    OK = None,
+    OK = (None,)
     CANCEL = None
 
 
@@ -195,7 +195,8 @@ class unohelper:
     def ImplementationHelper():
         class C:
             @staticmethod
-            def addImplementation(*args): return None
+            def addImplementation(*args):
+                return None
 
         return C
 

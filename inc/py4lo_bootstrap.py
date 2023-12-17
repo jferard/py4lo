@@ -18,12 +18,15 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
+
+
 def use_local(object_ref):
     # noinspection PyUnresolvedReferences
-    doc = XSCRIPTCONTEXT.getDocument() # noqa: F821
+    doc = XSCRIPTCONTEXT.getDocument()  # noqa: F821
     dsp = doc.getScriptProvider()
     (fname_wo_py, oname) = object_ref.split("::")
-    uri = ("vnd.sun.star.script:{}.py$__export_{}?"
-           "language=Python&location=document").format(fname_wo_py, oname)
+    uri = (
+        "vnd.sun.star.script:{}.py$__export_{}?" "language=Python&location=document"
+    ).format(fname_wo_py, oname)
     import_script = dsp.getScript(uri)
     return import_script.invoke((), (), ())[0]

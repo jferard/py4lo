@@ -27,8 +27,14 @@ from toml_helper import load_toml
 
 
 class PropertiesProvider:
-    def __init__(self, logger: logging.Logger, base_path, sources: Sources,
-                 destinations: Destinations, tdata: Mapping[str, Any]):
+    def __init__(
+        self,
+        logger: logging.Logger,
+        base_path,
+        sources: Sources,
+        destinations: Destinations,
+        tdata: Mapping[str, Any],
+    ):
         self._base_path = base_path
         self._logger = logger
         self._tdata = tdata
@@ -61,8 +67,8 @@ class PropertiesProvider:
         if add_readme:
             readme_contact = self.get("readme_contact")
             add_readme_callback = AddReadmeWith(
-                self.get_base_path().joinpath("inc"),
-                readme_contact)
+                self.get_base_path().joinpath("inc"), readme_contact
+            )
         else:
             add_readme_callback = None
         return add_readme_callback
@@ -71,14 +77,14 @@ class PropertiesProvider:
 class PropertiesProviderFactory:
     def create(self, toml_filename="py4lo.toml") -> PropertiesProvider:
         base_path = Path(__file__).parent.parent.parent.resolve()
-        kwargs = {'py4lo': base_path, 'project': os.getcwd()}
-        self._tdata = load_toml(base_path.joinpath(
-            "default-py4lo.toml"), Path(toml_filename), kwargs)
+        kwargs = {"py4lo": base_path, "project": os.getcwd()}
+        self._tdata = load_toml(
+            base_path.joinpath("default-py4lo.toml"), Path(toml_filename), kwargs
+        )
         logger = self.get_logger()
         sources = self._get_sources()
         destinations = self._get_destinations(sources.source_ods_file)
-        return PropertiesProvider(logger, base_path, sources, destinations,
-                                  self._tdata)
+        return PropertiesProvider(logger, base_path, sources, destinations, self._tdata)
 
     def _get_sources(self):
         src: Mapping[str, Any] = self._tdata["src"]
@@ -95,15 +101,18 @@ class PropertiesProviderFactory:
             Path(src["opt_dir"]),
             Path(src["assets_dir"]),
             src["assets_ignore"],
-            Path(src["test_dir"]))
+            Path(src["test_dir"]),
+        )
         return sources
 
     def _get_destinations(self, source_ods_file: Path):
         dest: Mapping[str, str] = self._tdata["dest"]
         destinations = Destinations(
             self._get_dest_file(source_ods_file),
-            Path(dest["temp_dir"]), Path(dest["dest_dir"]),
-            Path(dest["assets_dest_dir"]))
+            Path(dest["temp_dir"]),
+            Path(dest["dest_dir"]),
+            Path(dest["assets_dest_dir"]),
+        )
         return destinations
 
     def _get_dest_file(self, source_ods_file: Path) -> Path:
@@ -113,14 +122,15 @@ class PropertiesProviderFactory:
             if "suffix" in dest:
                 self.get_logger().debug(
                     "Property dest_name set to `%s`, ignore suffix `%s`",
-                    dest_ods_file, dest["suffix"])
+                    dest_ods_file,
+                    dest["suffix"],
+                )
         else:
             suffix = dest["suffix"]
             if source_ods_file is None:
                 dest_ods_file = Path("new-project.ods")
             else:
-                name = (source_ods_file.stem + "-"
-                        + suffix + source_ods_file.suffix)
+                name = source_ods_file.stem + "-" + suffix + source_ods_file.suffix
                 dest_ods_file = source_ods_file.parent.joinpath(name)
 
         return dest_ods_file

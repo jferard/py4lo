@@ -53,6 +53,7 @@ class ItemCallback(ABC):
     """
     Called on each item of the source. Use a ItemCallback to ignore a script.
     """
+
     @abstractmethod
     def call(self, zin: ZipFile, zout: ZipFile, item: ZipInfo) -> bool:
         """

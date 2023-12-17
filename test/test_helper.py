@@ -66,9 +66,15 @@ def file_path_error_mock(**kwargs):
 
 def verify_open_path(tc: unittest.TestCase, s: mock.Mock, *args, **kwargs):
     tc.assertTrue(
-        all(x in s.mock_calls for x in
-            [mock.call.open(*args, **kwargs), mock.call.open().__enter__(),
-             mock.call.open().__exit__(None, None, None)]))
+        all(
+            x in s.mock_calls
+            for x in [
+                mock.call.open(*args, **kwargs),
+                mock.call.open().__enter__(),
+                mock.call.open().__exit__(None, None, None),
+            ]
+        )
+    )
 
 
 def compare_xml_strings(s1, s2):
@@ -80,6 +86,7 @@ def compare_xml_strings(s1, s2):
     @return:
     """
     import xml.etree.ElementTree as ET
+
     dom1 = ET.fromstring(s1)
     dom2 = ET.fromstring(s2)
     stack = [(dom1, dom2)]

@@ -23,7 +23,7 @@ from callbacks import AfterCallback
 
 BEFORE = (
     '<?xml version="1.0" encoding="UTF-8"?>\n'
-    '<office:document-content '
+    "<office:document-content "
     'xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" '
     'xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" '
     'xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" '
@@ -65,7 +65,7 @@ BEFORE = (
     'experimental:ooxml-odf-interop:xmlns:form:1.0" '
     'xmlns:css3t="http://www.w3.org/TR/css3-text/" '
     'office:version="1.2"><office:scripts/>'
-    '<office:font-face-decls><style:font-face '
+    "<office:font-face-decls><style:font-face "
     'style:name="Liberation Sans" '
     'svg:font-family="&apos;Liberation Sans&apos;" '
     'style:font-family-generic="swiss" style:font-pitch="variable"/>'
@@ -79,7 +79,7 @@ BEFORE = (
     'style:font-family-generic="system" style:font-pitch="variable"/>'
     '<style:font-face style:name="Tahoma" svg:font-family="Tahoma" '
     'style:font-family-generic="system" style:font-pitch="variable"/>'
-    '</office:font-face-decls>'
+    "</office:font-face-decls>"
     '<office:automatic-styles><style:style style:name="co1" '
     'style:family="table-column">'
     '<style:table-column-properties fo:break-before="auto" '
@@ -87,29 +87,31 @@ BEFORE = (
     '<style:style style:name="ro1" style:family="table-row">'
     '<style:table-row-properties style:row-height="4.52mm" '
     'fo:break-before="auto" style:use-optimal-row-height="true"/>'
-    '</style:style>'
+    "</style:style>"
     '<style:style style:name="ta1" style:family="table" '
     'style:master-page-name="Default">'
     '<style:table-properties table:display="true" '
     'style:writing-mode="lr-tb"/></style:style>'
     '<style:style style:name="P1" style:family="paragraph">'
     '<style:paragraph-properties fo:text-align="center"/>'
-    '</style:style>'
-    '</office:automatic-styles>'
-    '<office:body><office:spreadsheet>'
+    "</style:style>"
+    "</office:automatic-styles>"
+    "<office:body><office:spreadsheet>"
     '<table:calculation-settings table:automatic-find-labels="false"/>'
-    '<table:table table:name="Feuille1" table:style-name="ta1">')
+    '<table:table table:name="Feuille1" table:style-name="ta1">'
+)
 AFTER = (
     '<table:table-column table:style-name="co1" '
     'table:default-cell-style-name="Default"/>'
     '<table:table-row table:style-name="ro1"><table:table-cell/>'
-    '</table:table-row></table:table><table:named-expressions/>'
-    '</office:spreadsheet>'
-    '</office:body></office:document-content>')
+    "</table:table-row></table:table><table:named-expressions/>"
+    "</office:spreadsheet>"
+    "</office:body></office:document-content>"
+)
 
 BEGIN_FORMS = (
-    '<office:forms form:automatic-focus="false" '
-    'form:apply-design-mode="false">')
+    '<office:forms form:automatic-focus="false" ' 'form:apply-design-mode="false">'
+)
 FORM_TPL = (
     '<form:form form:name="Formulaire" form:apply-filter="true" '
     'form:command-type="table" '
@@ -119,7 +121,7 @@ FORM_TPL = (
     '<form:property form:property-name="PropertyChangeNotificationEnabled" '
     'office:value-type="boolean" office:boolean-value="true"/>'
     '</form:properties><form:button form:name="name{id}" '
-    'form:control-implementation='
+    "form:control-implementation="
     '"ooo:com.sun.star.form.component.CommandButton" '
     'xml:id="control{id}" form:id="control{id}" form:label="{name}" '
     'office:target-frame="" xlink:href="" form:image-data="" '
@@ -127,20 +129,22 @@ FORM_TPL = (
     '<form:properties><form:property form:property-name="DefaultControl" '
     'office:value-type="string" '
     'office:string-value="com.sun.star.form.control.CommandButton"/>'
-    '</form:properties><office:event-listeners>'
+    "</form:properties><office:event-listeners>"
     '<script:event-listener script:language="ooo:script" '
     'script:event-name="form:performaction" '
     'xlink:href="vnd.sun.star.script:'
     '{file}${func}?language=Python&amp;location=document" '
-    'xlink:type="simple"/></office:event-listeners></form:button></form:form>')
-END_FORMS = '</office:forms>'
+    'xlink:type="simple"/></office:event-listeners></form:button></form:form>'
+)
+END_FORMS = "</office:forms>"
 
-BEGIN_SHAPES = '<table:shapes>'
+BEGIN_SHAPES = "<table:shapes>"
 DRAW_CONTROL_TPL = (
     '<draw:control draw:z-index="0" draw:text-style-name="P1" '
     'svg:width="80mm" svg:height="10mm" svg:x="{x}mm" svg:y="{y}mm" '
-    'draw:control="control{id}"/>')
-END_SHAPES = '</table:shapes>'
+    'draw:control="control{id}"/>'
+)
+END_SHAPES = "</table:shapes>"
 
 
 class AddDebugContent(AfterCallback):
@@ -162,8 +166,7 @@ class AddDebugContent(AfterCallback):
         i = 0
         for script in sorted(self._funcs_by_script):
             for func in self._funcs_by_script[script]:
-                forms.append(
-                    FORM_TPL.format(name=func, id=i, file=script, func=func))
+                forms.append(FORM_TPL.format(name=func, id=i, file=script, func=func))
                 draw.append(DRAW_CONTROL_TPL.format(x=10, y=15 * i + 10, id=i))
                 i += 1
 

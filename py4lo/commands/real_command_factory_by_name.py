@@ -26,10 +26,13 @@ from commands.run_command import RunCommand
 from commands.update_command import UpdateCommand
 
 
-real_command_factory_by_name = cast(Dict[str, Command], {
-    'debug': DebugCommand,
-    'init': InitCommand,
-    'test': TestCommand,
-    'run': RunCommand,
-    'update': UpdateCommand,
-})
+real_command_factory_by_name = cast(
+    Dict[str, Command],
+    {
+        "debug": DebugCommand,
+        "init": InitCommand,
+        "test": TestCommand,
+        "run": RunCommand,
+        "update": UpdateCommand,
+    },
+)

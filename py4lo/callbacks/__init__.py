@@ -20,8 +20,7 @@
 """
 These are callbacks for the ZipUpdater
 """
-from callbacks.callback import (  # noqa
-    BeforeCallback, ItemCallback, AfterCallback)
+from callbacks.callback import BeforeCallback, ItemCallback, AfterCallback  # noqa
 from callbacks.add_readme_with import AddReadmeWith  # noqa
 from callbacks.add_assets import AddAssets  # noqa
 from callbacks.add_debug_content import AddDebugContent  # noqa

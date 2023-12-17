@@ -38,9 +38,12 @@ class EmbedScript(Directive):
     def __init__(self, opt_dir: Path):
         self._opt_dir = opt_dir
 
-    def execute(self, processor: Any,  # "DirectiveProcessor",
-                _line_processor: Any,  # "DirectiveLineProcessor",
-                args: List[str]):
+    def execute(
+        self,
+        processor: Any,  # "DirectiveProcessor",
+        _line_processor: Any,  # "DirectiveLineProcessor",
+        args: List[str],
+    ):
         script_ref = args[0]
         if len(args) == 2:
             script_path = Path(args[1])
@@ -61,9 +64,8 @@ class EmbedScript(Directive):
                 stack.extend(script_path.glob("*.py"))
             elif path.suffix == "" or path.suffix == ".py":
                 path = path.with_suffix(".py")
-                with path.open('rb') as f:
-                    temp_script = TempScript(
-                        path, f.read(), self._opt_dir, [], None)
+                with path.open("rb") as f:
+                    temp_script = TempScript(path, f.read(), self._opt_dir, [], None)
                 ret.append(temp_script)
 
         return ret

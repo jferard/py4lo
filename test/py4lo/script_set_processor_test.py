@@ -37,36 +37,42 @@ class TestScriptSetProcessor(unittest.TestCase):
     @mock.patch("py_compile.compile")
     def test_scripts_processor(self, mock_compile):
         logger: Logger = mock.Mock()
-        source_path = file_path_mock(io.StringIO("some line"),
-                                     stem='script_fname')
+        source_path = file_path_mock(io.StringIO("some line"), stem="script_fname")
 
         dest = io.BytesIO()
         target_path = file_path_mock(dest)
         target_dir: Path = mock.Mock()
         target_dir.joinpath.return_value = target_path
-        script: SourceScript = mock.MagicMock(relative_path=Path("rel source"),
-                                         script_path=source_path)
+        script: SourceScript = mock.MagicMock(
+            relative_path=Path("rel source"), script_path=source_path
+        )
         dp: DirectiveProvider = mock.Mock()
         target_path.relative_to.side_effect = [Path("rel target")]
 
         try:
-            sp = script_set_processor.ScriptSetProcessor(logger, target_dir,
-                                                         "3.7", dp, [script])
+            sp = script_set_processor.ScriptSetProcessor(
+                logger, target_dir, "3.7", dp, [script]
+            )
             sp.process()
         except Exception:
             raise
 
-        self.assertEqual([
-            mock.call.debug('Scripts to process: %s', [script]),
-            mock.call.debug('Parsing script: %s (%s)', Path("rel source"),
-                       script),
-            mock.call.debug('Temp output script is: %s (%s)', target_path, []),
-            mock.call.debug('Writing temp script: %s (%s)', Path('rel target'),
-                       target_path),
-        ], logger.mock_calls)
-        self.assertEqual([mock.call(str(source_path), doraise=True)],
-                         mock_compile.mock_calls)
         self.assertEqual(
-            b'# parsed by py4lo (https://github.com/jferard/py4lo)\nsome line',
-            dest.getbuffer())
-        verify_open_path(self, source_path, 'r', encoding='utf-8')
+            [
+                mock.call.debug("Scripts to process: %s", [script]),
+                mock.call.debug("Parsing script: %s (%s)", Path("rel source"), script),
+                mock.call.debug("Temp output script is: %s (%s)", target_path, []),
+                mock.call.debug(
+                    "Writing temp script: %s (%s)", Path("rel target"), target_path
+                ),
+            ],
+            logger.mock_calls,
+        )
+        self.assertEqual(
+            [mock.call(str(source_path), doraise=True)], mock_compile.mock_calls
+        )
+        self.assertEqual(
+            b"# parsed by py4lo (https://github.com/jferard/py4lo)\nsome line",
+            dest.getbuffer(),
+        )
+        verify_open_path(self, source_path, "r", encoding="utf-8")

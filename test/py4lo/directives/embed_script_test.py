@@ -43,13 +43,13 @@ class TestEmbed(unittest.TestCase):
         self._opt.joinpath.return_value = fpath
         fpath.is_dir.return_value = False
 
-        self.assertEqual(True,
-                         self._directive.execute(proc, None, ["a/b.py"]))
-        self.assertEqual([mock.call.add_script(
-            TempScript(fpath, b"content", self._opt, [], None))],
-            proc.mock_calls)
-        verify_open_path(self, fpath, 'rb')
+        self.assertEqual(True, self._directive.execute(proc, None, ["a/b.py"]))
+        self.assertEqual(
+            [mock.call.add_script(TempScript(fpath, b"content", self._opt, [], None))],
+            proc.mock_calls,
+        )
+        verify_open_path(self, fpath, "rb")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

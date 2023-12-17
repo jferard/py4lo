@@ -37,23 +37,32 @@ class TestUpdateCommand(unittest.TestCase):
         ZubMock.return_value = zub
 
         # play
-        directive = UpdateCommand(logger, helper, Path("source.ods"),
-                                  Path("dest.ods"), "3.1", None)
+        directive = UpdateCommand(
+            logger, helper, Path("source.ods"), Path("dest.ods"), "3.1", None
+        )
         execute = directive.execute(10)
 
         # verify
         self.assertEqual((10, Path("dest.ods")), execute)
         self.assertEqual(
-            [mock.call.info(
-                "Update. Generating '%s' (source: %s) for Python '%s'",
-                       Path('dest.ods'), Path('source.ods'), '3.1')],
-            logger.mock_calls)
+            [
+                mock.call.info(
+                    "Update. Generating '%s' (source: %s) for Python '%s'",
+                    Path("dest.ods"),
+                    Path("source.ods"),
+                    "3.1",
+                )
+            ],
+            logger.mock_calls,
+        )
         self.assertEqual(
             [mock.call.get_destination_scripts(), mock.call.get_assets()],
-            helper.mock_calls)
+            helper.mock_calls,
+        )
         self.assertEqual(
-            mock.call.build().update(Path('source.ods'), Path('dest.ods')),
-            zub.mock_calls[-1])
+            mock.call.build().update(Path("source.ods"), Path("dest.ods")),
+            zub.mock_calls[-1],
+        )
 
     # @patch('zip_updater.ZipUpdaterBuilder', autospec=True)
     # def test_helper(self, ZupdaterB):

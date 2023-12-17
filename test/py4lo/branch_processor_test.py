@@ -22,7 +22,7 @@ from branch_processor import BranchProcessor
 
 class TestBranchProcessor(unittest.TestCase):
     def setUp(self):
-        self.bp = BranchProcessor(lambda args:args[0])
+        self.bp = BranchProcessor(lambda args: args[0])
 
     def test_false_branch(self):
         self.assertFalse(self.bp.handle_directive("foo", [True]))
@@ -39,13 +39,13 @@ class TestBranchProcessor(unittest.TestCase):
         self.assertTrue(self.bp.handle_directive("elif", [True]))
         # in first if, in second elif
         self.assertFalse(self.bp.skip())
-        self.assertTrue(self.bp.handle_directive("endif", [])) # not tested
+        self.assertTrue(self.bp.handle_directive("endif", []))  # not tested
         # in first if
         self.assertFalse(self.bp.skip())
-        self.assertTrue(self.bp.handle_directive("elif", [])) # not tested
+        self.assertTrue(self.bp.handle_directive("elif", []))  # not tested
         # out of first if : even if condition is true, "el" means "else"
         self.assertTrue(self.bp.skip())
-        self.assertTrue(self.bp.handle_directive("endif", [])) # not tested
+        self.assertTrue(self.bp.handle_directive("endif", []))  # not tested
         # after everything
         self.assertFalse(self.bp.skip())
         self.bp.end()
@@ -61,5 +61,6 @@ class TestBranchProcessor(unittest.TestCase):
         self.assertTrue(self.bp.handle_directive("endif", []))
         self.bp.end()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

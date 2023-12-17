@@ -34,8 +34,9 @@ class TestIgnoreScripts(unittest.TestCase):
         path = Path("Scripts")
         a = IgnoreItem(path)
         self.assertTrue(a.call(self.zin, self.zout, item))
-        self.assertEqual([],
-                         self.zin.mock_calls + self.zout.mock_calls + item.mock_calls)
+        self.assertEqual(
+            [], self.zin.mock_calls + self.zout.mock_calls + item.mock_calls
+        )
 
     def test_dont_ignore(self):
         item = mock.Mock()
@@ -43,9 +44,10 @@ class TestIgnoreScripts(unittest.TestCase):
         path = Path("Scripts")
         a = IgnoreItem(path)
         self.assertFalse(a.call(self.zin, self.zout, item))
-        self.assertEqual([],
-                         self.zin.mock_calls + self.zout.mock_calls + item.mock_calls)
+        self.assertEqual(
+            [], self.zin.mock_calls + self.zout.mock_calls + item.mock_calls
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

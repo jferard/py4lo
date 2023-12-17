@@ -22,12 +22,25 @@
 # py4lo: embed lib py4lo_io
 # py4lo: embed lib py4lo_dialogs
 import csv
-from codecs import (BOM_UTF32_BE, BOM_UTF32_LE, BOM_UTF16_BE, BOM_UTF16_LE,
-                    BOM_UTF8, getincrementaldecoder)
+from codecs import (
+    BOM_UTF32_BE,
+    BOM_UTF32_LE,
+    BOM_UTF16_BE,
+    BOM_UTF16_LE,
+    BOM_UTF8,
+    getincrementaldecoder,
+)
 
 from py4lo_dialogs import FileFilter, file_dialog
-from py4lo_helper import (make_pvs, provider, Target, FrameSearchFlag,
-                          make_sort_field, sort_range, SheetFormatter)
+from py4lo_helper import (
+    make_pvs,
+    provider,
+    Target,
+    FrameSearchFlag,
+    make_sort_field,
+    sort_range,
+    SheetFormatter,
+)
 from py4lo_commons import uno_url_to_path
 from py4lo_io import create_import_filter_options, Filter
 
@@ -49,8 +62,9 @@ def open_csv(*_args):
     filter_options = create_import_filter_options(dialect)
     pvs = make_pvs({"FilterName": Filter.CSV, "FilterOptions": filter_options})
 
-    oSource = provider.desktop.loadComponentFromURL(url, Target.BLANK,
-                                                    FrameSearchFlag.AUTO, pvs)
+    oSource = provider.desktop.loadComponentFromURL(
+        url, Target.BLANK, FrameSearchFlag.AUTO, pvs
+    )
 
     oCSVSheet = oSource.CurrentController.ActiveSheet
 

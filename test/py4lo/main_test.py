@@ -28,5 +28,5 @@ class MainTest(unittest.TestCase):
         main.main(factory, ["py4lo", "help"])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

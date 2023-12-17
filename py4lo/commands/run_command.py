@@ -33,8 +33,7 @@ class RunCommand(Command):
         calc_exe = provider.get("calc_exe")
         update_executor = UpdateCommand.create_executor(args, provider)
         run_command = RunCommand(calc_exe)
-        return CommandExecutor(provider.get_logger(), run_command,
-                               update_executor)
+        return CommandExecutor(provider.get_logger(), run_command, update_executor)
 
     def __init__(self, calc_exe: str):
         self._calc_exe = calc_exe

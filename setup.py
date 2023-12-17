@@ -23,40 +23,33 @@ from os import path
 here = path.abspath(path.dirname(__file__))
 
 # Get the long description from the README file
-with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
+with open(path.join(here, "README.rst"), encoding="utf-8") as f:
     long_description = f.read()
 
 setup(
-    name='py4lo',
-    version='0.1.0',
-    description='Py4LO is a simple toolkit to help you '
-                'write Python scripts for LibreOffice',
+    name="py4lo",
+    version="0.1.0",
+    description="Py4LO is a simple toolkit to help you "
+    "write Python scripts for LibreOffice",
     long_description=long_description,
-    url='https://github.com/jferard/py4lo',
-    author='Julien Férard',
-    license='GPLv3',
-
+    url="https://github.com/jferard/py4lo",
+    author="Julien Férard",
+    license="GPLv3",
     classifiers=[
-        'Development Status :: 3 - Alpha',
-        'Intended Audience :: Developers',
-        'Topic :: Software Development :: Build Tools',
-        'Topic :: Utilities',
-        'License :: OSI Approved :: '
-        'GNU General Public License v3 or later (GPLv3+)',
-        'Programming Language :: Python :: 3',
+        "Development Status :: 3 - Alpha",
+        "Intended Audience :: Developers",
+        "Topic :: Software Development :: Build Tools",
+        "Topic :: Utilities",
+        "License :: OSI Approved :: " "GNU General Public License v3 or later (GPLv3+)",
+        "Programming Language :: Python :: 3",
     ],
-
-    keywords='libreoffice ods script python macro',
+    keywords="libreoffice ods script python macro",
     install_requires=[],
-    test_requires=[
-        'pytest',
-        'codecov',
-        'pytest-cov'
-    ],
+    test_requires=["pytest", "codecov", "pytest-cov"],
     entry_points={
-        'console_scripts': [
-            'py4lo=py4lo:main',
+        "console_scripts": [
+            "py4lo=py4lo:main",
         ],
     },
-    python_requires='>=3.7',
+    python_requires=">=3.7",
 )

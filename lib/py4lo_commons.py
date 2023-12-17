@@ -25,8 +25,7 @@ from pathlib import Path
 import logging
 import configparser
 import datetime as dt
-from typing import (
-    Union, Any, cast, List, Optional, TextIO, Iterable, Mapping, Callable)
+from typing import Union, Any, cast, List, Optional, TextIO, Iterable, Mapping, Callable
 
 from py4lo_typing import UnoXScriptContext, StrPath, lazy
 
@@ -37,6 +36,7 @@ except (ModuleNotFoundError, ImportError):
     from mock_constants import uno
 
 _xsc = None
+
 
 def uno_url_to_path(url: str) -> Optional[Path]:
     """
@@ -66,7 +66,7 @@ def uno_path_to_url(path: Union[str, Path]) -> str:
     return uno.systemPathToFileUrl(str(path))
 
 
-ORIGIN = dt.datetime(1899, 12, 30) # TODO: oDoc.NullDate
+ORIGIN = dt.datetime(1899, 12, 30)  # TODO: oDoc.NullDate
 
 
 def init(xsc: UnoXScriptContext):
@@ -122,18 +122,23 @@ class Commons:
         return path.parent
 
     def init_logger(
-            self, file: Optional[Union[StrPath, TextIO]] = None, mode="a",
-            level=logging.DEBUG,
-            fmt='%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
+        self,
+        file: Optional[Union[StrPath, TextIO]] = None,
+        mode="a",
+        level=logging.DEBUG,
+        fmt="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    ):
         if self._logger is not None:
             raise Exception("use init_logger ONCE")
 
         self._logger = self.get_logger(file, mode, level, fmt)
 
     def get_logger(
-            self, file: Optional[Union[StrPath, TextIO]] = None,
-            mode: str = "a", level: int = logging.DEBUG,
-            fmt: str = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        self,
+        file: Optional[Union[StrPath, TextIO]] = None,
+        mode: str = "a",
+        level: int = logging.DEBUG,
+        fmt: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     ) -> logging.Logger:
         if file is None:
             file = self.join_current_dir("py4lo.log")
@@ -153,9 +158,13 @@ class Commons:
         else:
             return cur_dir_path / filename
 
-    def read_internal_config(self, filenames: Union[
-        StrPath, Iterable[StrPath]], args=None,
-                             apply=lambda config: None, encoding='utf-8'):
+    def read_internal_config(
+        self,
+        filenames: Union[StrPath, Iterable[StrPath]],
+        args=None,
+        apply=lambda config: None,
+        encoding="utf-8",
+    ):
         """
         Read an internal config, in the assets directory of the document.
         See https://docs.python.org/3.7/library/configparser.html
@@ -179,7 +188,7 @@ class Commons:
 
         path = uno_url_to_path(self._url)
         str_path = str(path)  # py < 3.6.2
-        with zipfile.ZipFile(str_path, 'r') as z:
+        with zipfile.ZipFile(str_path, "r") as z:
             for filename in filenames:
                 try:
                     file = z.open(str(filename))
@@ -200,18 +209,21 @@ class Commons:
         @return: file content as bytes
         """
         import zipfile
+
         path = uno_url_to_path(self._url)
         str_path = str(path)  # py < 3.6.2
-        with zipfile.ZipFile(str_path, 'r') as z:
+        with zipfile.ZipFile(str_path, "r") as z:
             with z.open(filename) as f:
                 return f.read()
 
 
 def init_logger(
-        logger: logging.Logger,
-        file: Optional[Union[StrPath, TextIO]] = None,
-        mode: str = "a", level: int = logging.DEBUG,
-        fmt: str = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
+    logger: logging.Logger,
+    file: Optional[Union[StrPath, TextIO]] = None,
+    mode: str = "a",
+    level: int = logging.DEBUG,
+    fmt: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+):
     if file is None:
         fh = _get_handler(sys.stdout, mode, level, fmt)
     else:
@@ -221,8 +233,7 @@ def init_logger(
     logger.setLevel(level)
 
 
-def _get_handler(file: Union[StrPath, TextIO], mode: str, level: int,
-                 fmt: str):
+def _get_handler(file: Union[StrPath, TextIO], mode: str, level: int, fmt: str):
     if isinstance(file, (str, Path)):
         fh = cast(logging.Handler, logging.FileHandler(str(file), mode))
     else:
@@ -237,12 +248,12 @@ def create_bus() -> Bus:
     return Bus()
 
 
-def read_config(filenames: Union[StrPath, Iterable[StrPath]],
-                args: Optional[Mapping] = None,
-                apply: Callable[
-                    [configparser.ConfigParser], None
-                ] = lambda config: None,
-                encoding: str = 'utf-8') -> configparser.ConfigParser:
+def read_config(
+    filenames: Union[StrPath, Iterable[StrPath]],
+    args: Optional[Mapping] = None,
+    apply: Callable[[configparser.ConfigParser], None] = lambda config: None,
+    encoding: str = "utf-8",
+) -> configparser.ConfigParser:
     """
     Read a config. See https://docs.python.org/3.7/library/configparser.html
 
@@ -276,8 +287,8 @@ def sanitize(s: str) -> str:
     @return: the ascii string
     """
     import unicodedata
-    s = unicodedata.normalize('NFKD', s).encode('ascii', 'ignore').decode(
-        'ascii')
+
+    s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode("ascii")
     return s
 
 
@@ -299,8 +310,11 @@ def date_to_float(a_date: Union[dt.date, dt.datetime, dt.time]) -> float:
         time_delta = a_datetime - ORIGIN
     elif isinstance(a_date, dt.time):
         time_delta = dt.timedelta(
-            hours=a_date.hour, minutes=a_date.minute, seconds=a_date.second,
-            microseconds=a_date.microsecond)
+            hours=a_date.hour,
+            minutes=a_date.minute,
+            seconds=a_date.second,
+            microseconds=a_date.microsecond,
+        )
     else:
         raise ValueError(a_date)
     return time_delta.total_seconds() / 86400

@@ -21,22 +21,52 @@ import time
 from pathlib import Path
 from typing import Iterable, Union, Dict, Mapping, cast
 
-from py4lo_helper import (uno_path_to_url, create_uno_service, to_items,
-                          remove_all)
-from py4lo_typing import (lazy, UnoStatement, UnoConnection,
-                          UnoDocumentDataSource, UnoContainer,
-                          UnoDatabaseContext, UnoTable)
+from py4lo_helper import uno_path_to_url, create_uno_service, to_items, remove_all
+from py4lo_typing import (
+    lazy,
+    UnoStatement,
+    UnoConnection,
+    UnoDocumentDataSource,
+    UnoContainer,
+    UnoDatabaseContext,
+    UnoTable,
+)
 
 try:
+
     class DataType:
         # noinspection PyUnresolvedReferences
         from com.sun.star.sdbc.DataType import (
-            BIT, TINYINT, SMALLINT, INTEGER, BIGINT, FLOAT, REAL, DOUBLE,
-            NUMERIC, DECIMAL, CHAR, VARCHAR, LONGVARCHAR, DATE, TIME,
-            TIMESTAMP, BINARY, VARBINARY, LONGVARBINARY, SQLNULL, OTHER,
-            OBJECT, DISTINCT, STRUCT, ARRAY, BLOB, CLOB, REF, BOOLEAN
+            BIT,
+            TINYINT,
+            SMALLINT,
+            INTEGER,
+            BIGINT,
+            FLOAT,
+            REAL,
+            DOUBLE,
+            NUMERIC,
+            DECIMAL,
+            CHAR,
+            VARCHAR,
+            LONGVARCHAR,
+            DATE,
+            TIME,
+            TIMESTAMP,
+            BINARY,
+            VARBINARY,
+            LONGVARBINARY,
+            SQLNULL,
+            OTHER,
+            OBJECT,
+            DISTINCT,
+            STRUCT,
+            ARRAY,
+            BLOB,
+            CLOB,
+            REF,
+            BOOLEAN,
         )
-
 
 except (ModuleNotFoundError, ImportError):
     from mock_constants import (  # type:ignore[assignment]
@@ -48,6 +78,7 @@ class BaseTableBuilder:
     """
     A builder for a base table
     """
+
     _logger = logging.getLogger(__name__)
 
     def __init__(self, oConnection: UnoConnection, name: str):
@@ -99,6 +130,7 @@ class BaseDB:
     """
     A Database wrapper.
     """
+
     _logger = logging.getLogger(__name__)
 
     def __init__(self, oDB: UnoDocumentDataSource):
@@ -110,8 +142,7 @@ class BaseDB:
     @property
     def connection(self) -> UnoConnection:
         if self._oConnection is None or self._oConnection.isClosed():
-            oHandler = create_uno_service(
-                "com.sun.star.sdb.InteractionHandler")
+            oHandler = create_uno_service("com.sun.star.sdb.InteractionHandler")
             self._oConnection = self._oDB.connectWithCompletion(oHandler)
 
         return self._oConnection
@@ -172,10 +203,15 @@ class BaseDB:
             fields = [field_s]
         else:
             fields = list(field_s)
-        sql_lines = ["ALTER TABLE {}".format(table)] + [
-            "    ALTER {} SET NOT NULL,".format(field) for field in fields
-        ] + ["    ADD CONSTRAINT PK_{} PRIMARY KEY ({})".format(
-            table, ", ".join(fields))]
+        sql_lines = (
+            ["ALTER TABLE {}".format(table)]
+            + ["    ALTER {} SET NOT NULL,".format(field) for field in fields]
+            + [
+                "    ADD CONSTRAINT PK_{} PRIMARY KEY ({})".format(
+                    table, ", ".join(fields)
+                )
+            ]
+        )
 
         self.execute("\n".join(sql_lines))
 
@@ -189,8 +225,8 @@ class BaseDB:
             fields = [field_s]
         else:
             fields = list(field_s)
-        sql = "CREATE INDEX IDX_{}_{} ON {} (\"{}\")".format(
-            table, "_".join(fields), table, "\", \"".join(fields)
+        sql = 'CREATE INDEX IDX_{}_{} ON {} ("{}")'.format(
+            table, "_".join(fields), table, '", "'.join(fields)
         )
         # noinspection PyBroadException
         try:
@@ -262,13 +298,13 @@ class BaseDB:
         try:
             self._oDB.QueryDefinitions.insertByName(name, oQuery)
         except Exception:
-            self._logger.exception("insert query %s => %s", repr(name),
-                                   repr(sql))
+            self._logger.exception("insert query %s => %s", repr(name), repr(sql))
 
 
 def open_or_create_db(path: Path) -> "BaseDB":
-    oDBContext = cast(UnoDatabaseContext,
-                      create_uno_service("com.sun.star.sdb.DatabaseContext"))
+    oDBContext = cast(
+        UnoDatabaseContext, create_uno_service("com.sun.star.sdb.DatabaseContext")
+    )
     url = uno_path_to_url(path)
     # noinspection PyBroadException
     try:

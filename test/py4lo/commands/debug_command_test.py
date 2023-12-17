@@ -28,7 +28,7 @@ from core.script import TempScript
 
 
 class TestDebugCommand(unittest.TestCase):
-    @mock.patch('zip_updater.ZipUpdater', autospec=True)
+    @mock.patch("zip_updater.ZipUpdater", autospec=True)
     def test(self, Zupdater):
         # mocks
         logger: Logger = mock.Mock()
@@ -48,11 +48,18 @@ class TestDebugCommand(unittest.TestCase):
 
         d.execute([])
 
-        self.assertEqual([mock.call.info(
-            "Debug or init. Generating '%s' for Python '%s'", Path('dest.ods'),
-            '3.1')],
-            logger.mock_calls)
+        self.assertEqual(
+            [
+                mock.call.info(
+                    "Debug or init. Generating '%s' for Python '%s'",
+                    Path("dest.ods"),
+                    "3.1",
+                )
+            ],
+            logger.mock_calls,
+        )
         print(Zupdater.mock_calls)
-        self.assertEqual(mock.call().update(Path('inc/debug.ods'),
-                                            Path('dest.ods')),
-                         Zupdater.mock_calls[-1])
+        self.assertEqual(
+            mock.call().update(Path("inc/debug.ods"), Path("dest.ods")),
+            Zupdater.mock_calls[-1],
+        )

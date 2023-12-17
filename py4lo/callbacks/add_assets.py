@@ -27,6 +27,7 @@ class AddAssets(AfterCallback):
     """
     Add assets in destination file
     """
+
     def __init__(self, assets: List[DestinationAsset]):
         """
         :param assets: the assets to add

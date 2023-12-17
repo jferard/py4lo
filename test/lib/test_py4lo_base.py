@@ -26,8 +26,7 @@ class Py4LOBaseTestCase(unittest.TestCase):
         db = open_or_create_db(Path("./test.odb"))
         db.execute_update("SQL")
 
-        self.assertEqual(
-            [mock.call.executeUpdate('SQL')], self._oStatement.mock_calls)
+        self.assertEqual([mock.call.executeUpdate("SQL")], self._oStatement.mock_calls)
 
     @mock.patch("py4lo_base.create_uno_service")
     def test_table_builder(self, cus):
@@ -49,16 +48,20 @@ class Py4LOBaseTestCase(unittest.TestCase):
         builder.add_column("text_range", DataType.NUMERIC)
         builder.build()
 
-        self.assertEqual([
-            mock.call.hasByName('ok'),
-            mock.call.createDataDescriptor(),
-            mock.call.createDataDescriptor().getColumns(),
-            mock.call.createDataDescriptor().getColumns().createDataDescriptor(),
-            mock.call.createDataDescriptor().getColumns().appendByDescriptor(
-                oColDataDescriptor),
-            mock.call.appendByDescriptor(oTableDataDescriptor)
-        ], oTables.mock_calls)
+        self.assertEqual(
+            [
+                mock.call.hasByName("ok"),
+                mock.call.createDataDescriptor(),
+                mock.call.createDataDescriptor().getColumns(),
+                mock.call.createDataDescriptor().getColumns().createDataDescriptor(),
+                mock.call.createDataDescriptor()
+                .getColumns()
+                .appendByDescriptor(oColDataDescriptor),
+                mock.call.appendByDescriptor(oTableDataDescriptor),
+            ],
+            oTables.mock_calls,
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -18,13 +18,22 @@
 import enum
 import os
 from contextlib import contextmanager
-from ctypes import cdll, c_void_p, byref, c_int, c_char_p, POINTER, c_double, \
-    string_at, CDLL
+from ctypes import (
+    cdll,
+    c_void_p,
+    byref,
+    c_int,
+    c_char_p,
+    POINTER,
+    c_double,
+    string_at,
+    CDLL,
+)
 from ctypes.util import find_library
 from pathlib import Path
 from typing import Union, Generator, List, Any, Iterator, Mapping
 
-library_name = find_library('sqlite3')
+library_name = find_library("sqlite3")
 if library_name is None:
     path = Path.cwd() / "sqlite3.dll"
     if path.exists():
@@ -60,8 +69,7 @@ class TransactionMode(enum.Enum):
 # https://www.sqlite.org/c3ref/funclist.html
 ##############################################
 # https://www.sqlite.org/c3ref/open.html
-sqlite3_lib.sqlite3_open_v2.argtypes = [c_char_p, POINTER(sqlite3_p), c_int,
-                                        c_char_p]
+sqlite3_lib.sqlite3_open_v2.argtypes = [c_char_p, POINTER(sqlite3_p), c_int, c_char_p]
 sqlite3_lib.sqlite3_open_v2.restype = c_int
 sqlite3_open_v2 = sqlite3_lib.sqlite3_open_v2
 
@@ -80,15 +88,24 @@ sqlite3_close_v2.argtypes = [sqlite3_p]
 sqlite3_close_v2.restype = c_int
 
 # https://www.sqlite.org/c3ref/exec.html
-sqlite3_lib.sqlite3_exec.argtypes = [sqlite3_p, c_char_p, c_void_p, c_void_p,
-                                     POINTER(c_char_p)]
+sqlite3_lib.sqlite3_exec.argtypes = [
+    sqlite3_p,
+    c_char_p,
+    c_void_p,
+    c_void_p,
+    POINTER(c_char_p),
+]
 sqlite3_lib.sqlite3_exec.restype = c_int
 sqlite3_exec = sqlite3_lib.sqlite3_exec
 
 # https://www.sqlite.org/c3ref/prepare.html
-sqlite3_lib.sqlite3_prepare_v2.argtypes = [sqlite3_p, c_char_p, c_int,
-                                           POINTER(sqlite3_stmt_p),
-                                           POINTER(c_char_p)]
+sqlite3_lib.sqlite3_prepare_v2.argtypes = [
+    sqlite3_p,
+    c_char_p,
+    c_int,
+    POINTER(sqlite3_stmt_p),
+    POINTER(c_char_p),
+]
 sqlite3_lib.sqlite3_prepare_v2.restype = c_int
 sqlite3_prepare_v2 = sqlite3_lib.sqlite3_prepare_v2
 
@@ -98,8 +115,13 @@ sqlite3_lib.sqlite3_column_count.restype = c_int
 sqlite3_column_count = sqlite3_lib.sqlite3_column_count
 
 # https://www.sqlite.org/c3ref/bind_blob.html
-sqlite3_lib.sqlite3_bind_blob.argtypes = [sqlite3_stmt_p, c_int, c_void_p,
-                                          c_int, c_void_p]
+sqlite3_lib.sqlite3_bind_blob.argtypes = [
+    sqlite3_stmt_p,
+    c_int,
+    c_void_p,
+    c_int,
+    c_void_p,
+]
 sqlite3_lib.sqlite3_bind_blob.restype = c_int
 sqlite3_bind_blob = sqlite3_lib.sqlite3_bind_blob
 
@@ -115,8 +137,13 @@ sqlite3_lib.sqlite3_bind_null.argtypes = [sqlite3_stmt_p, c_int]
 sqlite3_lib.sqlite3_bind_null.restype = c_int
 sqlite3_bind_null = sqlite3_lib.sqlite3_bind_null
 
-sqlite3_lib.sqlite3_bind_text.argtypes = [sqlite3_stmt_p, c_int, c_char_p,
-                                          c_int, c_void_p]
+sqlite3_lib.sqlite3_bind_text.argtypes = [
+    sqlite3_stmt_p,
+    c_int,
+    c_char_p,
+    c_int,
+    c_void_p,
+]
 sqlite3_lib.sqlite3_bind_text.restype = c_int
 sqlite3_bind_text = sqlite3_lib.sqlite3_bind_text
 
@@ -295,8 +322,9 @@ class Sqlite3Statement:
             raise self._err(ret)
         return sqlite3_changes(self._db)
 
-    def execute_query(self, with_names: bool = False
-                      ) -> Iterator[Union[List[Any], Mapping[str, Any]]]:
+    def execute_query(
+        self, with_names: bool = False
+    ) -> Iterator[Union[List[Any], Mapping[str, Any]]]:
         if with_names:
             return self._execute_query_with_names()
         else:
@@ -306,19 +334,14 @@ class Sqlite3Statement:
         col_count = sqlite3_column_count(self._stmt)
         ret = sqlite3_step(self._stmt)
         names = [
-            sqlite3_column_name(self._stmt, i).decode("utf-8")
-            for i in range(col_count)
+            sqlite3_column_name(self._stmt, i).decode("utf-8") for i in range(col_count)
         ]
-        column_types = [
-            sqlite3_column_type(self._stmt, i)
-            for i in range(col_count)
-        ]
+        column_types = [sqlite3_column_type(self._stmt, i) for i in range(col_count)]
 
         while ret == SQLITE_ROW:
-            row = dict([
-                (names[i], self._value(i, column_types))
-                for i in range(col_count)
-            ])
+            row = dict(
+                [(names[i], self._value(i, column_types)) for i in range(col_count)]
+            )
             yield row
             ret = sqlite3_step(self._stmt)
         if ret != SQLITE_DONE:
@@ -327,16 +350,10 @@ class Sqlite3Statement:
     def _execute_query_without_names(self) -> Iterator[List[Any]]:
         col_count = sqlite3_column_count(self._stmt)
         ret = sqlite3_step(self._stmt)
-        column_types = [
-            sqlite3_column_type(self._stmt, i)
-            for i in range(col_count)
-        ]
+        column_types = [sqlite3_column_type(self._stmt, i) for i in range(col_count)]
 
         while ret == SQLITE_ROW:
-            row = [
-                self._value(i, column_types)
-                for i in range(col_count)
-            ]
+            row = [self._value(i, column_types) for i in range(col_count)]
             yield row
             ret = sqlite3_step(self._stmt)
         if ret != SQLITE_DONE:
@@ -377,8 +394,7 @@ class Sqlite3Database:
     @contextmanager
     def prepare(self, sql: str) -> Generator[Sqlite3Statement, None, None]:
         stmt_p = sqlite3_stmt_p()
-        ret = sqlite3_prepare_v2(self._db, sql.encode("utf-8"), -1,
-                                 byref(stmt_p), None)
+        ret = sqlite3_prepare_v2(self._db, sql.encode("utf-8"), -1, byref(stmt_p), None)
         if ret != SQLITE_OK:
             raise self._err(ret)
 
@@ -392,8 +408,9 @@ class Sqlite3Database:
                 raise self._err(ret)
 
     @contextmanager
-    def transaction(self, mode: TransactionMode = TransactionMode.DEFERRED
-                    ) -> Generator[None, None, None]:
+    def transaction(
+        self, mode: TransactionMode = TransactionMode.DEFERRED
+    ) -> Generator[None, None, None]:
         self.execute_update("BEGIN {} TRANSACTION".format(mode.value))
         yield
         self.execute_update("END TRANSACTION")
@@ -401,7 +418,7 @@ class Sqlite3Database:
 
 @contextmanager
 def sqlite_open(
-        filepath: Union[str, Path], mode: str = "r"
+    filepath: Union[str, Path], mode: str = "r"
 ) -> Generator[Sqlite3Database, None, None]:
     db = c_void_p()
 

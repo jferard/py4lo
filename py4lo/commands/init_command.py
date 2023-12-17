@@ -34,12 +34,10 @@ class InitCommand(Command):
         sources = provider.get_sources()
         destinations = provider.get_destinations()
         python_version = provider.get("python_version")
-        helper = OdsUpdaterHelper(logger, sources,
-                                  destinations,
-                                  python_version)
-        init_command = DebugCommand(logger, helper,
-                                    sources, destinations,
-                                    python_version, "new-project.ods")
+        helper = OdsUpdaterHelper(logger, sources, destinations, python_version)
+        init_command = DebugCommand(
+            logger, helper, sources, destinations, python_version, "new-project.ods"
+        )
         return CommandExecutor(logger, init_command, test_executor)
 
     def execute(self, *args: Any) -> Tuple[Any, ...]:

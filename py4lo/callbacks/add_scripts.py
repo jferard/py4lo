@@ -40,7 +40,5 @@ class AddScripts(AfterCallback):
     def call(self, zout: ZipFile) -> bool:
         for script in self._scripts:
             self._logger.debug("Add script %s to archive", script.script_path)
-            zout.writestr(
-                str(script.script_path),
-                script.script_content)
+            zout.writestr(str(script.script_path), script.script_content)
         return True

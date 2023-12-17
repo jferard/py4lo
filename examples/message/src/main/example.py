@@ -17,6 +17,7 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
+
 # py4lo: entry
 # py4lo: embed script alib.py
 # py4lo: embed lib py4lo_typing
@@ -28,11 +29,20 @@ import time
 from datetime import datetime
 
 import example_lib
-from py4lo_dialogs import (ProgressExecutorBuilder, ConsoleExecutorBuilder,
-                           message_box, input_box)
+from py4lo_dialogs import (
+    ProgressExecutorBuilder,
+    ConsoleExecutorBuilder,
+    message_box,
+    input_box,
+)
 from py4lo_helper import provider as pr, xray, mri, parent_doc
-from py4lo_io import (dict_reader, dict_writer, export_to_csv,
-                      import_from_csv, CellTyping)
+from py4lo_io import (
+    dict_reader,
+    dict_writer,
+    export_to_csv,
+    import_from_csv,
+    CellTyping,
+)
 
 o = example_lib.Example(pr)
 
@@ -71,28 +81,42 @@ def example_from_lib(*_args):
 
 
 def writer_example(*_args):
-    w = dict_writer(pr.controller.getActiveSheet(),
-                    ["a", "b", "text_range", "d", "e"],
-                    cell_typing=CellTyping.Accurate)
+    w = dict_writer(
+        pr.controller.getActiveSheet(),
+        ["a", "b", "text_range", "d", "e"],
+        cell_typing=CellTyping.Accurate,
+    )
     w.writeheader()
-    for row in [{"a": "value", "b": 1, "text_range": True,
-                 "d": datetime(2020, 11, 21, 12, 36, 50)},
-                {"a": "other value", "b": 2, "text_range": False,
-                 "d": datetime(2020, 11, 21, 12, 36, 50)}]:
+    for row in [
+        {
+            "a": "value",
+            "b": 1,
+            "text_range": True,
+            "d": datetime(2020, 11, 21, 12, 36, 50),
+        },
+        {
+            "a": "other value",
+            "b": 2,
+            "text_range": False,
+            "d": datetime(2020, 11, 21, 12, 36, 50),
+        },
+    ]:
         w.writerow(row)
 
 
 def reader_example(*_args):
-    r = dict_reader(pr.controller.getActiveSheet(),
-                    restval="x", restkey="t",
-                    cell_typing=CellTyping.Accurate)
+    r = dict_reader(
+        pr.controller.getActiveSheet(),
+        restval="x",
+        restkey="t",
+        cell_typing=CellTyping.Accurate,
+    )
     for row in r:
         message_box("py4lo", "{}: {}".format(r.line_num, row))
 
 
 def export_example(*_args):
-    export_to_csv(pr.controller.getActiveSheet(),
-                  "./temp.csv")
+    export_to_csv(pr.controller.getActiveSheet(), "./temp.csv")
 
 
 def import_example(*_args):
@@ -121,8 +145,7 @@ def progress_example(*_args):
 
 
 def after_progress(*_args):
-    message_box("Title",
-                "The return value was: {}".format(progress_executor.response))
+    message_box("Title", "The return value was: {}".format(progress_executor.response))
 
 
 console_executor = None

@@ -37,9 +37,12 @@ class EmbedLib(Directive):
     def __init__(self, lib_dir: Path):
         self._lib_dir = lib_dir
 
-    def execute(self, processor: Any,  # "DirectiveProcessor",
-                line_processor: Any,  # "DirectiveLineProcessor",
-                args):
+    def execute(
+        self,
+        processor: Any,  # "DirectiveProcessor",
+        line_processor: Any,  # "DirectiveLineProcessor",
+        args,
+    ):
         lib_ref = args[0]
         lib_path = self._lib_dir.joinpath(lib_ref)
         source_scripts = self._embed(lib_path)
@@ -56,7 +59,8 @@ except NameError:
     pass
 finally:
     del py4lo_helper  # does not wipe cache, but remove the access.
-# end py4lo: init py4lo_helper""")
+# end py4lo: init py4lo_helper"""
+            )
         return True
 
     def _embed(self, lib_path: Path) -> Sequence[SourceScript]:
@@ -69,8 +73,7 @@ finally:
                 stack.extend(path.glob("*.py"))
             elif path.suffix == "" or path.suffix == ".py":
                 path = path.with_suffix(".py")
-                temp_script = SourceScript(
-                    path, self._lib_dir, False)
+                temp_script = SourceScript(path, self._lib_dir, False)
                 ret.append(temp_script)
 
         return ret

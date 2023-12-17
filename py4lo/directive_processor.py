@@ -36,22 +36,28 @@ class DirectiveProcessor:
 
     @staticmethod
     def create(
-            scripts_processor: Any,  # "ScriptSetProcessor",
-            directive_provider: DirectiveProvider, python_version: str,
-            source_script: SourceScript):
-        comparator = Comparator({'python_version': python_version})
+        scripts_processor: Any,  # "ScriptSetProcessor",
+        directive_provider: DirectiveProvider,
+        python_version: str,
+        source_script: SourceScript,
+    ):
+        comparator = Comparator({"python_version": python_version})
 
         def local_is_true(args: List[str]):
             return comparator.check(args[0], args[1], args[2])
 
         branch_processor = BranchProcessor(local_is_true)
 
-        return DirectiveProcessor(scripts_processor, branch_processor,
-                                  directive_provider)
+        return DirectiveProcessor(
+            scripts_processor, branch_processor, directive_provider
+        )
 
-    def __init__(self, script_set_processor: Any,  # "ScriptSetProcessor",
-                 branch_processor: BranchProcessor,
-                 directive_provider: DirectiveProvider):
+    def __init__(
+        self,
+        script_set_processor: Any,  # "ScriptSetProcessor",
+        branch_processor: BranchProcessor,
+        directive_provider: DirectiveProvider,
+    ):
         """
         Create a Directive processor. Scripts_path is the path to the scripts
         directory
@@ -71,9 +77,9 @@ class DirectiveProcessor:
 
     def process_line(self, line: str) -> List[str]:
         """Process a line that starts with #"""
-        return DirectiveLineProcessor(self, self._branch_processor,
-                                      self._directive_provider,
-                                      line).process_line()
+        return DirectiveLineProcessor(
+            self, self._branch_processor, self._directive_provider, line
+        ).process_line()
 
     def end(self):
         """Verify the end of the scripts"""
@@ -86,9 +92,13 @@ class DirectiveProcessor:
 class DirectiveLineProcessor:
     """A worker that processes the line"""
 
-    def __init__(self, directive_processor: DirectiveProcessor,
-                 branch_processor: BranchProcessor,
-                 directive_provider: DirectiveProvider, line: str):
+    def __init__(
+        self,
+        directive_processor: DirectiveProcessor,
+        branch_processor: BranchProcessor,
+        directive_provider: DirectiveProvider,
+        line: str,
+    ):
         self._directive_processor = directive_processor
         self._branch_processor = branch_processor
         self._directive_provider = directive_provider
@@ -120,8 +130,7 @@ class DirectiveLineProcessor:
             return None
 
     def _process_directive(self, line: str, args: List[str]):
-        is_branch_directive = self._branch_processor.handle_directive(args[0],
-                                                                      args[1:])
+        is_branch_directive = self._branch_processor.handle_directive(args[0], args[1:])
         if is_branch_directive:
             return
 

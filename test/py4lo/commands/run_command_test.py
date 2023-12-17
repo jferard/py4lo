@@ -34,19 +34,25 @@ class TestRunCommand(unittest.TestCase):
 
     @mock.patch("subprocess.call", autospec=True)
     def test_create(self, call_mock):
-        self.provider.get.return_value = {"log_level": 0, "python_exe": "py",
-                                          "python_version": 3.7,
-                                          "test_dir": ".", "src_dir": ".",
-                                          "base_path": ".", "calc_exe": "ca",
-                                          "source_file": "ods",
-                                          "suffix": ".ext", "src_ignore": "*",
-                                          "assets_dir": ".",
-                                          "target_dir": ".",
-                                          "assets_dest_dir": ".",
-                                          "assets_ignore": "*"}
+        self.provider.get.return_value = {
+            "log_level": 0,
+            "python_exe": "py",
+            "python_version": 3.7,
+            "test_dir": ".",
+            "src_dir": ".",
+            "base_path": ".",
+            "calc_exe": "ca",
+            "source_file": "ods",
+            "suffix": ".ext",
+            "src_ignore": "*",
+            "assets_dir": ".",
+            "target_dir": ".",
+            "assets_dest_dir": ".",
+            "assets_ignore": "*",
+        }
 
     @mock.patch("subprocess.call", autospec=True)
     def test(self, call_mock):
         h = RunCommand("calc")
         h.execute(0, Path(""))
-        self.assertEqual([mock.call(['calc', '.'])], call_mock.mock_calls)
+        self.assertEqual([mock.call(["calc", "."])], call_mock.mock_calls)

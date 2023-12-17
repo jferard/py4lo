@@ -33,16 +33,20 @@ class TestEmbedLib(unittest.TestCase):
         self.assertEqual(["embed", "lib"], self._directive.sig_elements())
 
     def test_execute(self):
-        proc =  mock.Mock()
+        proc = mock.Mock()
         s = []
-        self.assertEqual(True,
-                         self._directive.execute(proc, s, ["py4lo_helper"]))
+        self.assertEqual(True, self._directive.execute(proc, s, ["py4lo_helper"]))
         py4lo_path = Path(__file__).parent.parent.parent.parent
-        self.assertEqual([mock.call.append_script(
-            SourceScript(
-                py4lo_path / 'lib/py4lo_helper.py',
-                py4lo_path / 'lib', False))],
-            proc.mock_calls)
+        self.assertEqual(
+            [
+                mock.call.append_script(
+                    SourceScript(
+                        py4lo_path / "lib/py4lo_helper.py", py4lo_path / "lib", False
+                    )
+                )
+            ],
+            proc.mock_calls,
+        )
 
         expected = """# begin py4lo: init py4lo_helper
 import py4lo_helper
@@ -52,8 +56,9 @@ except NameError:
     pass
 finally:
     del py4lo_helper  # does not wipe cache, but remove the access.
-# end py4lo: init py4lo_helper""" # noqa: E501
+# end py4lo: init py4lo_helper"""  # noqa: E501
         self.assertEqual([expected], s)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

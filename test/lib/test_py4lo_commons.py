@@ -29,8 +29,18 @@ from pathlib import Path
 from unittest import mock
 
 from py4lo_commons import (
-    uno_url_to_path, uno_path_to_url, create_bus, Commons, init, sanitize,
-    read_config, date_to_int, date_to_float, int_to_date, float_to_date)
+    uno_url_to_path,
+    uno_path_to_url,
+    create_bus,
+    Commons,
+    init,
+    sanitize,
+    read_config,
+    date_to_int,
+    date_to_float,
+    int_to_date,
+    float_to_date,
+)
 
 
 # from py4lo_commons import *
@@ -39,6 +49,7 @@ from py4lo_commons import (
 class MiscTestCase(unittest.TestCase):
     def test_uno(self):
         from mock_constants import uno
+
         self.assertEqual("url/", uno.fileUrlToSystemPath("file://url"))
         self.assertEqual("file:///url", uno.systemPathToFileUrl("/url"))
 
@@ -74,8 +85,7 @@ class MiscTestCase(unittest.TestCase):
 
         # verify
         self.assertEqual("url", ret)
-        self.assertEqual([mock.call(str(Path("abc").resolve()))],
-                         sptfu.mock_calls)
+        self.assertEqual([mock.call(str(Path("abc").resolve()))], sptfu.mock_calls)
 
     @mock.patch("py4lo_commons.uno.systemPathToFileUrl")
     def test_uno_path_to_url_err(self, sptfu):
@@ -165,8 +175,8 @@ class TestCommons(unittest.TestCase):
         self.assertEqual("e", sanitize("é"))
 
     def test_logger(self):
-        t = tempfile.NamedTemporaryFile(delete=False, mode='w')
-        self.c.init_logger(t.name, fmt='%(levelname)s - %(message)s')
+        t = tempfile.NamedTemporaryFile(delete=False, mode="w")
+        self.c.init_logger(t.name, fmt="%(levelname)s - %(message)s")
         self.c.logger().debug("é")
         t.flush()
         t.close()
@@ -175,10 +185,10 @@ class TestCommons(unittest.TestCase):
         os.unlink(t.name)
 
     def test_logger_init_twice(self):
-        t = tempfile.NamedTemporaryFile(delete=False, mode='w')
-        self.c.init_logger(t, fmt='%(levelname)s - %(message)s')
+        t = tempfile.NamedTemporaryFile(delete=False, mode="w")
+        self.c.init_logger(t, fmt="%(levelname)s - %(message)s")
         with self.assertRaises(Exception):
-            self.c.init_logger(t, fmt='%(levelname)s - %(message)s')
+            self.c.init_logger(t, fmt="%(levelname)s - %(message)s")
         os.unlink(t.name)
 
     def test_logger_none(self):
@@ -255,7 +265,7 @@ class TestCommons(unittest.TestCase):
 
     def test_read_empty_config(self):
         config = read_config([])
-        self.assertEqual(['DEFAULT'], list(config))
+        self.assertEqual(["DEFAULT"], list(config))
 
     def test_get_logger(self):
         t = tempfile.mkdtemp()
@@ -280,10 +290,14 @@ class TestDate(unittest.TestCase):
     def test_date_to_float(self):
         self.assertEqual(0.0, date_to_float(dt.datetime(1899, 12, 30)))
         self.assertEqual(0.0, date_to_float(dt.date(1899, 12, 30)))
-        self.assertAlmostEqual(44639.723032407404, date_to_float(dt.datetime(
-            2022, 3, 19, 17, 21, 10)), delta=0.0001)
-        self.assertAlmostEqual(0.723032407404, date_to_float(dt.time(
-            17, 21, 10)), delta=0.0001)
+        self.assertAlmostEqual(
+            44639.723032407404,
+            date_to_float(dt.datetime(2022, 3, 19, 17, 21, 10)),
+            delta=0.0001,
+        )
+        self.assertAlmostEqual(
+            0.723032407404, date_to_float(dt.time(17, 21, 10)), delta=0.0001
+        )
         with self.assertRaises(ValueError):
             date_to_float(1)
 
@@ -295,11 +309,13 @@ class TestDate(unittest.TestCase):
     def test_float_to_date(self):
         self.assertEqual(dt.datetime(1899, 12, 30), float_to_date(0.0))
         self.assertEqual(dt.datetime(1899, 12, 30), float_to_date(0.0))
-        self.assertEqual(dt.datetime(
-            2022, 3, 19, 17, 21, 10), float_to_date(44639.723032407404))
-        self.assertEqual(dt.datetime(
-            1899, 12, 30, 17, 21, 10), float_to_date(0.723032407404))
+        self.assertEqual(
+            dt.datetime(2022, 3, 19, 17, 21, 10), float_to_date(44639.723032407404)
+        )
+        self.assertEqual(
+            dt.datetime(1899, 12, 30, 17, 21, 10), float_to_date(0.723032407404)
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

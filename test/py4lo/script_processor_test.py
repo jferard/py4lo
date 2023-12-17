@@ -35,19 +35,21 @@ class TestScriptsProcessor(unittest.TestCase):
         dp: DirectiveProcessor = mock.Mock()
         source_script: SourceScript = mock.Mock(
             relative_path="fname",
-            script_path=file_path_mock(
-                io.StringIO("some line")),
-            export_funcs=True)
+            script_path=file_path_mock(io.StringIO("some line")),
+            export_funcs=True,
+        )
         target_dir: Path = mock.Mock()
-        target_dir.joinpath.side_effect = [Path('t')]
+        target_dir.joinpath.side_effect = [Path("t")]
 
         sp = ScriptProcessor(logger, dp, source_script, target_dir)
         sp.parse_script()
 
         self.assertEqual(
-            [mock.call.debug('Parsing script: %s (%s)', 'fname',
-                        source_script),
-             mock.call.debug('Temp output script is: %s (%s)', Path('t'), [])],
-            logger.mock_calls)
+            [
+                mock.call.debug("Parsing script: %s (%s)", "fname", source_script),
+                mock.call.debug("Temp output script is: %s (%s)", Path("t"), []),
+            ],
+            logger.mock_calls,
+        )
         self.assertEqual([mock.call.ignore_lines(), mock.call.end()], dp.mock_calls)
-        verify_open_path(self, source_script.script_path, 'r', encoding='utf-8')
+        verify_open_path(self, source_script.script_path, "r", encoding="utf-8")

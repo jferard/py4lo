@@ -25,6 +25,7 @@ class DestinationScript:
     """A target script has a file name, a content (the file was processed),
     some exported functions and the exceptions encountered by the
     interpreter"""
+
     script_path: Path
     script_content: bytes
     dest_dir: Path
@@ -46,6 +47,7 @@ class TempScript:
     """A target script has a file name, a content (the file was processed),
     some exported functions and the exceptions encountered by the
     interpreter"""
+
     script_path: Path
     script_content: bytes
     temp_dir: Path
@@ -58,6 +60,10 @@ class TempScript:
 
     def to_destination(self, dest_dir: Path) -> DestinationScript:
         script_path = dest_dir.joinpath(self.relative_path)
-        return DestinationScript(script_path, self.script_content,
-                                 dest_dir, self.exported_func_names,
-                                 self.exception)
+        return DestinationScript(
+            script_path,
+            self.script_content,
+            dest_dir,
+            self.exported_func_names,
+            self.exception,
+        )

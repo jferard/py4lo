@@ -17,7 +17,7 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from abc import ABC, abstractmethod
-from typing import (Any, Dict, Optional, TypeVar, Union)
+from typing import Any, Dict, Optional, TypeVar, Union
 
 
 class Comparable(ABC):
@@ -35,7 +35,7 @@ class Comparator:
     processor"""
 
     def __init__(self, accepted_locals: Optional[Dict[str, T]] = None):
-        """accepted_locals are """
+        """accepted_locals are"""
         if accepted_locals is None:
             self._accepted_locals = {}
         else:
@@ -50,28 +50,33 @@ class Comparator:
         if type(parsed_arg1) is not type(parsed_arg2):
             return False
 
-        cmp_result = self._cmp(parsed_arg1, parsed_arg2) # type: ignore [type-var]
-        return (cmp_result == -1 and comparator in ["<", "<="]
-                or cmp_result == 0 and comparator in ["<=", "==", ">="]
-                or cmp_result == 1 and comparator in [">", ">="])
+        cmp_result = self._cmp(parsed_arg1, parsed_arg2)  # type: ignore [type-var]
+        return (
+            cmp_result == -1
+            and comparator in ["<", "<="]
+            or cmp_result == 0
+            and comparator in ["<=", "==", ">="]
+            or cmp_result == 1
+            and comparator in [">", ">="]
+        )
 
     def _parse_expr(self, expr: EXPR) -> EXPR:
         if not isinstance(expr, str):
             return expr
 
         # substitution
-        if expr[0] == '$':
+        if expr[0] == "$":
             name = expr[1:]
-            expr = eval(name, {'__builtin__': None}, self._accepted_locals)
+            expr = eval(name, {"__builtin__": None}, self._accepted_locals)
 
         if not isinstance(expr, str):
             return expr
 
         if expr:
             try:
-                if expr[-1:] == 'f':
+                if expr[-1:] == "f":
                     return float(expr[0:-1])
-                elif expr[-1:] == 'i':
+                elif expr[-1:] == "i":
                     return float(expr[0:-1])
             except ValueError:
                 pass

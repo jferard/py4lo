@@ -30,17 +30,22 @@ class TestAddScripts(unittest.TestCase):
         logger: Logger = mock.Mock()
         zout: ZipFile = mock.Mock()
         t1: DestinationScript = mock.Mock(
-            script_path="Scripts/python/t1", script_content="c1")
+            script_path="Scripts/python/t1", script_content="c1"
+        )
         t2: DestinationScript = mock.Mock(
-            script_path="Scripts/python/t2", script_content="c2")
+            script_path="Scripts/python/t2", script_content="c2"
+        )
 
         a = AddScripts(logger, [t1, t2])
         a.call(zout)
-        self.assertEqual([
-            mock.call.writestr('Scripts/python/t1', 'c1'),
-            mock.call.writestr('Scripts/python/t2', 'c2')
-        ], zout.mock_calls)
+        self.assertEqual(
+            [
+                mock.call.writestr("Scripts/python/t1", "c1"),
+                mock.call.writestr("Scripts/python/t2", "c2"),
+            ],
+            zout.mock_calls,
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
