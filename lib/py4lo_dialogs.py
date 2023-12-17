@@ -61,17 +61,13 @@ try:
         from com.sun.star.ui.dialogs.ExecutableDialogResults import (
             OK, CANCEL)
 
-    class FontWeight:
-        # noinspection PyUnresolvedReferences
-        from com.sun.star.awt.FontWeight import (BOLD, )
-
     class PushButtonType:
         # noinspection PyUnresolvedReferences
         from com.sun.star.awt.PushButtonType import (OK, CANCEL)
 
 except (ModuleNotFoundError, ImportError):
     from mock_constants import (  # type:ignore[assignment]
-        uno, MessageBoxType, MessageBoxButtons, FontWeight,
+        uno, MessageBoxType, MessageBoxButtons,
         ExecutableDialogResults, PushButtonType
     )
 

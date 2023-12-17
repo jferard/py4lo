@@ -31,7 +31,7 @@ from py4lo_helper import (provider as pr, make_pvs, parent_doc, get_cell_type,
                           get_used_range_address, Target,
                           FrameSearchFlag)
 from py4lo_typing import (UnoCell, UnoSheet, UnoSpreadsheetDocument,
-                          StrPath, UnoService, UnoNumberFormats)
+                          StrPath, UnoNumberFormats)
 
 try:
     # noinspection PyUnresolvedReferences

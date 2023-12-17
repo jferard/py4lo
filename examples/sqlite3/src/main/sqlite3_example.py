@@ -22,7 +22,6 @@
 # py4lo: embed lib py4lo_sqlite3
 import logging
 from pathlib import Path
-from typing import cast
 
 from py4lo_helper import provider
 from py4lo_commons import Commons, uno_url_to_path

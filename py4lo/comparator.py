@@ -17,8 +17,7 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from abc import ABC, abstractmethod
-from typing import (Any, Dict, Optional, TypeVar, Union, cast)
-from typing_extensions import reveal_type
+from typing import (Any, Dict, Optional, TypeVar, Union)
 
 
 class Comparable(ABC):

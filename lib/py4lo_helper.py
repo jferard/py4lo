@@ -24,12 +24,12 @@ from enum import Enum
 from locale import getlocale
 from pathlib import Path
 from typing import (Any, Optional, List, cast, Callable, Mapping, Tuple,
-                    Iterator, Union, Iterable, TypeVar)
+                    Iterator, Union, Iterable)
 
 from py4lo_commons import uno_path_to_url
-from py4lo_typing import (UnoSpreadsheetDocument, UnoController, UnoContext,
-                          UnoService, UnoSheet, UnoCellRangeAddress, UnoRange,
-                          UnoCell, UnoObject, DATA_ARRAY, UnoCellAddress,
+from py4lo_typing import (UnoSpreadsheetDocument, UnoController, UnoService,
+                          UnoSheet, UnoCellRangeAddress, UnoRange,
+                          UnoCell, DATA_ARRAY, UnoCellAddress,
                           UnoPropertyValue, DATA_ROW, UnoXScriptContext,
                           UnoColumn, UnoStruct, UnoEnum, UnoRow, DATA_VALUE,
                           UnoPropertyValues, UnoText, UnoSize,
@@ -88,13 +88,6 @@ try:
     from com.sun.star.uno import (RuntimeException as UnoRuntimeException,
                                   Exception as UnoException)
 
-
-    class PropertyState:
-        # noinspection PyUnresolvedReferences
-        from com.sun.star.beans.PropertyState import (
-            AMBIGUOUS_VALUE, DIRECT_VALUE)
-
-
     class FontSlant:
         # noinspection PyUnresolvedReferences
         from com.sun.star.awt.FontSlant import (NONE, OBLIQUE, ITALIC)
@@ -104,7 +97,7 @@ except (ModuleNotFoundError, ImportError):
         unohelper, uno, XTransferable, FrameSearchFlag, BorderLineStyle,
         ConditionOperator, FontWeight, ValidationType,
         TableValidationVisibility, ScriptFrameworkErrorException,
-        UnoRuntimeException, UnoException, PropertyState, FontSlant
+        UnoRuntimeException, UnoException, FontSlant
     )
 
 ###############################################################################

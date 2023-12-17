@@ -16,7 +16,7 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from typing import List, Tuple, Optional, Any
+from typing import Tuple, Any
 
 from commands import Command
 from commands.command_executor import CommandExecutor

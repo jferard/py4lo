@@ -109,6 +109,8 @@ class UnoOfficeDocument(UnoMultiServiceFactory):
 
     def storeToURL(self, _url: str, _args: UnoPropertyValues): ...
 
+    def store(self): ...
+
 
 # Calc
 class UnoConditionalFormat(UnoService):
@@ -196,7 +198,8 @@ class UnoColumn(UnoRange):
     OptimalWidth: int
 
 
-class UnoDatabaseDocument(UnoOfficeDocument): ...
+class UnoDatabaseDocument(UnoOfficeDocument):
+    ...
 
 
 

@@ -38,16 +38,9 @@ try:
         )
 
 
-    class ColumnValue:
-        # noinspection PyUnresolvedReferences
-        from com.sun.star.sdbc.ColumnValue import (
-            NO_NULLS, NULLABLE, NULLABLE_UNKNOWN
-        )
-
 except (ModuleNotFoundError, ImportError):
     from mock_constants import (  # type:ignore[assignment]
         DataType,
-        ColumnValue
     )
 
 
