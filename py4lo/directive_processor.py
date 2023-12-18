@@ -130,7 +130,9 @@ class DirectiveLineProcessor:
             return None
 
     def _process_directive(self, line: str, args: List[str]):
-        is_branch_directive = self._branch_processor.handle_directive(args[0], args[1:])
+        is_branch_directive = self._branch_processor.handle_directive(
+            args[0], args[1:]
+        )
         if is_branch_directive:
             return
 

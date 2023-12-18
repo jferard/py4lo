@@ -43,4 +43,6 @@ class TestCommandExecutor(unittest.TestCase):
         ce.execute(["1", "2"])
 
         self.assertEqual([mock.call.execute(["1", "2"])], previous.mock_calls)
-        self.assertEqual([mock.call.execute("3", "4")], self._command.mock_calls)
+        self.assertEqual(
+            [mock.call.execute("3", "4")], self._command.mock_calls
+        )

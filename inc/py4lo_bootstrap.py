@@ -26,7 +26,8 @@ def use_local(object_ref):
     dsp = doc.getScriptProvider()
     (fname_wo_py, oname) = object_ref.split("::")
     uri = (
-        "vnd.sun.star.script:{}.py$__export_{}?" "language=Python&location=document"
+        "vnd.sun.star.script:{}.py$__export_{}?"
+        "language=Python&location=document"
     ).format(fname_wo_py, oname)
     import_script = dsp.getScript(uri)
     return import_script.invoke((), (), ())[0]

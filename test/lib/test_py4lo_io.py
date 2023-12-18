@@ -195,7 +195,9 @@ class Py4LOIOTestCase(unittest.TestCase):
     def test_reader_rc(self, gura):
         # prepare
         oSheet = mock.Mock()
-        oRangeAddress = mock.Mock(StartColumn=0, StartRow=0, EndColumn=1, EndRow=2)
+        oRangeAddress = mock.Mock(
+            StartColumn=0, StartRow=0, EndColumn=1, EndRow=2
+        )
         gura.side_effect = [oRangeAddress]
 
         # play
@@ -216,7 +218,9 @@ class Py4LOIOTestCase(unittest.TestCase):
             mock.Mock(String="A3"),
             mock.Mock(String="B3"),
         ]
-        oRangeAddress = mock.Mock(StartColumn=0, StartRow=0, EndColumn=1, EndRow=2)
+        oRangeAddress = mock.Mock(
+            StartColumn=0, StartRow=0, EndColumn=1, EndRow=2
+        )
         gura.side_effect = [oRangeAddress]
 
         # play
@@ -240,7 +244,9 @@ class Py4LOIOTestCase(unittest.TestCase):
             mock.Mock(),
         ]
         oFormats = mock.Mock()
-        oRangeAddress = mock.Mock(StartColumn=0, StartRow=0, EndColumn=1, EndRow=2)
+        oRangeAddress = mock.Mock(
+            StartColumn=0, StartRow=0, EndColumn=1, EndRow=2
+        )
         gura.side_effect = [oRangeAddress]
 
         # play
@@ -261,14 +267,18 @@ class Py4LOIOTestCase(unittest.TestCase):
             mock.Mock(String="A3"),
             mock.Mock(String="B3"),
         ]
-        oRangeAddress = mock.Mock(StartColumn=0, StartRow=0, EndColumn=1, EndRow=2)
+        oRangeAddress = mock.Mock(
+            StartColumn=0, StartRow=0, EndColumn=1, EndRow=2
+        )
         gura.side_effect = [oRangeAddress]
 
         # play
         r = dict_reader(oSheet, cell_typing=CellTyping.String)
 
         # verify
-        self.assertEqual([{"A1": "A2", "B1": "B2"}, {"A1": "A3", "B1": "B3"}], list(r))
+        self.assertEqual(
+            [{"A1": "A2", "B1": "B2"}, {"A1": "A3", "B1": "B3"}], list(r)
+        )
 
     @mock.patch("py4lo_io.get_used_range_address")
     def test_dict_reader_fieldnames(self, gura):
@@ -282,7 +292,9 @@ class Py4LOIOTestCase(unittest.TestCase):
             mock.Mock(String="A3"),
             mock.Mock(String="B3"),
         ]
-        oRangeAddress = mock.Mock(StartColumn=0, StartRow=0, EndColumn=1, EndRow=2)
+        oRangeAddress = mock.Mock(
+            StartColumn=0, StartRow=0, EndColumn=1, EndRow=2
+        )
         gura.side_effect = [oRangeAddress]
 
         # play
@@ -312,7 +324,9 @@ class Py4LOIOTestCase(unittest.TestCase):
             mock.Mock(String="C2"),
         ]
         gct.side_effect = ["TEXT", "EMPTY", "EMPTY", "TEXT", "TEXT", "TEXT"]
-        oRangeAddress = mock.Mock(StartColumn=0, StartRow=0, EndColumn=2, EndRow=1)
+        oRangeAddress = mock.Mock(
+            StartColumn=0, StartRow=0, EndColumn=2, EndRow=1
+        )
         gura.side_effect = [oRangeAddress]
 
         # play
@@ -326,7 +340,10 @@ class Py4LOIOTestCase(unittest.TestCase):
 
         # verify
         self.assertEqual(
-            [{"bar": "RV", "foo": "A1"}, {"RK": ["C2"], "bar": "B2", "foo": "A2"}],
+            [
+                {"bar": "RV", "foo": "A1"},
+                {"RK": ["C2"], "bar": "B2", "foo": "A2"},
+            ],
             list(r),
         )
 
@@ -337,7 +354,9 @@ class Py4LOIOTestCase(unittest.TestCase):
         oFormats.getStandardFormat.side_effect = [1]
 
         # play
-        act_n = find_number_format_style(oFormats, NumberFormat.NUMBER, oLocale)
+        act_n = find_number_format_style(
+            oFormats, NumberFormat.NUMBER, oLocale
+        )
 
         # verify
         self.assertEqual(1, act_n)
@@ -528,7 +547,9 @@ class Py4LOIOTestCase(unittest.TestCase):
             ],
             oSheet.mock_calls,
         )
-        self.assertEqual(["a", "b", "text_range", 1, 2, 3], [c.Value for c in cells])
+        self.assertEqual(
+            ["a", "b", "text_range", 1, 2, 3], [c.Value for c in cells]
+        )
 
     def test_writer_formats(self):
         # prepare
@@ -558,7 +579,9 @@ class Py4LOIOTestCase(unittest.TestCase):
             ],
             oSheet.mock_calls,
         )
-        self.assertEqual(["a", "b", "text_range"], [c.String for c in cells[:3]])
+        self.assertEqual(
+            ["a", "b", "text_range"], [c.String for c in cells[:3]]
+        )
         self.assertEqual([1, 2, 3], [c.Value for c in cells[3:]])
 
     def test_writer_no_formats(self):
@@ -597,7 +620,9 @@ class Py4LOIOTestCase(unittest.TestCase):
             ],
             oSheet.mock_calls,
         )
-        self.assertEqual(["a", "b", "text_range"], [c.String for c in cells[:3]])
+        self.assertEqual(
+            ["a", "b", "text_range"], [c.String for c in cells[:3]]
+        )
         self.assertEqual([1, 2, 3], [c.Value for c in cells[3:]])
 
     def test_dict_writer_wc(self):
@@ -636,7 +661,8 @@ class Py4LOIOTestCase(unittest.TestCase):
             oSheet.mock_calls,
         )
         self.assertEqual(
-            ["a", "b", "text_range", 1, 2, 3, 4, 5, 6], [c.Value for c in cells]
+            ["a", "b", "text_range", 1, 2, 3, 4, 5, 6],
+            [c.Value for c in cells],
         )
 
     def test_dict_writer_wc_raise(self):
@@ -676,7 +702,9 @@ class Py4LOIOTestCase(unittest.TestCase):
         def wc(oCell: UnoCell, value: Any):
             oCell.Value = value
 
-        w = dict_writer(oSheet, ["a", "b", "text_range"], restval="foo", write_cell=wc)
+        w = dict_writer(
+            oSheet, ["a", "b", "text_range"], restval="foo", write_cell=wc
+        )
 
         w.writeheader()
         w.writerow({"a": 1, "b": 2})
@@ -716,7 +744,9 @@ class IOCSVTestCase(unittest.TestCase):
 
         # verify
         self.assertEqual([mock.call.getByIndex(0)], oOtherSheets.mock_calls)
-        self.assertEqual([mock.call.importSheet(oOtherDoc, "a", 2)], oSheets.mock_calls)
+        self.assertEqual(
+            [mock.call.importSheet(oOtherDoc, "a", 2)], oSheets.mock_calls
+        )
         self.assertEqual(
             [
                 mock.call.desktop.loadComponentFromURL(
@@ -725,7 +755,9 @@ class IOCSVTestCase(unittest.TestCase):
                     0,
                     (
                         make_pv("FilterName", "Text - txt - csv (StarCalc)"),
-                        make_pv("FilterOptions", "44,34,76,1,,1033,false,false"),
+                        make_pv(
+                            "FilterOptions", "44,34,76,1,,1033,false,false"
+                        ),
                         make_pv("Hidden", True),
                     ),
                 )
@@ -782,7 +814,10 @@ class IOCSVTestCase(unittest.TestCase):
                     "url",
                     (
                         make_pv("FilterName", "Text - txt - csv (StarCalc)"),
-                        make_pv("FilterOptions", "44,34,76,1,,1033,false,false,true"),
+                        make_pv(
+                            "FilterOptions",
+                            "44,34,76,1,,1033,false,false,true",
+                        ),
                         make_pv("Overwrite", True),
                     ),
                 ),

@@ -75,6 +75,8 @@ from py4lo_typing import (
     lazy,
     UnoClipboard,
     DataFlavor,
+    UnoBorderLine,
+    UnoSortField,
 )
 
 try:
@@ -303,7 +305,9 @@ def create_uno_service(
             return sm.createInstanceWithArgumentsAndContext(sname, args, ctxt)
 
 
-def create_uno_service_ctxt(sname: str, args: Optional[List[Any]] = None) -> UnoService:
+def create_uno_service_ctxt(
+    sname: str, args: Optional[List[Any]] = None
+) -> UnoService:
     assert provider is not None
     return create_uno_service(sname, args, provider.ctxt)
 
@@ -319,17 +323,21 @@ uno_service_ctxt = create_uno_service_ctxt
 #####
 
 
-def to_iter(o: Union[UnoIndexAccess[UO], UnoEnumerationAccess[UO]]) -> Iterator[UO]:
+def to_iter(
+    o: Union[UnoIndexAccess[UO], UnoEnumerationAccess[UO]]
+) -> Iterator[UO]:
     """
     @param o: an XIndexAccess or XEnumerationAccession object
     @return: an iterator on `o`
     """
     if o.supportsService("com.sun.star.container.XIndexAccess"):
-        count = o.Count  # type: ignore[union-attr]
+        o = cast(UnoIndexAccess, o)
+        count = o.Count
         for i in range(count):
-            yield o.getByIndex(i)  # type: ignore[union-attr]
+            yield o.getByIndex(i)
     elif o.supportsService("com.sun.star.container.XEnumerationAccess"):
-        oEnum = o.createEnumeration()  # type: ignore[union-attr]
+        o = cast(UnoEnumerationAccess, o)
+        oEnum = o.createEnumeration()
         while oEnum.hasMoreElements():
             yield oEnum.nextElement()
     else:
@@ -466,7 +474,9 @@ def make_full_pv(
     return pv
 
 
-def make_pvs(d: Optional[Mapping[str, Any]] = None) -> Tuple[UnoPropertyValue, ...]:
+def make_pvs(
+    d: Optional[Mapping[str, Any]] = None
+) -> Tuple[UnoPropertyValue, ...]:
     if d is None:
         return tuple()
     else:
@@ -508,7 +518,9 @@ def make_locale(
     return locale
 
 
-def make_border(color: int, width: int, style: BorderLineStyle = BorderLineStyle.SOLID):
+def make_border(
+    color: int, width: int, style: BorderLineStyle = BorderLineStyle.SOLID
+) -> UnoBorderLine:
     """
     Create a border
     @param color: the color
@@ -516,15 +528,19 @@ def make_border(color: int, width: int, style: BorderLineStyle = BorderLineStyle
     @param style: the style
     @return: the border
     """
-    border = uno.createUnoStruct("com.sun.star.table.BorderLine2")
+    border = cast(
+        UnoBorderLine, uno.createUnoStruct("com.sun.star.table.BorderLine2")
+    )
     border.Color = color
     border.LineWidth = width
     border.LineStyle = style
     return border
 
 
-def make_sort_field(field_position: int, asc: bool = True):
-    sf = uno.createUnoStruct("com.sun.star.table.TableSortField")
+def make_sort_field(field_position: int, asc: bool = True) -> UnoSortField:
+    sf = cast(
+        UnoSortField, uno.createUnoStruct("com.sun.star.table.TableSortField")
+    )
     sf.Field = field_position
     sf.IsAscending = asc
     return sf
@@ -594,7 +610,9 @@ def copy_range(oSourceRange: UnoRange):
     oSourceDoc = parent_doc(oSourceRange)
     oSourceController = oSourceDoc.CurrentController
     oSourceController.select(oSourceRange)
-    provider.dispatcher.executeDispatch(oSourceController, ".uno:Copy", "", 0, [])
+    provider.dispatcher.executeDispatch(
+        oSourceController, ".uno:Copy", "", 0, []
+    )
     # unselect
     oRanges = oSourceDoc.createInstance("com.sun.star.sheet.SheetCellRanges")
     oSourceController.select(oRanges)
@@ -607,10 +625,14 @@ def paste_range(
     assert provider is not None
     oDestDoc = parent_doc(oDestSheet)
     oDestController = oDestDoc.CurrentController
-    oDestCell = oDestSheet.getCellByPosition(oDestAddress.Column, oDestAddress.Row)
+    oDestCell = oDestSheet.getCellByPosition(
+        oDestAddress.Column, oDestAddress.Row
+    )
     oDestController.select(oDestCell)
     if formulas:
-        provider.dispatcher.executeDispatch(oDestController, ".uno:Paste", "", 0, [])
+        provider.dispatcher.executeDispatch(
+            oDestController, ".uno:Paste", "", 0, []
+        )
     else:
         # TODO: propose more options
         args = make_pvs(
@@ -631,7 +653,9 @@ def paste_range(
     oDestController.select(oRanges)
 
 
-def narrow_range(oRange: UnoRange, narrow_data: bool = False) -> Optional[UnoRange]:
+def narrow_range(
+    oRange: UnoRange, narrow_data: bool = False
+) -> Optional[UnoRange]:
     """
     Narrow the range to the used range
     @param oRange: the range, usually a row or a column
@@ -642,7 +666,9 @@ def narrow_range(oRange: UnoRange, narrow_data: bool = False) -> Optional[UnoRan
     oSheet = oRange.Spreadsheet
     oSheetRangeAddress = get_used_range_address(oSheet)
     oRangeAddress = oRange.RangeAddress
-    start_column = max(oRangeAddress.StartColumn, oSheetRangeAddress.StartColumn)
+    start_column = max(
+        oRangeAddress.StartColumn, oSheetRangeAddress.StartColumn
+    )
     end_column = min(oRangeAddress.EndColumn, oSheetRangeAddress.EndColumn)
     if start_column > end_column:
         return None
@@ -839,7 +865,9 @@ def quote_element(value: Any) -> str:
 
 
 def sort_range(
-    oRange: UnoRange, sort_fields: Tuple[UnoStruct, ...], has_header: bool = True
+    oRange: UnoRange,
+    sort_fields: Tuple[UnoStruct, ...],
+    has_header: bool = True,
 ):
     """
     @param oRange:
@@ -847,10 +875,13 @@ def sort_range(
     @param has_header: True if the range has a header
     @return:
     """
-    typed_sort_fields = uno.Any("[]com.sun.star.table.TableSortField", sort_fields)
+    typed_sort_fields = uno.Any(
+        "[]com.sun.star.table.TableSortField", sort_fields
+    )
     sort_descriptor = oRange.createSortDescriptor()
     update_pvs(
-        sort_descriptor, {"ContainsHeader": has_header, "SortFields": typed_sort_fields}
+        sort_descriptor,
+        {"ContainsHeader": has_header, "SortFields": typed_sort_fields},
     )
     oRange.sort(sort_descriptor)
 
@@ -868,7 +899,9 @@ def conditional_format_on_formulas(
 ):
     oConditionalFormat = oColoredColumns.ConditionalFormat
     for formula, style in style_by_formula.items():
-        oConditionalEntry = get_formula_conditional_entry(formula, style, oSrcAddress)
+        oConditionalEntry = get_formula_conditional_entry(
+            formula, style, oSrcAddress
+        )
         oConditionalFormat.addNew(oConditionalEntry)
 
     oColoredColumns.ConditionalFormat = oConditionalFormat
@@ -1003,7 +1036,9 @@ def get_page_style(oSheet: UnoSheet) -> UnoPageStyle:
     """
     page_style_name = oSheet.PageStyle
     oDoc = parent_doc(oSheet)
-    oStyle = oDoc.StyleFamilies.getByName("PageStyles").getByName(page_style_name)
+    oStyle = oDoc.StyleFamilies.getByName("PageStyles").getByName(
+        page_style_name
+    )
     return oStyle  # type: ignore[return-value]
 
 
@@ -1232,7 +1267,9 @@ class DocBuilder:
 
         return self
 
-    def apply_func_to_sheets(self, func: Callable[[UnoSheet], None]) -> "DocBuilder":
+    def apply_func_to_sheets(
+        self, func: Callable[[UnoSheet], None]
+    ) -> "DocBuilder":
         oSheets = self._oDoc.Sheets
         for oSheet in to_iter(oSheets):
             func(oSheet)
@@ -1261,7 +1298,9 @@ class DocBuilder:
 
         return self
 
-    def make_base_sheet(self, func: Callable[[UnoSheet], None]) -> "DocBuilder":
+    def make_base_sheet(
+        self, func: Callable[[UnoSheet], None]
+    ) -> "DocBuilder":
         oSheets = self._oDoc.Sheets
         oBaseSheet = oSheets.getByIndex(0)
         func(oBaseSheet)
@@ -1294,14 +1333,19 @@ _ApplyType = Callable[
 
 
 def read_options(
-    oSheet: UnoSheet, aAddress: UnoCellRangeAddress, apply: Optional[_ApplyType] = None
+    oSheet: UnoSheet,
+    aAddress: UnoCellRangeAddress,
+    apply: Optional[_ApplyType] = None,
 ) -> Mapping[str, Union[DATA_VALUE, DATA_ROW]]:
     options = {}
     if aAddress.StartColumn == aAddress.EndColumn:
         return {}
 
     oRange = oSheet.getCellRangeByPosition(
-        aAddress.StartColumn, aAddress.StartRow, aAddress.EndColumn, aAddress.EndRow
+        aAddress.StartColumn,
+        aAddress.StartRow,
+        aAddress.EndColumn,
+        aAddress.EndRow,
     )
     data_array = oRange.DataArray
     for row in data_array:
@@ -1336,7 +1380,9 @@ def rtrim_row(row: DATA_ROW, null="") -> Union[DATA_ROW, DATA_VALUE]:
 
 
 def read_options_from_sheet_name(
-    oDoc: UnoSpreadsheetDocument, sheet_name: str, apply: Optional[_ApplyType] = None
+    oDoc: UnoSpreadsheetDocument,
+    sheet_name: str,
+    apply: Optional[_ApplyType] = None,
 ):
     oSheet = oDoc.Sheets.getByName(sheet_name)
     oRangeAddress = get_used_range_address(oSheet)
@@ -1377,7 +1423,8 @@ class _Inspector:
             self._ignore_xray = True
             if fail_on_error:
                 raise UnoRuntimeException(
-                    "\nBasic library Xray is not installed", self._provider.ctxt
+                    "\nBasic library Xray is not installed",
+                    self._provider.ctxt,
                 )
 
     def xray(self, obj: Any, fail_on_error: bool = False):
@@ -1432,7 +1479,9 @@ def copy_to_clipboard(value: Any, flavor: Tuple[str, str] = TEXT_FLAVOR):
     """See https://forum.openoffice.org/en/forum/viewtopic.php?t=93562"""
     oClipboard = cast(
         UnoClipboard,
-        create_uno_service("com.sun.star.datatransfer.clipboard.SystemClipboard"),
+        create_uno_service(
+            "com.sun.star.datatransfer.clipboard.SystemClipboard"
+        ),
     )
     oClipboard.setContents(Transferable(value, flavor), None)
 
@@ -1441,7 +1490,9 @@ def get_from_clipboard(flavor: Tuple[str, str] = TEXT_FLAVOR) -> Optional[Any]:
     """See https://forum.openoffice.org/en/forum/viewtopic.php?t=93562"""
     oClipboard = cast(
         UnoClipboard,
-        create_uno_service("com.sun.star.datatransfer.clipboard.SystemClipboard"),
+        create_uno_service(
+            "com.sun.star.datatransfer.clipboard.SystemClipboard"
+        ),
     )
     oContents = oClipboard.getContents()
     oTypes = oContents.getTransferDataFlavors()
@@ -1491,23 +1542,30 @@ class HTMLConverter:
     def convert(self, text_range: UnoText) -> str:
         """Convert a sequence of chars to HTML"""
         html = self._html_line_break.join(
-            self._par_to_html(par_text_range) for par_text_range in to_iter(text_range)
+            self._par_to_html(par_text_range)
+            for par_text_range in to_iter(text_range)
         )
         return html
 
     def _par_to_html(self, par_text_range: UnoText) -> str:
-        return "".join([self._to_html(chunk) for chunk in to_iter(par_text_range)])
+        return "".join(
+            [self._to_html(chunk) for chunk in to_iter(par_text_range)]
+        )
 
     def _to_html(self, text_range: UnoText) -> str:
         tag = self._get_tag(text_range)
 
         statements = []
         if text_range.CharFontName != "Liberation Sans":
-            statements.append('font-family: "{}"'.format(text_range.CharFontName))
+            statements.append(
+                'font-family: "{}"'.format(text_range.CharFontName)
+            )
         if text_range.CharHeight != 10:
             statements.append("font-size: {}pt".format(text_range.CharHeight))
         if text_range.CharWeight != 100:
-            statements.append("font-weight: {}".format(int(text_range.CharWeight * 4)))
+            statements.append(
+                "font-weight: {}".format(int(text_range.CharWeight * 4))
+            )
         italic = (
             text_range.CharPosture == FontSlant.OBLIQUE
             or text_range.CharPosture == FontSlant.ITALIC
@@ -1529,7 +1587,9 @@ class HTMLConverter:
 
         if (
             text_range.TextPortionType == "TextField"
-            and text_range.TextField.supportsService("com.sun.star.text.TextField.URL")
+            and text_range.TextField.supportsService(
+                "com.sun.star.text.TextField.URL"
+            )
         ):
             text = "<a href='{}'>{}</a>".format(
                 text_range.TextField.URL, text_range.TextField.Representation
@@ -1579,7 +1639,9 @@ class SheetFormatter:
         row_as_header(oRows.getByIndex(0))
 
     def set_format(self, fmt_name: str, *col_indices: int):
-        number_format_id = self._oFormats.queryKey(fmt_name, self._locale, True)
+        number_format_id = self._oFormats.queryKey(
+            fmt_name, self._locale, True
+        )
         if number_format_id == -1:
             number_format_id = self._oFormats.addNew(fmt_name, self._locale)
 
@@ -1594,7 +1656,10 @@ class SheetFormatter:
         set_print_area(self._oSheet)
 
     def set_optimal_width(
-        self, *col_indices: int, min_width: int = 2 * 1000, max_width: int = 10 * 1000
+        self,
+        *col_indices: int,
+        min_width: int = 2 * 1000,
+        max_width: int = 10 * 1000
     ):
         oColumns = self._oSheet.Columns
         for i in col_indices:

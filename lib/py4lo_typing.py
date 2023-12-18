@@ -260,10 +260,12 @@ class UnoNumberFormats(UnoService):
     def getByKey(self, _key: int) -> UnoNumberFormat:
         ...
 
-    def getStandardFormat(self, _id: Any, _locale: Any):
+    def getStandardFormat(self, _id: Any, _locale: Any) -> int:
         ...
 
-    def queryKey(self, _fmt_name: str, _locale: UnoStruct, _param: bool) -> int:
+    def queryKey(
+        self, _fmt_name: str, _locale: UnoStruct, _param: bool
+    ) -> int:
         ...
 
     def addNew(self, _fmt_name: str, _locale: UnoStruct) -> int:
@@ -373,7 +375,9 @@ class UnoSheets(UnoIndexAccess[UnoSheet], UnoNameAccess[UnoSheet]):
         ...
 
 
-class UnoTableColumns(UnoEnumerationAccess[UnoColumn], UnoIndexAccess[UnoColumn]):
+class UnoTableColumns(
+    UnoEnumerationAccess[UnoColumn], UnoIndexAccess[UnoColumn]
+):
     ...
 
 
@@ -392,7 +396,10 @@ class UnoMultiComponentFactory(UnoService):
         ...
 
     def createInstanceWithArgumentsAndContext(
-        self, _serviceSpecifier: str, _args: List[Any], _context: "UnoComponentContext"
+        self,
+        _serviceSpecifier: str,
+        _args: List[Any],
+        _context: "UnoComponentContext",
     ) -> UnoService:
         ...
 
@@ -468,7 +475,9 @@ class UnoStyleFamily(UnoIndexAccess[UnoStyle], UnoNameAccess[UnoStyle]):
     ...
 
 
-class UnoStyleFamilies(UnoIndexAccess[UnoStyleFamily], UnoNameAccess[UnoStyleFamily]):
+class UnoStyleFamilies(
+    UnoIndexAccess[UnoStyleFamily], UnoNameAccess[UnoStyleFamily]
+):
     ...
 
 
@@ -510,9 +519,24 @@ class UnoServiceManager(UnoMultiServiceFactory, UnoMultiComponentFactory):
     ...
 
 
+class UnoBorderLine(UnoStruct):
+    Color: int
+    LineWidth: int
+    LineStyle: Any
+
+
+class UnoSortField(UnoStruct):
+    Field: int
+    IsAscending: bool
+
+
 class UnoDesktop(UnoService):
     def loadComponentFromURL(
-        self, _url: str, _target: str, _frame_flags: Any, params: UnoPropertyValues
+        self,
+        _url: str,
+        _target: str,
+        _frame_flags: Any,
+        params: UnoPropertyValues,
     ) -> UnoOfficeDocument:
         ...
 
@@ -621,7 +645,7 @@ class UnoTextControl(UnoControl):
         ...
 
 
-### BASE
+# ## BASE ##
 class UnoStatement(UnoService):
     def executeUpdate(self, _sql: str):
         ...
@@ -637,7 +661,10 @@ class UnoStatement(UnoService):
 
 
 class UnoContainer(
-    Generic[UO], UnoNameAccess[UO], UnoIndexAccess[UO], UnoEnumerationAccess[UO]
+    Generic[UO],
+    UnoNameAccess[UO],
+    UnoIndexAccess[UO],
+    UnoEnumerationAccess[UO],
 ):
     def createDataDescriptor(self):
         ...

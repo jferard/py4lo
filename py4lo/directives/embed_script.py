@@ -65,7 +65,9 @@ class EmbedScript(Directive):
             elif path.suffix == "" or path.suffix == ".py":
                 path = path.with_suffix(".py")
                 with path.open("rb") as f:
-                    temp_script = TempScript(path, f.read(), self._opt_dir, [], None)
+                    temp_script = TempScript(
+                        path, f.read(), self._opt_dir, [], None
+                    )
                 ret.append(temp_script)
 
         return ret

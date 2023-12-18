@@ -53,11 +53,14 @@ class TestCommandTest(unittest.TestCase):
         self.assertEqual(
             [
                 mock.call.info(
-                    "execute doctests: %s", '"test_py_exe" -m doctest /src_dir/src_a.py'
+                    "execute doctests: %s",
+                    '"test_py_exe" -m doctest /src_dir/src_a.py',
                 ),
                 mock.call.debug("PYTHONPATH = %s", mock.ANY),
                 mock.call.info("output: ok"),
-                mock.call.info('execute unittests: "test_py_exe" /test_dir/c_test.py'),
+                mock.call.info(
+                    'execute unittests: "test_py_exe" /test_dir/c_test.py'
+                ),
                 mock.call.info("output: not ok"),
                 mock.call.error("error: err"),
                 mock.call.info(

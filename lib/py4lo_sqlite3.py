@@ -39,7 +39,9 @@ if library_name is None:
     if path.exists():
         str_path = str(path)
     else:
-        str_path = os.environ["SQLITE3_LIB"]  # will raise an error if not present
+        str_path = os.environ[
+            "SQLITE3_LIB"
+        ]  # will raise an error if not present
     sqlite3_lib = CDLL(str_path)
 else:
     sqlite3_lib = cdll.LoadLibrary(library_name)
@@ -69,7 +71,12 @@ class TransactionMode(enum.Enum):
 # https://www.sqlite.org/c3ref/funclist.html
 ##############################################
 # https://www.sqlite.org/c3ref/open.html
-sqlite3_lib.sqlite3_open_v2.argtypes = [c_char_p, POINTER(sqlite3_p), c_int, c_char_p]
+sqlite3_lib.sqlite3_open_v2.argtypes = [
+    c_char_p,
+    POINTER(sqlite3_p),
+    c_int,
+    c_char_p,
+]
 sqlite3_lib.sqlite3_open_v2.restype = c_int
 sqlite3_open_v2 = sqlite3_lib.sqlite3_open_v2
 
@@ -334,13 +341,19 @@ class Sqlite3Statement:
         col_count = sqlite3_column_count(self._stmt)
         ret = sqlite3_step(self._stmt)
         names = [
-            sqlite3_column_name(self._stmt, i).decode("utf-8") for i in range(col_count)
+            sqlite3_column_name(self._stmt, i).decode("utf-8")
+            for i in range(col_count)
         ]
-        column_types = [sqlite3_column_type(self._stmt, i) for i in range(col_count)]
+        column_types = [
+            sqlite3_column_type(self._stmt, i) for i in range(col_count)
+        ]
 
         while ret == SQLITE_ROW:
             row = dict(
-                [(names[i], self._value(i, column_types)) for i in range(col_count)]
+                [
+                    (names[i], self._value(i, column_types))
+                    for i in range(col_count)
+                ]
             )
             yield row
             ret = sqlite3_step(self._stmt)
@@ -350,7 +363,9 @@ class Sqlite3Statement:
     def _execute_query_without_names(self) -> Iterator[List[Any]]:
         col_count = sqlite3_column_count(self._stmt)
         ret = sqlite3_step(self._stmt)
-        column_types = [sqlite3_column_type(self._stmt, i) for i in range(col_count)]
+        column_types = [
+            sqlite3_column_type(self._stmt, i) for i in range(col_count)
+        ]
 
         while ret == SQLITE_ROW:
             row = [self._value(i, column_types) for i in range(col_count)]
@@ -394,7 +409,9 @@ class Sqlite3Database:
     @contextmanager
     def prepare(self, sql: str) -> Generator[Sqlite3Statement, None, None]:
         stmt_p = sqlite3_stmt_p()
-        ret = sqlite3_prepare_v2(self._db, sql.encode("utf-8"), -1, byref(stmt_p), None)
+        ret = sqlite3_prepare_v2(
+            self._db, sql.encode("utf-8"), -1, byref(stmt_p), None
+        )
         if ret != SQLITE_OK:
             raise self._err(ret)
 

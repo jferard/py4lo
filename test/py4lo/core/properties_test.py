@@ -75,7 +75,8 @@ class TestProperties(unittest.TestCase):
     def test_readme(self):
         logger = logging.getLogger()
         sources = mock.Mock(
-            get_assets_paths=lambda: Path("assets"), get_src_paths=lambda: Path("src")
+            get_assets_paths=lambda: Path("assets"),
+            get_src_paths=lambda: Path("src"),
         )
         destinations = mock.Mock()
         self.maxDiff = None
@@ -109,7 +110,8 @@ class TestProperties(unittest.TestCase):
 
         self.assertEqual({path_a}, _get_paths(source_dir, ["text_range"], "*"))
         self.assertEqual(
-            [mock.call.rglob("*"), mock.call.rglob("text_range")], source_dir.mock_calls
+            [mock.call.rglob("*"), mock.call.rglob("text_range")],
+            source_dir.mock_calls,
         )
 
 

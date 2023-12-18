@@ -57,7 +57,9 @@ class HelpCommand(Command):
     def execute(self, *_args: Any) -> Tuple[Any, ...]:
         if self._command_name:
             try:
-                msg = self._command_factory_by_name[self._command_name].get_help()
+                msg = self._command_factory_by_name[
+                    self._command_name
+                ].get_help()
             except KeyError:
                 msg = self.get_help()
         else:

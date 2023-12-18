@@ -21,20 +21,21 @@ import subprocess
 import sys
 from logging import Logger
 from pathlib import Path
-from typing import Dict, Callable, Iterator
+from typing import Dict, Callable, Iterator, cast, Optional
 
 from commands.command import Command
 from commands.command_executor import CommandExecutor
 from core.properties import PropertiesProvider
 from core.source_dest import Sources
-from py4lo_typing import lazy
 
 
 class TestCommand(Command):
     __test__ = False
 
     @staticmethod
-    def create_executor(_args, provider: PropertiesProvider) -> CommandExecutor:
+    def create_executor(
+        _args, provider: PropertiesProvider
+    ) -> CommandExecutor:
         python_exe = provider.get("python_exe")
         logger = provider.get_logger()
         return CommandExecutor(
@@ -45,14 +46,16 @@ class TestCommand(Command):
         self._logger = logger
         self._python_exe = python_exe
         self._sources = sources
-        self._env = lazy(Dict[str, str])
+        self._env = cast(Optional[Dict[str, str]], None)
 
     def execute(self):
         final_status = self._execute_all_tests(
             self._src_paths(), self._execute_doctests
         )
         final_status = (
-            self._execute_all_tests(self._test_paths(), self._execute_unittests)
+            self._execute_all_tests(
+                self._test_paths(), self._execute_unittests
+            )
             or final_status
         )
         return (final_status,)
@@ -68,7 +71,9 @@ class TestCommand(Command):
             status = completed_process.returncode
             if completed_process.stdout:
                 self._logger.info(
-                    "output: {0}".format(completed_process.stdout.decode("iso-8859-1"))
+                    "output: {0}".format(
+                        completed_process.stdout.decode("iso-8859-1")
+                    )
                 )
             if status != 0:
                 if completed_process.stderr:

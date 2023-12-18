@@ -50,7 +50,8 @@ class Comparator:
         if type(parsed_arg1) is not type(parsed_arg2):
             return False
 
-        cmp_result = self._cmp(parsed_arg1, parsed_arg2)  # type: ignore [type-var]
+        cmp_result = self._cmp(parsed_arg1, parsed_arg2
+                               )  # type: ignore[type-var]
         return (
             cmp_result == -1
             and comparator in ["<", "<="]

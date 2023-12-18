@@ -79,7 +79,9 @@ class RewriteManifest(ItemCallback):
             return False
 
     def _rewrite_manifest(self, zin: ZipFile, manifest_item: ZipInfo):
-        pretty_manifest = RewriteManifest._prettyfy_xml(zin, manifest_item.filename)
+        pretty_manifest = RewriteManifest._prettyfy_xml(
+            zin, manifest_item.filename
+        )
         lines = RewriteManifest._strip_close(pretty_manifest)
         lines += self._script_lines()
         return "\n".join(lines).encode("utf-8")
@@ -109,7 +111,9 @@ class RewriteManifest(ItemCallback):
                 posix += "/"
             lines.append("    " + DIR_TPL.format(posix))
         for script in self._scripts:
-            new_line = "    " + PYTHON_ENTRY_TPL.format(script.script_path.as_posix())
+            new_line = "    " + PYTHON_ENTRY_TPL.format(
+                script.script_path.as_posix()
+            )
             lines.append(new_line)
         for asset in self._assets:
             new_line = "    " + ASSET_ENTRY_TPL.format(asset.path.as_posix())

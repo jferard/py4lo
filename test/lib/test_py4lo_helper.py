@@ -182,7 +182,11 @@ class HelperBaseTestCase(unittest.TestCase):
 
         # verify
         self.assertEqual(
-            [mock.call.createInstance("com.sun.star.reflection.CoreReflection")],
+            [
+                mock.call.createInstance(
+                    "com.sun.star.reflection.CoreReflection"
+                )
+            ],
             self.sm.mock_calls,
         )
         self.assertEqual(ref, actual_ref)
@@ -198,7 +202,11 @@ class HelperBaseTestCase(unittest.TestCase):
 
         # verify
         self.assertEqual(
-            [mock.call.createInstance("com.sun.star.reflection.CoreReflection")],
+            [
+                mock.call.createInstance(
+                    "com.sun.star.reflection.CoreReflection"
+                )
+            ],
             self.sm.mock_calls,
         )
         self.assertEqual(ref, actual_ref1)
@@ -325,7 +333,8 @@ class HelperBaseTestCase(unittest.TestCase):
     def test_get_cell_type_formula(self):
         # prepare
         oCell = mock.Mock(
-            Type=mock.Mock(value="FORMULA"), FormulaResultType=mock.Mock(value="bar")
+            Type=mock.Mock(value="FORMULA"),
+            FormulaResultType=mock.Mock(value="bar"),
         )
 
         # play
@@ -380,9 +389,14 @@ class HelperBaseTestCase(unittest.TestCase):
 
         # verify
         self.assertEqual(oMCell, ret)
-        self.assertEqual([mock.call.collapseToMergedArea()], oCursor.mock_calls)
         self.assertEqual(
-            [mock.call.createCursorByRange(oCell), mock.call.getCellByPosition(1, 5)],
+            [mock.call.collapseToMergedArea()], oCursor.mock_calls
+        )
+        self.assertEqual(
+            [
+                mock.call.createCursorByRange(oCell),
+                mock.call.getCellByPosition(1, 5),
+            ],
             oSheet.mock_calls,
         )
 
@@ -406,13 +420,17 @@ class HelperStructTestCase(unittest.TestCase):
 
     def test_make_pv(self):
         pv = make_pv("name", "value")
-        self.assertTrue("uno.com.sun.star.beans.PropertyValue" in str(type(pv)))
+        self.assertTrue(
+            "uno.com.sun.star.beans.PropertyValue" in str(type(pv))
+        )
         self.assertEqual("name", pv.Name)
         self.assertEqual("value", pv.Value)
 
     def test_make_full_pv(self):
         pv = make_full_pv("name", "value", 20, PropertyState.AMBIGUOUS_VALUE)
-        self.assertTrue("uno.com.sun.star.beans.PropertyValue" in str(type(pv)))
+        self.assertTrue(
+            "uno.com.sun.star.beans.PropertyValue" in str(type(pv))
+        )
         self.assertEqual("name", pv.Name)
         self.assertEqual("value", pv.Value)
         self.assertEqual(20, pv.Handle)
@@ -420,7 +438,9 @@ class HelperStructTestCase(unittest.TestCase):
 
     def test_make_full_pv2(self):
         pv = make_full_pv("name", "value")
-        self.assertTrue("uno.com.sun.star.beans.PropertyValue" in str(type(pv)))
+        self.assertTrue(
+            "uno.com.sun.star.beans.PropertyValue" in str(type(pv))
+        )
         self.assertEqual("name", pv.Name)
         self.assertEqual("value", pv.Value)
         self.assertEqual(0, pv.Handle)
@@ -480,7 +500,9 @@ class HelperStructTestCase(unittest.TestCase):
 
     def test_make_border(self):
         border = make_border(0xFF0000, 3, BorderLineStyle.SOLID)
-        self.assertTrue("uno.com.sun.star.table.BorderLine2" in str(type(border)))
+        self.assertTrue(
+            "uno.com.sun.star.table.BorderLine2" in str(type(border))
+        )
         self.assertEqual(16711680, border.Color)
         self.assertEqual(3, border.LineWidth)
         self.assertEqual(BorderLineStyle.SOLID, border.LineStyle)
@@ -539,7 +561,10 @@ class HelperRangesTestCase(unittest.TestCase):
         # verify
         self.assertEqual(10, r)
         self.assertEqual(
-            [mock.call.gotoStartOfUsedArea(True), mock.call.gotoEndOfUsedArea(True)],
+            [
+                mock.call.gotoStartOfUsedArea(True),
+                mock.call.gotoEndOfUsedArea(True),
+            ],
             oCursor.mock_calls,
         )
 
@@ -556,14 +581,19 @@ class HelperRangesTestCase(unittest.TestCase):
         # verify
         self.assertEqual(oRangeAddress, ra)
         self.assertEqual(
-            [mock.call.gotoStartOfUsedArea(True), mock.call.gotoEndOfUsedArea(True)],
+            [
+                mock.call.gotoStartOfUsedArea(True),
+                mock.call.gotoEndOfUsedArea(True),
+            ],
             oCursor.mock_calls,
         )
 
     def test_used_range(self):
         # prepare
         oCursor = mock.Mock(
-            RangeAddress=mock.Mock(StartColumn=1, StartRow=2, EndColumn=8, EndRow=10)
+            RangeAddress=mock.Mock(
+                StartColumn=1, StartRow=2, EndColumn=8, EndRow=10
+            )
         )
         oRange = mock.Mock()
         oSheet = mock.Mock()
@@ -576,17 +606,25 @@ class HelperRangesTestCase(unittest.TestCase):
         # verify
         self.assertEqual(oRange, oActualRange)
         self.assertEqual(
-            [mock.call.gotoStartOfUsedArea(True), mock.call.gotoEndOfUsedArea(True)],
+            [
+                mock.call.gotoStartOfUsedArea(True),
+                mock.call.gotoEndOfUsedArea(True),
+            ],
             oCursor.mock_calls,
         )
         self.assertEqual(
-            [mock.call.createCursor(), mock.call.getCellRangeByPosition(1, 2, 8, 10)],
+            [
+                mock.call.createCursor(),
+                mock.call.getCellRangeByPosition(1, 2, 8, 10),
+            ],
             oSheet.mock_calls,
         )
 
     def test_used_range2(self):
         # prepare
-        oRangeAddress = mock.Mock(StartColumn=2, StartRow=4, EndColumn=8, EndRow=16)
+        oRangeAddress = mock.Mock(
+            StartColumn=2, StartRow=4, EndColumn=8, EndRow=16
+        )
         oCursor = mock.Mock(RangeAddress=oRangeAddress)
         oSheet = mock.Mock()
         oSheet.createCursor.side_effect = [oCursor]
@@ -598,11 +636,17 @@ class HelperRangesTestCase(unittest.TestCase):
 
         # verify
         self.assertEqual(
-            [mock.call.gotoStartOfUsedArea(True), mock.call.gotoEndOfUsedArea(True)],
+            [
+                mock.call.gotoStartOfUsedArea(True),
+                mock.call.gotoEndOfUsedArea(True),
+            ],
             oCursor.mock_calls,
         )
         self.assertEqual(
-            [mock.call.createCursor(), mock.call.getCellRangeByPosition(2, 4, 8, 16)],
+            [
+                mock.call.createCursor(),
+                mock.call.getCellRangeByPosition(2, 4, 8, 16),
+            ],
             oSheet.mock_calls,
         )
         self.assertEqual(oExpectedRange, oRange)
@@ -610,7 +654,9 @@ class HelperRangesTestCase(unittest.TestCase):
     def test_narrow_range_to_address(self):
         # prepare
         oSheet = mock.Mock()
-        oRangeAddress = mock.Mock(StartColumn=1, StartRow=2, EndColumn=4, EndRow=8)
+        oRangeAddress = mock.Mock(
+            StartColumn=1, StartRow=2, EndColumn=4, EndRow=8
+        )
         oExpectedRange = mock.Mock()
         oSheet.getCellRangeByPosition.side_effect = [oExpectedRange]
 
@@ -626,7 +672,9 @@ class HelperRangesTestCase(unittest.TestCase):
     def test_get_range_size(self):
         # prepare
         oRange = mock.Mock(
-            RangeAddress=mock.Mock(StartColumn=1, StartRow=2, EndColumn=4, EndRow=8)
+            RangeAddress=mock.Mock(
+                StartColumn=1, StartRow=2, EndColumn=4, EndRow=8
+            )
         )
         # play
         w, h = get_range_size(oRange)
@@ -795,7 +843,9 @@ class HelperRangesTestCase(unittest.TestCase):
         oSheet = mock.Mock()
         oRange = mock.Mock(
             Spreadsheet=oSheet,
-            RangeAddress=mock.Mock(StartColumn=1, EndColumn=7, StartRow=1, EndRow=5),
+            RangeAddress=mock.Mock(
+                StartColumn=1, EndColumn=7, StartRow=1, EndRow=5
+            ),
         )
         gura.side_effect = [
             mock.Mock(StartColumn=0, EndColumn=60, StartRow=0, EndRow=50)
@@ -865,7 +915,9 @@ class HelperRangesTestCase(unittest.TestCase):
         oSheet = mock.Mock()
         oRange = mock.Mock(
             Spreadsheet=oSheet,
-            RangeAddress=mock.Mock(StartColumn=1, EndColumn=7, StartRow=1, EndRow=5),
+            RangeAddress=mock.Mock(
+                StartColumn=1, EndColumn=7, StartRow=1, EndRow=5
+            ),
         )
         gura.side_effect = [
             mock.Mock(StartColumn=0, EndColumn=60, StartRow=0, EndRow=50)
@@ -935,7 +987,9 @@ class HelperRangesTestCase(unittest.TestCase):
         oSheet = mock.Mock()
         oRange = mock.Mock(
             Spreadsheet=oSheet,
-            RangeAddress=mock.Mock(StartColumn=1, EndColumn=7, StartRow=1, EndRow=5),
+            RangeAddress=mock.Mock(
+                StartColumn=1, EndColumn=7, StartRow=1, EndRow=5
+            ),
         )
         gura.side_effect = [
             mock.Mock(StartColumn=0, EndColumn=60, StartRow=0, EndRow=50)
@@ -1287,7 +1341,9 @@ class HelperFormattingTestCase(unittest.TestCase):
         oCell = mock.Mock(Validation=oVal)
 
         # play
-        set_validation_list_by_cell(oCell, [1, 2, 3], "foo", False, True, False)
+        set_validation_list_by_cell(
+            oCell, [1, 2, 3], "foo", False, True, False
+        )
 
         # verify
         self.assertEqual(ValidationType.LIST, oVal.Type)
@@ -1326,7 +1382,8 @@ class HelperFormattingTestCase(unittest.TestCase):
 
         # verify
         self.assertEqual(
-            [mock.call.createSortDescriptor(), mock.call.sort(oSD)], oRange.mock_calls
+            [mock.call.createSortDescriptor(), mock.call.sort(oSD)],
+            oRange.mock_calls,
         )
         self.assertEqual(
             [mock.call(oSD, {"ContainsHeader": True, "SortFields": mock.ANY})],
@@ -1346,10 +1403,15 @@ class HelperFormattingTestCase(unittest.TestCase):
 
         # verify
         self.assertEqual(
-            [mock.call.createSortDescriptor(), mock.call.sort(oSD)], oRange.mock_calls
+            [mock.call.createSortDescriptor(), mock.call.sort(oSD)],
+            oRange.mock_calls,
         )
         self.assertEqual(
-            [mock.call(oSD, {"ContainsHeader": False, "SortFields": mock.ANY})],
+            [
+                mock.call(
+                    oSD, {"ContainsHeader": False, "SortFields": mock.ANY}
+                )
+            ],
             up.mock_calls,
         )
 
@@ -1381,7 +1443,9 @@ class HelperFormattingTestCase(unittest.TestCase):
         conditional_format_on_formulas(oRange, {"foo": "bar"}, oCellAddress)
 
         # verify
-        self.assertEqual([mock.call("foo", "bar", oCellAddress)], gfce.mock_calls)
+        self.assertEqual(
+            [mock.call("foo", "bar", oCellAddress)], gfce.mock_calls
+        )
         self.assertEqual([mock.call.addNew("e")], oFormat.mock_calls)
 
     @mock.patch("py4lo_helper.make_pv")
@@ -1555,7 +1619,9 @@ class HelperFormattingTestCase(unittest.TestCase):
         set_print_area(oSheet)
 
         # verify
-        self.assertEqual([mock.call.setPrintAreas([sheet_ra])], oSheet.mock_calls)
+        self.assertEqual(
+            [mock.call.setPrintAreas([sheet_ra])], oSheet.mock_calls
+        )
 
     @mock.patch("py4lo_helper.parent_doc")
     def test_get_page_style(self, pd):
@@ -1580,25 +1646,33 @@ class HelperFormattingTestCase(unittest.TestCase):
     @mock.patch("py4lo_helper.get_used_range")
     @mock.patch("py4lo_helper.get_page_style")
     def test_set_paper_1(self, gps, gur, ms):
-        self._set_paper(gps, gur, ms, 10 * 1000, 40 * 1000, False, 1, 0, 21000, 29700)
+        self._set_paper(
+            gps, gur, ms, 10 * 1000, 40 * 1000, False, 1, 0, 21000, 29700
+        )
 
     @mock.patch("py4lo_helper.create_uno_struct")
     @mock.patch("py4lo_helper.get_used_range")
     @mock.patch("py4lo_helper.get_page_style")
     def test_set_paper_2(self, gps, gur, ms):
-        self._set_paper(gps, gur, ms, 40 * 1000, 400 * 1000, False, 1, 0, 29700, 42000)
+        self._set_paper(
+            gps, gur, ms, 40 * 1000, 400 * 1000, False, 1, 0, 29700, 42000
+        )
 
     @mock.patch("py4lo_helper.create_uno_struct")
     @mock.patch("py4lo_helper.get_used_range")
     @mock.patch("py4lo_helper.get_page_style")
     def test_set_paper_3(self, gps, gur, ms):
-        self._set_paper(gps, gur, ms, 40 * 1000, 10 * 1000, True, 0, 1, 29700, 21000)
+        self._set_paper(
+            gps, gur, ms, 40 * 1000, 10 * 1000, True, 0, 1, 29700, 21000
+        )
 
     @mock.patch("py4lo_helper.create_uno_struct")
     @mock.patch("py4lo_helper.get_used_range")
     @mock.patch("py4lo_helper.get_page_style")
     def test_set_paper_4(self, gps, gur, ms):
-        self._set_paper(gps, gur, ms, 400 * 1000, 40 * 1000, True, 0, 1, 42000, 29700)
+        self._set_paper(
+            gps, gur, ms, 400 * 1000, 40 * 1000, True, 0, 1, 42000, 29700
+        )
 
     def _set_paper(self, gps, gur, ms, w, h, is_landscape, sx, sy, pw, ph):
         # prepare
@@ -1614,7 +1688,8 @@ class HelperFormattingTestCase(unittest.TestCase):
         self.assertEqual(sx, oPageStyle.ScaleToPagesX)
         self.assertEqual(sy, oPageStyle.ScaleToPagesY)
         self.assertEqual(
-            [mock.call("com.sun.star.awt.Size", Width=pw, Height=ph)], ms.mock_calls
+            [mock.call("com.sun.star.awt.Size", Width=pw, Height=ph)],
+            ms.mock_calls,
         )
 
     @mock.patch("py4lo_helper.parent_doc")
@@ -1680,8 +1755,12 @@ class HelperFormattingTestCase(unittest.TestCase):
         self.assertEqual(["abcd efgh", "ij"], _wrap_text("abcd efgh ij", 9))
         self.assertEqual(["abcd efgh", "ij"], _wrap_text("abcd efgh ij", 10))
         self.assertEqual(["abcd efgh ij"], _wrap_text("abcd efgh ij", 11))
-        self.assertEqual(["a very", "long", "text"], _wrap_text("a very long text", 8))
-        self.assertEqual(["a very", "long text"], _wrap_text("a very long text", 9))
+        self.assertEqual(
+            ["a very", "long", "text"], _wrap_text("a very long text", 8)
+        )
+        self.assertEqual(
+            ["a very", "long text"], _wrap_text("a very long text", 9)
+        )
 
 
 ###########################################################################
@@ -1765,7 +1844,8 @@ class HelperOpenTestCase(unittest.TestCase):
             py4lo_helper.provider.desktop.mock_calls,
         )
         self.assertEqual(
-            [mock.call.lockControllers, mock.call.unlockControllers], oDoc.mock_calls
+            [mock.call.lockControllers, mock.call.unlockControllers],
+            oDoc.mock_calls,
         )
 
     def test_doc_builder(self):
@@ -1787,7 +1867,8 @@ class HelperOpenTestCase(unittest.TestCase):
             py4lo_helper.provider.desktop.mock_calls,
         )
         self.assertEqual(
-            [mock.call.lockControllers, mock.call.unlockControllers], oDoc.mock_calls
+            [mock.call.lockControllers, mock.call.unlockControllers],
+            oDoc.mock_calls,
         )
 
     def test_doc_builder_pvs(self):
@@ -1803,13 +1884,17 @@ class HelperOpenTestCase(unittest.TestCase):
         self.assertEqual(
             [
                 mock.call.loadComponentFromURL(
-                    "private:factory/scalc", Target.BLANK, 0, (make_pv("Hidden", True),)
+                    "private:factory/scalc",
+                    Target.BLANK,
+                    0,
+                    (make_pv("Hidden", True),),
                 )
             ],
             py4lo_helper.provider.desktop.mock_calls,
         )
         self.assertEqual(
-            [mock.call.lockControllers, mock.call.unlockControllers], oDoc.mock_calls
+            [mock.call.lockControllers, mock.call.unlockControllers],
+            oDoc.mock_calls,
         )
 
     def test_doc_builder_sheet_names_two(self):
@@ -1822,12 +1907,18 @@ class HelperOpenTestCase(unittest.TestCase):
 
         # play
         d = doc_builder(NewDocumentUrl.Calc)
-        d.sheet_names(list("ab"), expand_if_necessary=False, trunc_if_necessary=False)
+        d.sheet_names(
+            list("ab"), expand_if_necessary=False, trunc_if_necessary=False
+        )
         d.build()
 
         # verify
         self.assertEqual(
-            [mock.call.loadComponentFromURL(NewDocumentUrl.Calc, Target.BLANK, 0, ())],
+            [
+                mock.call.loadComponentFromURL(
+                    NewDocumentUrl.Calc, Target.BLANK, 0, ()
+                )
+            ],
             py4lo_helper.provider.desktop.mock_calls,
         )
         self.assertEqual(
@@ -1856,12 +1947,18 @@ class HelperOpenTestCase(unittest.TestCase):
 
         # play
         d = doc_builder(NewDocumentUrl.Calc)
-        d.sheet_names(list("ab"), expand_if_necessary=False, trunc_if_necessary=True)
+        d.sheet_names(
+            list("ab"), expand_if_necessary=False, trunc_if_necessary=True
+        )
         d.build()
 
         # verify
         self.assertEqual(
-            [mock.call.loadComponentFromURL(NewDocumentUrl.Calc, Target.BLANK, 0, ())],
+            [
+                mock.call.loadComponentFromURL(
+                    NewDocumentUrl.Calc, Target.BLANK, 0, ()
+                )
+            ],
             py4lo_helper.provider.desktop.mock_calls,
         )
         self.assertEqual(
@@ -1890,12 +1987,18 @@ class HelperOpenTestCase(unittest.TestCase):
 
         # play
         d = doc_builder(NewDocumentUrl.Calc)
-        d.sheet_names(list("abc"), expand_if_necessary=False, trunc_if_necessary=False)
+        d.sheet_names(
+            list("abc"), expand_if_necessary=False, trunc_if_necessary=False
+        )
         d.build()
 
         # verify
         self.assertEqual(
-            [mock.call.loadComponentFromURL(NewDocumentUrl.Calc, Target.BLANK, 0, ())],
+            [
+                mock.call.loadComponentFromURL(
+                    NewDocumentUrl.Calc, Target.BLANK, 0, ()
+                )
+            ],
             py4lo_helper.provider.desktop.mock_calls,
         )
         self.assertEqual(
@@ -1927,7 +2030,11 @@ class HelperOpenTestCase(unittest.TestCase):
 
         # verify
         self.assertEqual(
-            [mock.call.loadComponentFromURL(NewDocumentUrl.Calc, Target.BLANK, 0, ())],
+            [
+                mock.call.loadComponentFromURL(
+                    NewDocumentUrl.Calc, Target.BLANK, 0, ()
+                )
+            ],
             py4lo_helper.provider.desktop.mock_calls,
         )
         self.assertEqual(
@@ -1964,7 +2071,11 @@ class HelperOpenTestCase(unittest.TestCase):
 
         # verify
         self.assertEqual(
-            [mock.call.loadComponentFromURL(NewDocumentUrl.Calc, Target.BLANK, 0, ())],
+            [
+                mock.call.loadComponentFromURL(
+                    NewDocumentUrl.Calc, Target.BLANK, 0, ()
+                )
+            ],
             py4lo_helper.provider.desktop.mock_calls,
         )
         self.assertEqual(
@@ -2003,7 +2114,11 @@ class HelperOpenTestCase(unittest.TestCase):
 
         # verify
         self.assertEqual(
-            [mock.call.loadComponentFromURL(NewDocumentUrl.Calc, Target.BLANK, 0, ())],
+            [
+                mock.call.loadComponentFromURL(
+                    NewDocumentUrl.Calc, Target.BLANK, 0, ()
+                )
+            ],
             py4lo_helper.provider.desktop.mock_calls,
         )
         self.assertEqual(
@@ -2042,7 +2157,11 @@ class HelperOpenTestCase(unittest.TestCase):
 
         # verify
         self.assertEqual(
-            [mock.call.loadComponentFromURL(NewDocumentUrl.Calc, Target.BLANK, 0, ())],
+            [
+                mock.call.loadComponentFromURL(
+                    NewDocumentUrl.Calc, Target.BLANK, 0, ()
+                )
+            ],
             py4lo_helper.provider.desktop.mock_calls,
         )
         self.assertEqual(
@@ -2079,7 +2198,11 @@ class HelperOpenTestCase(unittest.TestCase):
 
         # verify
         self.assertEqual(
-            [mock.call.loadComponentFromURL(NewDocumentUrl.Calc, Target.BLANK, 0, ())],
+            [
+                mock.call.loadComponentFromURL(
+                    NewDocumentUrl.Calc, Target.BLANK, 0, ()
+                )
+            ],
             py4lo_helper.provider.desktop.mock_calls,
         )
         self.assertEqual(
@@ -2120,7 +2243,11 @@ class HelperOpenTestCase(unittest.TestCase):
 
         # verify
         self.assertEqual(
-            [mock.call.loadComponentFromURL(NewDocumentUrl.Calc, Target.BLANK, 0, ())],
+            [
+                mock.call.loadComponentFromURL(
+                    NewDocumentUrl.Calc, Target.BLANK, 0, ()
+                )
+            ],
             py4lo_helper.provider.desktop.mock_calls,
         )
         self.assertEqual(
@@ -2169,7 +2296,9 @@ class HelperMiscTestCase(unittest.TestCase):
 
     def testUnoService(self):
         create_uno_service_ctxt("x")
-        self.sm.createInstanceWithContext.assert_called_once_with("x", self.ctxt)
+        self.sm.createInstanceWithContext.assert_called_once_with(
+            "x", self.ctxt
+        )
 
         create_uno_service_ctxt("y", [1, 2, 3])
         self.sm.createInstanceWithArgumentsAndContext.assert_called_once_with(
@@ -2234,7 +2363,9 @@ class HelperMiscTestCase(unittest.TestCase):
         self.assertEqual("foo", rtrim_row(("foo", "", "", "")))
         self.assertEqual(0.0, rtrim_row((0.0, "", "", "")))
         self.assertEqual((0.0, "", 1.0), rtrim_row((0.0, "", 1.0, "")))
-        self.assertEqual(("foo", "", "", "bar"), rtrim_row(("foo", "", "", "bar")))
+        self.assertEqual(
+            ("foo", "", "", "bar"), rtrim_row(("foo", "", "", "bar"))
+        )
 
     @mock.patch("py4lo_helper.read_options")
     @mock.patch("py4lo_helper.get_used_range_address")
@@ -2495,11 +2626,21 @@ class MiscTestCase(unittest.TestCase):
         oPar1.createEnumeration.side_effect = [oPar1Enum]
 
         oPar2Enum = mock.Mock()
-        oPar2Enum.hasMoreElements.side_effect = [True, True, True, True, True, False]
+        oPar2Enum.hasMoreElements.side_effect = [
+            True,
+            True,
+            True,
+            True,
+            True,
+            False,
+        ]
         oPar2Enum.nextElement.side_effect = [
             self._create_chunk("B", CharPosture=FontSlant.ITALIC),
             self._create_chunk(
-                "C", CharWeight=150, CharEscapementHeight=58, CharEscapement=-15
+                "C",
+                CharWeight=150,
+                CharEscapementHeight=58,
+                CharEscapement=-15,
             ),
             self._create_chunk(
                 "C", CharWeight=150, CharEscapementHeight=58, CharEscapement=15

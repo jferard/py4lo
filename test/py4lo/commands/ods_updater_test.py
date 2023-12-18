@@ -48,7 +48,8 @@ class TestOdsUpdaterHelper(unittest.TestCase):
         self.assertEqual([], logger.mock_calls)
         self.assertEqual([mock.call.get_assets()], sources.mock_calls)
         self.assertEqual(
-            [mock.call.to_destination_assets(source_assets)], destinations.mock_calls
+            [mock.call.to_destination_assets(source_assets)],
+            destinations.mock_calls,
         )
 
     @mock.patch("commands.ods_updater.ScriptSetProcessor", autospec=True)
@@ -70,7 +71,8 @@ class TestOdsUpdaterHelper(unittest.TestCase):
 
         # verify
         self.assertEqual(
-            [mock.call.debug("Directives tree: %s", mock.ANY)], logger.mock_calls
+            [mock.call.debug("Directives tree: %s", mock.ANY)],
+            logger.mock_calls,
         )
         self.assertEqual([destination_script], scripts)
         self.assertEqual(
@@ -78,5 +80,6 @@ class TestOdsUpdaterHelper(unittest.TestCase):
             sources.mock_calls,
         )
         self.assertEqual(
-            [mock.call.to_destination_scripts([temp_script])], destinations.mock_calls
+            [mock.call.to_destination_scripts([temp_script])],
+            destinations.mock_calls,
         )

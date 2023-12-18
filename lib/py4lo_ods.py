@@ -103,7 +103,8 @@ class OdsTablesBuilder:
         return self
 
     def sort_func_creator(
-        self, sort_func_creator: Callable[[zipfile.ZipFile, NameSpace], SortFunc]
+        self,
+        sort_func_creator: Callable[[zipfile.ZipFile, NameSpace], SortFunc],
     ):
         self._sort_func_creator = sort_func_creator
 
@@ -123,7 +124,9 @@ def dont_sort(*_args, **_kwargs) -> SortFunc:
     return sort_func
 
 
-def put_active_first(z: zipfile.ZipFile, ns: NameSpace = OFFICE_NS) -> SortFunc:
+def put_active_first(
+    z: zipfile.ZipFile, ns: NameSpace = OFFICE_NS
+) -> SortFunc:
     """
     :param z: the zip file
     :param ns: the name space
@@ -189,7 +192,9 @@ class OdsRows:
             count = int(
                 row.get(
                     self._ns.attrib("table:number-rows-repeated"),
-                    row.attrib.get(self._ns.attrib("table:number-rows-spanned"), "1"),
+                    row.attrib.get(
+                        self._ns.attrib("table:number-rows-spanned"), "1"
+                    ),
                 )
             )
             cells = self._get_cells(row)
@@ -207,7 +212,9 @@ class OdsRows:
             if e.tag not in (cell_tag, covered_cell_tag):
                 continue
 
-            v1 = "\n".join(p.text for p in self._ns.findall(e, "./text:p") if p.text)
+            v1 = "\n".join(
+                p.text for p in self._ns.findall(e, "./text:p") if p.text
+            )
             repeat_count = int(e.attrib.get(repeated_attr, "1"))
             if e.tag == cell_tag:
                 span_count = int(e.attrib.get(spanned_attr, "1"))
@@ -241,7 +248,9 @@ class OdsRows:
                 return all_rows[index]
         elif isinstance(index, slice):
             # use itertools.islice to avoid a list creation
-            return list(itertools.islice(self, index.start, index.stop, index.step))
+            return list(
+                itertools.islice(self, index.start, index.stop, index.step)
+            )
         else:
             raise TypeError("index must be int or slice")
 

@@ -54,7 +54,9 @@ class UpdateCommand(Command):
         python_version = provider.get("python_version")
         source_ods_file = sources.source_ods_file
         dest_ods_file = destinations.dest_ods_file
-        helper = OdsUpdaterHelper(logger, sources, destinations, python_version)
+        helper = OdsUpdaterHelper(
+            logger, sources, destinations, python_version
+        )
         return UpdateCommand(
             logger,
             helper,

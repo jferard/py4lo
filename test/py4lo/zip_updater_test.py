@@ -67,10 +67,12 @@ class TestZipUpdater(unittest.TestCase):
         b1.call.assert_called_once_with(zout)
         b2.call.assert_called_once_with(zout)
         self.assertEqual(
-            [mock.call(zin, zout, 1), mock.call(zin, zout, 2)], i1.call.mock_calls
+            [mock.call(zin, zout, 1), mock.call(zin, zout, 2)],
+            i1.call.mock_calls,
         )
         self.assertEqual(
-            [mock.call(zin, zout, 1), mock.call(zin, zout, 2)], i2.call.mock_calls
+            [mock.call(zin, zout, 1), mock.call(zin, zout, 2)],
+            i2.call.mock_calls,
         )
         a1.call.assert_called_once_with(zout)
         a2.call.assert_called_once_with(zout)

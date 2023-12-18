@@ -115,7 +115,9 @@ class Sqlite3TestCase(unittest.TestCase):
         with sqlite_open(self._path, "crw") as db:
             db.execute_update("CREATE TABLE t(x INTEGER)")
 
-        with sqlite_open(self._path, "rw") as db, sqlite_open(self._path, "rw") as db2:
+        with sqlite_open(self._path, "rw") as db, sqlite_open(
+            self._path, "rw"
+        ) as db2:
             with db.transaction(TransactionMode.IMMEDIATE):
                 try:
                     with db2.transaction(TransactionMode.IMMEDIATE):
@@ -155,7 +157,10 @@ class Sqlite3TestCase(unittest.TestCase):
                 ),
             )
             self.assertEqual(
-                0, db.execute_update("CREATE UNIQUE INDEX `id_UNIQUE` ON `t` (`a` ASC)")
+                0,
+                db.execute_update(
+                    "CREATE UNIQUE INDEX `id_UNIQUE` ON `t` (`a` ASC)"
+                ),
             )
 
 

@@ -51,7 +51,9 @@ class _DirectiveProviderFactory:
         self._logger.debug("Directives tree: %s", self._directives_tree)
         return DirectiveProvider(self._logger, self._directives_tree)
 
-    def _insert_directive_class(self, sig_elements: List[str], directive: Directive):
+    def _insert_directive_class(
+        self, sig_elements: List[str], directive: Directive
+    ):
         cur_directives_tree = self._directives_tree
         for fst in sig_elements:
             if fst not in cur_directives_tree:
@@ -103,6 +105,9 @@ class DirectiveProvider:
                 raise KeyError(args)
 
         if GET_DIRECTIVE in cur_directives_tree:
-            return cast(Directive, cur_directives_tree[GET_DIRECTIVE]), args[i:]
+            return (
+                cast(Directive, cur_directives_tree[GET_DIRECTIVE]),
+                args[i:],
+            )
 
         assert False, "no args"

@@ -59,7 +59,12 @@ try:
 
     class NumberFormat:
         # noinspection PyUnresolvedReferences
-        from com.sun.star.util.NumberFormat import DATE, TIME, DATETIME, LOGICAL
+        from com.sun.star.util.NumberFormat import (
+            DATE,
+            TIME,
+            DATETIME,
+            LOGICAL,
+        )
 
 except (ModuleNotFoundError, ImportError):
     from mock_constants import Locale, NumberFormat  # type:ignore[assignment]
@@ -190,7 +195,8 @@ class reader(Iterator[List[Any]]):
         row = [
             self._read_cell(self._oSheet.getCellByPosition(j, i))
             for j in range(
-                self._oRangeAddress.StartColumn, self._oRangeAddress.EndColumn + 1
+                self._oRangeAddress.StartColumn,
+                self._oRangeAddress.EndColumn + 1,
             )
         ]
 
@@ -254,7 +260,9 @@ class dict_reader:
 # Writer #
 ##########
 def find_number_format_style(
-    oFormats: UnoNumberFormats, format_id: NumberFormat, oLocale: Locale = Locale()
+    oFormats: UnoNumberFormats,
+    format_id: NumberFormat,
+    oLocale: Locale = Locale(),
 ) -> int:
     """
     @param oFormats: the formats
@@ -826,7 +834,11 @@ def import_from_csv(
     assert pr is not None
     filter_options = create_import_filter_options(*args, **kwargs)
     pvs = make_pvs(
-        {"FilterName": Filter.CSV, "FilterOptions": filter_options, "Hidden": True}
+        {
+            "FilterName": Filter.CSV,
+            "FilterOptions": filter_options,
+            "Hidden": True,
+        }
     )
 
     oDoc.lockControllers()
@@ -834,7 +846,9 @@ def import_from_csv(
     desktop = pr.desktop
     oSource = cast(
         UnoSpreadsheetDocument,
-        desktop.loadComponentFromURL(url, Target.BLANK, FrameSearchFlag.AUTO, pvs),
+        desktop.loadComponentFromURL(
+            url, Target.BLANK, FrameSearchFlag.AUTO, pvs
+        ),
     )
     oSource.Sheets.getByIndex(0).Name = sheet_name
     name = oSource.Sheets.ElementNames[0]
@@ -889,7 +903,12 @@ def _create_import_filter_options(
     quoting = "true" if quoted_field_as_text else "false"
     detect = "true" if detect_special_numbers else "false"
     tokens = _base_filter_tokens(
-        delimiter, quotechar, encoding, language_code, first_line, format_by_idx
+        delimiter,
+        quotechar,
+        encoding,
+        language_code,
+        first_line,
+        format_by_idx,
     ) + [quoting, detect]
     return ",".join(tokens)
 
@@ -928,7 +947,9 @@ def export_to_csv(oSheet: UnoSheet, path: StrPath, *args, **kwargs):
 
 def _get_charset_id(encoding: str) -> int:
     norm_encoding = encodings.normalize_encoding(encoding)
-    norm_encoding = encodings.aliases.aliases.get(norm_encoding.lower(), norm_encoding)
+    norm_encoding = encodings.aliases.aliases.get(
+        norm_encoding.lower(), norm_encoding
+    )
     return CHARSET_ID_BY_NAME.get(norm_encoding, 0)
 
 
@@ -1018,6 +1039,11 @@ def _create_export_filter_options(
     store_as_text = "true" if store_numeric_cells_as_text else "false"
     save_as_shown = "true" if save_cell_contents_as_shown else "false"
     tokens = _base_filter_tokens(
-        delimiter, quotechar, encoding, language_code, first_line, format_by_idx
+        delimiter,
+        quotechar,
+        encoding,
+        language_code,
+        first_line,
+        format_by_idx,
     ) + [store_as_text, store_as_text, save_as_shown]
     return ",".join(tokens)

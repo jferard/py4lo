@@ -85,7 +85,9 @@ class MiscTestCase(unittest.TestCase):
 
         # verify
         self.assertEqual("url", ret)
-        self.assertEqual([mock.call(str(Path("abc").resolve()))], sptfu.mock_calls)
+        self.assertEqual(
+            [mock.call(str(Path("abc").resolve()))], sptfu.mock_calls
+        )
 
     @mock.patch("py4lo_commons.uno.systemPathToFileUrl")
     def test_uno_path_to_url_err(self, sptfu):
@@ -310,10 +312,12 @@ class TestDate(unittest.TestCase):
         self.assertEqual(dt.datetime(1899, 12, 30), float_to_date(0.0))
         self.assertEqual(dt.datetime(1899, 12, 30), float_to_date(0.0))
         self.assertEqual(
-            dt.datetime(2022, 3, 19, 17, 21, 10), float_to_date(44639.723032407404)
+            dt.datetime(2022, 3, 19, 17, 21, 10),
+            float_to_date(44639.723032407404),
         )
         self.assertEqual(
-            dt.datetime(1899, 12, 30, 17, 21, 10), float_to_date(0.723032407404)
+            dt.datetime(1899, 12, 30, 17, 21, 10),
+            float_to_date(0.723032407404),
         )
 
 

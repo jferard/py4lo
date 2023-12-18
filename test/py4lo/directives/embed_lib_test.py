@@ -35,13 +35,17 @@ class TestEmbedLib(unittest.TestCase):
     def test_execute(self):
         proc = mock.Mock()
         s = []
-        self.assertEqual(True, self._directive.execute(proc, s, ["py4lo_helper"]))
+        self.assertEqual(
+            True, self._directive.execute(proc, s, ["py4lo_helper"])
+        )
         py4lo_path = Path(__file__).parent.parent.parent.parent
         self.assertEqual(
             [
                 mock.call.append_script(
                     SourceScript(
-                        py4lo_path / "lib/py4lo_helper.py", py4lo_path / "lib", False
+                        py4lo_path / "lib/py4lo_helper.py",
+                        py4lo_path / "lib",
+                        False,
                     )
                 )
             ],

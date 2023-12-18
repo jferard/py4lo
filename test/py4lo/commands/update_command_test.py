@@ -92,7 +92,7 @@ class TestUpdateCommand(unittest.TestCase):
     #     destinations.dest_ods_file = Path("dest.ods")
     #     sources.get_src_paths.side_effect = [[Path("x.py")]]
     #     sources.src_dir = Path(".")
-    #     #        sources.relative_path = PropertyMock(return_value=Path("x.py"))
+    #     # sources.relative_path = PropertyMock(return_value=Path("x.py"))
     #     sources.source_ods_file = Path("source.ods")
     #     provider.get_sources.side_effect = [sources]
     #     provider.get_destinations.side_effect = [destinations]

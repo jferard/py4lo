@@ -52,7 +52,9 @@ class DebugCommand(Command):
         sources = provider.get_sources()
         destinations = provider.get_destinations()
         python_version = provider.get("python_version")
-        helper = OdsUpdaterHelper(logger, sources, destinations, python_version)
+        helper = OdsUpdaterHelper(
+            logger, sources, destinations, python_version
+        )
         debug_command = DebugCommand(
             logger, helper, sources, destinations, python_version
         )
@@ -86,14 +88,17 @@ class DebugCommand(Command):
             ts.relative_path: ts.exported_func_names for ts in temp_scripts
         }
         dest_scripts = [
-            ts.to_destination(self._destinations.dest_dir) for ts in temp_scripts
+            ts.to_destination(self._destinations.dest_dir)
+            for ts in temp_scripts
         ]
         assets = self._helper.get_assets()
 
         zupdater = self._get_zip_updater(
             assets, exported_func_names_by_script, dest_scripts
         )
-        zupdater.update(self._sources.inc_dir.joinpath("debug.ods"), self._debug_path)
+        zupdater.update(
+            self._sources.inc_dir.joinpath("debug.ods"), self._debug_path
+        )
         return (self._debug_path,)
 
     def _get_zip_updater(
@@ -105,7 +110,9 @@ class DebugCommand(Command):
         zupdater_builder = zip_updater.ZipUpdaterBuilder(self._logger)
         zupdater_builder.item(IgnoreItem(Path("Scripts"))).item(
             RewriteManifest(scripts, assets)
-        ).after(AddScripts(self._logger, scripts)).after(AddAssets(assets)).after(
+        ).after(AddScripts(self._logger, scripts)).after(
+            AddAssets(assets)
+        ).after(
             AddDebugContent(exported_func_names_by_script)
         )
         zupdater = zupdater_builder.build()

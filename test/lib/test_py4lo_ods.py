@@ -275,7 +275,9 @@ class TestOds1(unittest.TestCase):
         )
 
     def test_get_item1(self):
-        self.assertEqual(["A2:A3", "B2:D3", "B2:D3", "B2:D3"], self.ods_rows[1])
+        self.assertEqual(
+            ["A2:A3", "B2:D3", "B2:D3", "B2:D3"], self.ods_rows[1]
+        )
 
     def test_get_item_neg1(self):
         self.assertEqual(["A6", "B6", "C6", "D6"], self.ods_rows[-1])

@@ -110,7 +110,8 @@ AFTER = (
 )
 
 BEGIN_FORMS = (
-    '<office:forms form:automatic-focus="false" ' 'form:apply-design-mode="false">'
+    '<office:forms form:automatic-focus="false" '
+    'form:apply-design-mode="false">'
 )
 FORM_TPL = (
     '<form:form form:name="Formulaire" form:apply-filter="true" '
@@ -166,7 +167,9 @@ class AddDebugContent(AfterCallback):
         i = 0
         for script in sorted(self._funcs_by_script):
             for func in self._funcs_by_script[script]:
-                forms.append(FORM_TPL.format(name=func, id=i, file=script, func=func))
+                forms.append(
+                    FORM_TPL.format(name=func, id=i, file=script, func=func)
+                )
                 draw.append(DRAW_CONTROL_TPL.format(x=10, y=15 * i + 10, id=i))
                 i += 1
 

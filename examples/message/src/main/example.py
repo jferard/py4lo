@@ -145,7 +145,9 @@ def progress_example(*_args):
 
 
 def after_progress(*_args):
-    message_box("Title", "The return value was: {}".format(progress_executor.response))
+    message_box(
+        "Title", "The return value was: {}".format(progress_executor.response)
+    )
 
 
 console_executor = None

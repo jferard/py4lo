@@ -28,4 +28,6 @@ class Example(unohelper.Base):
         self._provider = provider
 
     def lib_example(self):
-        message_box("py4lo", TEXT.format(os.path.abspath("../../../../../py4lo")))
+        message_box(
+            "py4lo", TEXT.format(os.path.abspath("../../../../../py4lo"))
+        )

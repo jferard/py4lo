@@ -40,7 +40,8 @@ setup(
         "Intended Audience :: Developers",
         "Topic :: Software Development :: Build Tools",
         "Topic :: Utilities",
-        "License :: OSI Approved :: " "GNU General Public License v3 or later (GPLv3+)",
+        "License :: OSI Approved :: "
+        "GNU General Public License v3 or later (GPLv3+)",
         "Programming Language :: Python :: 3",
     ],
     keywords="libreoffice ods script python macro",

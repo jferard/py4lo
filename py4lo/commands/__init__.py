@@ -47,7 +47,9 @@ class Commands:
         return command.create_executor(args, provider)
 
     def get_help_message(self):
-        lines = ["a command = {}".format(" | ".join(self._command_factory_by_name))]
+        lines = [
+            "a command = {}".format(" | ".join(self._command_factory_by_name))
+        ]
         for name, cf in self._command_factory_by_name.items():
             lines.append("{}: {}".format(name, cf.get_help()))
         return "\n".join(lines)

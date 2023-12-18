@@ -75,14 +75,18 @@ some line""",
         sp = script_set_processor._ContentParser(self._logger, self._dp, path)
         self.assertEqual(
             ParsedScriptContent(
-                "# parsed by py4lo (https://github.com/jferard/py4lo)\nline1\nline2", []
+                "# parsed by py4lo (https://github.com/jferard/py4lo)\n"
+                "line1\n"
+                "line2",
+                [],
             ),
             sp.parse(True),
         )
 
         self.assertEqual([], self._logger.mock_calls)
         self.assertEqual(
-            [mock.call.process_line("#some line"), mock.call.end()], self._dp.mock_calls
+            [mock.call.process_line("#some line"), mock.call.end()],
+            self._dp.mock_calls,
         )
         self.verify_open(path)
 

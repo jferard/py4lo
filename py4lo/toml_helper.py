@@ -1,4 +1,5 @@
 import logging
+import re
 import subprocess
 import sys
 import traceback
@@ -10,7 +11,9 @@ from tools import nested_merge
 
 
 def load_toml(
-    default_py4lo_toml: Path, project_py4lo_toml: Path, kwargs: Mapping[str, Any]
+    default_py4lo_toml: Path,
+    project_py4lo_toml: Path,
+    kwargs: Mapping[str, Any],
 ) -> Mapping[str, Any]:
     return TomlLoader(default_py4lo_toml, project_py4lo_toml, kwargs).load()
 
@@ -72,19 +75,22 @@ class TomlLoader:
     def _check_python_target_version(self):
         # get version from target executable
         if "python_exe" in self._data:
-            status, version = subprocess.getstatusoutput(
-                '"' + str(self._data["python_exe"]) + '" -V'
+            status, out = subprocess.getstatusoutput(
+                '"{}" -V'.format(self._data["python_exe"])
             )
             if status == 0:
-                self._data["python_version"] = ((version.split())[1].split("."))[0]
-                return
+                m = re.match(r"^.* (3\.\d+)(\.\d+)?$", out)
+                if m:
+                    self._data["python_version"] = m.group(1)
+                    return
 
         # if python_exe was not set, or did not return the expected result,
         # get from sys. It's the local python.
         if "python_version" not in self._data:
             self._data["python_exe"] = sys.executable
-            self._data["python_version"] = (
-                str(sys.version_info.major) + "." + str(sys.version_info.minor)
+            vinfo = sys.version_info
+            self._data["python_version"] = "{}.{}".format(
+                vinfo.major, vinfo.minor
             )
 
     def _check_level(self):

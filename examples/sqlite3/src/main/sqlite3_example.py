@@ -58,7 +58,8 @@ def sqlite_example(*_args):
 
         with sqlite_open(path, "crw") as db:
             db.execute_update(
-                "CREATE TABLE persons " "(name TEXT, age INTEGER, percentage DOUBLE)"
+                "CREATE TABLE persons "
+                "(name TEXT, age INTEGER, percentage DOUBLE)"
             )
             with db.transaction():
                 with db.prepare("INSERT INTO persons VALUES(?, ?, ?)") as stmt:
@@ -76,7 +77,8 @@ def sqlite_example(*_args):
 
         logger.debug("Query result %s", new_data_array)
         arr = list(oSheet.getCellRangeByName("output_rows").DataArray)
-        arr = new_data_array[: len(new_data_array)] + arr[len(new_data_array) :]
+        n = len(new_data_array)
+        arr = new_data_array[:] + arr[n:]
         oSheet.getCellRangeByName("output_rows").DataArray = arr
     except Exception:
         logger.exception("EXC")

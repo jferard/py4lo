@@ -49,7 +49,9 @@ class TestRewriteManifest(unittest.TestCase):
         with self.assertRaises(KeyError):
             zout.read("x")
 
-        RewriteManifest([], []).call(zin, zout, zin.getinfo("META-INF/manifest.xml"))
+        RewriteManifest([], []).call(
+            zin, zout, zin.getinfo("META-INF/manifest.xml")
+        )
         expected = """<?xml version="1.0" ?><manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.2">
     <manifest:file-entry manifest:full-path="Basic/" manifest:media-type="application/binary"/>
     <manifest:file-entry manifest:full-path="Basic/Standard/" manifest:media-type="application/binary"/>
@@ -69,7 +71,11 @@ class TestRewriteManifest(unittest.TestCase):
         zout = zipfile.ZipFile(out, "w")
 
         RewriteManifest(
-            [DestinationScript(Path("s/script"), bytes(), Path("s"), [], None)],
+            [
+                DestinationScript(
+                    Path("s/script"), bytes(), Path("s"), [], None
+                )
+            ],
             [DestinationAsset(Path("a/asset"), bytes())],
         ).call(zin, zout, zin.getinfo("META-INF/manifest.xml"))
         expected = """<?xml version="1.0" ?><manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.2">

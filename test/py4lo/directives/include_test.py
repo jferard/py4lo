@@ -39,7 +39,9 @@ class TestInclude(unittest.TestCase):
         self.assertEqual(
             [
                 mock.call.append(
-                    "# begin py4lo include: [to inc]\nsome line\n# end py4lo include\n"
+                    "# begin py4lo include: [to inc]\n"
+                    "some line\n"
+                    "# end py4lo include\n"
                 )
             ],
             proc.mock_calls,

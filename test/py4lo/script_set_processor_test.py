@@ -37,7 +37,9 @@ class TestScriptSetProcessor(unittest.TestCase):
     @mock.patch("py_compile.compile")
     def test_scripts_processor(self, mock_compile):
         logger: Logger = mock.Mock()
-        source_path = file_path_mock(io.StringIO("some line"), stem="script_fname")
+        source_path = file_path_mock(
+            io.StringIO("some line"), stem="script_fname"
+        )
 
         dest = io.BytesIO()
         target_path = file_path_mock(dest)
@@ -60,16 +62,23 @@ class TestScriptSetProcessor(unittest.TestCase):
         self.assertEqual(
             [
                 mock.call.debug("Scripts to process: %s", [script]),
-                mock.call.debug("Parsing script: %s (%s)", Path("rel source"), script),
-                mock.call.debug("Temp output script is: %s (%s)", target_path, []),
                 mock.call.debug(
-                    "Writing temp script: %s (%s)", Path("rel target"), target_path
+                    "Parsing script: %s (%s)", Path("rel source"), script
+                ),
+                mock.call.debug(
+                    "Temp output script is: %s (%s)", target_path, []
+                ),
+                mock.call.debug(
+                    "Writing temp script: %s (%s)",
+                    Path("rel target"),
+                    target_path,
                 ),
             ],
             logger.mock_calls,
         )
         self.assertEqual(
-            [mock.call(str(source_path), doraise=True)], mock_compile.mock_calls
+            [mock.call(str(source_path), doraise=True)],
+            mock_compile.mock_calls,
         )
         self.assertEqual(
             b"# parsed by py4lo (https://github.com/jferard/py4lo)\nsome line",

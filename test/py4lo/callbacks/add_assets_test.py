@@ -34,7 +34,9 @@ class AddAssetsTest(unittest.TestCase):
 
     def test_empty2(self):
         zout: ZipFile = mock.Mock()
-        asset: DestinationAsset = mock.Mock(path=Path("asset"), content=bytes())
+        asset: DestinationAsset = mock.Mock(
+            path=Path("asset"), content=bytes()
+        )
 
         cb = AddAssets([asset])
         cb.call(zout)

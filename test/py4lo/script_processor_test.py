@@ -46,10 +46,18 @@ class TestScriptsProcessor(unittest.TestCase):
 
         self.assertEqual(
             [
-                mock.call.debug("Parsing script: %s (%s)", "fname", source_script),
-                mock.call.debug("Temp output script is: %s (%s)", Path("t"), []),
+                mock.call.debug(
+                    "Parsing script: %s (%s)", "fname", source_script
+                ),
+                mock.call.debug(
+                    "Temp output script is: %s (%s)", Path("t"), []
+                ),
             ],
             logger.mock_calls,
         )
-        self.assertEqual([mock.call.ignore_lines(), mock.call.end()], dp.mock_calls)
-        verify_open_path(self, source_script.script_path, "r", encoding="utf-8")
+        self.assertEqual(
+            [mock.call.ignore_lines(), mock.call.end()], dp.mock_calls
+        )
+        verify_open_path(
+            self, source_script.script_path, "r", encoding="utf-8"
+        )

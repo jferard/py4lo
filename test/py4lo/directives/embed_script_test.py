@@ -45,7 +45,11 @@ class TestEmbed(unittest.TestCase):
 
         self.assertEqual(True, self._directive.execute(proc, None, ["a/b.py"]))
         self.assertEqual(
-            [mock.call.add_script(TempScript(fpath, b"content", self._opt, [], None))],
+            [
+                mock.call.add_script(
+                    TempScript(fpath, b"content", self._opt, [], None)
+                )
+            ],
             proc.mock_calls,
         )
         verify_open_path(self, fpath, "rb")

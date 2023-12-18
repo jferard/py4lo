@@ -17,7 +17,8 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# see http://stackoverflow.com/questions/61151/where-do-the-python-unit-tests-go
+# see
+# http://stackoverflow.com/questions/61151/where-do-the-python-unit-tests-go
 import sys
 import unittest
 from pathlib import Path
@@ -79,7 +80,8 @@ def verify_open_path(tc: unittest.TestCase, s: mock.Mock, *args, **kwargs):
 
 def compare_xml_strings(s1, s2):
     """
-    >>> compare_xml_strings('<root a="1" b="2">A</root>', '<root b="2" a="1">A</root>')
+    >>> compare_xml_strings('<root a="1" b="2">A</root>',
+    ... '<root b="2" a="1">A</root>')
 
     @param s1:
     @param s2:

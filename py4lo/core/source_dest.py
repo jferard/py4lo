@@ -83,7 +83,9 @@ def _get_paths(source_dir: Path, ignore: List[str], glob="*") -> Set[Path]:
     return set(p for p in paths if p.is_file())
 
 
-def _get_module_names(source_dir: Path, ignore: List[str], glob="*") -> Set[str]:
+def _get_module_names(
+    source_dir: Path, ignore: List[str], glob="*"
+) -> Set[str]:
     paths = _get_paths(source_dir, ignore, glob)
     module_names = set()
     for p in paths:

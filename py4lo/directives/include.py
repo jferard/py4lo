@@ -103,7 +103,9 @@ class IncludeStripper:
                     IncludeStripper.DOC_STRING_CLOSE,
                 ):
                     self._state = IncludeStripper.IN_DOC_STRING
-            elif stripped_line.startswith(IncludeStripper.DOC_STRING_SINGLE_OPEN):
+            elif stripped_line.startswith(
+                IncludeStripper.DOC_STRING_SINGLE_OPEN
+            ):
                 if self.is_open_doc_string(
                     stripped_line,
                     IncludeStripper.DOC_STRING_SINGLE_OPEN,
@@ -127,9 +129,9 @@ class IncludeStripper:
     def is_open_doc_string(
         self, stripped_line: str, string_open: str, string_close: str
     ) -> bool:
-        return not stripped_line.endswith(string_close) or len(stripped_line) == len(
-            string_open
-        )
+        return not stripped_line.endswith(string_close) or len(
+            stripped_line
+        ) == len(string_open)
 
     def is_close_doc_string(
         self, stripped_line: str, doc: int, string_close: str

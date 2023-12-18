@@ -25,7 +25,17 @@ from pathlib import Path
 import logging
 import configparser
 import datetime as dt
-from typing import Union, Any, cast, List, Optional, TextIO, Iterable, Mapping, Callable
+from typing import (
+    Union,
+    Any,
+    cast,
+    List,
+    Optional,
+    TextIO,
+    Iterable,
+    Mapping,
+    Callable,
+)
 
 from py4lo_typing import UnoXScriptContext, StrPath, lazy
 
@@ -233,7 +243,9 @@ def init_logger(
     logger.setLevel(level)
 
 
-def _get_handler(file: Union[StrPath, TextIO], mode: str, level: int, fmt: str):
+def _get_handler(
+    file: Union[StrPath, TextIO], mode: str, level: int, fmt: str
+) -> logging.Handler:
     if isinstance(file, (str, Path)):
         fh = cast(logging.Handler, logging.FileHandler(str(file), mode))
     else:
@@ -288,7 +300,11 @@ def sanitize(s: str) -> str:
     """
     import unicodedata
 
-    s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode("ascii")
+    s = (
+        unicodedata.normalize("NFKD", s)
+        .encode("ascii", "ignore")
+        .decode("ascii")
+    )
     return s
 
 

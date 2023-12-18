@@ -102,7 +102,9 @@ class ScriptSetProcessor:
     def _write_script(self, script: TempScript):
         self._ensure_dir_exists(script)
         self._logger.debug(
-            "Writing temp script: %s (%s)", script.relative_path, script.script_path
+            "Writing temp script: %s (%s)",
+            script.relative_path,
+            script.script_path,
         )
         with script.script_path.open("wb") as f:
             f.write(script.script_content)
@@ -136,10 +138,14 @@ class ScriptProcessor:
         )
         exception = self._get_exception()
         parser = _ContentParser(
-            self._logger, self._directive_processor, self._source_script.script_path
+            self._logger,
+            self._directive_processor,
+            self._source_script.script_path,
         )
         parsed_content = parser.parse(self._source_script.export_funcs)
-        target_path = self._target_dir.joinpath(self._source_script.relative_path)
+        target_path = self._target_dir.joinpath(
+            self._source_script.relative_path
+        )
         script = TempScript(
             target_path,
             parsed_content.text.encode("utf-8"),
@@ -156,7 +162,9 @@ class ScriptProcessor:
 
     def _get_exception(self) -> Optional[Exception]:
         try:
-            py_compile.compile(str(self._source_script.script_path), doraise=True)
+            py_compile.compile(
+                str(self._source_script.script_path), doraise=True
+            )
         except Exception as e:
             return e
         else:
