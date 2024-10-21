@@ -2,11 +2,12 @@
 mydir/*
 py4lo/__pycache__/*
 .pytest_cache/*
-**/.pytest_cache
-.cache
-.idea
-venv
-history
+**/.pytest_cache/
+.cache/
+.idea/
+venv/
+history/
+megalinter-reports/
 
 # generated files
 examples/**/*.ods
@@ -21,8 +22,6 @@ examples/quickstart/qs
 **/*.pyc
 .coverage
 coverage.xml
-.coverage
-.coveragerc
 <tempfile.*>
 
 .travis.yml

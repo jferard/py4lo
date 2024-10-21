@@ -1,0 +1,17 @@
+[tool.black]
+line-length = 79
+diff = true
+
+[tool.mypy]
+exclude = ["target", "megalinter-reports", "venv", "test"]
+
+[tool.pyright]
+reportMissingImports = false
+exclude = ["**/target", "megalinter-reports", "venv", "test"]
+
+[tool.bandit]
+skips = ["B311", "B314", "B405", "B318", "B408"]
+exclude_dirs = ["./megalinter-reports", "./venv", "./examples/csv/target", "./examples/html/target", "./examples/message/target", "./examples/quickstart/qs/target", "./examples/sqlite3/target"]
+
+[tool.isort]
+profile = "black"
