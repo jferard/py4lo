@@ -16,6 +16,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
+# mypy: disable-error-code="import-not-found"
 import unittest
 from unittest import mock
 
@@ -225,7 +226,8 @@ class HelperBaseTestCase(unittest.TestCase):
     def test_to_enumerate_enum(self):
         # prepare
         oEnum = mock.Mock()
-        enum_access = mock.Mock(spec=["createEnumeration"])
+        enum_access = mock.Mock(spec=["createEnumeration", "supportsService"])
+        enum_access.supportsService.side_effect = [False, True]
         enum_access.createEnumeration.side_effect = [oEnum]
         oEnum.hasMoreElements.side_effect = [True, True, True, False]
         oEnum.nextElement.side_effect = [1, 4, 9]
