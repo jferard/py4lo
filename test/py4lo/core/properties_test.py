@@ -29,17 +29,16 @@ from core.source_dest import _get_paths
 class TestProperties(unittest.TestCase):
     @mock.patch("core.properties.load_toml", autospec=True)
     def test_provider_factory(self, toml_mock):
-        toml_mock.return_value = {"a": 1, "log_level": -1,
-                                  "src": {"source_ods_file": "s.ods",
-                                          "inc_dir": "inc", "lib_dir": "lib",
-                                          "src_dir": "src", "src_ignore": "",
-                                          "opt_dir": "opt",
-                                          "assets_dir": "assets",
-                                          "assets_ignore": "",
-                                          "test_dir": "test"},
-                                  "dest": {"suffix": "ok", "temp_dir": "temp",
-                                           "dest_dir": "dest",
-                                           "assets_dest_dir": "Assets"}}
+        toml_mock.return_value = {
+            "a": 1, "log_level": -1,
+            "src": {"source_ods_file": "s.ods",
+                    "inc_dir": "inc", "lib_dir": "lib",
+                    "src_dir": "src", "src_ignore": "",
+                    "opt_dir": "opt", "assets_dir": "assets",
+                    "assets_ignore": "", "test_dir": "test"},
+            "dest": {"suffix": "ok", "temp_dir": "temp",
+                     "dest_dir": "dest", "assets_dest_dir": "Assets"}
+        }
         p = PropertiesProviderFactory().create()
 
         self.assertEqual({"a", "log_level", "src", "dest"}, p.keys())
@@ -48,7 +47,7 @@ class TestProperties(unittest.TestCase):
     def test_provider(self):
         logger = logging.getLogger()
         sources = mock.Mock(get_assets_paths=lambda: Path("assets"),
-                       get_src_paths=lambda: Path("src"))
+                            get_src_paths=lambda: Path("src"))
         destinations = mock.Mock()
         provider = PropertiesProvider(logger, Path("base"), sources,
                                       destinations, {'a': 1})
@@ -66,7 +65,7 @@ class TestProperties(unittest.TestCase):
     def test_readme(self):
         logger = logging.getLogger()
         sources = mock.Mock(get_assets_paths=lambda: Path("assets"),
-                       get_src_paths=lambda: Path("src"))
+                            get_src_paths=lambda: Path("src"))
         destinations = mock.Mock()
         self.maxDiff = None
         base_path = Path(__file__).parent.parent.parent.parent

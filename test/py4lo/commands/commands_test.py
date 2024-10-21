@@ -26,7 +26,11 @@ class TestCommands(unittest.TestCase):
     def setUp(self):
         self.provider: PropertiesProvider = mock.Mock()
 
-    def test(self):
+    @mock.patch("commands.test_command.secure_exe", autospec=True)
+    @mock.patch("commands.run_command.secure_exe", autospec=True)
+    def test(self, secure_mock, secure_mock2):
+        secure_mock.side_effect = lambda x, _y: x
+        secure_mock2.side_effect = lambda x, _y: x
         _ = commands.get("run", ["arg1", "arg2"], self.provider)
         # print(progress_executor.execute(["arg1", "arg2"]))
 

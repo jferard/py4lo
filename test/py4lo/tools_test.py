@@ -16,7 +16,7 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import subprocess
+import subprocess  # nosec: B404
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -25,8 +25,10 @@ from tools import open_with_calc, nested_merge
 
 
 class TestTools(unittest.TestCase):
+    @mock.patch("tools.secure_exe", autospec=True)
     @mock.patch('subprocess.call', spec=subprocess.call)
-    def test_open_with_calc(self, subprocess_call_mock):
+    def test_open_with_calc(self, subprocess_call_mock, secure_mock):
+        secure_mock.side_effect = lambda x, _y: x
         open_with_calc(Path("myfile.ods"), "mycalc.exe")
         self.assertEqual([
             mock.call(['mycalc.exe', 'myfile.ods'])],

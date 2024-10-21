@@ -67,7 +67,7 @@ class TestTomlHelper(unittest.TestCase):
                             'b': 2,
                             'log_level': 'INFO'}.items() <= tdata.items())
         self.assertEqual(
-            {'python_exe', 'b', 'log_level', 'python_version'},
+            {'python_exe', 'b', 'log_level'},
             set(tdata.keys()))
         verify_open_path(self, default_toml, 'r', encoding="utf-8")
         verify_open_path(self, local_toml, 'r', encoding="utf-8")

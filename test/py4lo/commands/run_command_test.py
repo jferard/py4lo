@@ -28,7 +28,11 @@ class TestRunCommand(unittest.TestCase):
     def setUp(self):
         self.provider: PropertiesProvider = mock.Mock()
 
-    def test_with_empty_tdata(self):
+    @mock.patch("commands.run_command.secure_exe", autospec=True)
+    @mock.patch("commands.test_command.secure_exe", autospec=True)
+    def test_with_empty_tdata(self, secure_mock, secure_mock2):
+        secure_mock.side_effect = lambda x, _y: x
+        secure_mock2.side_effect = lambda x, _y: x
         self.provider.get.return_value = {}
         RunCommand.create_executor([], self.provider)
 
@@ -45,8 +49,10 @@ class TestRunCommand(unittest.TestCase):
                                           "assets_dest_dir": ".",
                                           "assets_ignore": "*"}
 
+    @mock.patch("tools.secure_exe", autospec=True)
     @mock.patch("subprocess.call", autospec=True)
-    def test(self, call_mock):
+    def test(self, call_mock, secure_mock):
+        secure_mock.side_effect = lambda x, _y: x
         h = RunCommand("calc")
         h.execute(0, Path(""))
         self.assertEqual([mock.call(['calc', '.'])], call_mock.mock_calls)
