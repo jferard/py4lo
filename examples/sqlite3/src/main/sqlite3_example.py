@@ -28,16 +28,24 @@ from py4lo_commons import Commons, uno_url_to_path
 from py4lo_sqlite3 import sqlite_open
 
 try:
-    CUR_PATH = uno_url_to_path(provider.doc.URL).parent
-except AttributeError:
-    CUR_PATH = Path.cwd()
+    if provider is None:
+        raise ValueError()
+
+    doc_path = uno_url_to_path(provider.doc.URL)
+    if doc_path is None:
+        raise ValueError()
+
+    CUR_PATH = doc_path.parent
+except (ValueError, AttributeError):
+     CUR_PATH = Path.cwd()
+
+logger = logging.getLogger()
 
 try:
-    commons = Commons.create(XSCRIPTCONTEXT)
+    commons = Commons.create(XSCRIPTCONTEXT)  # type: ignore[name-defined]
 except NameError:
     pass
 else:
-    logger = logging.getLogger()
     commons.init_logger(logger, CUR_PATH / "sqlite3.log")
 
 
@@ -73,7 +81,8 @@ def sqlite_example(*_args):
 
         logger.debug("Query result %s", new_data_array)
         arr = list(oSheet.getCellRangeByName("output_rows").DataArray)
-        arr = new_data_array[:len(new_data_array)] + arr[len(new_data_array):]
+        n = len(new_data_array)
+        arr = new_data_array[:n] + arr[n:]
         oSheet.getCellRangeByName("output_rows").DataArray = arr
     except Exception:
         logger.exception("EXC")
