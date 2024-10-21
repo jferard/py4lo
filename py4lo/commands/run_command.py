@@ -18,20 +18,25 @@
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 from pathlib import Path
+from typing import cast
 
 from commands.command import Command
+from commands.null_command import NullCommand
 from core.properties import PropertiesProvider
 from commands.command_executor import CommandExecutor
 from commands.update_command import UpdateCommand
-from tools import open_with_calc
+from tools import open_with_calc, secure_exe
 
 
 class RunCommand(Command):
     @staticmethod
     def create_executor(args, provider: PropertiesProvider) -> CommandExecutor:
-        calc_exe = provider.get("calc_exe")
-        update_executor = UpdateCommand.create_executor(args, provider)
-        run_command = RunCommand(calc_exe)
+        sec_calc_exe = secure_exe(provider.get("calc_exe"), "scalc")
+        if sec_calc_exe is None:
+            run_command = cast(Command, NullCommand("Can't find calc exe"))
+        else:
+            update_executor = UpdateCommand.create_executor(args, provider)
+            run_command = RunCommand(sec_calc_exe)
         return CommandExecutor(provider.get_logger(), run_command,
                                update_executor)
 

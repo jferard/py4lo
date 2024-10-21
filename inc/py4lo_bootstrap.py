@@ -21,7 +21,7 @@
 def use_local(object_ref):
     # noinspection PyUnresolvedReferences
     doc = XSCRIPTCONTEXT.getDocument() # noqa: F821
-    dsp = doc.getScriptProvider()
+    dsp = doc.getScriptProvider()  # type: ignore # noqa: F821
     (fname_wo_py, oname) = object_ref.split("::")
     uri = ("vnd.sun.star.script:{}.py$__export_{}?"
            "language=Python&location=document").format(fname_wo_py, oname)

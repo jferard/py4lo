@@ -19,6 +19,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """py4lo_commons deals with ordinary Python objects (POPOs ?)."""
+# mypy: disable-error-code="import-untyped"
 from pathlib import Path
 import logging
 import configparser

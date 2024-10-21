@@ -21,12 +21,14 @@ import subprocess
 import sys
 from logging import Logger
 from pathlib import Path
-from typing import Dict, Callable, Iterator
+from typing import Dict, Callable, Iterator, cast, Optional, Any, Tuple
 
 from commands.command import Command
 from commands.command_executor import CommandExecutor
+from commands.null_command import NullCommand
 from core.properties import PropertiesProvider
 from core.source_dest import Sources
+from tools import secure_exe
 
 
 class TestCommand(Command):
@@ -35,19 +37,25 @@ class TestCommand(Command):
     @staticmethod
     def create_executor(_args, provider: PropertiesProvider
                         ) -> CommandExecutor:
-        python_exe = provider.get("python_exe")
+        sec_python_exe = secure_exe(provider.get("python_exe"), "python")
         logger = provider.get_logger()
-        return CommandExecutor(logger,
-                               TestCommand(logger, python_exe,
-                                           provider.get_sources()))
+        if sec_python_exe is None:
+            command = cast(Command, NullCommand("Can't find python exe"))
+        else:
+            command = cast(Command, TestCommand(
+                logger, sec_python_exe, provider.get_sources()
+            ))
+        return CommandExecutor(logger, command)
 
     def __init__(self, logger: Logger, python_exe: str, sources: Sources):
         self._logger = logger
         self._python_exe = python_exe
         self._sources = sources
-        self._env = None
+        self._env = cast(Optional[Dict[str, str]], None)
 
-    def execute(self):
+    def execute(self, *args: Any) -> Tuple[Any, ...]:
+        if args:
+            print("Ignoring args", args)
         final_status = self._execute_all_tests(
             self._src_paths(), self._execute_doctests)
         final_status = self._execute_all_tests(

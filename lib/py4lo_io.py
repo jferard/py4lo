@@ -15,6 +15,7 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# mypy: disable-error-code="import-untyped,import-not-found"
 import csv
 import encodings
 import locale

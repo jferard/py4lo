@@ -18,6 +18,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """py4lo_helper deals with LO objects."""
+# mypy: disable-error-code="import-untyped,import-not-found"
 import logging
 from enum import Enum
 from locale import getlocale
@@ -94,12 +95,23 @@ try:
         from com.sun.star.awt.FontSlant import (NONE, OBLIQUE, ITALIC)
 
 except (ModuleNotFoundError, ImportError):
-    from mock_constants import (  # noqa
-        unohelper, uno, XTransferable, FrameSearchFlag, BorderLineStyle,
-        ConditionOperator, FontWeight, ValidationType,
-        TableValidationVisibility, ScriptFrameworkErrorException,
-        UnoRuntimeException, UnoException, PropertyState, FontSlant
-    )
+    from mock_constants import (    # type:ignore[assignment]
+        BorderLineStyle,            # pyright: ignore[reportGeneralTypeIssues]
+        ConditionOperator,          # pyright: ignore[reportGeneralTypeIssues]
+        FontSlant,                  # pyright: ignore[reportGeneralTypeIssues]
+        FontWeight,                 # pyright: ignore[reportGeneralTypeIssues]
+        FrameSearchFlag,            # pyright: ignore[reportGeneralTypeIssues]
+        PropertyState,              # pyright: ignore[reportGeneralTypeIssues]
+        ScriptFrameworkErrorException,\
+                                    # pyright: ignore[reportGeneralTypeIssues]
+        TableValidationVisibility,  # pyright: ignore[reportGeneralTypeIssues]
+        UnoException,               # pyright: ignore[reportGeneralTypeIssues]
+        UnoRuntimeException,        # pyright: ignore[reportGeneralTypeIssues]
+        ValidationType,             # pyright: ignore[reportGeneralTypeIssues]
+        XTransferable,              # pyright: ignore[reportGeneralTypeIssues]
+        uno,                        # pyright: ignore[reportGeneralTypeIssues]
+        unohelper,                  # pyright: ignore[reportGeneralTypeIssues]
+     )
 
 ###############################################################################
 # BASE
@@ -249,17 +261,18 @@ def to_enumerate(o: UnoObject) -> Iterator[Tuple[int, UnoObject]]:
     @param o: an XIndexAccess or XEnumerationAccession object
     @return: an enumerate iterator on `o`
     """
-    try:
-        count = o.Count
-    except AttributeError:
-        oEnum = o.createEnumeration()
+    if o.supportsService("com.sun.star.container.XIndexAccess"):
+        count = o.Count  # type: ignore[union-attr]
+        for i in range(count):
+            yield i, o.getByIndex(i)  # type: ignore[union-attr]
+    elif o.supportsService("com.sun.star.container.XEnumerationAccess"):
+        oEnum = o.createEnumeration()  # type: ignore[union-attr]
         i = 0
         while oEnum.hasMoreElements():
             yield i, oEnum.nextElement()
             i += 1
     else:
-        for i in range(count):
-            yield i, o.getByIndex(i)
+        raise TypeError(repr(o))
 
 
 def to_dict(oXNameAccess: UnoObject) -> Mapping[str, UnoObject]:
@@ -276,13 +289,15 @@ def to_items(oXNameAccess: UnoObject) -> Iterator[Tuple[str, UnoObject]]:
     )
 
 
-def remove_all(oXAccess: UnoObject):
-    try:
-        for name in oXAccess.ElementNames:
-            oXAccess.removeByName(name)
-    except AttributeError:
-        while oXAccess.Count:
-            oXAccess.removeByIndex(0)
+def remove_all(o: UnoObject):
+    if o.supportsService("com.sun.star.container.XIndexContainer"):
+        while o.Count:  # type: ignore[union-attr]
+            o.removeByIndex(0)  # type: ignore[union-attr]
+    elif o.supportsService("com.sun.star.container.XNameContainer"):
+        for name in o.ElementNames:  # type: ignore[union-attr]
+            o.removeByName(name)  # type: ignore[union-attr]
+    else:
+        raise TypeError(repr(o))
 
 
 def parent_doc(oRange: UnoRange) -> UnoSpreadsheetDocument:
@@ -883,8 +898,7 @@ def get_page_style(oSheet: UnoSheet) -> UnoService:
     oDoc = parent_doc(oSheet)
     oStyle = oDoc.StyleFamilies.getByName("PageStyles").getByName(
         page_style_name)
-    return oStyle
-
+    return oStyle  # type: ignore[return-value]
 
 def set_paper(oSheet: UnoSheet):
     """

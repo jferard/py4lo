@@ -15,6 +15,7 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# mypy: disable-error-code="import-not-found"
 import logging
 import time
 from pathlib import Path
@@ -41,7 +42,7 @@ try:
         )
 
 except (ModuleNotFoundError, ImportError):
-    from mock_constants import ( # noqa
+    from mock_constants import ( # type:ignore[assignment]
         DataType,
         ColumnValue
     )

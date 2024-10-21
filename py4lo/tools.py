@@ -18,13 +18,15 @@
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import subprocess
 from pathlib import Path
-from typing import List, Dict, Any, Callable
+from typing import List, Dict, Any, Callable, Optional
 
 
 def open_with_calc(ods_path: Path, calc_exe: str):
     """Open a file with calc"""
-    # TODO: use return code to throw an error
-    subprocess.call([calc_exe, str(ods_path)])
+    sec_calc_exe = secure_exe(calc_exe, "scalc")
+    if sec_calc_exe is None:
+        return
+    subprocess.call([sec_calc_exe, str(ods_path)])  # nosec: B603
 
 
 def nested_merge(d1: Dict[str, Any], d2: Dict[str, Any],
@@ -48,3 +50,11 @@ def nested_merge(d1: Dict[str, Any], d2: Dict[str, Any],
             d1[k] = apply(v)
 
     return d1
+
+def secure_exe(exe: str, name: str) -> Optional[str]:
+    import shutil
+    ret = shutil.which(exe)
+    if ret is not None and name in ret:
+        return ret
+    else:
+        return None

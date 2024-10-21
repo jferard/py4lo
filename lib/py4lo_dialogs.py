@@ -15,6 +15,7 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# mypy: disable-error-code="import-untyped,import-not-found"
 from collections import namedtuple
 from enum import Enum
 from threading import Thread
@@ -62,9 +63,12 @@ try:
         from com.sun.star.awt.PushButtonType import (OK, CANCEL)
 
 except (ModuleNotFoundError, ImportError):
-    from mock_constants import (  # noqa
-        uno, MessageBoxType, MessageBoxButtons, FontWeight,
-        ExecutableDialogResults, PushButtonType
+    from mock_constants import (  # type: ignore[assignment]
+        ExecutableDialogResults,  # pyright: ignore[reportGeneralTypeIssues]
+        MessageBoxButtons,  # pyright: ignore[reportGeneralTypeIssues]
+        MessageBoxType,  # pyright: ignore[reportGeneralTypeIssues]
+        PushButtonType,  # pyright: ignore[reportGeneralTypeIssues]
+        uno,  # pyright: ignore[reportGeneralTypeIssues]
     )
 
 
