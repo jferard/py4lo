@@ -19,7 +19,7 @@
 Basic support for uno types out of the LibreOffice engine.
 """
 from pathlib import Path
-from typing import (NewType, Any, Union, Tuple, List)
+from typing import (NewType, Any, Union, Tuple, List, cast, Optional)
 
 UnoXScriptContext = NewType("UnoXScriptContext", Any)
 
@@ -72,3 +72,7 @@ DATA_VALUE = Union[str, float]
 DATA_ROW = Union[Tuple[DATA_VALUE, ...], List[DATA_VALUE]]
 DATA_ARRAY = Union[Tuple[DATA_ROW, ...], List[DATA_ROW]]
 StrPath = Union[str, Path]
+
+# Misc
+def lazy(typ):
+    return cast(Optional[typ], None)

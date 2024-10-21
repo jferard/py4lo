@@ -26,7 +26,7 @@ import datetime as dt
 from typing import (
     Union, Any, cast, List, Optional, TextIO, Iterable, Mapping, Callable)
 
-from py4lo_typing import UnoXScriptContext, StrPath
+from py4lo_typing import UnoXScriptContext, StrPath, lazy
 
 try:
     # noinspection PyUnresolvedReferences
@@ -100,7 +100,7 @@ class Commons:
 
     def __init__(self, url: str):
         self._url = url
-        self._logger = None
+        self._logger = lazy(logging.Logger)
 
     def __del__(self):
         if self._logger is not None:

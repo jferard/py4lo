@@ -29,10 +29,12 @@ from datetime import datetime
 
 import example_lib
 from py4lo_dialogs import (ProgressExecutorBuilder, ConsoleExecutorBuilder,
-                           message_box, input_box)
+                           message_box, input_box, ConsoleExecutor,
+                           ProgressExecutor)
 from py4lo_helper import provider as pr, xray, mri, parent_doc
 from py4lo_io import (dict_reader, dict_writer, export_to_csv,
                       import_from_csv, CellTyping)
+from py4lo_typing import lazy
 
 o = example_lib.Example(pr)
 
@@ -99,7 +101,7 @@ def import_example(*_args):
     import_from_csv(pr.doc, "csv sheet", 0, "./temp.csv")
 
 
-progress_executor = None
+progress_executor = lazy(ProgressExecutor)
 
 
 def progress_example(*_args):
@@ -121,11 +123,14 @@ def progress_example(*_args):
 
 
 def after_progress(*_args):
-    message_box("Title",
+    if progress_executor is None:
+        message_box("Error", "The return value was: None")
+    else:
+        message_box("Title",
                 "The return value was: {}".format(progress_executor.response))
 
 
-console_executor = None
+console_executor = lazy(ConsoleExecutor)
 
 
 def console_example(*_args):
