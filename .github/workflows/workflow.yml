@@ -30,7 +30,7 @@ jobs:
       - name: set PYTHONPATH
         run: |
           ls -R $GITHUB_WORKSPACE
-          echo "PYTHONPATH=\"$GITHUB_WORKSPACE\lib/\":\"$GITHUB_WORKSPACE\py4lo/\":\"/usr/lib/python3/dist-packages/\"" >> "$GITHUB_ENV"
+          echo "PYTHONPATH=$GITHUB_WORKSPACE/lib/:$GITHUB_WORKSPACE/py4lo/:/usr/lib/python3/dist-packages/" >> "$GITHUB_ENV"
       - name: Test with pytest & generate coverage report
         run: |
           echo "$PYTHONPATH"
