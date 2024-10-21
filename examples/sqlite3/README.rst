@@ -13,6 +13,6 @@ Type in your command line interface:
 
 .. code-block:: bash
 
-    > python ../../py4lo run
+    python3 ../../py4lo run
 
 It will update the ods file, run the tests and launch LibreOffice.
