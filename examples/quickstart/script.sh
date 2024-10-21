@@ -1,7 +1,7 @@
 #!/bin/bash -x
 
 mkdir -p qs/src/main
-cd qs
+cd qs || exit
 
 cat > src/main/qs.py<< EOF
 # -*- coding: utf-8 -*-
@@ -19,7 +19,7 @@ EOF
 python3 ../../../py4lo init
 mv new-project.ods qs.ods
 
-cat > qs.toml<< EOF
+cat >qs.toml<< EOF
 calc_exe = "libreoffice"
 python_exe = "python3"
 
@@ -27,7 +27,7 @@ python_exe = "python3"
 source_ods_file = "{project}/qs.ods"
 EOF
 
-cat > qs.py<< EOF
+cat >qs.py<< EOF
 # -*- coding: utf-8 -*-
 # py4lo: entry
 # py4lo: embed lib py4lo_typing
