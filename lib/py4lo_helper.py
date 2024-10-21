@@ -352,6 +352,8 @@ def make_pv(name: str, value: Any) -> UnoPropertyValue:
     pv = uno.createUnoStruct('com.sun.star.beans.PropertyValue')
     pv.Name = name
     pv.Value = value
+    pv.Handle = 0
+    pv.State = PropertyState.DIRECT_VALUE
     return pv
 
 
@@ -402,15 +404,17 @@ def make_locale(language: str = "", region: str = "",
     @return: the locale
     """
     locale = uno.createUnoStruct('com.sun.star.lang.Locale')
-    if not subtags:
-        locale.Country = region
-        locale.Language = language
-    else:
+    if subtags:
+        locale.Country = ""
         locale.Language = "qlt"
         if region:
             locale.Variant = "-".join([language, region] + subtags)
         else:
             locale.Variant = "-".join([language] + subtags)
+    else:
+        locale.Country = region
+        locale.Language = language
+        locale.Variant = ""
     return locale
 
 

@@ -354,13 +354,13 @@ class HelperStructTestCase(unittest.TestCase):
 
     def test_make_pv(self):
         pv = make_pv("name", "value")
-        self.assertTrue("uno.com.sun.star.beans.PropertyValue" in str(type(pv)))
+        self.assertEqual("com.sun.star.beans.PropertyValue", pv.typeName)
         self.assertEqual("name", pv.Name)
         self.assertEqual("value", pv.Value)
 
     def test_make_full_pv(self):
         pv = make_full_pv("name", "value", 20, PropertyState.AMBIGUOUS_VALUE)
-        self.assertTrue("uno.com.sun.star.beans.PropertyValue" in str(type(pv)))
+        self.assertEqual("com.sun.star.beans.PropertyValue", pv.typeName)
         self.assertEqual("name", pv.Name)
         self.assertEqual("value", pv.Value)
         self.assertEqual(20, pv.Handle)
@@ -368,7 +368,7 @@ class HelperStructTestCase(unittest.TestCase):
 
     def test_make_full_pv2(self):
         pv = make_full_pv("name", "value")
-        self.assertTrue("uno.com.sun.star.beans.PropertyValue" in str(type(pv)))
+        self.assertTrue("com.sun.star.beans.PropertyValue", pv.typeName)
         self.assertEqual("name", pv.Name)
         self.assertEqual("value", pv.Value)
         self.assertEqual(0, pv.Handle)
@@ -409,7 +409,7 @@ class HelperStructTestCase(unittest.TestCase):
 
     def test_make_locale(self):
         locale = make_locale("en", "US")
-        self.assertTrue("uno.com.sun.star.lang.Locale" in str(type(locale)))
+        self.assertEqual("com.sun.star.lang.Locale", locale.typeName)
         self.assertEqual("US", locale.Country)
         self.assertEqual("en", locale.Language)
         self.assertEqual("", locale.Variant)
@@ -428,8 +428,7 @@ class HelperStructTestCase(unittest.TestCase):
 
     def test_make_border(self):
         border = make_border(0xFF0000, 3, BorderLineStyle.SOLID)
-        self.assertTrue(
-            "uno.com.sun.star.table.BorderLine2" in str(type(border)))
+        self.assertEqual("com.sun.star.table.BorderLine2", border.typeName)
         self.assertEqual(16711680, border.Color)
         self.assertEqual(3, border.LineWidth)
         self.assertEqual(BorderLineStyle.SOLID, border.LineStyle)
@@ -604,7 +603,10 @@ class HelperRangesTestCase(unittest.TestCase):
         ], oDisp.mock_calls)
 
     @mock.patch("py4lo_helper.parent_doc")
-    def test_paste_range(self, pd):
+    @mock.patch("py4lo_helper.make_pv")
+    def test_paste_range(self, mkpv, pd):
+        mkpv.side_effect = lambda a, b: (a, b)
+
         # prepare
         oSheet = mock.Mock()
         oDestAddress = mock.Mock()
@@ -871,10 +873,6 @@ class HelperFormattingTestCase(unittest.TestCase):
         py4lo_helper._inspect = _Inspector(py4lo_helper.provider)
 
     def test_validation_builder(self):
-        class ValidationType:
-            # noinspection PyUnresolvedReferences
-            from com.sun.star.sheet.ValidationType import (LIST, )
-
         # prepare
         oVal = mock.Mock()
         oCell = mock.Mock(Validation=oVal)
@@ -1329,7 +1327,11 @@ class HelperOpenTestCase(unittest.TestCase):
             self.ctxt, self.sm, self.desktop)
         py4lo_helper._inspect = _Inspector(py4lo_helper.provider)
 
-    def test_open_in_calc(self):
+
+    @mock.patch("py4lo_helper.make_pv")
+    def test_open_in_calc(self, mkpv):
+        mkpv.side_effect = lambda a, b: (a, b)
+
         # prepare
         py4lo_helper.provider = mock.Mock()
 
@@ -1340,7 +1342,7 @@ class HelperOpenTestCase(unittest.TestCase):
         self.assertEqual([
             mock.call.desktop.loadComponentFromURL(
                 'file:///fname',
-                Target.SELF, 0, (make_pv("Hidden", True),))],
+                Target.SELF, 0, (("Hidden", True),))],
             py4lo_helper.provider.mock_calls)
 
     def test_open_in_calc_no_params(self):
@@ -1399,14 +1401,14 @@ class HelperOpenTestCase(unittest.TestCase):
         py4lo_helper.provider.desktop.loadComponentFromURL.side_effect = [oDoc]
 
         # play
-        d = doc_builder(NewDocumentUrl.Calc, pvs=make_pvs({"Hidden": True}))
+        d = doc_builder(NewDocumentUrl.Calc, pvs={"Hidden": True})
         d.build()
 
         # verify
         self.assertEqual([
             mock.call.loadComponentFromURL('private:factory/scalc',
                                            Target.BLANK, 0,
-                                           (make_pv("Hidden", True),))
+                                           {"Hidden": True})
         ], py4lo_helper.provider.desktop.mock_calls)
         self.assertEqual([
             mock.call.lockControllers, mock.call.unlockControllers

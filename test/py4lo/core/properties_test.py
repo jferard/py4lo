@@ -69,7 +69,8 @@ class TestProperties(unittest.TestCase):
                        get_src_paths=lambda: Path("src"))
         destinations = mock.Mock()
         self.maxDiff = None
-        provider = PropertiesProvider(logger, Path("."), sources,
+        base_path = Path(__file__).parent.parent.parent.parent
+        provider = PropertiesProvider(logger, base_path, sources,
                                       destinations, {'add_readme': True})
         f = io.BytesIO()
         with ZipFile(f, "w") as zout:

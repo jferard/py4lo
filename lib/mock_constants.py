@@ -18,6 +18,7 @@
 import enum
 import os
 from pathlib import Path
+from unittest import mock
 from urllib.parse import urlparse
 
 
@@ -83,7 +84,7 @@ class MessageBoxButtons:
 
 
 class FontWeight:
-    BOLD = None
+    BOLD = 150
 
 
 class ExecutableDialogResults:
@@ -101,7 +102,7 @@ class XTransferable:
 
 
 class FrameSearchFlag:
-    AUTO = None
+    AUTO = 0
 
 
 class BorderLineStyle:
@@ -117,20 +118,21 @@ class ValidationType:
 
 
 class TableValidationVisibility:
-    SORTEDASCENDING = None
-    UNSORTED = None
-
-
-class ScriptFrameworkErrorException(Exception):
-    pass
-
-
-class UnoRuntimeException(Exception):
-    pass
+    SORTEDASCENDING = 2
+    UNSORTED = 1
 
 
 class UnoException(Exception):
     pass
+
+class ScriptFrameworkErrorException(UnoException):
+    pass
+
+
+class UnoRuntimeException(UnoException):
+    pass
+
+
 
 
 Locale = object
@@ -168,8 +170,9 @@ class uno:
         return Path(path).as_uri()
 
     @staticmethod
-    def createUnoStruct(struct_id: str) -> None:
-        pass
+    def createUnoStruct(struct_id: str) -> mock.Mock:
+        m = mock.Mock(typeName=struct_id)
+        return m
 
     @staticmethod
     def Any(name, value) -> None:

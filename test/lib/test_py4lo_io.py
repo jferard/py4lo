@@ -21,12 +21,12 @@ import unittest
 from typing import Any
 from unittest import mock
 
-from py4lo_helper import (make_pv)
+from py4lo_helper import (make_pv, Target)
 from py4lo_io import (create_import_filter_options,
                       create_export_filter_options, Format, create_read_cell,
                       CellTyping, reader, dict_reader, find_number_format_style,
                       create_write_cell, writer, dict_writer, import_from_csv,
-                      export_to_csv)
+                      export_to_csv, Filter)
 from py4lo_typing import UnoCell
 from mock_constants import NumberFormat
 
@@ -505,7 +505,8 @@ class Py4LOIOTestCase(unittest.TestCase):
             mock.call.getCellByPosition(1, 1),
             mock.call.getCellByPosition(2, 1)
         ], oSheet.mock_calls)
-        self.assertEqual(['a', 'b', 'text_range', 1, 2, 3], [c.t for c in cells])
+        self.assertEqual(['a', 'b', 'text_range', 1, 2, 3],
+                         [c.t for c in cells])
 
     def test_writer_formats(self):
         # prepare
@@ -530,7 +531,8 @@ class Py4LOIOTestCase(unittest.TestCase):
             mock.call.getCellByPosition(1, 1),
             mock.call.getCellByPosition(2, 1)
         ], oSheet.mock_calls)
-        self.assertEqual(['a', 'b', 'text_range'], [c.String for c in cells[:3]])
+        self.assertEqual(['a', 'b', 'text_range'],
+                         [c.String for c in cells[:3]])
         self.assertEqual([1, 2, 3], [c.Value for c in cells[3:]])
 
     def test_writer_no_formats(self):
@@ -561,7 +563,8 @@ class Py4LOIOTestCase(unittest.TestCase):
             mock.call.getCellByPosition(1, 1),
             mock.call.getCellByPosition(2, 1)
         ], oSheet.mock_calls)
-        self.assertEqual(['a', 'b', 'text_range'], [c.String for c in cells[:3]])
+        self.assertEqual(['a', 'b', 'text_range'],
+                         [c.String for c in cells[:3]])
         self.assertEqual([1, 2, 3], [c.Value for c in cells[3:]])
 
     def test_dict_writer_wc(self):
@@ -631,7 +634,8 @@ class Py4LOIOTestCase(unittest.TestCase):
         def wc(oCell: UnoCell, value: Any):
             oCell.t = value
 
-        w = dict_writer(oSheet, ['a', 'b', 'text_range'], restval="foo", write_cell=wc)
+        w = dict_writer(oSheet, ['a', 'b', 'text_range'], restval="foo",
+                        write_cell=wc)
 
         w.writeheader()
         w.writerow({"a": 1, "b": 2})
@@ -645,13 +649,17 @@ class Py4LOIOTestCase(unittest.TestCase):
             mock.call.getCellByPosition(1, 1),
             mock.call.getCellByPosition(2, 1),
         ], oSheet.mock_calls)
-        self.assertEqual(['a', 'b', 'text_range', 1, 2, 'foo'], [c.t for c in cells])
+        self.assertEqual(['a', 'b', 'text_range', 1, 2, 'foo'],
+                         [c.t for c in cells])
 
 
 class IOCSVTestCase(unittest.TestCase):
     @mock.patch("py4lo_io.uno_path_to_url")
     @mock.patch("py4lo_io.pr")
-    def test_import_from_csv(self, pr, ptu):
+    @mock.patch("py4lo_helper.make_pv")
+    def test_import_from_csv(self, mkpv, pr, ptu):
+        mkpv.side_effect = lambda a, b: (a, b)
+
         # prepare
         oSheets = mock.Mock()
         oDoc = mock.Mock(Sheets=oSheets)
@@ -670,10 +678,11 @@ class IOCSVTestCase(unittest.TestCase):
                          oSheets.mock_calls)
         self.assertEqual([
             mock.call.desktop.loadComponentFromURL(
-                'url', '_blank', 0, (
-                    make_pv("FilterName", "Text - txt - csv (StarCalc)"),
-                    make_pv("FilterOptions", "44,34,76,1,,1033,false,false"),
-                    make_pv("Hidden", True)))
+                'url', Target.BLANK, 0, (
+                    ("FilterName", Filter.CSV),
+                    ("FilterOptions", "44,34,76,1,,1033,false,false"),
+                    ("Hidden", True))
+            )
         ], pr.mock_calls)
 
     def test_import_options_dialect(self):
@@ -688,7 +697,8 @@ class IOCSVTestCase(unittest.TestCase):
 
     def test_empty_import_options(self):
         self.assertEqual('44,34,76,1,,1033,false,false',
-                         create_import_filter_options(language_code="en_US"))
+                         create_import_filter_options(
+                             language_code="en_US"))
 
     def test_import_options(self):
         self.assertEqual('44,34,76,1,1/2,1033,false,false',
@@ -698,7 +708,8 @@ class IOCSVTestCase(unittest.TestCase):
 
     @mock.patch("py4lo_io.uno_path_to_url")
     @mock.patch("py4lo_io.parent_doc")
-    def test_export_to_csv(self, pd, ptu):
+    @mock.patch("py4lo_helper.make_pv")
+    def test_export_to_csv(self, mkpv, pd, ptu):
         # prepare
         oSheet = mock.Mock()
         path = mock.Mock()
@@ -706,6 +717,7 @@ class IOCSVTestCase(unittest.TestCase):
         oCurSheet = mock.Mock()
         oDoc = mock.Mock(CurrentController=mock.Mock(ActiveSheet=oCurSheet))
         pd.side_effect = [oDoc]
+        mkpv.side_effect = lambda a, b: (a, b)
 
         # play
         export_to_csv(oSheet, path, language_code="en_US")
@@ -716,15 +728,16 @@ class IOCSVTestCase(unittest.TestCase):
             mock.call.lockControllers(),
             mock.call.storeToURL(
                 'url',
-                (make_pv("FilterName", "Text - txt - csv (StarCalc)"),
-                 make_pv("FilterOptions", "44,34,76,1,,1033,false,false,true"),
-                 make_pv("Overwrite", True))),
+                (("FilterName", "Text - txt - csv (StarCalc)"),
+                ("FilterOptions", "44,34,76,1,,1033,false,false,true"),
+                ( "Overwrite", True))),
             mock.call.unlockControllers()
         ], oDoc.mock_calls)
 
     def test_empty_export_options(self):
         self.assertEqual('44,34,76,1,,1033,false,false,true',
-                         create_export_filter_options(language_code="en_US"))
+                         create_export_filter_options(
+                             language_code="en_US"))
 
     def test_export_options_dialect(self):
         self.assertEqual('44,39,76,1,,1033,true,true,true',
@@ -735,7 +748,6 @@ class IOCSVTestCase(unittest.TestCase):
     def test_export_options_two_parameters(self):
         with self.assertRaises(ValueError):
             create_export_filter_options(1, 2)
-
 
 if __name__ == '__main__':
     unittest.main()
