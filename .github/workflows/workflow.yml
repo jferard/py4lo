@@ -24,9 +24,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install ruff pytest pytest-cov
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-      - name: Lint with ruff
+      - name: Check with ruff
         run: |
-          ruff --format=github --target-version=py38 .
+          ruff check
       - name: set PYTHONPATH
         run: echo "PYTHONPATH=$PYTHONPATH:\"/usr/lib/python3/dist-packages/\"" >> "$GITHUB_ENV"
       - name: Test with pytest & generate coverage report
