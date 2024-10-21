@@ -21,7 +21,7 @@ import unittest
 from typing import Any
 from unittest import mock
 
-from py4lo_helper import (make_pv, Target)
+from py4lo_helper import Target
 from py4lo_io import (create_import_filter_options,
                       create_export_filter_options, Format, create_read_cell,
                       CellTyping, reader, dict_reader, find_number_format_style,
