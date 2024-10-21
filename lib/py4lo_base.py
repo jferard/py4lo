@@ -44,7 +44,7 @@ try:
 except (ModuleNotFoundError, ImportError):
     from mock_constants import ( # type:ignore[assignment]
         DataType,
-        ColumnValue
+        ColumnValue  # noqa: F401
     )
 
 
