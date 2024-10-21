@@ -28,7 +28,9 @@ jobs:
         run: |
           ruff check
       - name: set PYTHONPATH
-        run: echo "PYTHONPATH=\"$GITHUB_WORKSPACE\lib/\":\"$GITHUB_WORKSPACE\py4lo/\":\"/usr/lib/python3/dist-packages/\"" >> "$GITHUB_ENV"
+        run: |
+          ls -R $GITHUB_WORKSPACE
+          echo "PYTHONPATH=\"$GITHUB_WORKSPACE\lib/\":\"$GITHUB_WORKSPACE\py4lo/\":\"/usr/lib/python3/dist-packages/\"" >> "$GITHUB_ENV"
       - name: Test with pytest & generate coverage report
         run: |
           echo "$PYTHONPATH"
