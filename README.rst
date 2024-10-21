@@ -36,19 +36,19 @@ Just ``git clone`` the repo:
 
 .. code-block:: bash
 
-    > git clone https://github.com/jferard/py4lo.git
+    git clone https://github.com/jferard/py4lo.git
 
 Then install requirements (you may need to be in adminstrator mode):
 
 .. code-block:: bash
 
-    > pip install -r requirements.txt
+    pip3 install -r requirements.txt
 
 For Ubuntu:
 
 .. code-block:: bash
 
-    > sudo apt-get install libreoffice-script-provider-python
+    sudo apt-get install libreoffice-script-provider-python
 
 Quick start
 -----------
@@ -58,8 +58,8 @@ Create a new `qs` dir and a `src/main` subdir:
 
 .. code-block:: bash
 
-    > mkdir -p qs/src/main
-    > cd qs
+    mkdir -p qs/src/main
+    cd qs
 
 Step 1
 ~~~~~~
@@ -83,9 +83,9 @@ Step 2
 
 Generate a debug document:
 
-.. code-block:: python
+.. code-block:: bash
 
-    > python <py4lo dir>/py4lo init
+    python3 <py4lo dir>/py4lo init
 
 Where ``<py4lo dir>`` points to the cloned repo. It will create a
 ``new-project.ods`` document with the Python ``test`` function attached
@@ -131,7 +131,7 @@ Update and test the new script:
 
 .. code-block:: bash
 
-    > python <py4lo dir>/py4lo run
+    python3 <py4lo dir>/py4lo run
 
 
 The library
@@ -205,7 +205,7 @@ From the py4lo directory:
 
 .. code-block:: bash
 
-   python3 -m pytest --cov-report term-missing --ignore=examples --cov=py4lo --cov=lib && python3 -m pytest --cov-report term-missing --ignore=examples --ignore=test --ignore=py4lo/__main__.py --cov-append --doctest-modules --cov=lib
+   python3 -m pytest --cov-report term-missing --ignore=examples --ignore=megalinter-reports --cov=py4lo --cov=lib && python3 -m pytest --cov-report term-missing --ignore=examples --ignore=test --ignore=megalinter-reports --ignore=py4lo/__main__.py --cov-append --doctest-modules --cov=lib
 
 
 .. |Build Status| image:: https://github.com/jferard/py4lo/actions/workflows/workflow.yml/badge.svg
