@@ -212,13 +212,14 @@ class HelperBaseTestCase(unittest.TestCase):
     def test_to_iter_enum(self):
         # prepare
         oEnum = mock.Mock()
-        enum_access = mock.Mock(spec=["createEnumeration"])
-        enum_access.createEnumeration.side_effect = [oEnum]
+        oEnumAccess = mock.Mock(spec=["supportsService", "createEnumeration"])
+        oEnumAccess.supportsService.side_effect = [False, True]
+        oEnumAccess.createEnumeration.side_effect = [oEnum]
         oEnum.hasMoreElements.side_effect = [True, True, True, False]
         oEnum.nextElement.side_effect = [1, 4, 9]
 
         # play
-        ret = list(to_iter(enum_access))
+        ret = list(to_iter(oEnumAccess))
 
         # verify
         self.assertEqual([1, 4, 9], ret)
@@ -241,7 +242,7 @@ class HelperBaseTestCase(unittest.TestCase):
     def test_to_dict(self):
         # prepare
         name_access = mock.Mock()
-        name_access.getElementNames.side_effect = [("foo", "bar", "baz")]
+        name_access.ElementNames = ["foo", "bar", "baz"]
         name_access.getByName.side_effect = [1, 4, 9]
 
         # play
@@ -1078,8 +1079,7 @@ class HelperFormattingTestCase(unittest.TestCase):
     @mock.patch("py4lo_helper.parent_doc")
     def test_create_filter(self, pd):
         # prepare
-        oFrame = mock.Mock()
-        oController = mock.Mock(Frame=oFrame)
+        oController = mock.Mock()
         oDoc = mock.Mock(CurrentController=oController)
         oRange = mock.Mock()
         pd.side_effect = [oDoc]
@@ -1095,7 +1095,7 @@ class HelperFormattingTestCase(unittest.TestCase):
         self.assertEqual([
             mock.call.createInstance('com.sun.star.frame.DispatchHelper'),
             mock.call.createInstance().executeDispatch(
-                oFrame, '.uno:DataFilterAutoFilter', '', 0, [])
+                oController, '.uno:DataFilterAutoFilter', '', 0, [])
         ], self.sm.mock_calls)
 
     def test_row_as_header(self):
@@ -1563,6 +1563,7 @@ class HelperOpenTestCase(unittest.TestCase):
         ], py4lo_helper.provider.desktop.mock_calls)
         self.assertEqual([
             mock.call.lockControllers(),
+            mock.call.Sheets.supportsService('com.sun.star.container.XIndexAccess'),
             mock.call.Sheets.getByIndex(0),
             mock.call.Sheets.getByIndex(1),
             mock.call.Sheets.getByIndex(2),
@@ -1597,6 +1598,7 @@ class HelperOpenTestCase(unittest.TestCase):
         ], py4lo_helper.provider.desktop.mock_calls)
         self.assertEqual([
             mock.call.lockControllers(),
+            mock.call.Sheets.supportsService('com.sun.star.container.XIndexAccess'),
             mock.call.Sheets.getByIndex(0),
             mock.call.Sheets.getByIndex(1),
             mock.call.unlockControllers()
@@ -1832,7 +1834,7 @@ class HelperMiscTestCase(unittest.TestCase):
         # verifiy
         self.assertEqual([mock.call.getCellRangeByPosition(0, 3, 2, 3)],
                          oSheet.mock_calls)
-        self.assertEqual(row, oRange.DataArray)
+        self.assertEqual([row], oRange.DataArray)
 
 
 class MiscTestCase(unittest.TestCase):
@@ -2019,13 +2021,17 @@ class MiscTestCase(unittest.TestCase):
 
     def test_html_converter(self):
         self.maxDiff = None
+
+        # PAR 1
         oPar1Enum = mock.Mock(name="oPar1Enum")
         oPar1Enum.hasMoreElements.side_effect = [True, False]
         oPar1Enum.nextElement.side_effect = [
             self._create_chunk("A", CharFontName="Liberation Avec")]
-        oPar1 = mock.Mock(name="oPar1", spec=['createEnumeration'])
+        oPar1 = mock.Mock(name="oPar1", spec=['supportsService', 'createEnumeration'])
+        oPar1.supportsService.side_effect = [False, True]
         oPar1.createEnumeration.side_effect = [oPar1Enum]
 
+        # PAR 2
         oPar2Enum = mock.Mock()
         oPar2Enum.hasMoreElements.side_effect = [True, True, True, True, True,
                                                  False]
@@ -2038,23 +2044,25 @@ class MiscTestCase(unittest.TestCase):
             self._create_chunk("D", CharColor=0xFF0000),
             self._create_chunk("EFG", CharWeight=150)
         ]
-        oPar2 = mock.Mock(name="oPar2", spec=['createEnumeration'])
+        oPar2 = mock.Mock(name="oPar2", spec=['supportsService', 'createEnumeration'])
+        oPar2.supportsService.side_effect = [False, True]
         oPar2.createEnumeration.side_effect = [oPar2Enum]
         oParEnum = mock.Mock(name="oParEnum")
         oParEnum.hasMoreElements.side_effect = [True, True, False]
         oParEnum.nextElement.side_effect = [oPar1, oPar2]
-        text_range = mock.Mock(name="text_range", spec=['createEnumeration'])
-        text_range.createEnumeration.side_effect = [oParEnum]
+        oTextRange = mock.Mock(name="oTextRange", spec=['supportsService', 'createEnumeration'])
+        oTextRange.supportsService.side_effect = [False, True]
+        oTextRange.createEnumeration.side_effect = [oParEnum]
 
         self.assertEqual(
             ("""<span style='font-family: "Liberation Avec"'>A</span>"""
-             "<br>\r\n"
+             "<br>"
              "<span style='font-style: italic'>B</span>"
              "<sub style='font-weight: 600'>C</sub>"
              "<sup style='font-weight: 600'>C</sup>"
              "<span style='color: #ff0000'>D</span>"
              "<span style='font-weight: 600'>EFG</span>"),
-            py4lo_helper.HTMLConverter().convert(text_range))
+            py4lo_helper.HTMLConverter().convert(oTextRange))
 
     def _create_chunk(self, string: str, **kwargs) -> UnoTextRange:
         d = {

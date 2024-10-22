@@ -32,7 +32,7 @@ from py4lo_typing import (UnoSpreadsheetDocument, UnoController, UnoContext,
                           UnoCell, UnoObject, DATA_ARRAY, UnoCellAddress,
                           UnoPropertyValue, DATA_ROW, UnoXScriptContext,
                           UnoColumn, UnoStruct, UnoEnum, UnoRow, DATA_VALUE,
-                          UnoPropertyValues, UnoTextRange)
+                          UnoPropertyValues, UnoTextRange, lazy)
 
 try:
     # noinspection PyUnresolvedReferences
@@ -95,23 +95,23 @@ try:
         from com.sun.star.awt.FontSlant import (NONE, OBLIQUE, ITALIC)
 
 except (ModuleNotFoundError, ImportError):
-    from mock_constants import (    # type:ignore[assignment]
-        BorderLineStyle,            # pyright: ignore[reportGeneralTypeIssues]
-        ConditionOperator,          # pyright: ignore[reportGeneralTypeIssues]
-        FontSlant,                  # pyright: ignore[reportGeneralTypeIssues]
-        FontWeight,                 # pyright: ignore[reportGeneralTypeIssues]
-        FrameSearchFlag,            # pyright: ignore[reportGeneralTypeIssues]
-        PropertyState,              # pyright: ignore[reportGeneralTypeIssues]
-        ScriptFrameworkErrorException,\
-                                    # pyright: ignore[reportGeneralTypeIssues]
+    from mock_constants import (  # type:ignore[assignment]
+        BorderLineStyle,  # pyright: ignore[reportGeneralTypeIssues]
+        ConditionOperator,  # pyright: ignore[reportGeneralTypeIssues]
+        FontSlant,  # pyright: ignore[reportGeneralTypeIssues]
+        FontWeight,  # pyright: ignore[reportGeneralTypeIssues]
+        FrameSearchFlag,  # pyright: ignore[reportGeneralTypeIssues]
+        PropertyState,  # pyright: ignore[reportGeneralTypeIssues]
+        ScriptFrameworkErrorException, \
+        # pyright: ignore[reportGeneralTypeIssues]
         TableValidationVisibility,  # pyright: ignore[reportGeneralTypeIssues]
-        UnoException,               # pyright: ignore[reportGeneralTypeIssues]
-        UnoRuntimeException,        # pyright: ignore[reportGeneralTypeIssues]
-        ValidationType,             # pyright: ignore[reportGeneralTypeIssues]
-        XTransferable,              # pyright: ignore[reportGeneralTypeIssues]
-        uno,                        # pyright: ignore[reportGeneralTypeIssues]
-        unohelper,                  # pyright: ignore[reportGeneralTypeIssues]
-     )
+        UnoException,  # pyright: ignore[reportGeneralTypeIssues]
+        UnoRuntimeException,  # pyright: ignore[reportGeneralTypeIssues]
+        ValidationType,  # pyright: ignore[reportGeneralTypeIssues]
+        XTransferable,  # pyright: ignore[reportGeneralTypeIssues]
+        uno,  # pyright: ignore[reportGeneralTypeIssues]
+        unohelper,  # pyright: ignore[reportGeneralTypeIssues]
+    )
 
 ###############################################################################
 # BASE
@@ -140,8 +140,8 @@ class _ObjectProvider:
     """
 
     @staticmethod
-    def create(xsc: UnoXScriptContext):
-        doc = xsc.getDocument()
+    def create(xsc: UnoXScriptContext) -> "_ObjectProvider":
+        doc = cast(UnoSpreadsheetDocument, xsc.getDocument())
         controller = doc.CurrentController
         frame = controller.Frame
         parent_win = frame.ContainerWindow
@@ -163,24 +163,26 @@ class _ObjectProvider:
         self.ctxt = ctxt
         self.service_manager = service_manager
         self.desktop = desktop
-        self._script_provider_factory = None
-        self._script_provider = None
-        self._reflect = None
-        self._dispatcher = None
+        self._script_provider_factory = lazy(UnoService)
+        self._script_provider = lazy(UnoService)
+        self._reflect = lazy(UnoService)
+        self._dispatcher = lazy(UnoService)
 
-    def get_script_provider_factory(self):
+    def get_script_provider_factory(self) -> UnoService:
         """
         > This service is used to create MasterScriptProviders
         @return:
         """
         if self._script_provider_factory is None:
-            self._script_provider_factory = \
+            self._script_provider_factory = cast(
+                UnoService,
                 self.service_manager.createInstanceWithContext(
                     "com.sun.star.script.provider.MasterScriptProviderFactory",
                     self.ctxt)
+            )
         return self._script_provider_factory
 
-    def get_script_provider(self):
+    def get_script_provider(self) -> UnoService:
         """
         > This interface provides a factory for obtaining objects implementing
         > the XScript interface
@@ -188,20 +190,25 @@ class _ObjectProvider:
         @return:
         """
         if self._script_provider is None:
-            self._script_provider = \
+            self._script_provider = cast(
+                UnoService,
                 self.get_script_provider_factory().createScriptProvider("")
+            )
         return self._script_provider
 
     @property
-    def reflect(self):
+    def reflect(self) -> UnoService:
         """
         > This service is the implementation of the reflection API
 
         @return: the reflect service
         """
         if self._reflect is None:
-            self._reflect = self.service_manager.createInstance(
-                "com.sun.star.reflection.CoreReflection")
+            self._reflect = cast(
+                UnoService,
+                self.service_manager.createInstance(
+                    "com.sun.star.reflection.CoreReflection")
+            )
         return self._reflect
 
     @property
@@ -212,8 +219,11 @@ class _ObjectProvider:
         @return:
         """
         if self._dispatcher is None:
-            self._dispatcher = self.service_manager.createInstance(
-                "com.sun.star.frame.DispatchHelper")
+            self._dispatcher = cast(
+                UnoService,
+                self.service_manager.createInstance(
+                    "com.sun.star.frame.DispatchHelper")
+            )
         return self._dispatcher
 
 
@@ -245,15 +255,16 @@ def to_iter(o: UnoObject) -> Iterator[UnoObject]:
     @param o: an XIndexAccess or XEnumerationAccession object
     @return: an iterator on `o`
     """
-    try:
+    if o.supportsService("com.sun.star.container.XIndexAccess"):
         count = o.Count
-    except AttributeError:
+        for i in range(count):
+            yield o.getByIndex(i)
+    elif o.supportsService("com.sun.star.container.XEnumerationAccess"):
         oEnum = o.createEnumeration()
         while oEnum.hasMoreElements():
             yield oEnum.nextElement()
     else:
-        for i in range(count):
-            yield o.getByIndex(i)
+        raise TypeError(repr(o))
 
 
 def to_enumerate(o: UnoObject) -> Iterator[Tuple[int, UnoObject]]:
@@ -278,7 +289,7 @@ def to_enumerate(o: UnoObject) -> Iterator[Tuple[int, UnoObject]]:
 def to_dict(oXNameAccess: UnoObject) -> Mapping[str, UnoObject]:
     return {
         name: oXNameAccess.getByName(name)
-        for name in oXNameAccess.getElementNames()
+        for name in oXNameAccess.ElementNames
     }
 
 
@@ -434,7 +445,7 @@ def make_locale(language: str = "", region: str = "",
 
 
 def make_border(color: int, width: int,
-                style: BorderLineStyle = BorderLineStyle.SOLID):
+                style: BorderLineStyle = BorderLineStyle.SOLID) -> UnoStruct:
     """
     Create a border
     @param color: the color
@@ -449,7 +460,7 @@ def make_border(color: int, width: int,
     return border
 
 
-def make_sort_field(field_position: int, asc: bool = True):
+def make_sort_field(field_position: int, asc: bool = True) -> UnoStruct:
     sf = uno.createUnoStruct('com.sun.star.table.TableSortField')
     sf.Field = field_position
     sf.IsAscending = asc
@@ -594,6 +605,10 @@ def data_array(oSheet: UnoSheet) -> DATA_ARRAY:
     return get_used_range(oSheet).DataArray
 
 
+def is_empty_da_value(v: DATA_VALUE) -> bool:
+    return isinstance(v, str) and v.strip() == ""
+
+
 def top_void_row_count(data_array: DATA_ARRAY) -> int:
     """
     @param data_array: a data array
@@ -601,7 +616,7 @@ def top_void_row_count(data_array: DATA_ARRAY) -> int:
     """
     r0 = 0
     row_count = len(data_array)
-    while r0 < row_count and all(v.strip() == "" for v in data_array[r0]):
+    while r0 < row_count and all(is_empty_da_value(v) for v in data_array[r0]):
         r0 += 1
     return r0
 
@@ -615,7 +630,7 @@ def bottom_void_row_count(data_array: DATA_ARRAY) -> int:
     r1 = 0
     # r1 < row_count => row_count - r1 > 0 => row_count - r1 - 1 >= 0
     while r1 < row_count and all(
-            v.strip() == "" for v in data_array[row_count - r1 - 1]):
+            is_empty_da_value(v) for v in data_array[row_count - r1 - 1]):
         r1 += 1
     return r1
 
@@ -632,7 +647,7 @@ def left_void_row_count(data_array: DATA_ARRAY) -> int:
     c0 = len(data_array[0])
     for row in data_array:
         c = 0
-        while c < c0 and row[c].strip() == "":
+        while c < c0 and is_empty_da_value(row[c]):
             c += 1
         if c < c0:
             c0 = c
@@ -652,7 +667,7 @@ def right_void_row_count(data_array: DATA_ARRAY) -> int:
     c1 = width
     for row in data_array:
         c = 0
-        while c < c1 and row[width - c - 1].strip() == "":
+        while c < c1 and is_empty_da_value(row[width - c - 1]):
             c += 1
         if c < c1:
             c1 = c
@@ -822,7 +837,7 @@ def create_filter(oRange: UnoRange):
     oController = oDoc.CurrentController
     oController.select(oRange)
     provider.dispatcher.executeDispatch(
-        oController.Frame, ".uno:DataFilterAutoFilter", "", 0, [])
+        oController, ".uno:DataFilterAutoFilter", "", 0, [])
     # unselect
     oRanges = oDoc.createInstance("com.sun.star.sheet.SheetCellRanges")
     oController.select(oRanges)
@@ -900,6 +915,7 @@ def get_page_style(oSheet: UnoSheet) -> UnoService:
         page_style_name)
     return oStyle  # type: ignore[return-value]
 
+
 def set_paper(oSheet: UnoSheet):
     """
     Set the paper for this sheet
@@ -956,10 +972,11 @@ def add_link(oCell: UnoCell, text: str, url: str, wrap_at: int = -1):
         lines = _wrap_text(text, wrap_at)
 
     for line in lines:
-        text_field = oDoc.createInstance("com.sun.star.text.TextField.URL")
-        text_field.Representation = line
-        text_field.URL = url
-        oCell.insertTextContent(oCursor, text_field, False)
+        text_field_url = cast(UnoService, oDoc.createInstance(
+            "com.sun.star.text.TextField.URL"))
+        text_field_url.Representation = line
+        text_field_url.URL = url
+        oCell.insertTextContent(oCursor, text_field_url, False)
 
 
 def _wrap_text(text: str, wrap_at: int):
@@ -1022,8 +1039,10 @@ def open_in_calc(filename: Union[str, Path], target: str = Target.BLANK,
         params = make_pvs(kwargs)
     else:
         params = ()
-    return provider.desktop.loadComponentFromURL(url, target, frame_flags,
-                                                 params)
+    return cast(
+        UnoSpreadsheetDocument,
+        provider.desktop.loadComponentFromURL(url, target, frame_flags, params)
+    )
 
 
 # Create a document
@@ -1056,8 +1075,11 @@ class DocBuilder:
                  search_flags: FrameSearchFlag,
                  pvs: UnoPropertyValues):
         """Create a blank new doc"""
-        self._oDoc = provider.desktop.loadComponentFromURL(
-            url, taget_frame_name, search_flags, pvs)
+        self._oDoc = cast(
+            UnoSpreadsheetDocument,
+            provider.desktop.loadComponentFromURL(
+                url, taget_frame_name, search_flags, pvs)
+        )
         self._oDoc.lockControllers()
 
     def build(self) -> UnoSpreadsheetDocument:
@@ -1080,7 +1102,7 @@ class DocBuilder:
                 s += 1
 
             if s != initial_count:
-                raise AssertionError("s={} vs oSheets.getCount()={}".format(
+                raise AssertionError("s={} vs oSheets.Count={}".format(
                     s, initial_count))
 
             if expand_if_necessary:
@@ -1090,7 +1112,7 @@ class DocBuilder:
                     s += 1
         except StopIteration:  # it
             if s > initial_count:
-                raise AssertionError("s={} vs oSheets.getCount()={}".format(
+                raise AssertionError("s={} vs oSheets.Count={}".format(
                     s, oSheets.getCount()))
             if trunc_if_necessary:
                 self.trunc_to_count(s)
@@ -1149,12 +1171,15 @@ class DocBuilder:
 ###############################################################################
 # MISC
 ###############################################################################
-def read_options(oSheet: UnoSpreadsheetDocument, aAddress: UnoRangeAddress,
-                 apply: Union[
-                     Callable[[str, str], Tuple[str, str]],
-                     Callable[[str, List[str]], Tuple[str, List[str]]]
-                 ] = lambda k_v: k_v
-                 ) -> Mapping[str, DATA_VALUE]:
+_ApplyType = Callable[
+    [str, Union[DATA_ROW, DATA_VALUE]], Tuple[str, Union[DATA_ROW, DATA_VALUE]]
+]
+
+
+def read_options(
+        oSheet: UnoSpreadsheetDocument, aAddress: UnoRangeAddress,
+        apply: Optional[_ApplyType] = None
+) -> Mapping[str, DATA_VALUE]:
     options = {}
     if aAddress.StartColumn == aAddress.EndColumn:
         return {}
@@ -1164,12 +1189,14 @@ def read_options(oSheet: UnoSpreadsheetDocument, aAddress: UnoRangeAddress,
         aAddress.EndColumn, aAddress.EndRow)
     data_array = oRange.DataArray
     for row in data_array:
-        k = row[0]
+        k = str(row[0])
         v = rtrim_row(row[1:])
-        k, v = apply(k, v)
-        if not k:
-            continue
-        options[k] = v
+        if apply is None:
+            new_k, new_v = k, v
+        else:
+            new_k, new_v = apply(k, v)
+        if new_k:
+            options[new_k] = new_v
     return options
 
 
@@ -1194,10 +1221,8 @@ def rtrim_row(row: DATA_ROW, null="") -> Union[DATA_ROW, DATA_VALUE]:
 
 def read_options_from_sheet_name(
         oDoc: UnoSpreadsheetDocument, sheet_name: str,
-        apply: Union[
-            Callable[[str, str], Tuple[str, str]],
-            Callable[[str, List[str]], Tuple[str, List[str]]]
-        ] = lambda k_v: k_v):
+        apply: Optional[_ApplyType]
+):
     oSheet = oDoc.Sheets.getByName(sheet_name)
     oRangeAddress = get_used_range_address(oSheet)
     return read_options(oSheet, oRangeAddress, apply)
@@ -1205,15 +1230,15 @@ def read_options_from_sheet_name(
 
 def copy_row_at_index(oSheet: UnoSheet, row: DATA_ROW, r: int):
     oRange = oSheet.getCellRangeByPosition(0, r, len(row) - 1, r)
-    oRange.DataArray = row
+    oRange.DataArray = [row]
 
 
 class _Inspector:
     def __init__(self, provider: _ObjectProvider):
         self._provider = provider
-        self._xray_script = None
+        self._xray_script = lazy(UnoService)
         self._ignore_xray = False
-        self._oMRI = None
+        self._oMRI = lazy(UnoService)
         self._ignore_mri = False
 
     def use_xray(self, fail_on_error: bool = False):
@@ -1250,7 +1275,9 @@ class _Inspector:
             if self._ignore_xray:
                 return
 
-        self._xray_script.invoke((obj,), (), ())
+        _oi = cast(Tuple[int, ...], tuple())
+        _o = cast(Tuple[Any, ...], tuple())
+        self._xray_script.invoke((obj,), _oi, _o)
 
     def mri(self, obj: Any, fail_on_error: bool = False):
         """
@@ -1329,9 +1356,12 @@ class HTMLConverter:
     """
     _logger = logging.getLogger(__name__)
 
+    def __init__(self, html_line_break: str = "<br>"):
+        self._html_line_break = html_line_break
+
     def convert(self, text_range: UnoTextRange) -> str:
         """Convert a sequence of chars to HTML"""
-        html = "<br>\r\n".join(
+        html = self._html_line_break.join(
             self._par_to_html(par_text_range) for par_text_range in
             to_iter(text_range))
         return html
@@ -1407,9 +1437,9 @@ class SheetFormatter:
             self._locale = locale
 
     @staticmethod
-    def _find_locale():
+    def _find_locale() -> UnoStruct:
         try:
-            language_code = getlocale()[0]
+            language_code = cast(str, getlocale()[0])
             region, language = language_code.split("_")
             return make_locale(language, region)
         except (IndexError, ValueError):
@@ -1419,12 +1449,11 @@ class SheetFormatter:
         oRows = self._oSheet.Rows
         row_as_header(oRows.getByIndex(0))
 
-
-    def set_format(self, fmt: str, *col_indices: int):
+    def set_format(self, fmt_name: str, *col_indices: int):
         number_format_id = self._oFormats.queryKey(
-            fmt, self._locale, True)
+            fmt_name, self._locale, True)
         if number_format_id == -1:
-            number_format_id = self._oFormats.addNew(fmt, self._locale)
+            number_format_id = self._oFormats.addNew(fmt_name, self._locale)
 
         oColumns = self._oSheet.Columns
         for i in col_indices:
@@ -1437,11 +1466,10 @@ class SheetFormatter:
         set_print_area(self._oSheet)
 
     def set_optimal_width(self, *col_indices: int, min_width: int = 2 * 1000,
-                         max_width: int = 10 * 1000):
+                          max_width: int = 10 * 1000):
         oColumns = self._oSheet.Columns
         for i in col_indices:
             column_optimal_width(oColumns.getByIndex(i), min_width, max_width)
 
     def create_filter(self):
         create_filter(self._oSheet)
-
