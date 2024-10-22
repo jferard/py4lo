@@ -28,12 +28,11 @@ from pathlib import Path
 
 from unittest import mock
 
+import py4lo_commons
 from py4lo_commons import (
     uno_url_to_path, uno_path_to_url, create_bus, Commons, init, sanitize,
     read_config, date_to_int, date_to_float, int_to_date, float_to_date)
-
-
-# from py4lo_commons import *
+from test.test_helper import py4lo_dir
 
 
 class MiscTestCase(unittest.TestCase):
@@ -123,7 +122,7 @@ class TestCommons(unittest.TestCase):
     def test_init(self):
         xsc = object()
         init(xsc)
-        self.assertEqual(Commons.xsc, xsc)
+        self.assertEqual(py4lo_commons._xsc, xsc)
 
     def test_create_linux(self):
         oDoc = mock.Mock(URL="file:///doc/url.ods")

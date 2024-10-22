@@ -38,10 +38,10 @@ class Py4LOBaseTestCase(unittest.TestCase):
 
         cus.side_effect = [self._oDBContext, self._oHandler]
         self._oDBContext.getByName.side_effect = [self._oDB]
-        self._oConnection.getTables.return_value = oTables
+        self._oConnection.Tables = oTables
         oTables.hasByName.return_value = False
         oTables.createDataDescriptor.return_value = oTableDataDescriptor
-        oTableDataDescriptor.getColumns.return_value = oColumns
+        oTableDataDescriptor.Columns = oColumns
         oColumns.createDataDescriptor.return_value = oColDataDescriptor
 
         db = open_or_create_db(Path("./test.odb"))
@@ -52,9 +52,8 @@ class Py4LOBaseTestCase(unittest.TestCase):
         self.assertEqual([
             mock.call.hasByName('ok'),
             mock.call.createDataDescriptor(),
-            mock.call.createDataDescriptor().getColumns(),
-            mock.call.createDataDescriptor().getColumns().createDataDescriptor(),
-            mock.call.createDataDescriptor().getColumns().appendByDescriptor(
+            mock.call.createDataDescriptor().Columns.createDataDescriptor(),
+            mock.call.createDataDescriptor().Columns.appendByDescriptor(
                 oColDataDescriptor),
             mock.call.appendByDescriptor(oTableDataDescriptor)
         ], oTables.mock_calls)

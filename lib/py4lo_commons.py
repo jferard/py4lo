@@ -19,6 +19,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """py4lo_commons deals with ordinary Python objects (POPOs ?)."""
+import sys
 # mypy: disable-error-code="import-untyped"
 from pathlib import Path
 import logging
@@ -27,13 +28,16 @@ import datetime as dt
 from typing import (
     Union, Any, cast, List, Optional, TextIO, Iterable, Mapping, Callable)
 
-from py4lo_typing import UnoXScriptContext, StrPath, lazy
+from py4lo_typing import UnoXScriptContext, StrPath, lazy, UnoObject, \
+    UnoSpreadsheet, UnoSpreadsheetDocument
 
 try:
     # noinspection PyUnresolvedReferences
     import uno
 except (ModuleNotFoundError, ImportError):
     from mock_constants import uno
+
+_xsc = None
 
 
 def uno_url_to_path(url: str) -> Optional[Path]:
@@ -64,11 +68,9 @@ def uno_path_to_url(path: Union[str, Path]) -> str:
     return uno.systemPathToFileUrl(str(path))
 
 
-ORIGIN = dt.datetime(1899, 12, 30) # TODO: oDoc.NullDate
-
-
-def init(xsc):
-    Commons.xsc = xsc
+def init(xsc: UnoXScriptContext):
+    global _xsc
+    _xsc = xsc
 
 
 class Bus:
@@ -95,7 +97,9 @@ class Commons:
     def create(xsc: Optional[UnoXScriptContext] = None):
         if xsc is None:
             # noinspection PyUnresolvedReferences
-            xsc = Commons.xsc
+            xsc = _xsc
+        if xsc is None:
+            raise ValueError()
         doc = xsc.getDocument()
         return Commons(doc.URL)
 
@@ -109,9 +113,11 @@ class Commons:
                 h.flush()
                 h.close()
 
-    def cur_dir(self) -> Path:
+    def cur_dir(self) -> Optional[Path]:
         """return the directory of the current document"""
         path = uno_url_to_path(self._url)
+        if path is None:
+            return None
         return path.parent
 
     def init_logger(
@@ -140,7 +146,11 @@ class Commons:
         return self._logger
 
     def join_current_dir(self, filename: str) -> Path:
-        return self.cur_dir() / filename
+        cur_dir_path = self.cur_dir()
+        if cur_dir_path is None:
+            return Path(filename)
+        else:
+            return cur_dir_path / filename
 
     def read_internal_config(self, filenames: Union[
         StrPath, Iterable[StrPath]], args=None,
@@ -167,8 +177,8 @@ class Commons:
         reader = codecs.getreader(encoding)
 
         path = uno_url_to_path(self._url)
-        path = str(path)  # py < 3.6.2
-        with zipfile.ZipFile(path, 'r') as z:
+        str_path = str(path)  # py < 3.6.2
+        with zipfile.ZipFile(str_path, 'r') as z:
             for filename in filenames:
                 try:
                     file = z.open(filename)
@@ -190,8 +200,8 @@ class Commons:
         """
         import zipfile
         path = uno_url_to_path(self._url)
-        path = str(path)  # py < 3.6.2
-        with zipfile.ZipFile(path, 'r') as z:
+        str_path = str(path)  # py < 3.6.2
+        with zipfile.ZipFile(str_path, 'r') as z:
             with z.open(filename) as f:
                 return f.read()
 
@@ -201,13 +211,16 @@ def init_logger(
         file: Optional[Union[StrPath, TextIO]] = None,
         mode: str = "a", level: int = logging.DEBUG,
         fmt: str = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
-    fh = _get_handler(file, mode, level, fmt)
+    if file is None:
+        fh = _get_handler(sys.stdout, mode, level, fmt)
+    else:
+        fh = _get_handler(file, mode, level, fmt)
     logger.addHandler(fh)
     logger.setLevel(level)
 
 
 def _get_handler(file: Union[StrPath, TextIO], mode: str, level: int,
-                 fmt: str):
+                 fmt: str) -> logging.Handler:
     if isinstance(file, (str, Path)):
         fh = logging.FileHandler(str(file), mode)
     else:
@@ -266,34 +279,69 @@ def sanitize(s: str) -> str:
     return s
 
 
+class DatesHelper:
+    @staticmethod
+    def create(oDoc: Optional[UnoSpreadsheetDocument] = None):
+        if oDoc is None:
+            origin = dt.datetime(1899, 12, 30)
+        else:
+            oNullDate = oDoc.NullDate
+            if oNullDate.Day == 0:
+                origin = dt.datetime(1899, 12, 30)
+            else:
+                origin = dt.datetime(oNullDate.Year, oNullDate.Month,
+                                     oNullDate.Day)
+        return DatesHelper(origin)
+
+    def __init__(self, origin: dt.datetime):
+        self._origin = origin
+
+    def date_to_int(self, a_date: Union[dt.date, dt.datetime]) -> int:
+        if isinstance(a_date, dt.datetime):
+            pass
+        elif isinstance(a_date, dt.date):
+            a_date = dt.datetime(a_date.year, a_date.month, a_date.day)
+        else:
+            raise ValueError()
+        return (a_date - self._origin).days
+
+    def date_to_float(self,
+                      a_date: Union[dt.date, dt.datetime, dt.time]) -> float:
+        if isinstance(a_date, dt.datetime):
+            time_delta = a_date - self._origin
+        elif isinstance(a_date, dt.date):
+            a_datetime = dt.datetime(a_date.year, a_date.month, a_date.day)
+            time_delta = a_datetime - self._origin
+        elif isinstance(a_date, dt.time):
+            time_delta = dt.timedelta(
+                hours=a_date.hour, minutes=a_date.minute, seconds=a_date.second,
+                microseconds=a_date.microsecond)
+        else:
+            raise ValueError(a_date)
+        return time_delta.total_seconds() / 86400
+
+    def int_to_date(self, days: int) -> dt.datetime:
+        return self._origin + dt.timedelta(days)
+
+    def float_to_date(self, days: float) -> dt.datetime:
+        return self._origin + dt.timedelta(days)
+
+
+# deprecated
 def date_to_int(a_date: Union[dt.date, dt.datetime]) -> int:
-    if isinstance(a_date, dt.datetime):
-        pass
-    elif isinstance(a_date, dt.date):
-        a_date = dt.datetime(a_date.year, a_date.month, a_date.day)
-    else:
-        raise ValueError()
-    return (a_date - ORIGIN).days
+    return DatesHelper.create().date_to_int(a_date)
 
 
+# deprecated
 def date_to_float(a_date: Union[dt.date, dt.datetime, dt.time]) -> float:
-    if isinstance(a_date, dt.datetime):
-        time_delta = a_date - ORIGIN
-    elif isinstance(a_date, dt.date):
-        a_datetime = dt.datetime(a_date.year, a_date.month, a_date.day)
-        time_delta = a_datetime - ORIGIN
-    elif isinstance(a_date, dt.time):
-        time_delta = dt.timedelta(
-            hours=a_date.hour, minutes=a_date.minute, seconds=a_date.second,
-            microseconds=a_date.microsecond)
-    else:
-        raise ValueError(a_date)
-    return time_delta.total_seconds() / 86400
+    return DatesHelper.create().date_to_float(a_date)
 
 
+# deprecated
 def int_to_date(days: int) -> dt.datetime:
-    return ORIGIN + dt.timedelta(days)
+    return DatesHelper.create().int_to_date(days)
 
 
+# deprecated
 def float_to_date(days: float) -> dt.datetime:
-    return ORIGIN + dt.timedelta(days)
+    return DatesHelper.create().float_to_date(days)
