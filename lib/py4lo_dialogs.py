@@ -46,6 +46,11 @@ try:
             DEFAULT_BUTTON_NO, DEFAULT_BUTTON_IGNORE,
         )
 
+    class MessageBoxResults:
+        # noinspection PyUnresolvedReferences
+        from com.sun.star.awt.MessageBoxResults import (
+            CANCEL, OK, YES, NO, RETRY, IGNORE
+        )
 
     class FontWeight:
         # noinspection PyUnresolvedReferences
@@ -68,6 +73,7 @@ except (ModuleNotFoundError, ImportError):
         MessageBoxButtons,  # pyright: ignore[reportGeneralTypeIssues]
         MessageBoxType,  # pyright: ignore[reportGeneralTypeIssues]
         PushButtonType,  # pyright: ignore[reportGeneralTypeIssues]
+        MessageBoxResults,  # pyright: ignore[reportGeneralTypeIssues]
         uno,  # pyright: ignore[reportGeneralTypeIssues]
     )
 
@@ -245,7 +251,7 @@ class InputBox:
         if dialog.execute() == ExecutableDialogResults.CANCEL:
             return None
 
-        ret = oEditModel.Text
+        ret = oEditControl.Text
         dialog.dispose()
         return ret
 
