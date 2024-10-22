@@ -23,7 +23,7 @@ import sys
 from datetime import (date, datetime, time)
 from enum import IntEnum, Enum
 from typing import (Any, Callable, List, Iterator, Optional, Mapping, Tuple,
-                    Iterable)
+                    Iterable, cast)
 
 # values of cell_typing
 from py4lo_commons import float_to_date, date_to_float, uno_path_to_url
@@ -182,7 +182,9 @@ class dict_reader:
                  read_cell=None):
         self._reader = reader(oSheet, cell_typing, oFormats, read_cell)
         if fieldnames is None:
-            self.fieldnames = next(self._reader)
+            self.fieldnames = tuple(
+                [v.strip() if isinstance(v, str) else "" for v in next(self._reader)]
+            )
         else:
             self.fieldnames = fieldnames
         self._width = len(self.fieldnames)
@@ -774,8 +776,12 @@ def import_from_csv(oDoc: UnoSpreadsheetDocument, sheet_name: str, dest_position
 
     oDoc.lockControllers()
     url = uno_path_to_url(path)
-    oSource = pr.desktop.loadComponentFromURL(url, Target.BLANK,
-                                              FrameSearchFlag.AUTO, pvs)
+    oDesktop = pr.desktop
+    oSource = cast(
+        UnoSpreadsheetDocument,
+        oDesktop.loadComponentFromURL(
+            url, Target.BLANK, FrameSearchFlag.AUTO, pvs)
+    )
     oSource.Sheets.getByIndex(0).Name = sheet_name
     name = oSource.Sheets.ElementNames[0]
     oDoc.Sheets.importSheet(oSource, name, dest_position)
@@ -890,7 +896,8 @@ def _base_filter_tokens(
     @return: a list of options
     """
     encoding_index = _get_charset_id(encoding)
-    language_id = LANGUAGE_ID_BY_CODE.get(language_code, 0)
+    code = "" if language_code is None else language_code
+    language_id = LANGUAGE_ID_BY_CODE.get(code, 0)
     field_formats = _build_field_formats(format_by_idx)
     return [str(ord(delimiter)), str(ord(quotechar)), str(encoding_index),
             str(first_line), field_formats, str(language_id)]
