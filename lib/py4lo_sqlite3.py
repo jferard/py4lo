@@ -18,8 +18,9 @@
 import enum
 import os
 from contextlib import contextmanager
-from ctypes import cdll, c_void_p, byref, c_int, c_char_p, POINTER, c_double, \
-    string_at, CDLL
+from ctypes import (
+    cdll, c_void_p, byref, c_int, c_char_p, POINTER, c_double, string_at, CDLL
+)
 from ctypes.util import find_library
 from pathlib import Path
 from typing import Union, Generator, List, Any, Iterator, Mapping
@@ -27,9 +28,13 @@ from typing import Union, Generator, List, Any, Iterator, Mapping
 library_name = find_library('sqlite3')
 if library_name is None:
     path = Path.cwd() / "sqlite3.dll"
-    if not path.exists():
-        path = os.environ["SQLITE3_LIB"]  # will raise an error if not present
-    sqlite3_lib = CDLL(str(path))
+    if path.exists():
+        str_path = str(path)
+    else:
+        str_path = os.environ[
+            "SQLITE3_LIB"
+        ]  # will raise an error if not present
+    sqlite3_lib = CDLL(str_path)
 else:
     sqlite3_lib = cdll.LoadLibrary(library_name)
 
@@ -76,6 +81,20 @@ except AttributeError:
 
 sqlite3_close_v2.argtypes = [sqlite3_p]
 sqlite3_close_v2.restype = c_int
+
+# https://www.sqlite.org/c3ref/busy_timeout.html
+sqlite3_lib.sqlite3_busy_timeout.argtypes = [sqlite3_p, c_int]
+sqlite3_lib.sqlite3_busy_timeout.restype = c_int
+sqlite3_busy_timeout = sqlite3_lib.sqlite3_busy_timeout
+
+# https://sqlite.org/c3ref/interrupt.html
+sqlite3_lib.sqlite3_interrupt.argtypes = [sqlite3_p]
+sqlite3_lib.sqlite3_interrupt.restype = None
+sqlite3_interrupt = sqlite3_lib.sqlite3_interrupt
+
+sqlite3_lib.sqlite3_is_interrupted.argtypes = [sqlite3_p]
+sqlite3_lib.sqlite3_is_interrupted.restype = c_int
+sqlite3_is_interrupted = sqlite3_lib.sqlite3_is_interrupted
 
 # https://www.sqlite.org/c3ref/exec.html
 sqlite3_lib.sqlite3_exec.argtypes = [sqlite3_p, c_char_p, c_void_p, c_void_p,
@@ -249,8 +268,8 @@ class Sqlite3Statement:
         self._stmt = stmt
 
     def bind_text(self, i: int, v: str):
-        v = v.encode("utf-8")
-        ret = sqlite3_bind_text(self._stmt, i, v, len(v), SQLITE_TRANSIENT)
+        bs = v.encode("utf-8")
+        ret = sqlite3_bind_text(self._stmt, i, bs, len(bs), SQLITE_TRANSIENT)
         if ret != SQLITE_OK:
             raise self._err(ret)
 
@@ -392,32 +411,68 @@ class Sqlite3Database:
     @contextmanager
     def transaction(self, mode: TransactionMode = TransactionMode.DEFERRED
                     ) -> Generator[None, None, None]:
+        """
+        If there is an exception, then we have the following sequence:
+        ```
+        BEGIN <mode> TRANSACTION
+        <SQL commands> -- the exception here
+        ROLLBACK
+        ```
+        and yield the exception to Python.
+
+        If there is no exception:
+        ```
+        BEGIN <mode> TRANSACTION
+        <SQL commands> -- no exception
+        END TRANSACTION
+        ```
+
+        @param mode: transaction mode
+        @return: a context
+        """
         self.execute_update("BEGIN {} TRANSACTION".format(mode.value))
-        yield
-        self.execute_update("END TRANSACTION")
+        try:
+            yield
+        except SQLiteError:
+            self.execute_update("ROLLBACK")
+            raise
+        else:
+            self.execute_update("END TRANSACTION") # synonym of COMMIT
+
+    def interrupt(self) -> bool:
+        sqlite3_interrupt(self._db)
+        return bool(sqlite3_is_interrupted(self._db))
 
 
 @contextmanager
 def sqlite_open(
-        filepath: Union[str, Path], mode: str = "r"
+        filepath: Union[str, Path], mode: str = "r", timeout: int=-1
 ) -> Generator[Sqlite3Database, None, None]:
     db = c_void_p()
+
+    if isinstance(filepath, str):
+        str_path = filepath
+        path = Path(filepath)
+    else:
+        str_path = str(filepath.absolute())
+        path = filepath
+
     if mode == "r":
         flags = SQLITE_OPEN_READONLY
-        if not filepath.exists():
-            raise FileNotFoundError(str(filepath))
+        if not path.exists():
+            raise FileNotFoundError(str_path)
     elif mode == "rw":
         flags = SQLITE_OPEN_READWRITE
-        if not filepath.exists():
-            raise FileNotFoundError(str(filepath))
+        if not path.exists():
+            raise FileNotFoundError(str_path)
     elif mode == "crw":
         flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE
     else:
         raise ValueError(mode)
 
-    if isinstance(filepath, Path):
-        filepath = str(filepath.absolute())
-    sqlite3_open_v2(filepath.encode("utf-8"), byref(db), flags, None)
+    sqlite3_open_v2(str_path.encode("utf-8"), byref(db), flags, None)
+    if timeout > 0:
+        sqlite3_busy_timeout(db, timeout)
     try:
         yield Sqlite3Database(db)
     finally:

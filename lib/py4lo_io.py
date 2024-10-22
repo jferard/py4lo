@@ -37,6 +37,7 @@ try:
     # noinspection PyUnresolvedReferences
     from com.sun.star.lang import Locale
 
+
     class NumberFormat:
         # noinspection PyUnresolvedReferences
         from com.sun.star.util.NumberFormat import (DATE, TIME, DATETIME,
@@ -183,7 +184,8 @@ class dict_reader:
         self._reader = reader(oSheet, cell_typing, oFormats, read_cell)
         if fieldnames is None:
             self.fieldnames = tuple(
-                [v.strip() if isinstance(v, str) else "" for v in next(self._reader)]
+                [v.strip() if isinstance(v, str) else "" for v in
+                 next(self._reader)]
             )
         else:
             self.fieldnames = fieldnames
@@ -756,7 +758,8 @@ class Format(IntEnum):
     US = 10  # US-English
 
 
-def import_from_csv(oDoc: UnoSpreadsheetDocument, sheet_name: str, dest_position: int,
+def import_from_csv(oDoc: UnoSpreadsheetDocument, sheet_name: str,
+                    dest_position: int,
                     path: StrPath, *args, **kwargs):
     """
     @param sheet_name: the sheet name

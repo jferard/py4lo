@@ -1,13 +1,16 @@
 import ctypes
 import random
 import string
+import threading
 import unittest
 from datetime import datetime
+from time import sleep
 from pathlib import Path
+from unittest import mock
 
 from py4lo_sqlite3 import (
     sqlite_open, SQLiteError, TransactionMode, SQLITE_BUSY, SQLITE_ERROR,
-    SQLITE_CONSTRAINT
+    SQLITE_CONSTRAINT, Sqlite3Database, SQLITE_OK
 )
 
 
@@ -104,15 +107,61 @@ class Sqlite3TestCase(unittest.TestCase):
         with sqlite_open(self._path, "crw") as db:
             db.execute_update("CREATE TABLE t(x INTEGER)")
 
-        with sqlite_open(self._path, "rw") as db, sqlite_open(self._path,
-                                                              "rw") as db2:
-            with db.transaction(TransactionMode.IMMEDIATE):
-                try:
-                    with db2.transaction(TransactionMode.IMMEDIATE):
+        with self.assertRaises(SQLiteError) as cm:
+            with (
+                sqlite_open(self._path, "rw") as db,
+                sqlite_open(self._path, "rw") as db2
+            ):
+                with db.transaction(TransactionMode.IMMEDIATE):
+                    db2.execute_update("INSERT INTO t VALUES (1)")
+
+        exc = cm.exception
+        self.assertEqual(SQLITE_BUSY, exc.result_code)
+        self.assertEqual('database is locked', exc.msg)
+
+    def test_timeout_long(self):
+        with sqlite_open(self._path, "crw") as db:
+            db.execute_update("CREATE TABLE t(x INTEGER)")
+
+        with (
+            sqlite_open(self._path, "rw") as db,
+            sqlite_open(self._path, "rw", 2_000) as db2,
+        ):
+            def func():
+                with db.transaction(TransactionMode.IMMEDIATE):
+                    db.execute_update("INSERT INTO t VALUES (1)")
+                    sleep(1)
+
+            t = threading.Thread(target=func)
+            t.start()
+            db2.execute_update("INSERT INTO t VALUES (2)")
+            t.join()
+
+    def test_timeout_short(self):
+        with sqlite_open(self._path, "crw") as db:
+            db.execute_update("CREATE TABLE t(x INTEGER)")
+
+        with self.assertRaises(SQLiteError) as cm:
+            with (
+                sqlite_open(self._path, "rw") as db,
+                sqlite_open(self._path, "rw", 100) as db2,
+            ):
+                def func():
+                    try:
+                        with db.transaction(TransactionMode.IMMEDIATE):
+                            db.execute_update("INSERT INTO t VALUES (1)")
+                            sleep(1)
+                    except Exception:
                         pass
-                except SQLiteError as exc:
-                    self.assertEqual(SQLITE_BUSY, exc.result_code)
-                    self.assertEqual('database is locked', exc.msg)
+
+                t = threading.Thread(target=func)
+                t.start()
+                db2.execute_update("INSERT INTO t VALUES (2)")
+                t.join()
+
+        exc = cm.exception
+        self.assertEqual(SQLITE_BUSY, exc.result_code)
+        self.assertEqual('database is locked', exc.msg)
 
     def test_bindings(self):
         with sqlite_open(self._path, "crw") as db:
@@ -137,6 +186,57 @@ class Sqlite3TestCase(unittest.TestCase):
                 "CREATE TABLE t(a INTEGER, b TEXT, text_range REAL, e BLOB) STRICT"))
             self.assertEqual(0, db.execute_update(
                 "CREATE UNIQUE INDEX `id_UNIQUE` ON `t` (`a` ASC)"))
+
+    @mock.patch("py4lo_sqlite3.sqlite3_errmsg")
+    @mock.patch("py4lo_sqlite3.sqlite3_changes")
+    @mock.patch("py4lo_sqlite3.sqlite3_exec")
+    def test_rollback(self, sqlite3_exec, sqlite3_changes, sqlite3_errmsg):
+        # Arrange
+        sqlite3_exec.side_effect = [SQLITE_OK, SQLITE_ERROR, SQLITE_OK]
+        sqlite3_changes.side_effect = [0, 0, 0]
+        sqlite3_errmsg.side_effect = [b"Err"]
+
+        db = mock.Mock()
+        sqlite3_db = Sqlite3Database(db)
+
+        # Act
+        with self.assertRaises(SQLiteError):
+            with sqlite3_db.transaction(TransactionMode.IMMEDIATE):
+                sqlite3_db.execute_update("FOO")
+
+        # Assert
+        self.assertEqual(
+            [
+                mock.call(db, b'BEGIN IMMEDIATE TRANSACTION', None, None, None),
+                mock.call(db, b'FOO', None, None, None),
+                mock.call(db, b'ROLLBACK', None, None, None),
+            ],
+            sqlite3_exec.mock_calls
+        )
+
+    @mock.patch("py4lo_sqlite3.sqlite3_changes")
+    @mock.patch("py4lo_sqlite3.sqlite3_exec")
+    def test_commit(self, sqlite3_exec, sqlite3_changes):
+        # Arrange
+        sqlite3_exec.side_effect = [SQLITE_OK, SQLITE_OK, SQLITE_OK]
+        sqlite3_changes.side_effect = [0, 1, 0]
+
+        db = mock.Mock()
+        sqlite3_db = Sqlite3Database(db)
+
+        # Act
+        with sqlite3_db.transaction(TransactionMode.IMMEDIATE):
+            sqlite3_db.execute_update("INSERT INTO t VALUES (1)")
+
+        # Assert
+        self.assertEqual(
+            [
+                mock.call(db, b'BEGIN IMMEDIATE TRANSACTION', None, None, None),
+                mock.call(db, b'INSERT INTO t VALUES (1)', None, None, None),
+                mock.call(db, b'END TRANSACTION', None, None, None),
+            ],
+            sqlite3_exec.mock_calls
+        )
 
 
 if __name__ == '__main__':
