@@ -18,6 +18,7 @@
 import enum
 import os
 from pathlib import Path
+from typing import Any
 from unittest import mock
 from urllib.parse import urlparse
 
@@ -68,6 +69,7 @@ class MessageBoxType:
     ERRORBOX = 3
     QUERYBOX = 4
 
+
 class MessageBoxButtons:
     BUTTONS_OK = 1
     BUTTONS_OK_CANCEL = 2
@@ -83,17 +85,26 @@ class MessageBoxButtons:
     DEFAULT_BUTTON_IGNORE = 0x60000
 
 
+class MessageBoxResults:
+    CANCEL = 0
+    OK = 1
+    YES = 2
+    NO = 3
+    RETRY = 4
+    IGNORE = 5
+
+
 class FontWeight:
     BOLD = 150
 
 
 class ExecutableDialogResults:
-    OK = None,
-    CANCEL = None
+    CANCEL = 0
+    OK = 1
 
 
 class PushButtonType:
-    OK = None,
+    OK = None
     CANCEL = None
 
 
@@ -175,7 +186,7 @@ class uno:
         return m
 
     @staticmethod
-    def Any(name, value) -> None:
+    def Any(name: str, value: Any) -> Any:
         pass
 
 
