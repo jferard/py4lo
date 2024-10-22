@@ -35,16 +35,20 @@ class TestEmbed(unittest.TestCase):
         self.assertEqual(["embed", "script"], self._directive.sig_elements())
 
     def test_execute(self):
+        # Arrange
         proc = mock.Mock()
         fpath = file_path_mock(io.BytesIO(b"content"))
-        fpath.suffix = ""
+        fpath.suffix = ".py"
         fpath.with_suffix.return_value = fpath
 
         self._opt.joinpath.return_value = fpath
         fpath.is_dir.return_value = False
 
-        self.assertEqual(True,
-                         self._directive.execute(proc, None, ["a/b.py"]))
+        # Act
+        execute = self._directive.execute(proc, None, ["a/b.py"])
+
+        # Assert
+        self.assertEqual(True, execute)
         self.assertEqual([mock.call.add_script(
             TempScript(fpath, b"content", self._opt, [], None))],
             proc.mock_calls)
