@@ -226,6 +226,14 @@ class _ObjectProvider:
             )
         return self._dispatcher
 
+    def get_dialog(self, dialog_name: str, dialog_location: str = "document"):
+        """Get a GUI existing dialog"""
+        oDialogProvider = self.service_manager.createInstanceWithArguments(
+            "com.sun.star.awt.DialogProvider", (self.doc,))
+        dialog_url = "vnd.sun.star.script:{}?location={}".format(
+            dialog_name, dialog_location)
+        oDialog = oDialogProvider.createDialog(dialog_url)
+        return oDialog
 
 def create_uno_service(sname: str, args: Optional[List[Any]] = None,
                        ctxt: Optional[UnoContext] = None) -> UnoService:
