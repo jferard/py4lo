@@ -187,7 +187,7 @@ class uno:
 
     @staticmethod
     def Any(name: str, value: Any) -> Any:
-        pass
+        return value
 
 
 class unohelper:
