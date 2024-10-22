@@ -18,6 +18,7 @@
 """
 Basic support for uno types out of the LibreOffice engine.
 """
+# mypy: disable-error-code="empty-body"
 from pathlib import Path
 from typing import (NewType, Any, Union, Tuple, List, cast, Optional)
 

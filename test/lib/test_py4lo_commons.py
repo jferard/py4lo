@@ -32,7 +32,6 @@ import py4lo_commons
 from py4lo_commons import (
     uno_url_to_path, uno_path_to_url, create_bus, Commons, init, sanitize,
     read_config, date_to_int, date_to_float, int_to_date, float_to_date)
-from test.test_helper import py4lo_dir
 
 
 class MiscTestCase(unittest.TestCase):
