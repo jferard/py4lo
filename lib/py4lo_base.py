@@ -23,7 +23,7 @@ from typing import Iterable, Union, Dict, Mapping
 
 from py4lo_helper import (uno_path_to_url, create_uno_service, to_items,
                           remove_all)
-from py4lo_typing import UnoObject
+from py4lo_typing import UnoObject, UnoService, lazy
 
 try:
     class DataType:
@@ -60,10 +60,10 @@ class BaseTableBuilder:
         @param name: the name of the table
         """
         self._oConnection = oConnection
-        self._oTables = oConnection.getTables()
+        self._oTables = oConnection.Tables
         self._oTableDescriptor = self._oTables.createDataDescriptor()
         self._oTableDescriptor.Name = name
-        self._oCols = self._oTableDescriptor.getColumns()
+        self._oCols = self._oTableDescriptor.Columns
 
     def build(self):
         """
@@ -86,7 +86,7 @@ class BaseTableBuilder:
         self._oCols.appendByDescriptor(oCol)
 
 
-def drop_all(oDrop):
+def drop_all(oDrop: UnoObject):
     """
     Drop all elements (count or name)
     @param oDrop: the container
@@ -107,8 +107,8 @@ class BaseDB:
 
     def __init__(self, oDB: UnoObject):
         self._oDB = oDB
-        self._oConnection = None
-        self._oStatement = None
+        self._oConnection = lazy(UnoService)
+        self._oStatement = lazy(UnoService)
         self._sql_by_name = {}
 
     @property
@@ -131,14 +131,14 @@ class BaseDB:
 
     def get_table_builder(self, name: str) -> BaseTableBuilder:
         oConnection = self.connection
-        oTables = oConnection.getTables()
+        oTables = oConnection.Tables
         if oTables.hasByName(name):
             raise ValueError("Exists")
 
         return BaseTableBuilder(oConnection, name)
 
     def get_tables(self) -> UnoObject:
-        return self.connection.getTables()
+        return self.connection.Tables
 
     def execute_update(self, sql: str):
         self.statement.executeUpdate(sql)
