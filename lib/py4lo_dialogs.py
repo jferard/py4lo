@@ -73,7 +73,7 @@ except (ModuleNotFoundError, ImportError):
         MessageBoxButtons,  # pyright: ignore[reportGeneralTypeIssues]
         MessageBoxType,  # pyright: ignore[reportGeneralTypeIssues]
         PushButtonType,  # pyright: ignore[reportGeneralTypeIssues]
-        MessageBoxResults,  # pyright: ignore[reportGeneralTypeIssues]
+        MessageBoxResults,  # pyright: ignore[reportGeneralTypeIssues]  # noqa: F401
         uno,  # pyright: ignore[reportGeneralTypeIssues]
     )
 
@@ -232,7 +232,7 @@ class InputBox:
         place_widget(oDialogModel, x, y, self.width, self.height)
 
         self._create_label_model(oDialogModel, "label", msg_text)
-        oEditModel = self._create_edit_model(
+        _oEditModel = self._create_edit_model(
             oDialogModel, "edit", msg_default)
         self._create_cancel_model(oDialogModel, "btn_cancel")
         self._create_ok_model(oDialogModel, "btn_ok")
