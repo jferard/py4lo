@@ -52,10 +52,10 @@ class TestSourcesDests(unittest.TestCase):
 
     @mock.patch("core.source_dest._get_paths", autospec=True)
     def test_sources_scripts(self, gp_mock):
-        gp_mock.return_value = [Path("text_range")]
+        gp_mock.return_value = [Path("oTextRange")]
 
         self.assertEqual(
-            [SourceScript(script_path=Path('text_range'), source_dir=Path('src'),
+            [SourceScript(script_path=Path('oTextRange'), source_dir=Path('src'),
                           export_funcs=True)],
             self._sources.get_src_scripts())
         self.assertEqual([mock.call(Path('src'), [], '*.py')], gp_mock.mock_calls)

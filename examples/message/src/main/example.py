@@ -31,7 +31,7 @@ import example_lib
 from py4lo_dialogs import (ProgressExecutorBuilder, ConsoleExecutorBuilder,
                            message_box, input_box, ConsoleExecutor,
                            ProgressExecutor)
-from py4lo_helper import provider as pr, xray, mri, parent_doc
+from py4lo_helper import provider as pr, xray, mri, parent_doc, to_iter
 from py4lo_io import (dict_reader, dict_writer, export_to_csv,
                       import_from_csv, CellTyping)
 from py4lo_typing import lazy
@@ -53,6 +53,7 @@ def message_example(*_args):
         "Current dir is: {}".format(os.path.abspath("../../../../py4lo")),
         "Current doc name is: {}".format(oDoc.Title),
         "Current sheet name is: {}".format(oSheet.Name),
+        "Sheet names are: {}".format([s.Name for s in to_iter(oDoc.Sheets)])
     ]
 
     message_box("py4lo", "\n".join(lines))
@@ -74,12 +75,12 @@ def example_from_lib(*_args):
 
 def writer_example(*_args):
     w = dict_writer(pr.controller.getActiveSheet(),
-                    ["a", "b", "text_range", "d", "e"],
+                    ["a", "b", "oTextRange", "d", "e"],
                     cell_typing=CellTyping.Accurate)
     w.writeheader()
-    for row in [{"a": "value", "b": 1, "text_range": True,
+    for row in [{"a": "value", "b": 1, "oTextRange": True,
                  "d": datetime(2020, 11, 21, 12, 36, 50)},
-                {"a": "other value", "b": 2, "text_range": False,
+                {"a": "other value", "b": 2, "oTextRange": False,
                  "d": datetime(2020, 11, 21, 12, 36, 50)}]:
         w.writerow(row)
 

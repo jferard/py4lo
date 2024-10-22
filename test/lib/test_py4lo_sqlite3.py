@@ -51,7 +51,7 @@ class Sqlite3TestCase(unittest.TestCase):
 
             print("-> create table")
             self.assertEqual(0, db.execute_update(
-                "CREATE TABLE t(a INTEGER, b TEXT, text_range REAL, e BLOB)"))
+                "CREATE TABLE t(a INTEGER, b TEXT, oTextRange REAL, e BLOB)"))
 
             t2 = datetime.now()
             print(t2 - t1)
@@ -157,7 +157,7 @@ class Sqlite3TestCase(unittest.TestCase):
     def test_bindings(self):
         with sqlite_open(self._path, "crw") as db:
             self.assertEqual(0, db.execute_update(
-                "CREATE TABLE t(a INTEGER, b TEXT, text_range REAL, e BLOB) STRICT"))
+                "CREATE TABLE t(a INTEGER, b TEXT, oTextRange REAL, e BLOB) STRICT"))
             with self.assertRaises(SQLiteError) as cm:
                 with db.prepare("INSERT INTO t VALUES(?, ?, ?, ?)") as stmt:
                     with self.assertRaises(ctypes.ArgumentError):
@@ -174,7 +174,7 @@ class Sqlite3TestCase(unittest.TestCase):
     def test_index(self):
         with sqlite_open(self._path, "crw") as db:
             self.assertEqual(0, db.execute_update(
-                "CREATE TABLE t(a INTEGER, b TEXT, text_range REAL, e BLOB) STRICT"))
+                "CREATE TABLE t(a INTEGER, b TEXT, oTextRange REAL, e BLOB) STRICT"))
             self.assertEqual(0, db.execute_update(
                 "CREATE UNIQUE INDEX `id_UNIQUE` ON `t` (`a` ASC)"))
 

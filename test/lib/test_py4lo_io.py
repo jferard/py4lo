@@ -492,7 +492,7 @@ class Py4LOIOTestCase(unittest.TestCase):
 
         w = writer(oSheet, write_cell=wc)
         w.writerows([
-            ("a", "b", "text_range"),
+            ("a", "b", "oTextRange"),
             (1, 2, 3),
         ])
 
@@ -505,7 +505,7 @@ class Py4LOIOTestCase(unittest.TestCase):
             mock.call.getCellByPosition(1, 1),
             mock.call.getCellByPosition(2, 1)
         ], oSheet.mock_calls)
-        self.assertEqual(['a', 'b', 'text_range', 1, 2, 3],
+        self.assertEqual(['a', 'b', 'oTextRange', 1, 2, 3],
                          [c.t for c in cells])
 
     def test_writer_formats(self):
@@ -518,7 +518,7 @@ class Py4LOIOTestCase(unittest.TestCase):
         # play
         w = writer(oSheet, CellTyping.Accurate, oFormats=oFormats)
         w.writerows([
-            ("a", "b", "text_range"),
+            ("a", "b", "oTextRange"),
             (1, 2, 3),
         ])
 
@@ -531,7 +531,7 @@ class Py4LOIOTestCase(unittest.TestCase):
             mock.call.getCellByPosition(1, 1),
             mock.call.getCellByPosition(2, 1)
         ], oSheet.mock_calls)
-        self.assertEqual(['a', 'b', 'text_range'],
+        self.assertEqual(['a', 'b', 'oTextRange'],
                          [c.String for c in cells[:3]])
         self.assertEqual([1, 2, 3], [c.Value for c in cells[3:]])
 
@@ -544,7 +544,7 @@ class Py4LOIOTestCase(unittest.TestCase):
         # play
         w = writer(oSheet, CellTyping.Accurate)
         w.writerows([
-            ("a", "b", "text_range"),
+            ("a", "b", "oTextRange"),
             (1, 2, 3),
         ])
 
@@ -563,7 +563,7 @@ class Py4LOIOTestCase(unittest.TestCase):
             mock.call.getCellByPosition(1, 1),
             mock.call.getCellByPosition(2, 1)
         ], oSheet.mock_calls)
-        self.assertEqual(['a', 'b', 'text_range'],
+        self.assertEqual(['a', 'b', 'oTextRange'],
                          [c.String for c in cells[:3]])
         self.assertEqual([1, 2, 3], [c.Value for c in cells[3:]])
 
@@ -577,12 +577,12 @@ class Py4LOIOTestCase(unittest.TestCase):
         def wc(oCell: UnoCell, value: Any):
             oCell.t = value
 
-        w = dict_writer(oSheet, ['a', 'b', 'text_range'], write_cell=wc)
+        w = dict_writer(oSheet, ['a', 'b', 'oTextRange'], write_cell=wc)
 
         w.writeheader()
         w.writerows([
-            {"a": 1, "b": 2, "text_range": 3},
-            {"a": 4, "b": 5, "text_range": 6},
+            {"a": 1, "b": 2, "oTextRange": 3},
+            {"a": 4, "b": 5, "oTextRange": 6},
         ])
 
         #
@@ -597,7 +597,7 @@ class Py4LOIOTestCase(unittest.TestCase):
             mock.call.getCellByPosition(1, 2),
             mock.call.getCellByPosition(2, 2)
         ], oSheet.mock_calls)
-        self.assertEqual(['a', 'b', 'text_range', 1, 2, 3, 4, 5, 6],
+        self.assertEqual(['a', 'b', 'oTextRange', 1, 2, 3, 4, 5, 6],
                          [c.t for c in cells])
 
     def test_dict_writer_wc_raise(self):
@@ -610,7 +610,7 @@ class Py4LOIOTestCase(unittest.TestCase):
         def wc(oCell: UnoCell, value: Any):
             oCell.t = value
 
-        w = dict_writer(oSheet, ['a', 'b', 'text_range'], write_cell=wc)
+        w = dict_writer(oSheet, ['a', 'b', 'oTextRange'], write_cell=wc)
 
         w.writeheader()
         with self.assertRaises(ValueError):
@@ -622,7 +622,7 @@ class Py4LOIOTestCase(unittest.TestCase):
             mock.call.getCellByPosition(1, 0),
             mock.call.getCellByPosition(2, 0),
         ], oSheet.mock_calls)
-        self.assertEqual(['a', 'b', 'text_range'], [c.t for c in cells])
+        self.assertEqual(['a', 'b', 'oTextRange'], [c.t for c in cells])
 
     def test_dict_writer_wc_restval(self):
         # prepare
@@ -634,7 +634,7 @@ class Py4LOIOTestCase(unittest.TestCase):
         def wc(oCell: UnoCell, value: Any):
             oCell.t = value
 
-        w = dict_writer(oSheet, ['a', 'b', 'text_range'], restval="foo",
+        w = dict_writer(oSheet, ['a', 'b', 'oTextRange'], restval="foo",
                         write_cell=wc)
 
         w.writeheader()
@@ -649,7 +649,7 @@ class Py4LOIOTestCase(unittest.TestCase):
             mock.call.getCellByPosition(1, 1),
             mock.call.getCellByPosition(2, 1),
         ], oSheet.mock_calls)
-        self.assertEqual(['a', 'b', 'text_range', 1, 2, 'foo'],
+        self.assertEqual(['a', 'b', 'oTextRange', 1, 2, 'foo'],
                          [c.t for c in cells])
 
 
@@ -665,7 +665,7 @@ class IOCSVTestCase(unittest.TestCase):
         oDoc = mock.Mock(Sheets=oSheets)
         p = mock.Mock()
         ptu.side_effect = ["url"]
-        oOtherSheets = mock.Mock(ElementNames=["a", "b", "text_range"])
+        oOtherSheets = mock.Mock(ElementNames=["a", "b", "oTextRange"])
         oOtherDoc = mock.Mock(Sheets=oOtherSheets)
         pr.desktop.loadComponentFromURL.side_effect = [oOtherDoc]
 

@@ -47,7 +47,7 @@ class TestHelpCommand(unittest.TestCase):
 
     @mock.patch("__main__.__builtins__.print", autospec=True)
     def test_with_grabage(self, print_mock):
-        h = HelpCommand.create_executor(["a", "b", "text_range"], self.provider)
+        h = HelpCommand.create_executor(["a", "b", "oTextRange"], self.provider)
         h.execute()
         self.assertEqual(
             [

@@ -113,6 +113,9 @@ except (ModuleNotFoundError, ImportError):
         unohelper,  # pyright: ignore[reportGeneralTypeIssues]
     )
 
+def has_uno_interface(o: UnoObject, interface_name: str) -> bool:
+    return any(t.typeName == interface_name for t in o.Types)
+
 ###############################################################################
 # BASE
 ###############################################################################
@@ -263,11 +266,11 @@ def to_iter(o: UnoObject) -> Iterator[UnoObject]:
     @param o: an XIndexAccess or XEnumerationAccession object
     @return: an iterator on `o`
     """
-    if o.supportsService("com.sun.star.container.XIndexAccess"):
+    if has_uno_interface(o, "com.sun.star.container.XIndexAccess"):
         count = o.Count
         for i in range(count):
             yield o.getByIndex(i)
-    elif o.supportsService("com.sun.star.container.XEnumerationAccess"):
+    elif has_uno_interface(o, "com.sun.star.container.XEnumerationAccess"):
         oEnum = o.createEnumeration()
         while oEnum.hasMoreElements():
             yield oEnum.nextElement()
@@ -280,11 +283,11 @@ def to_enumerate(o: UnoObject) -> Iterator[Tuple[int, UnoObject]]:
     @param o: an XIndexAccess or XEnumerationAccession object
     @return: an enumerate iterator on `o`
     """
-    if o.supportsService("com.sun.star.container.XIndexAccess"):
+    if has_uno_interface(o, "com.sun.star.container.XIndexAccess"):
         count = o.Count  # type: ignore[union-attr]
         for i in range(count):
             yield i, o.getByIndex(i)  # type: ignore[union-attr]
-    elif o.supportsService("com.sun.star.container.XEnumerationAccess"):
+    elif has_uno_interface(o, "com.sun.star.container.XEnumerationAccess"):
         oEnum = o.createEnumeration()  # type: ignore[union-attr]
         i = 0
         while oEnum.hasMoreElements():
@@ -309,10 +312,10 @@ def to_items(oXNameAccess: UnoObject) -> Iterator[Tuple[str, UnoObject]]:
 
 
 def remove_all(o: UnoObject):
-    if o.supportsService("com.sun.star.container.XIndexContainer"):
+    if has_uno_interface(o, "com.sun.star.container.XIndexContainer"):
         while o.Count:  # type: ignore[union-attr]
             o.removeByIndex(0)  # type: ignore[union-attr]
-    elif o.supportsService("com.sun.star.container.XNameContainer"):
+    elif has_uno_interface(o, "com.sun.star.container.XNameContainer"):
         for name in o.ElementNames:  # type: ignore[union-attr]
             o.removeByName(name)  # type: ignore[union-attr]
     else:
@@ -1367,11 +1370,11 @@ class HTMLConverter:
     def __init__(self, html_line_break: str = "<br>"):
         self._html_line_break = html_line_break
 
-    def convert(self, text_range: UnoTextRange) -> str:
+    def convert(self, oTextRange: UnoTextRange) -> str:
         """Convert a sequence of chars to HTML"""
         html = self._html_line_break.join(
             self._par_to_html(par_text_range) for par_text_range in
-            to_iter(text_range))
+            to_iter(oTextRange))
         return html
 
     def _par_to_html(self, par_text_range: UnoTextRange) -> str:

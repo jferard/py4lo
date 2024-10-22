@@ -84,14 +84,14 @@ class TestProperties(unittest.TestCase):
         path_a: Path = mock.Mock()
         path_b: Path = mock.Mock()
 
-        source_dir.rglob.side_effect = [[path_a, path_b, Path("./text_range")],
-                                        [Path("text_range")]]
+        source_dir.rglob.side_effect = [[path_a, path_b, Path("./oTextRange")],
+                                        [Path("oTextRange")]]
         path_a.is_file.return_value = True
         path_b.is_file.return_value = False
 
         self.assertEqual({path_a},
-                         _get_paths(source_dir, ["text_range"], "*"))
-        self.assertEqual([mock.call.rglob('*'), mock.call.rglob('text_range')],
+                         _get_paths(source_dir, ["oTextRange"], "*"))
+        self.assertEqual([mock.call.rglob('*'), mock.call.rglob('oTextRange')],
                          source_dir.mock_calls)
 
 

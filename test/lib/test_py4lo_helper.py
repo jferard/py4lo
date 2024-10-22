@@ -187,24 +187,26 @@ class HelperBaseTestCase(unittest.TestCase):
 
     def test_to_iter_count(self):
         # prepare
-        index_access = mock.Mock()
-        index_access.Count = 3
-        index_access.getByIndex.side_effect = [1, 4, 9]
+        oIndexAccess = mock.Mock()
+        oIndexAccess.Types = [mock.Mock(typeName="com.sun.star.container.XIndexAccess")]
+        oIndexAccess.Count = 3
+        oIndexAccess.getByIndex.side_effect = [1, 4, 9]
 
         # play
-        ret = list(to_iter(index_access))
+        ret = list(to_iter(oIndexAccess))
 
         # verify
         self.assertEqual([1, 4, 9], ret)
 
     def test_to_enumerate_count(self):
         # prepare
-        index_access = mock.Mock()
-        index_access.Count = 3
-        index_access.getByIndex.side_effect = [1, 4, 9]
+        oIndexAccess = mock.Mock()
+        oIndexAccess.Types = [mock.Mock(typeName="com.sun.star.container.XIndexAccess")]
+        oIndexAccess.Count = 3
+        oIndexAccess.getByIndex.side_effect = [1, 4, 9]
 
         # play
-        ret = list(to_enumerate(index_access))
+        ret = list(to_enumerate(oIndexAccess))
 
         # verify
         self.assertEqual([(0, 1), (1, 4), (2, 9)], ret)
@@ -212,8 +214,8 @@ class HelperBaseTestCase(unittest.TestCase):
     def test_to_iter_enum(self):
         # prepare
         oEnum = mock.Mock()
-        oEnumAccess = mock.Mock(spec=["supportsService", "createEnumeration"])
-        oEnumAccess.supportsService.side_effect = [False, True]
+        oEnumAccess = mock.Mock(spec=["createEnumeration"])
+        oEnumAccess.Types = [mock.Mock(typeName="com.sun.star.container.XEnumerationAccess")]
         oEnumAccess.createEnumeration.side_effect = [oEnum]
         oEnum.hasMoreElements.side_effect = [True, True, True, False]
         oEnum.nextElement.side_effect = [1, 4, 9]
@@ -227,14 +229,14 @@ class HelperBaseTestCase(unittest.TestCase):
     def test_to_enumerate_enum(self):
         # prepare
         oEnum = mock.Mock()
-        enum_access = mock.Mock(spec=["createEnumeration", "supportsService"])
-        enum_access.supportsService.side_effect = [False, True]
-        enum_access.createEnumeration.side_effect = [oEnum]
+        oEnumAccess = mock.Mock(spec=["createEnumeration"])
+        oEnumAccess.Types = [mock.Mock(typeName="com.sun.star.container.XEnumerationAccess")]
+        oEnumAccess.createEnumeration.side_effect = [oEnum]
         oEnum.hasMoreElements.side_effect = [True, True, True, False]
         oEnum.nextElement.side_effect = [1, 4, 9]
 
         # play
-        ret = list(to_enumerate(enum_access))
+        ret = list(to_enumerate(oEnumAccess))
 
         # verify
         self.assertEqual([(0, 1), (1, 4), (2, 9)], ret)
@@ -761,7 +763,7 @@ class HelperDataArrayTestCase(unittest.TestCase):
         data_array = [
             ("", "", "", "", "", "", "",),
             ("", "", "a", "", "", "b", "",),
-            ("", "", "", "text_range", "d", "", "",),
+            ("", "", "", "oTextRange", "d", "", "",),
             ("", "", "", "", "", "", "",),
             ("", "", "", "", "e", "", "",),
             ("", "", "", "", "", "", "",),
@@ -804,7 +806,7 @@ class HelperDataArrayTestCase(unittest.TestCase):
         data_array = [
             ("", "", "", "", "", "", "",),
             ("", "", "a", "", "", "b", "",),
-            ("", "", "", "text_range", "d", "", "",),
+            ("", "", "", "oTextRange", "d", "", "",),
             ("", "", "", "", "", "", "",),
             ("", "", "", "", "e", "", "",),
             ("", "", "", "", "", "", "",),
@@ -899,14 +901,14 @@ class HelperFormattingTestCase(unittest.TestCase):
         oCell = mock.Mock(Validation=oVal)
 
         # play
-        set_validation_list_by_cell(oCell, ["a", "b", "text_range"])
+        set_validation_list_by_cell(oCell, ["a", "b", "oTextRange"])
 
         # verify
         self.assertEqual(ValidationType.LIST, oVal.Type)
         self.assertEqual(2, oVal.ShowList)
         self.assertTrue(oVal.ShowErrorMessage)
         self.assertTrue(oVal.IgnoreBlankCells)
-        self.assertEqual('"a";"b";"text_range"', oVal.Formula1)
+        self.assertEqual('"a";"b";"oTextRange"', oVal.Formula1)
         self.assertIsNotNone(oCell.String)
 
     def test_set_validation_list2(self):
@@ -1544,6 +1546,7 @@ class HelperOpenTestCase(unittest.TestCase):
         # prepare
         sheets = [mock.Mock() for _ in range(3)]
         oSheets = mock.Mock(Count=3)
+        oSheets.Types = [mock.Mock(typeName="com.sun.star.container.XIndexAccess")]
         oSheets.getByIndex.side_effect = lambda i: sheets[i]
         oDoc = mock.Mock(Sheets=oSheets)
         py4lo_helper.provider.desktop.loadComponentFromURL.side_effect = [oDoc]
@@ -1563,7 +1566,6 @@ class HelperOpenTestCase(unittest.TestCase):
         ], py4lo_helper.provider.desktop.mock_calls)
         self.assertEqual([
             mock.call.lockControllers(),
-            mock.call.Sheets.supportsService('com.sun.star.container.XIndexAccess'),
             mock.call.Sheets.getByIndex(0),
             mock.call.Sheets.getByIndex(1),
             mock.call.Sheets.getByIndex(2),
@@ -1577,6 +1579,7 @@ class HelperOpenTestCase(unittest.TestCase):
         # prepare
         sheets = [mock.Mock(app=None) for _ in range(3)]
         oSheets = mock.Mock(Count=3)
+        oSheets.Types = [mock.Mock(typeName="com.sun.star.container.XIndexAccess")]
         oSheets.getByIndex.side_effect = lambda i: sheets[i]
         oDoc = mock.Mock(Sheets=oSheets)
         py4lo_helper.provider.desktop.loadComponentFromURL.side_effect = [oDoc]
@@ -1598,7 +1601,6 @@ class HelperOpenTestCase(unittest.TestCase):
         ], py4lo_helper.provider.desktop.mock_calls)
         self.assertEqual([
             mock.call.lockControllers(),
-            mock.call.Sheets.supportsService('com.sun.star.container.XIndexAccess'),
             mock.call.Sheets.getByIndex(0),
             mock.call.Sheets.getByIndex(1),
             mock.call.unlockControllers()
@@ -2027,8 +2029,8 @@ class MiscTestCase(unittest.TestCase):
         oPar1Enum.hasMoreElements.side_effect = [True, False]
         oPar1Enum.nextElement.side_effect = [
             self._create_chunk("A", CharFontName="Liberation Avec")]
-        oPar1 = mock.Mock(name="oPar1", spec=['supportsService', 'createEnumeration'])
-        oPar1.supportsService.side_effect = [False, True]
+        oPar1 = mock.Mock(name="oPar1", spec=['createEnumeration'])
+        oPar1.Types = [mock.Mock(typeName="com.sun.star.container.XEnumerationAccess")]
         oPar1.createEnumeration.side_effect = [oPar1Enum]
 
         # PAR 2
@@ -2044,14 +2046,15 @@ class MiscTestCase(unittest.TestCase):
             self._create_chunk("D", CharColor=0xFF0000),
             self._create_chunk("EFG", CharWeight=150)
         ]
-        oPar2 = mock.Mock(name="oPar2", spec=['supportsService', 'createEnumeration'])
-        oPar2.supportsService.side_effect = [False, True]
+        oPar2 = mock.Mock(name="oPar2", spec=['createEnumeration'])
+        oPar2.Types = [mock.Mock(typeName="com.sun.star.container.XEnumerationAccess")]
         oPar2.createEnumeration.side_effect = [oPar2Enum]
+
         oParEnum = mock.Mock(name="oParEnum")
         oParEnum.hasMoreElements.side_effect = [True, True, False]
         oParEnum.nextElement.side_effect = [oPar1, oPar2]
-        oTextRange = mock.Mock(name="oTextRange", spec=['supportsService', 'createEnumeration'])
-        oTextRange.supportsService.side_effect = [False, True]
+        oTextRange = mock.Mock(name="oTextRange", spec=['createEnumeration'])
+        oTextRange.Types = [mock.Mock(typeName="com.sun.star.container.XEnumerationAccess")]
         oTextRange.createEnumeration.side_effect = [oParEnum]
 
         self.assertEqual(

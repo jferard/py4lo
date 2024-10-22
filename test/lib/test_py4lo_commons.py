@@ -153,8 +153,8 @@ class TestCommons(unittest.TestCase):
     #     xsc.getDocument.side_effect = [oDoc]
     #
     #     init(xsc)
-    #     text_range = Commons.create()
-    #     self.assertEqual(Path("C:/doc"), text_range.cur_dir())
+    #     oTextRange = Commons.create()
+    #     self.assertEqual(Path("C:/doc"), oTextRange.cur_dir())
 
     def testCurDir(self):
         self.assertEqual(Path("/temp"), self.c.cur_dir())
