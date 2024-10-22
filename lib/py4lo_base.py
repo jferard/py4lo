@@ -193,8 +193,11 @@ class BaseDB:
             fields = [field_s]
         else:
             fields = list(field_s)
-        sql = "CREATE INDEX IDX_{}_{} ON {} (\"{}\")".format(
-            table, "_".join(fields), table, "\", \"".join(fields)
+
+        idx_name = "IDX_{}_{}".format(table, "_".join(fields))
+        idx_name = idx_name[:31]  # Firebird limit
+        sql = "CREATE INDEX {} ON {} (\"{}\")".format(
+            idx_name, table, "\", \"".join(fields)
         )
         # noinspection PyBroadException
         try:
