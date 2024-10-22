@@ -108,10 +108,7 @@ class Sqlite3TestCase(unittest.TestCase):
             db.execute_update("CREATE TABLE t(x INTEGER)")
 
         with self.assertRaises(SQLiteError) as cm:
-            with (
-                sqlite_open(self._path, "rw") as db,
-                sqlite_open(self._path, "rw") as db2
-            ):
+            with sqlite_open(self._path, "rw") as db, sqlite_open(self._path, "rw") as db2:
                 with db.transaction(TransactionMode.IMMEDIATE):
                     db2.execute_update("INSERT INTO t VALUES (1)")
 
@@ -123,10 +120,7 @@ class Sqlite3TestCase(unittest.TestCase):
         with sqlite_open(self._path, "crw") as db:
             db.execute_update("CREATE TABLE t(x INTEGER)")
 
-        with (
-            sqlite_open(self._path, "rw") as db,
-            sqlite_open(self._path, "rw", 2_000) as db2,
-        ):
+        with sqlite_open(self._path, "rw") as db, sqlite_open(self._path, "rw", 2_000) as db2:
             def func():
                 with db.transaction(TransactionMode.IMMEDIATE):
                     db.execute_update("INSERT INTO t VALUES (1)")
@@ -142,10 +136,7 @@ class Sqlite3TestCase(unittest.TestCase):
             db.execute_update("CREATE TABLE t(x INTEGER)")
 
         with self.assertRaises(SQLiteError) as cm:
-            with (
-                sqlite_open(self._path, "rw") as db,
-                sqlite_open(self._path, "rw", 100) as db2,
-            ):
+            with sqlite_open(self._path, "rw") as db, sqlite_open(self._path, "rw", 100) as db2:
                 def func():
                     try:
                         with db.transaction(TransactionMode.IMMEDIATE):
