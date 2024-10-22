@@ -113,9 +113,6 @@ except (ModuleNotFoundError, ImportError):
         unohelper,  # pyright: ignore[reportGeneralTypeIssues]
     )
 
-def has_uno_interface(o: UnoObject, interface_name: str) -> bool:
-    return any(t.typeName == interface_name for t in o.Types)
-
 ###############################################################################
 # BASE
 ###############################################################################
@@ -266,16 +263,17 @@ def to_iter(o: UnoObject) -> Iterator[UnoObject]:
     @param o: an XIndexAccess or XEnumerationAccession object
     @return: an iterator on `o`
     """
-    if has_uno_interface(o, "com.sun.star.container.XIndexAccess"):
+    try:
         count = o.Count
         for i in range(count):
             yield o.getByIndex(i)
-    elif has_uno_interface(o, "com.sun.star.container.XEnumerationAccess"):
-        oEnum = o.createEnumeration()
-        while oEnum.hasMoreElements():
-            yield oEnum.nextElement()
-    else:
-        raise TypeError(repr(o))
+    except AttributeError:
+        try:
+            oEnum = o.createEnumeration()
+            while oEnum.hasMoreElements():
+                yield oEnum.nextElement()
+        except AttributeError:
+            raise TypeError(repr(o))
 
 
 def to_enumerate(o: UnoObject) -> Iterator[Tuple[int, UnoObject]]:
@@ -283,43 +281,51 @@ def to_enumerate(o: UnoObject) -> Iterator[Tuple[int, UnoObject]]:
     @param o: an XIndexAccess or XEnumerationAccession object
     @return: an enumerate iterator on `o`
     """
-    if has_uno_interface(o, "com.sun.star.container.XIndexAccess"):
+    try:
         count = o.Count  # type: ignore[union-attr]
         for i in range(count):
             yield i, o.getByIndex(i)  # type: ignore[union-attr]
-    elif has_uno_interface(o, "com.sun.star.container.XEnumerationAccess"):
-        oEnum = o.createEnumeration()  # type: ignore[union-attr]
-        i = 0
-        while oEnum.hasMoreElements():
-            yield i, oEnum.nextElement()
-            i += 1
-    else:
-        raise TypeError(repr(o))
+    except AttributeError:
+        try:
+            oEnum = o.createEnumeration()  # type: ignore[union-attr]
+            i = 0
+            while oEnum.hasMoreElements():
+                yield i, oEnum.nextElement()
+                i += 1
+        except AttributeError:
+            raise TypeError(repr(o))
 
 
 def to_dict(oXNameAccess: UnoObject) -> Mapping[str, UnoObject]:
-    return {
-        name: oXNameAccess.getByName(name)
-        for name in oXNameAccess.ElementNames
-    }
+    try:
+        return {
+            name: oXNameAccess.getByName(name)
+            for name in oXNameAccess.ElementNames
+        }
+    except AttributeError as e:
+        raise TypeError(repr(oXNameAccess) + str(e))
 
 
 def to_items(oXNameAccess: UnoObject) -> Iterator[Tuple[str, UnoObject]]:
-    return (
-        (name, oXNameAccess.getByName(name))
-        for name in oXNameAccess.ElementNames
-    )
+    try:
+        return (
+            (name, oXNameAccess.getByName(name))
+            for name in oXNameAccess.ElementNames
+        )
+    except AttributeError:
+        raise TypeError(repr(oXNameAccess))
 
 
 def remove_all(o: UnoObject):
-    if has_uno_interface(o, "com.sun.star.container.XIndexContainer"):
+    try:
         while o.Count:  # type: ignore[union-attr]
             o.removeByIndex(0)  # type: ignore[union-attr]
-    elif has_uno_interface(o, "com.sun.star.container.XNameContainer"):
-        for name in o.ElementNames:  # type: ignore[union-attr]
-            o.removeByName(name)  # type: ignore[union-attr]
-    else:
-        raise TypeError(repr(o))
+    except AttributeError:
+        try:
+            for name in o.ElementNames:  # type: ignore[union-attr]
+                o.removeByName(name)  # type: ignore[union-attr]
+        except AttributeError:
+            raise TypeError(repr(o))
 
 
 def parent_doc(oRange: UnoRange) -> UnoSpreadsheetDocument:
