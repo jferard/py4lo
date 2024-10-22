@@ -41,6 +41,5 @@ class NullCommand(Command):
         print(self._msg)
         return tuple()
 
-    @staticmethod
-    def get_help() -> str:
+    def get_help(self) -> str:
         return "<internal command>"

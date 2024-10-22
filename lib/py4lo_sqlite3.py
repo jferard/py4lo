@@ -92,9 +92,13 @@ sqlite3_lib.sqlite3_interrupt.argtypes = [sqlite3_p]
 sqlite3_lib.sqlite3_interrupt.restype = None
 sqlite3_interrupt = sqlite3_lib.sqlite3_interrupt
 
-sqlite3_lib.sqlite3_is_interrupted.argtypes = [sqlite3_p]
-sqlite3_lib.sqlite3_is_interrupted.restype = c_int
-sqlite3_is_interrupted = sqlite3_lib.sqlite3_is_interrupted
+try:
+    sqlite3_lib.sqlite3_is_interrupted.argtypes = [sqlite3_p]
+    sqlite3_lib.sqlite3_is_interrupted.restype = c_int
+    sqlite3_is_interrupted = sqlite3_lib.sqlite3_is_interrupted
+except AttributeError:
+    def sqlite3_is_interrupted(db):
+        return -1
 
 # https://www.sqlite.org/c3ref/exec.html
 sqlite3_lib.sqlite3_exec.argtypes = [sqlite3_p, c_char_p, c_void_p, c_void_p,

@@ -17,7 +17,7 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import subprocess
+import subprocess   # nosec: B404
 import unittest
 from pathlib import Path
 from unittest import mock

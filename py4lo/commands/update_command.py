@@ -18,7 +18,7 @@
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from logging import Logger
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Tuple, Any
 
 from callbacks import (AddReadmeWith, IgnoreItem, ARC_SCRIPTS_PATH,
                        RewriteManifest, AddScripts, AddAssets)
@@ -65,7 +65,7 @@ class UpdateCommand(Command):
         self._python_version = python_version
         self._add_readme_callback = add_readme_callback
 
-    def execute(self, status: int) -> (int, Path):
+    def execute(self, status: int) -> Tuple[Any, ...]:
         self._logger.info(
             "Update. Generating '%s' (source: %s) for Python '%s'",
             self._dest_ods_file,
@@ -92,6 +92,5 @@ class UpdateCommand(Command):
 
         return zip_updater_builder.build()
 
-    @staticmethod
-    def get_help():
+    def get_help(self) -> str:
         return "Update the file with all scripts"

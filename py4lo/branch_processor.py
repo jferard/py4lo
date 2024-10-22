@@ -17,7 +17,7 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import logging
-from typing import List, Callable, Any
+from typing import List, Callable, Any, cast
 
 
 class BranchProcessor:
@@ -29,13 +29,13 @@ class BranchProcessor:
     def __init__(self, tester: Callable[[List[str]], bool]):
         """The tester will evaluate the arguments of 'if' or 'elif'"""
         self._assertion_is_true = tester
-        self._dont_skips = []
+        self._dont_skips = cast(List[bool], [])
 
     def end(self):
         """
         To call before the end, to verify if there are no unclosed if block
         """
-        if len(self._dont_skips):
+        if self._dont_skips:
             logging.error("Branch condition not closed!")
             raise ValueError("Branch condition not closed!")
 

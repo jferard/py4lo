@@ -109,7 +109,7 @@ class PropertiesProviderFactory:
             Path(dest["assets_dest_dir"]))
         return destinations
 
-    def _get_dest_file(self, source_ods_file: Path) -> Path:
+    def _get_dest_file(self, source_ods_file: Optional[Path]) -> Path:
         dest: Mapping[str, str] = self._tdata["dest"]
         if "dest_ods_file" in dest:
             dest_ods_file = Path(dest["dest_ods_file"])

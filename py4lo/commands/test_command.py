@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import os
-import subprocess
+import subprocess  # nosec: B404
 import sys
 from logging import Logger
 from pathlib import Path
@@ -115,6 +115,5 @@ class TestCommand(Command):
             self._logger.debug("PYTHONPATH = %s", env["PYTHONPATH"])
         return self._env
 
-    @staticmethod
-    def get_help():
+    def get_help(self) -> str:
         return "Do the test of the scripts to add to the spreadsheet"

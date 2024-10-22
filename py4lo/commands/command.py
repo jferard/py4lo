@@ -17,7 +17,7 @@
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from abc import ABC, abstractmethod
-from typing import List, Optional, Tuple, Any
+from typing import List, Tuple, Any
 
 from core.properties import PropertiesProvider
 
@@ -29,9 +29,9 @@ class Command(ABC):
         pass
 
     @abstractmethod
-    def execute(self, *args: List[str]) -> Optional[Tuple]:
+    def execute(self, *args: List[str]) -> Tuple[Any, ...]:
         pass
 
-    @staticmethod
-    def get_help():
+    @abstractmethod
+    def get_help(self) -> str:
         pass

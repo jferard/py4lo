@@ -16,18 +16,19 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+from typing import cast, Dict
 
+from commands import Command
 from commands.debug_command import DebugCommand
 from commands.init_command import InitCommand
-from commands.test_command import TestCommand
 from commands.run_command import RunCommand
+from commands.test_command import TestCommand
 from commands.update_command import UpdateCommand
 
-
-real_command_factory_by_name = {
+real_command_factory_by_name = cast(Dict[str, Command], {
     'debug': DebugCommand,
     'init': InitCommand,
     'test': TestCommand,
     'run': RunCommand,
     'update': UpdateCommand,
-}
+})

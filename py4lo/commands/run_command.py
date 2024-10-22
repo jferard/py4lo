@@ -18,7 +18,7 @@
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 from pathlib import Path
-from typing import cast
+from typing import cast, Tuple, Any
 
 from commands.command import Command
 from commands.null_command import NullCommand
@@ -43,14 +43,14 @@ class RunCommand(Command):
     def __init__(self, calc_exe: str):
         self._calc_exe = calc_exe
 
-    def execute(self, status: int, dest_name: Path) -> None:
+    def execute(self, status: int, dest_name: Path) -> Tuple[Any, ...]:
         if status == 0:
             print("All tests ok")
             logging.warning("%s %s", self._calc_exe, dest_name)
             open_with_calc(dest_name, self._calc_exe)
         else:
             print("Error: some tests failed")
+        return tuple()
 
-    @staticmethod
-    def get_help():
+    def get_help(self) -> str:
         return "Update + open the created file"

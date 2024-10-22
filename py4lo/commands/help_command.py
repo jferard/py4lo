@@ -16,6 +16,8 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+from typing import Tuple, Any
+
 from commands.command import Command
 from commands.command_executor import CommandExecutor
 from core.properties import PropertiesProvider
@@ -51,17 +53,17 @@ class HelpCommand(Command):
         self._command_factory_by_name = command_factory_by_name
         self._command_name = command_name
 
-    def execute(self) -> None:
+    def execute(self) -> Tuple[Any, ...]:
         if self._command_name:
             try:
                 msg = self._command_factory_by_name[
-                    self._command_name].get_help()
+                    self._command_name].get_help(None)
             except KeyError:
                 msg = self.get_help()
         else:
             msg = self.get_help()
         print(msg)
+        return tuple()
 
-    @staticmethod
-    def get_help():
+    def get_help(self):
         return "help [command]: Specific help message about command"

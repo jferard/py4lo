@@ -16,7 +16,7 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Any
 
 from commands import Command
 from commands.command_executor import CommandExecutor
@@ -42,9 +42,9 @@ class InitCommand(Command):
                                     python_version, "new-project.ods")
         return CommandExecutor(logger, init_command, test_executor)
 
-    def execute(self, *args: List[str]) -> Optional[Tuple]:
-        pass
+    def execute(self, *args: List[str]) -> Tuple[Any, ...]:
+        return tuple()
 
     @staticmethod
-    def get_help():
+    def get_help(self) -> str:
         return "Create a new document from script"

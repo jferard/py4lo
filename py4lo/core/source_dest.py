@@ -18,7 +18,7 @@
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Set
+from typing import List, Set, Optional
 
 from core.asset import SourceAsset, DestinationAsset
 from core.script import SourceScript, TempScript, DestinationScript
@@ -26,7 +26,7 @@ from core.script import SourceScript, TempScript, DestinationScript
 
 @dataclass
 class Sources:
-    source_ods_file: Path
+    source_ods_file: Optional[Path]
     inc_dir: Path
     lib_dir: Path
     src_dir: Path

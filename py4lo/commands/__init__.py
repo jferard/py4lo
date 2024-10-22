@@ -16,7 +16,7 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from typing import Dict, List
+from typing import Dict, List, cast
 
 from commands.command import Command
 from commands.command_executor import CommandExecutor
@@ -47,12 +47,12 @@ class Commands:
         lines = [
             "a command = {}".format(" | ".join(self._command_factory_by_name))]
         for name, cf in self._command_factory_by_name.items():
-            lines.append("{}: {}".format(name, cf.get_help()))
+            lines.append("{}: {}".format(name, cf.get_help(None)))
         return "\n".join(lines)
 
 
 cf_by_name = real_command_factory_by_name.copy()
 # add help now
-cf_by_name['help'] = HelpCommand
+cf_by_name['help'] = cast(Command, HelpCommand)
 
 commands = Commands(cf_by_name)

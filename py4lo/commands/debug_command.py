@@ -19,7 +19,7 @@
 
 import logging
 from pathlib import Path
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Any
 
 import zip_updater
 from callbacks import (IgnoreItem, RewriteManifest, AddScripts, AddAssets,
@@ -64,7 +64,7 @@ class DebugCommand(Command):
         self._debug_path = destinations.dest_ods_file.parent.joinpath(
             doc_name)
 
-    def execute(self, *_args: List[str]) -> Tuple[Path]:
+    def execute(self, *_args: List[str]) -> Tuple[Any, ...]:
         self._logger.info("Debug or init. Generating '%s' for Python '%s'",
                           self._debug_path, self._python_version)
 
@@ -96,6 +96,5 @@ class DebugCommand(Command):
         zupdater = zupdater_builder.build()
         return zupdater
 
-    @staticmethod
-    def get_help():
+    def get_help(self) -> str:
         return "Create a debug.ods file with button for each function"

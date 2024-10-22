@@ -16,6 +16,7 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+from pathlib import Path
 from typing import Dict, List
 from zipfile import ZipFile
 
@@ -149,7 +150,7 @@ class AddDebugContent(AfterCallback):
     The debug content is one button per function.
     """
 
-    def __init__(self, funcs_by_script: Dict[str, List[str]]):
+    def __init__(self, funcs_by_script: Dict[Path, List[str]]):
         """
         :param funcs_by_script: a mapping script_name -> [func name]
         """

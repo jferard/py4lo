@@ -16,14 +16,16 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import re
 import shlex
-from typing import List, Optional, Any
+from typing import List, Optional, Any, Set, cast
 
 from branch_processor import BranchProcessor
 from comparator import Comparator
 from core.script import SourceScript, TempScript
 from directives import DirectiveProvider
 
+PY4LO_REGEX = re.compile(r"^#\s*py4lo\s*:(.*)$")
 
 class DirectiveProcessor:
     """A DirectiveProcessor processes directives, ie line that begins with #,
@@ -55,7 +57,7 @@ class DirectiveProcessor:
         self._script_set_processor = script_set_processor
         self._branch_processor = branch_processor
         self._directive_provider = directive_provider
-        self._includes = set()
+        self._includes = cast(Set[str], set())
 
     def append_script(self, source_script: SourceScript):
         """Append a script to the script processor"""
@@ -108,9 +110,9 @@ class DirectiveLineProcessor:
         return self._target_lines
 
     def _get_directive(self) -> Optional[List[str]]:
-        mark, directive = self._line.split(":", 1)
-        mark = mark.split()
-        if mark == ['#py4lo'] or mark == ['#', 'py4lo']:
+        m = PY4LO_REGEX.match(self._line)
+        if m:
+            directive = m.group(1)
             return shlex.split(directive)
         else:
             return None
