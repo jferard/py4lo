@@ -18,7 +18,14 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""py4lo_commons deals with ordinary Python objects (POPOs ?)."""
+"""
+The module py4lo_commons deals with ordinary Python objects (POPOs ?).
+It allows to:
+* use a Bus for events.
+* get a logger
+* get the current directory
+* convert dates
+"""
 import configparser
 import datetime as dt
 import logging
@@ -42,7 +49,7 @@ _xsc = None
 
 def uno_url_to_path(url: str) -> Optional[Path]:
     """
-    Wrapper
+    Wrapper for fileUrlToSystemPath.
     @param url: the url
     @return: the path or None if the url is empty
     """
@@ -54,7 +61,7 @@ def uno_url_to_path(url: str) -> Optional[Path]:
 
 def uno_path_to_url(path: Union[str, Path]) -> str:
     """
-    Wrapper
+    Wrapper for systemPathToFileUrl
     @param path: the path
     @return: the url
     """
@@ -69,22 +76,56 @@ def uno_path_to_url(path: Union[str, Path]) -> str:
 
 
 def init(xsc: UnoXScriptContext):
+    """
+    Initialize the script context in main script.
+
+    :param xsc: the value shoudl be XSCRIPTCONTEXT in main script.
+    :deprecated: use `Commons.create(XSCRIPTCONTEXT)`
+    """
     global _xsc
     _xsc = xsc
 
 
 class Bus:
     """
-    A minimal bus minimal to communicate with front end
+    A minimal bus minimal to communicate with front end.
+
+    Example:
+    ```
+    bus = Bus()
+
+    class X:
+        def _handle_func(x: Any):
+            print(x)
+
+    ...
+    x = X()
+    bus.subscribe(x)
+
+    ...
+    bus.post("func", "foo") # calls x._handle_func("foo")
+    bus.post("other_func", "foo") # ignore
     """
 
     def __init__(self):
         self._subscribers = cast(List[Any], [])
 
     def subscribe(self, s: Any):
+        """
+        Subscribe to the bus.
+
+        @param s: the object that subscribes
+        """
         self._subscribers.append(s)
 
     def post(self, event_type: str, event_data: Any):
+        """
+        Post an event. If a subscriber does not implement this event,
+        the event is simply ignored.
+
+        @param event_type: the name of the event
+        @param event_data: the data
+        """
         for s in self._subscribers:
             m_name = "_handle_" + event_type.lower()
             if hasattr(s, m_name):
@@ -92,10 +133,31 @@ class Bus:
                 m(event_data)
 
 
+def create_bus() -> Bus:
+    """
+    Create a new bus
+    @return: the bus
+    """
+    return Bus()
+
+
 class Commons:
+    """
+    The Commons class implements some basic features.
+    """
+    _logger = logging.getLogger(__name__)
+
     @staticmethod
-    def create(xsc: Optional[UnoXScriptContext] = None):
+    def create(xsc: Optional[UnoXScriptContext] = None) -> "Commons":
+        """
+        Create a new Commons object.
+
+        @param xsc: XSCRIPTCONTEXT
+        @return:
+        """
         if xsc is None:
+            Commons._logger.warning(
+                "Should call `Commons.create(XSCRIPTCONTEXT)`")
             # noinspection PyUnresolvedReferences
             xsc = _xsc
         if xsc is None:
@@ -104,17 +166,26 @@ class Commons:
         return Commons(doc.URL)
 
     def __init__(self, url: str):
+        """
+        Create a new Commons object
+        @param url: the url of the document.
+        """
         self._url = url
         self._logger = lazy(logging.Logger)
 
     def __del__(self):
+        """
+        Flushes and closes all loggers.
+        """
         if self._logger is not None:
             for h in self._logger.handlers:
                 h.flush()
                 h.close()
 
     def cur_dir(self) -> Optional[Path]:
-        """return the directory of the current document"""
+        """
+        @return: the directory of the current document or None (new document).
+        """
         path = uno_url_to_path(self._url)
         if path is None:
             return None
@@ -124,28 +195,63 @@ class Commons:
             self, file: Optional[Union[StrPath, TextIO]] = None, mode="a",
             level=logging.DEBUG,
             fmt='%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
+        """
+        Initialize the root logger (but returns nothing)
+
+        @param file: the log file
+        @param mode: the log mode
+        @param level: the log level
+        @param fmt: the log entry fromat
+        @raises: Exception if the logger is already initialized
+        """
         if self._logger is not None:
             raise Exception("use init_logger ONCE")
 
         self._logger = self.get_logger(file, mode, level, fmt)
+
+    def logger(self) -> logging.Logger:
+        """
+        @return: the logger.
+        """
+        if self._logger is None:
+            raise Exception("use init_logger")
+        return self._logger
 
     def get_logger(
             self, file: Optional[Union[StrPath, TextIO]] = None,
             mode: str = "a", level: int = logging.DEBUG,
             fmt: str = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     ) -> logging.Logger:
+        """
+        Initialize and return the root logger.
+
+        ```
+        logger = commons.get_logger(...)
+        ```
+
+        is the same as:
+        ```
+        commons.init_logger(...)
+        logger = commons.logger()
+        ```
+
+        @param file: the log file
+        @param mode: the log mode
+        @param level: the log level
+        @param fmt: the log entry fromat
+        @return: the logger
+        """
         if file is None:
             file = self.join_current_dir("py4lo.log")
         logger = logging.getLogger()
         init_logger(logger, file, mode, level, fmt)
         return logger
 
-    def logger(self) -> logging.Logger:
-        if self._logger is None:
-            raise Exception("use init_logger")
-        return self._logger
-
     def join_current_dir(self, filename: str) -> Path:
+        """
+        @param filename: a file name
+        @return: the path of the file name in the doc current directory
+        """
         cur_dir_path = self.cur_dir()
         if cur_dir_path is None:
             return Path(filename)
@@ -211,6 +317,15 @@ def init_logger(
         file: Optional[Union[StrPath, TextIO]] = None,
         mode: str = "a", level: int = logging.DEBUG,
         fmt: str = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
+    """
+    Initialize a logger (but returns nothing)
+
+    @param logger: the logger to initialize
+    @param file: the log file
+    @param mode: the log mode
+    @param level: the log level
+    @param fmt: the log entry fromat
+    """
     if file is None:
         fh = _get_handler(sys.stdout, mode, level, fmt)
     else:
@@ -221,6 +336,14 @@ def init_logger(
 
 def _get_handler(file: Union[StrPath, TextIO], mode: str, level: int,
                  fmt: str) -> logging.Handler:
+    """
+    Return a log handler.
+
+    @param file: the log file
+    @param mode: the log mode
+    @param level: the log level
+    @param fmt: the log entry fromat
+    """
     if isinstance(file, (str, Path)):
         fh = logging.FileHandler(str(file), mode)
     else:
@@ -229,10 +352,6 @@ def _get_handler(file: Union[StrPath, TextIO], mode: str, level: int,
     fh.setFormatter(formatter)
     fh.setLevel(level)
     return fh
-
-
-def create_bus() -> Bus:
-    return Bus()
 
 
 def read_config(filenames: Union[StrPath, Iterable[StrPath]],
@@ -259,6 +378,10 @@ def read_config(filenames: Union[StrPath, Iterable[StrPath]],
 
 
 def _get_config(args: Optional[Mapping]) -> configparser.ConfigParser:
+    """
+    @param args: arguments to be passed to the ConfigParser
+    @return: the ConfigParser
+    """
     if args is None:
         config = configparser.ConfigParser()
     else:
@@ -268,7 +391,7 @@ def _get_config(args: Optional[Mapping]) -> configparser.ConfigParser:
 
 def sanitize(s: str) -> str:
     """
-    Remove accents and special chars from a string
+    Remove accents and special chars from a string.
 
     @param s: the unicode string
     @return: the ascii string
@@ -280,8 +403,23 @@ def sanitize(s: str) -> str:
 
 
 class DatesHelper:
+    """
+    A helper for dates, using the NullDate of a document (see
+    com.sun.star.sheet.SpreadsheetDocumentSettings.NullDate).
+
+    Example:
+
+    ```
+    helper = DatesHelper.create(oDoc)
+    helper.date_to_int(dt.date(1899, 12, 30)) # 0 if this is the NullDate
+    ```
+    """
     @staticmethod
-    def create(oDoc: Optional[UnoSpreadsheetDocument] = None):
+    def create(oDoc: Optional[UnoSpreadsheetDocument] = None) -> "DatesHelper":
+        """
+        @param oDoc: the document that has a NullDate
+        @return: the helper
+        """
         if oDoc is None:
             origin = dt.datetime(1899, 12, 30)
         else:
@@ -294,9 +432,18 @@ class DatesHelper:
         return DatesHelper(origin)
 
     def __init__(self, origin: dt.datetime):
+        """
+        @param origin: the NullDate as Python datetime.
+        """
         self._origin = origin
 
     def date_to_int(self, a_date: Union[dt.date, dt.datetime]) -> int:
+        """
+        Converts a date to an int.
+
+        @param a_date: the Python date or datetime to convert
+        @return: the LibreOffice internal representation of the date as an int.
+        """
         if isinstance(a_date, dt.datetime):
             pass
         elif isinstance(a_date, dt.date):
@@ -307,6 +454,12 @@ class DatesHelper:
 
     def date_to_float(self,
                       a_date: Union[dt.date, dt.datetime, dt.time]) -> float:
+        """
+        Converts a date to a float.
+
+        @param a_date: the Python date or datetime to convert
+        @return: the LibreOffice internal representation of the date as a float.
+        """
         if isinstance(a_date, dt.datetime):
             time_delta = a_date - self._origin
         elif isinstance(a_date, dt.date):
@@ -321,27 +474,63 @@ class DatesHelper:
         return time_delta.total_seconds() / 86400
 
     def int_to_date(self, days: int) -> dt.datetime:
+        """
+        Converts an int to a date.
+
+        @param days: the LibreOffice internal representation of the date as an int
+        @return: the date
+        """
         return self._origin + dt.timedelta(days)
 
     def float_to_date(self, days: float) -> dt.datetime:
+        """
+        Converts a float to a date.
+
+        @param days: the LibreOffice internal representation of the date as a float
+        @return: the datetime
+        """
         return self._origin + dt.timedelta(days)
 
 
-# deprecated
 def date_to_int(a_date: Union[dt.date, dt.datetime]) -> int:
+    """
+    Converts a date to an int, using default origin (1899-12-30)
+
+    @deprecated: use DateHelper
+    @param a_date: the Python date or datetime to convert
+    @return: the LibreOffice internal representation of the date as an int.
+    """
     return DatesHelper.create().date_to_int(a_date)
 
 
-# deprecated
 def date_to_float(a_date: Union[dt.date, dt.datetime, dt.time]) -> float:
+    """
+    Converts a date to a float, using default origin (1899-12-30)
+
+    @deprecated: use DateHelper
+    @param a_date: the Python date or datetime to convert
+    @return: the LibreOffice internal representation of the date as a float.
+    """
     return DatesHelper.create().date_to_float(a_date)
 
 
-# deprecated
 def int_to_date(days: int) -> dt.datetime:
+    """
+    Converts an int to a date, using default origin (1899-12-30)
+
+    @deprecated: use DateHelper
+    @param days: the LibreOffice internal representation of the date as an int.
+    @return: the Python datetime
+    """
     return DatesHelper.create().int_to_date(days)
 
 
-# deprecated
 def float_to_date(days: float) -> dt.datetime:
+    """
+    Converts a float to a date, using default origin (1899-12-30)
+
+    @deprecated: use DateHelper
+    @param days: the LibreOffice internal representation of the date as a float.
+    @return: the Python datetime
+    """
     return DatesHelper.create().float_to_date(days)
