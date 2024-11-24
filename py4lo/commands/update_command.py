@@ -34,7 +34,7 @@ from zip_updater import ZipUpdater, ZipUpdaterBuilder
 
 class UpdateCommand(Command):
     @staticmethod
-    def create_executor(args, provider: PropertiesProvider) -> CommandExecutor:
+    def create_executor(args: List[str], provider: PropertiesProvider) -> CommandExecutor:
         test_executor = TestCommand.create_executor(args, provider)
         logger = provider.get_logger()
         update_command = UpdateCommand.create(logger, provider)

@@ -18,7 +18,7 @@
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 from pathlib import Path
-from typing import cast, Tuple, Any
+from typing import cast, Tuple, Any, List
 
 from commands.command import Command
 from commands.null_command import NullCommand
@@ -30,7 +30,7 @@ from tools import open_with_calc, secure_exe
 
 class RunCommand(Command):
     @staticmethod
-    def create_executor(args, provider: PropertiesProvider) -> CommandExecutor:
+    def create_executor(args: List[str], provider: PropertiesProvider) -> CommandExecutor:
         sec_calc_exe = secure_exe(provider.get("calc_exe"), "scalc")
         if sec_calc_exe is None:
             run_command = cast(Command, NullCommand("Can't find calc exe"))

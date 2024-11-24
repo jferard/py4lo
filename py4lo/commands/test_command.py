@@ -21,7 +21,7 @@ import subprocess  # nosec: B404
 import sys
 from logging import Logger
 from pathlib import Path
-from typing import Dict, Callable, Iterator, cast, Optional, Any, Tuple
+from typing import Dict, Callable, Iterator, cast, Optional, Any, Tuple, List
 
 from commands.command import Command
 from commands.command_executor import CommandExecutor
@@ -35,7 +35,7 @@ class TestCommand(Command):
     __test__ = False
 
     @staticmethod
-    def create_executor(_args, provider: PropertiesProvider
+    def create_executor(_args: List[str], provider: PropertiesProvider
                         ) -> CommandExecutor:
         sec_python_exe = secure_exe(provider.get("python_exe"), "python")
         logger = provider.get_logger()

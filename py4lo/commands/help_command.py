@@ -16,7 +16,7 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from typing import Tuple, Any
+from typing import Tuple, Any, List
 
 from commands.command import Command
 from commands.command_executor import CommandExecutor
@@ -40,7 +40,7 @@ command     a command = debug|help|init|test|update
 
 class HelpCommand(Command):
     @staticmethod
-    def create_executor(args, provider: PropertiesProvider) -> CommandExecutor:
+    def create_executor(args: List[str], provider: PropertiesProvider) -> CommandExecutor:
         if len(args) == 1:
             command_name = args[0]
         else:

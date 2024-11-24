@@ -15,7 +15,7 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from typing import Any, Tuple
+from typing import Any, Tuple, List
 
 from commands.command import Command
 from commands.command_executor import CommandExecutor
@@ -23,7 +23,7 @@ from core.properties import PropertiesProvider
 
 class NullCommand(Command):
     @staticmethod
-    def create_executor(args, provider: PropertiesProvider) -> CommandExecutor:
+    def create_executor(args: List[str], provider: PropertiesProvider) -> CommandExecutor:
         if args:
             print("Ignoring args", args)
 
