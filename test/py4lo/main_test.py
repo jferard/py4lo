@@ -27,6 +27,10 @@ class MainTest(unittest.TestCase):
         factory = mock.MagicMock()
         main.main(factory, ["py4lo", "help"])
 
+    def test_args(self):
+        args = main.get_args(["run", "notest"])
+        self.assertEqual("run", args.command)
+        self.assertEqual(["notest"], args.parameters)
 
 if __name__ == '__main__':
     unittest.main()

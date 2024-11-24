@@ -35,7 +35,10 @@ from zip_updater import ZipUpdater, ZipUpdaterBuilder
 class UpdateCommand(Command):
     @staticmethod
     def create_executor(args: List[str], provider: PropertiesProvider) -> CommandExecutor:
-        test_executor = TestCommand.create_executor(args, provider)
+        if "notest" in args:
+            test_executor = None
+        else:
+            test_executor = TestCommand.create_executor(args, provider)
         logger = provider.get_logger()
         update_command = UpdateCommand.create(logger, provider)
         return CommandExecutor(logger, update_command, test_executor)
@@ -65,7 +68,7 @@ class UpdateCommand(Command):
         self._python_version = python_version
         self._add_readme_callback = add_readme_callback
 
-    def execute(self, status: int) -> Tuple[Any, ...]:
+    def execute(self, status: int = 0) -> Tuple[Any, ...]:
         self._logger.info(
             "Update. Generating '%s' (source: %s) for Python '%s'",
             self._dest_ods_file,

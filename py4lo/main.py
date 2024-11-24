@@ -31,8 +31,8 @@ def get_args(argv: List[str] = sys.argv[1:]) -> argparse.Namespace:
                         default="py4lo.toml", type=str)
     parser.add_argument("command",
                         help=commands.get_help_message(), type=str)
-    parser.add_argument("parameter", nargs="*",
-                        help="command parameter")
+    parser.add_argument("parameters", nargs="*",
+                        help="command parameters")
     return parser.parse_args(argv)
 
 
@@ -44,7 +44,7 @@ def main(factory: PropertiesProviderFactory, argv: List[str] = sys.argv[1:]):
     logger.debug("Log Level is: %s", logger.getEffectiveLevel())
     logger.debug("Command line arguments are: %s", args)
 
-    command = commands.get(args.command, args.parameter,
+    command = commands.get(args.command, args.parameters,
                            provider)
     logger.debug("Command is %s", command)
 
