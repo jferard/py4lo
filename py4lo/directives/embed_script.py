@@ -58,7 +58,7 @@ class EmbedScript(Directive):
         while stack:
             path = stack.pop()
             if path.is_dir():
-                stack.extend(script_path.glob("*"))
+                stack.extend(path.glob("*"))
             elif path.suffix == ".py":
                 with path.open('rb') as f:
                     temp_script = TempScript(

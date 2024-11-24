@@ -37,8 +37,7 @@ class TestEmbed(unittest.TestCase):
     def test_execute(self):
         # Arrange
         proc = mock.Mock()
-        fpath = file_path_mock(io.BytesIO(b"content"))
-        fpath.suffix = ".py"
+        fpath = file_path_mock(io.BytesIO(b"content"), suffix = ".py")
         fpath.with_suffix.return_value = fpath
 
         self._opt.joinpath.return_value = fpath
@@ -46,6 +45,57 @@ class TestEmbed(unittest.TestCase):
 
         # Act
         execute = self._directive.execute(proc, None, ["a/b.py"])
+
+        # Assert
+        self.assertEqual(True, execute)
+        self.assertEqual([mock.call.add_script(
+            TempScript(fpath, b"content", self._opt, [], None))],
+            proc.mock_calls)
+        verify_open_path(self, fpath, 'rb')
+
+    def test_execute_dir(self):
+        # Arrange
+        proc = mock.Mock()
+        fpath = file_path_mock(io.BytesIO(b"content"), suffix=".py")
+        fpath.with_suffix.return_value = fpath
+        fpath.is_dir.return_value = False
+
+        fdirpath = mock.Mock()
+        fdirpath.is_dir.return_value = True
+        fdirpath.glob.return_value = [fpath]
+
+        self._opt.joinpath.return_value = fdirpath
+
+        # Act
+        execute = self._directive.execute(proc, None, ["a/b"])
+
+        # Assert
+        self.assertEqual(True, execute)
+        self.assertEqual([mock.call.add_script(
+            TempScript(fpath, b"content", self._opt, [], None))],
+            proc.mock_calls)
+        verify_open_path(self, fpath, 'rb')
+
+    def test_execute_subdir(self):
+        # Arrange
+        proc = mock.Mock()
+
+        fpath = file_path_mock(io.BytesIO(b"content"), suffix=".py")
+        fpath.with_suffix.return_value = fpath
+        fpath.is_dir.return_value = False
+
+        fsubdirpath = mock.Mock()
+        fsubdirpath.is_dir.return_value = True
+        fsubdirpath.glob.return_value = [fpath]
+
+        fdirpath = mock.Mock()
+        fdirpath.is_dir.return_value = True
+        fdirpath.glob.return_value = [fsubdirpath]
+
+        self._opt.joinpath.return_value = fdirpath
+
+        # Act
+        execute = self._directive.execute(proc, None, ["a/b"])
 
         # Assert
         self.assertEqual(True, execute)
