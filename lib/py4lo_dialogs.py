@@ -46,11 +46,13 @@ try:
             DEFAULT_BUTTON_NO, DEFAULT_BUTTON_IGNORE,
         )
 
+
     class MessageBoxResults:
         # noinspection PyUnresolvedReferences
         from com.sun.star.awt.MessageBoxResults import (
             CANCEL, OK, YES, NO, RETRY, IGNORE
         )
+
 
     class FontWeight:
         # noinspection PyUnresolvedReferences
@@ -79,6 +81,7 @@ except (ModuleNotFoundError, ImportError):
 
 
 class ControlModel(str, Enum):
+    """List of UNO control models names"""
     AnimatedImages = "com.sun.star.awt.AnimatedImagesControlModel"
     Grid = "com.sun.star.awt.grid.UnoControlGridModel"
     TabPageContainer = "com.sun.star.awt.tab.UnoControlTabPageContainerModel"
@@ -111,6 +114,7 @@ class ControlModel(str, Enum):
 
 
 class Control(str, Enum):
+    """List of UNO control names"""
     AnimatedImages = "com.sun.star.awt.AnimatedImagesControl"
     Grid = "com.sun.star.awt.grid.UnoControlGrid"
     TabPageContainer = "com.sun.star.awt.tab.UnoControlTabPageContainer"
@@ -149,7 +153,16 @@ class Control(str, Enum):
 def place_widget(
         oWidgetModel: UnoControlModel, x: int, y: int,
         width: int, height: int):
-    """Place a widget on the widget model"""
+    """
+    Place a widget on the widget model (see
+    com.sun.star.awt.UnoControlDialogElement)
+
+    @param oWidgetModel: the model of the widget to place
+    @param x: the x position
+    @param y: the y position
+    @param width: the width of the widget
+    @param height: the height of the widget
+    """
     oWidgetModel.PositionX = x
     oWidgetModel.PositionY = y
     oWidgetModel.Width = width
@@ -161,9 +174,12 @@ Size = namedtuple("Size", ["width", "height"])
 
 def get_text_size(oDialogModel: UnoControlModel, text: str) -> Size:
     """
+    Return the size of a box containing the given text on a dialog
+    model.
+
     @param oDialogModel: the model
     @param text: the text
-    @return: the text size
+    @return: the text size (see com.sun.star.awt.Size)
     """
     oTextControl = create_uno_service(Control.FixedText)
     oTextModel = cast(UnoControlModel,
@@ -171,7 +187,7 @@ def get_text_size(oDialogModel: UnoControlModel, text: str) -> Size:
     oTextModel.Label = text
     oTextControl.setModel(oTextModel)
     min_size = oTextControl.MinimumSize
-    # Why 0.5 ? I don't know
+    # Why 0.5? I don't know
     return Size(min_size.Width * 0.5, min_size.Height * 0.5)
 
 
@@ -179,7 +195,16 @@ def message_box(msg_title: str, msg_text: str,
                 msg_type=MessageBoxType.MESSAGEBOX,
                 msg_buttons=MessageBoxButtons.BUTTONS_OK,
                 parent_win=None) -> int:
-    """Create a message box"""
+    """
+    Create a message box
+
+    @param msg_title: the title of the message box
+    @param msg_text: the text
+    @param msg_type: the type (see com.sun.star.awt.MessageBoxType)
+    @param msg_buttons: the buttons (see com.sun.star.awt.MessageBoxButtons)
+    @param parent_win: the optional parent window
+    @return: the result (see com.sun.star.awt.MessageBoxResults)
+    """
     # from https://forum.openoffice.org/fr/forum/viewtopic.php?f=15&t=47603#
     # (thanks Bernard !)
     toolkit = create_uno_service_ctxt("com.sun.star.awt.Toolkit")
@@ -191,15 +216,37 @@ def message_box(msg_title: str, msg_text: str,
 
 
 class InputBox:
-    # see https://wiki.documentfoundation.org/Macros
-    # /General/IO_to_Screen#Using_Application_Programming_Interface_(API)
-    """TODO: choose input type"""
+    """
+    A very ugly input box factory.
+    Use `InputBoxBuilder`.
 
+    Example:
+    ```
+    builder = InputBoxBuilder()
+    builder.width = 200
+    factory = builder.build()
+    factory.input("Game", "Guess the number (1-1000)")
+    """
+
+    # see https://wiki.documentfoundation.org/Macros/General/IO_to_Screen
     def __init__(
             self, width: int, height: int, hori_margin: int, vert_margin: int,
             button_width: int, button_height: int,
             hori_sep: int, vert_sep: int, label_width: int, label_height: int,
             edit_height: int):
+        """
+        @param width: the width of the box
+        @param height: the height of the box
+        @param hori_margin: the left and right margins
+        @param vert_margin: the top and bottom margins
+        @param button_width: the width of the OK / Cancel buttons
+        @param button_height: the height of the OK / Cancel buttons
+        @param hori_sep: the space between the buttons
+        @param vert_sep: the space between the label and the text box
+        @param label_width: the width of the label
+        @param label_height: the height of the label
+        @param edit_height: the height of the edit box
+        """
         self.width = width
         self.height = height
         self.hori_margin = hori_margin
@@ -215,6 +262,17 @@ class InputBox:
     def input(self, msg_title: str, msg_text: str, msg_default: str = "",
               parent_win=None, x: Optional[int] = None,
               y: Optional[int] = None) -> Optional[str]:
+        """
+        Execute an input box.
+
+        @param msg_title: the title of the input box
+        @param msg_text: the text
+        @param msg_default: the default text inside the box
+        @param parent_win: the optional parent window
+        @param x: the x position of the box
+        @param y: the y position of the box
+        @return: the value inside the input box
+        """
         if parent_win is None:
             parent_win = provider.parent_win
         toolkit = create_uno_service_ctxt("com.sun.star.awt.Toolkit")
@@ -315,8 +373,19 @@ class InputBox:
 
 
 class InputBoxBuilder:
-    # see https://wiki.documentfoundation.org/Macros/General/
-    # IO_to_Screen#Using_Application_Programming_Interface_(API)
+    """
+    A very ugly input box factory builder.
+
+    Example:
+    ```
+    builder = InputBoxBuilder()
+    builder.width = 200
+    factory = builder.build()
+    factory.input("Game", "Guess the number (1-1000)")
+    ```
+    """
+
+    # see https://wiki.documentfoundation.org/Macros/General/IO_to_Screen
     def __init__(self):
         self.width = 300
         self.height = None
@@ -341,6 +410,9 @@ class InputBoxBuilder:
     margin = property(fset=_set_margin)
 
     def build(self) -> InputBox:
+        """
+        @return: the input box factory
+        """
         if self.height is None:
             self.height = (
                     self.vert_margin + self.label_height + self.vert_sep
@@ -363,7 +435,17 @@ class InputBoxBuilder:
 def input_box(msg_title: str, msg_text: str, msg_default="", parent_win=None,
               x: Optional[int] = None,
               y: Optional[int] = None) -> str:
-    """Create an input box"""
+    """
+    Execute an input box.
+
+    @param msg_title: the title of the input box
+    @param msg_text: the text
+    @param msg_default: the default text inside the box
+    @param parent_win: the optional parent window
+    @param x: the x position of the box
+    @param y: the y position of the box
+    @return: the value inside the input box
+    """
     return InputBoxBuilder().build().input(msg_title, msg_text, msg_default,
                                            parent_win, x, y)
 
@@ -375,8 +457,19 @@ def file_dialog(title: str, filters: Optional[List[FileFilter]] = None,
                 display_dir: StrPath = "",
                 single: bool = True) -> Union[Optional[str], List[str]]:
     """
-    Open a file dialog
-    @return: if single, url or None, else a list of urls
+    Open a file dialog.
+
+    Example:
+    ```
+    urls = file_dialog(
+        "Choose csv files", [FileFilter("CSV", "*.csv")], single=False)
+    ```
+
+    @param title: the title of the dialog
+    @param filters: the filter
+    @param display_dir: the base directory of the dialog
+    @param single: if True, select one files, otherwise allows multiple selction.
+    @return: if single is True, url or None, else a list of urls
     """
     oFilePicker = create_uno_service("com.sun.star.ui.dialogs.FilePicker")
     if filters is not None:
@@ -403,7 +496,14 @@ def file_dialog(title: str, filters: Optional[List[FileFilter]] = None,
 def folder_dialog(title: str,
                   display_dir: StrPath = "") -> Optional[str]:
     """
-    Open a file dialog
+    Open a folder/directory dialog.
+
+    Example:
+    ```
+    urls = folder_dialog("Choose csv files folder")
+    ```
+
+    @param title: the title of the dialog
     @return: url or None
     """
     oFolder = create_uno_service("com.sun.star.ui.dialogs.FolderPicker")
@@ -422,7 +522,222 @@ Progress = NamedTuple("Progress",
                       [("min", int), ("max", int)])
 
 
+def _set_rectangle(oWidgetModel: UnoControlModel, rectangle: Rectangle):
+    """
+    Place a widget on the widget model (see
+    com.sun.star.awt.UnoControlDialogElement)
+
+    @param oWidgetModel: the model of the widget to place
+    @param rectangle: the position and size of the widget
+    """
+    oWidgetModel.PositionX = rectangle.x
+    oWidgetModel.PositionY = rectangle.y
+    oWidgetModel.Width = rectangle.w
+    oWidgetModel.Height = rectangle.h
+
+
+# ProgressExecutor
+class VoidProgressHandler:
+    """
+    A VoidProgressHandler. This is the base class for ProgressHandler.
+
+    A progress handler allows to trigger a progress, to set a progress value
+    or to set a progress text.
+
+    Typically, it is passed to a function as the only parameter:
+
+    ```
+    progress_handler = VoidProgressHandler() # or another handler
+    def myfunc(progress_handler: VoidProgressHandler):
+        do_something()
+        progress_handler.progress(10)
+        progress_handler.message("Something done")
+        ...
+    ```
+
+    The function may set the `response` attribute of the progress_handler to
+    return a value.
+    """
+
+    def __init__(self):
+        self.response = None
+
+    def progress(self, n: int):
+        """
+        Update the progress value
+        @param n: number of steps since the last progress
+        """
+        pass
+
+    def set(self, i: int):
+        """
+        Set the progress value
+        @param i: total number of steps since the beginning
+        """
+        pass
+
+    def reset(self):
+        """
+        Reset the progress value
+        """
+        pass
+
+    def message(self, text: str):
+        """
+        Set a progress message
+        @param text: the text
+        """
+        pass
+
+
+class ProgressHandler(VoidProgressHandler):
+    """
+    A ProgressHandler will send progress value updates to a progress bar
+    and the progress message to a text box.
+
+    Typically, it is passed to a function as the only parameter:
+
+    ```
+    progress_handler = ProgressHandler(...) # or another handler
+    def myfunc(progress_handler: VoidProgressHandler):
+        do_something()
+        progress_handler.progress(10)
+        progress_handler.message("Something done")
+        ...
+    ```
+
+    The function may set the `response` attribute of the progress_handler to
+    return a value.
+    """
+
+    def __init__(self, oBar: UnoControlModel, bar_progress_min: int,
+                 bar_progress_max: int, oText: UnoControl):
+        """
+        @param oBar: the progress bar (see: com.sun.star.awt.UnoControlProgressBar)
+        @param bar_progress_min: the minimum progress value
+        @param bar_progress_max: the maximum progress value
+        @param oText: the progress text box (see: com.sun.star.awt.UnoControlFixedTextModel)
+        """
+        VoidProgressHandler.__init__(self)
+        self._oBar = oBar
+        self._oBar.Value = bar_progress_min
+        self._bar_progress_min = bar_progress_min
+        self._bar_progress_max = bar_progress_max
+        self._oText = oText
+        self.response = None
+
+    def progress(self, n: int = 1):
+        self._oBar.Value = self._oBar.Value + n
+        if self._oBar.Value > self._bar_progress_max:
+            self._oBar.Value = self._bar_progress_max
+
+    def set(self, i: int):
+        if i > self._bar_progress_max:
+            self._oBar.Value = self._bar_progress_max
+        else:
+            self._oBar.Value = i
+
+    def reset(self):
+        self._oBar.Value = self._bar_progress_min
+
+    def message(self, text: str):
+        self._oText.Text = text
+
+
+class ProgressExecutor:
+    """
+    A ProgressExecutor takes a dialog that contains a progress bar
+    and a progress text box. It will then execute a function.
+
+    See ProgressExecutorBuilder for a convenient way to create this object.
+
+    ```
+    def myfunc(progress_handler: VoidProgressHandler):
+        do_something()
+        progress_handler.progress(10)
+        progress_handler.message("Something done")
+        ...
+        progress_handler.response = "OK"
+
+    executor = ProgressExecutor.create(...)
+    executor.execute(func)
+    x = executor.response
+    ```
+    """
+
+    @staticmethod
+    def create(oDialog: UnoControl, autoclose: bool,
+               oBar: UnoControlModel, bar_progress_min: int,
+               bar_progress_max: int, oText: UnoControl) -> "ProgressExecutor":
+        """
+        @param oDialog: the dialog containing the bar and the text box
+        @param autoclose: if True, close the dialog when the function is executed
+        @param oBar: the progress bar (see: com.sun.star.awt.UnoControlProgressBar)
+        @param bar_progress_min: the minimum progress value
+        @param bar_progress_max: the maximum progress value
+        @param oText: the progress text box (see: com.sun.star.awt.UnoControlFixedTextModel)
+        """
+        progress_handler = ProgressHandler(
+            oBar, bar_progress_min, bar_progress_max, oText)
+        return ProgressExecutor(oDialog, autoclose, progress_handler)
+
+    def __init__(self, oDialog: UnoControl, autoclose: bool,
+                 progress_handler: VoidProgressHandler):
+        """
+        @param oDialog: the dialog containing the bar and the text box
+        @param autoclose: if True, close the dialog when maximum is reached
+        @param progress_handler: the progress handler
+        """
+        self._oDialog = oDialog
+        self._autoclose = autoclose
+        self._progress_handler = progress_handler
+
+    def execute(self, func: Callable[[VoidProgressHandler], None]):
+        """
+        Execute the function in a thread and reverberate ProgressHandler
+        commands to the dialog.
+
+        @param func: a function that takes a `ProgressHandler` object. The
+        function may set the `response` attribute of the progress_handler to
+        return a value.
+        """
+        toolkit = create_uno_service("com.sun.star.awt.Toolkit")
+
+        def aux():
+            self._oDialog.setVisible(True)
+            self._oDialog.createPeer(toolkit, None)
+            func(self._progress_handler)
+            if self._autoclose:
+                # free all resources as soon as the function is executed
+                self._oDialog.dispose()
+            else:
+                # wait for the user to close the window
+                self._oDialog.execute()
+
+        t = Thread(target=aux)
+        t.start()
+
+    @property
+    def response(self) -> Any:
+        """
+        Get the response from the handler.
+
+        @return: the response
+        """
+        return self._progress_handler.response
+
+
 class ProgressExecutorBuilder:
+    """
+    A ProgessExecutorBuilder.
+
+    Example:
+    ```
+    builder = ProgressExecutorBuilder()
+    executor = builder.title("See the progress").autoclose(True).build()
+    ```
+    """
+
     def __init__(self):
         self._oDialogModel = cast(
             UnoControlModel, create_uno_service(ControlModel.Dialog))
@@ -441,7 +756,10 @@ class ProgressExecutorBuilder:
         self._message = None
         self._autoclose = True
 
-    def build(self) -> "ProgressExecutor":
+    def build(self) -> ProgressExecutor:
+        """
+        @return: the executor
+        """
         self._oDialogModel.insertByName("bar", self._oBarModel)
         self._oDialogModel.insertByName("text", self._oTextModel)
         _set_rectangle(self._oDialogModel, self._dialog_rectangle)
@@ -461,7 +779,7 @@ class ProgressExecutorBuilder:
         if self._message is not None:
             self._oTextModel.Label = self._message
 
-        return ProgressExecutor(
+        return ProgressExecutor.create(
             self._oDialog, self._autoclose, self._oDialog.getControl("bar"),
             self._bar_progress.min, self._bar_progress.max,
             cast(UnoControl, self._oDialog.getControl("text")))
@@ -538,95 +856,128 @@ class ProgressExecutorBuilder:
         return self
 
 
-def _set_rectangle(o: Any, rectangle: Rectangle):
-    o.PositionX = rectangle.x
-    o.PositionY = rectangle.y
-    o.Width = rectangle.w
-    o.Height = rectangle.h
-
-
-class VoidProgressHandler:
+# ConsoleExecutor
+class VoidConsoleHandler:
     """
-    A progress handler
+    A VoidConsoleHandler. This is the base class for ConsoleHandler objects.
+
+    Typically, it is passed to a function as the only parameter:
+
+    ```
+    progress_handler = VoidConsoleHandler()
+    def myfunc(console_handler: VoidConsoleHandler):
+        do_something()
+        console_handler.message("Something done")
+        ...
+    ```
+
+    The function may set the `response` attribute of the coonsole_handler to
+    return a value.
     """
 
-    def progress(self, n: int):
-        """
-        Update the progress
-        @param n: number of steps since the last progress
-        """
-        pass
-
-    def set(self, i: int):
-        """
-        Set the progress
-        @param i: total number of steps since the beginning
-        """
-        pass
-
-    def reset(self):
-        """
-        Reset the progress
-        """
-        pass
-
-    def message(self, text: str):
-        """
-        Create a message
-        @param text: the text
-        """
-        pass
-
-
-class ProgressHandler(VoidProgressHandler):
-    def __init__(self, oBar: UnoControlModel, bar_progress_min: int,
-                 bar_progress_max: int, oText: UnoControl):
-        self._oBar = oBar
-        self._oBar.Value = bar_progress_min
-        self._bar_progress_min = bar_progress_min
-        self._bar_progress_max = bar_progress_max
-        self._oText = oText
+    def __init__(self):
         self.response = None
 
-    def progress(self, n: int = 1):
-        self._oBar.Value = self._oBar.Value + n
-        if self._oBar.Value > self._bar_progress_max:
-            self._oBar.Value = self._bar_progress_max
+    def message(self, text: str):
+        """
+        A message
+        @param text: the text of the message
+        """
+        pass
 
-    def set(self, i: int):
-        if i > self._bar_progress_max:
-            self._oBar.Value = self._bar_progress_max
-        else:
-            self._oBar.Value = i
 
-    def reset(self):
-        self._oBar.Value = self._bar_progress_min
+class ConsoleHandler(VoidConsoleHandler):
+    """
+    A ConsoleHandler will send the progress message to a text box.
+
+    Typically, it is passed to a function as the only parameter:
+
+    ```
+    progress_handler = ConsoleHandler(...)
+    def myfunc(console_handler: ConsoleHandler):
+        do_something()
+        console_handler.message("Something done")
+        ...
+    ```
+
+    The function may set the `response` attribute of the coonsole_handler to
+    return a value.
+    """
+
+    def __init__(self, oText: UnoControl):
+        self._oText = oText
+        self.response = None
+        self._cur_pos = 0
+        self._selection = uno.createUnoStruct('com.sun.star.awt.Selection')
 
     def message(self, text: str):
-        self._oText.Text = text
+        """
+        Add a message to the console
+        @param text: the text of the message
+        """
+        self._selection.Min = self._cur_pos
+        self._selection.Max = self._cur_pos
+        self._oText.insertText(self._selection, text + "\n")
+        self._cur_pos += len(text) + 1
 
 
-class ProgressExecutor:
-    def __init__(
-            self, oDialog: UnoControl, autoclose: bool,
-            oBar: UnoControlModel, bar_progress_min: int,
-            bar_progress_max: int, oText: UnoControl):
+class ConsoleExecutor:
+    """
+    A ConsoleExecutor takes a dialog that contains a progress text box.
+    It will then execute a function.
+
+    See ConsoleExecutorBuilder for a convenient way to create this object.
+
+    ```
+    def myfunc(console_handler: VoidProgressHandler):
+        do_something()
+        console_handler.message("Something done")
+        ...
+        console_handler.response = "OK"
+
+    executor = ConsoleExecutor.create(...)
+    executor.execute(func)
+    x = executor.response
+    ```
+    """
+
+    @staticmethod
+    def create(oDialog: UnoControl, autoclose: bool,
+               oText: UnoControl) -> "ConsoleExecutor":
+        """
+        @param oDialog: the dialog containing the text box
+        @param autoclose: if True, close the dialog when the function is executed
+        @param oText: the progress text box (see: com.sun.star.awt.UnoControlFixedTextModel)
+        """
+        console_handler = ConsoleHandler(oText)
+        return ConsoleExecutor(oDialog, autoclose, console_handler)
+
+    def __init__(self, oDialog: UnoControl, autoclose: bool,
+                 console_handler: VoidConsoleHandler):
+        """
+        @param oDialog: the dialog containing the text box
+        @param autoclose: if True, close the dialog when the function is executed
+        @param console_handler: the ConsoleHandler
+        """
         self._oDialog = oDialog
         self._autoclose = autoclose
-        self._progress_handler = ProgressHandler(oBar, bar_progress_min,
-                                                 bar_progress_max, oText)
+        self._console_handler = console_handler
 
-    def execute(self, func: Callable[[ProgressHandler], None]):
+    def execute(self, func: Callable[[VoidConsoleHandler], None]):
         """
-        Execute the function with a progress bar
-        @param func: a function that takes a `ProgressDialog` object.
+        Execute the function in a thread and reverberate ConsoleHandler
+        commands to the dialog.
+
+        @param func: a function that takes a `ConsoleHandler` object. The
+        function may set the `response` attribute of the progress_handler to
+        return a value.
         """
         toolkit = create_uno_service("com.sun.star.awt.Toolkit")
 
         def aux():
             self._oDialog.setVisible(True)
             self._oDialog.createPeer(toolkit, None)
-            func(self._progress_handler)
+            func(self._console_handler)
             if self._autoclose:
                 # free all resources as soon as the function is executed
                 self._oDialog.dispose()
@@ -638,14 +989,26 @@ class ProgressExecutor:
         t.start()
 
     @property
-    def response(self) -> Any:
+    def response(self):
         """
+        Get the response from the handler.
+
         @return: the response
         """
-        return self._progress_handler.response
+        return self._console_handler.response
 
 
 class ConsoleExecutorBuilder:
+    """
+    A ConsoleExecutorBuilder
+
+    Example:
+    ```
+    builder = ConsoleExecutorBuilder()
+    executor = builder.title("See the messages").autoclose(True).build()
+    ```
+    """
+
     def __init__(self):
         self._oDialogModel = cast(
             UnoControlModel, create_uno_service(ControlModel.Dialog))
@@ -681,8 +1044,8 @@ class ConsoleExecutorBuilder:
         self._autoclose = b
         return self
 
-    def console_rectangle(self, x: int, y: int, w: int,
-                          h: int) -> "ConsoleExecutorBuilder":
+    def console_rectangle(
+            self, x: int, y: int, w: int, h: int) -> "ConsoleExecutorBuilder":
         """
         Set the dialog rectangle
 
@@ -695,7 +1058,10 @@ class ConsoleExecutorBuilder:
         self._console_rectangle = Rectangle(x, y, w, h)
         return self
 
-    def build(self) -> "ConsoleExecutor":
+    def build(self) -> ConsoleExecutor:
+        """
+        @return: the executor
+        """
         self._oDialog.setModel(self._oDialogModel)
         self._oDialogModel.insertByName("text", self._oTextModel)
         _set_rectangle(self._oDialogModel, self._console_rectangle)
@@ -704,70 +1070,6 @@ class ConsoleExecutorBuilder:
                             self._console_rectangle.h - MARGIN * 2
         )
         _set_rectangle(self._oTextModel, text_rectangle)
-        return ConsoleExecutor(
+        return ConsoleExecutor.create(
             self._oDialog, self._autoclose,
             cast(UnoControl, self._oDialog.getControl("text")))
-
-
-class VoidConsoleHandler:
-    """
-    A console handler
-    """
-
-    def message(self, text: str):
-        """
-        A message
-        @param text: the text of the message
-        """
-        pass
-
-
-class ConsoleHandler(VoidConsoleHandler):
-    def __init__(self, oText: UnoControl):
-        self._oText = oText
-        self.response = None
-        self._cur_pos = 0
-        self._selection = uno.createUnoStruct('com.sun.star.awt.Selection')
-
-    def message(self, text: str):
-        """
-        Add a message to the console
-        @param text: the text of the message
-        """
-        self._selection.Min = self._cur_pos
-        self._selection.Max = self._cur_pos
-        self._oText.insertText(self._selection, text + "\n")
-        self._cur_pos += len(text) + 1
-
-
-class ConsoleExecutor:
-    def __init__(self, oDialog: UnoControl, autoclose: bool,
-                 oText: UnoControl):
-        self._oDialog = oDialog
-        self._autoclose = autoclose
-        self._console_handler = ConsoleHandler(oText)
-
-    def execute(self, func):
-        """
-        Execute the function with a progress bar
-        @param func: a function that takes a `ProgressDialog` object.
-        """
-        toolkit = create_uno_service("com.sun.star.awt.Toolkit")
-
-        def aux():
-            self._oDialog.setVisible(True)
-            self._oDialog.createPeer(toolkit, None)
-            func(self._console_handler)
-            if self._autoclose:
-                # free all resources as soon as the function is executed
-                self._oDialog.dispose()
-            else:
-                # wait for the user to close the window
-                self._oDialog.execute()
-
-        t = Thread(target=aux)
-        t.start()
-
-    @property
-    def response(self):
-        return self._console_handler.response
