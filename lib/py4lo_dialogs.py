@@ -15,7 +15,48 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+The module py4lo_dialogs gives functions to create a LibreOffice dialog from
+scratch.
+
+Here's a full example:
+
+```
+oDialogModel = cast(UnoControlModel,
+                    create_uno_service(ControlModel.Dialog))
+oDialogModel.Title = "The title"
+place_widget(oDialogModel, 100, 100, 400, 300)
+
+oLabelModel = cast(UnoControlModel,
+                   oDialogModel.createInstance(ControlModel.FixedText))
+place_widget(oLabelModel, 10, 10, 390, 20)
+oLabelModel.Label = "A text"
+oDialogModel.insertByName("label", oLabelModel)
+
+oDialog = create_uno_service(Control.Dialog)
+oDialog.setModel(oDialogModel)
+
+oOkModel = cast(UnoControlModel,
+                oDialogModel.createInstance(ControlModel.Button))
+place_widget(oOkModel, 100, 350, 100, 20)
+oOkModel.PushButtonType = PushButtonType.OK
+oOkModel.DefaultButton = True
+oDialogModel.insertByName("button", oOkModel)
+
+oToolkit = create_uno_service_ctxt("com.sun.star.awt.Toolkit")
+oDialog.createPeer(oToolkit, None)
+
+if oDialog.execute() == ExecutableDialogResults.OK:
+    ...
+
+oDialog.dispose()
+```
+
+To load an XML dialog (like in Basic), see: `_ObjectProvider.get_dialog`
+from py4lo_helper.
+"""
 # mypy: disable-error-code="import-untyped,import-not-found"
+
 from collections import namedtuple
 from enum import Enum
 from threading import Thread
@@ -275,7 +316,7 @@ class InputBox:
         """
         if parent_win is None:
             parent_win = provider.parent_win
-        toolkit = create_uno_service_ctxt("com.sun.star.awt.Toolkit")
+        oToolkit = create_uno_service_ctxt("com.sun.star.awt.Toolkit")
 
         if x is None or y is None:
             ps = parent_win.PosSize
@@ -295,22 +336,22 @@ class InputBox:
         self._create_cancel_model(oDialogModel, "btn_cancel")
         self._create_ok_model(oDialogModel, "btn_ok")
 
-        dialog = create_uno_service(Control.Dialog)
-        dialog.setModel(oDialogModel)
+        oDialog = create_uno_service(Control.Dialog)
+        oDialog.setModel(oDialogModel)
 
-        dialog.createPeer(toolkit, parent_win)
+        oDialog.createPeer(oToolkit, parent_win)
 
-        oEditControl = dialog.getControl("edit")
+        oEditControl = oDialog.getControl("edit")
         oEditControl.setSelection(
             create_uno_struct("com.sun.star.awt.Selection", Min=0,
                               Max=len(msg_default)))
         oEditControl.setFocus()
 
-        if dialog.execute() == ExecutableDialogResults.CANCEL:
+        if oDialog.execute() == ExecutableDialogResults.CANCEL:
             return None
 
         ret = oEditControl.Text
-        dialog.dispose()
+        oDialog.dispose()
         return ret
 
     def _create_label_model(self, oDialogModel: UnoControlModel, name: str,
@@ -701,11 +742,11 @@ class ProgressExecutor:
         function may set the `response` attribute of the progress_handler to
         return a value.
         """
-        toolkit = create_uno_service("com.sun.star.awt.Toolkit")
+        oToolkit = create_uno_service("com.sun.star.awt.Toolkit")
 
         def aux():
             self._oDialog.setVisible(True)
-            self._oDialog.createPeer(toolkit, None)
+            self._oDialog.createPeer(oToolkit, None)
             func(self._progress_handler)
             if self._autoclose:
                 # free all resources as soon as the function is executed
@@ -972,11 +1013,11 @@ class ConsoleExecutor:
         function may set the `response` attribute of the progress_handler to
         return a value.
         """
-        toolkit = create_uno_service("com.sun.star.awt.Toolkit")
+        oToolkit = create_uno_service("com.sun.star.awt.Toolkit")
 
         def aux():
             self._oDialog.setVisible(True)
-            self._oDialog.createPeer(toolkit, None)
+            self._oDialog.createPeer(oToolkit, None)
             func(self._console_handler)
             if self._autoclose:
                 # free all resources as soon as the function is executed
