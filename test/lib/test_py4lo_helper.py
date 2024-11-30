@@ -31,10 +31,10 @@ from py4lo_helper import (
     make_sort_field, get_last_used_row, get_used_range_address, get_used_range,
     narrow_range_to_address, get_range_size, copy_range, paste_range,
     narrow_range, top_void_row_count, bottom_void_row_count,
-    left_void_row_count, right_void_row_count, data_array,
+    left_void_column_count, right_void_column_count, data_array,
     ListValidationBuilder, set_validation_list_by_cell, sort_range,
     quote_element, clear_conditional_format, conditional_format_on_formulas,
-    get_formula_conditional_entry, find_or_create_number_format_style,
+    get_formula_conditional_entry_values, find_or_create_number_format_style,
     create_filter, row_as_header, column_optimal_width, set_print_area,
     get_page_style, set_paper, add_link, _wrap_text, open_in_calc, Target,
     new_doc, NewDocumentUrl, doc_builder, create_uno_service_ctxt,
@@ -771,36 +771,36 @@ class HelperDataArrayTestCase(unittest.TestCase):
         ]
         self.assertEqual(1, top_void_row_count(data_array))
         self.assertEqual(2, bottom_void_row_count(data_array))
-        self.assertEqual(2, left_void_row_count(data_array))
-        self.assertEqual(1, right_void_row_count(data_array))
+        self.assertEqual(2, left_void_column_count(data_array))
+        self.assertEqual(1, right_void_column_count(data_array))
 
     def test_row_count_no_row(self):
         data_array = []
         self.assertEqual(0, top_void_row_count(data_array))
         self.assertEqual(0, bottom_void_row_count(data_array))
-        self.assertEqual(0, left_void_row_count(data_array))
-        self.assertEqual(0, right_void_row_count(data_array))
+        self.assertEqual(0, left_void_column_count(data_array))
+        self.assertEqual(0, right_void_column_count(data_array))
 
     def test_row_count_one_cell(self):
         data_array = [("",)]
         self.assertEqual(1, top_void_row_count(data_array))
         self.assertEqual(1, bottom_void_row_count(data_array))
-        self.assertEqual(1, left_void_row_count(data_array))
-        self.assertEqual(1, right_void_row_count(data_array))
+        self.assertEqual(1, left_void_column_count(data_array))
+        self.assertEqual(1, right_void_column_count(data_array))
 
     def test_row_count_one_row(self):
         data_array = [("", "")]
         self.assertEqual(1, top_void_row_count(data_array))
         self.assertEqual(1, bottom_void_row_count(data_array))
-        self.assertEqual(2, left_void_row_count(data_array))
-        self.assertEqual(2, right_void_row_count(data_array))
+        self.assertEqual(2, left_void_column_count(data_array))
+        self.assertEqual(2, right_void_column_count(data_array))
 
     def test_row_count_one_col(self):
         data_array = [("",), ("",)]
         self.assertEqual(2, top_void_row_count(data_array))
         self.assertEqual(2, bottom_void_row_count(data_array))
-        self.assertEqual(1, left_void_row_count(data_array))
-        self.assertEqual(1, right_void_row_count(data_array))
+        self.assertEqual(1, left_void_column_count(data_array))
+        self.assertEqual(1, right_void_column_count(data_array))
 
     def test_row_count2(self):
         data_array = [
@@ -814,8 +814,8 @@ class HelperDataArrayTestCase(unittest.TestCase):
         ]
         self.assertEqual(1, top_void_row_count(data_array))
         self.assertEqual(2, bottom_void_row_count(data_array))
-        self.assertEqual(2, left_void_row_count(data_array))
-        self.assertEqual(1, right_void_row_count(data_array))
+        self.assertEqual(2, left_void_column_count(data_array))
+        self.assertEqual(1, right_void_column_count(data_array))
 
     def test_row_count_empty(self):
         data_array = [
@@ -827,8 +827,8 @@ class HelperDataArrayTestCase(unittest.TestCase):
         ]
         self.assertEqual(5, top_void_row_count(data_array))
         self.assertEqual(5, bottom_void_row_count(data_array))
-        self.assertEqual(7, left_void_row_count(data_array))
-        self.assertEqual(7, right_void_row_count(data_array))
+        self.assertEqual(7, left_void_column_count(data_array))
+        self.assertEqual(7, right_void_column_count(data_array))
 
     @mock.patch("py4lo_helper.get_used_range")
     def test_data_array(self, gura):
@@ -1024,7 +1024,7 @@ class HelperFormattingTestCase(unittest.TestCase):
         mk_pv.side_effect = [1, 2, 3, 4, 5]
 
         # play
-        ret = get_formula_conditional_entry("A1=0", "foo", oCellAddress)
+        ret = get_formula_conditional_entry_values("A1=0", "foo", oCellAddress)
 
         # verify
         self.assertEqual((1, 2, 3, 4, 5), ret)
