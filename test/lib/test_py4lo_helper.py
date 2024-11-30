@@ -1000,7 +1000,7 @@ class HelperFormattingTestCase(unittest.TestCase):
         # verify
         self.assertEqual([mock.call.clear()], oFormat.mock_calls)
 
-    @mock.patch("py4lo_helper.get_formula_conditional_entry")
+    @mock.patch("py4lo_helper.get_formula_conditional_entry_values")
     def test_conditional_format_on_formulas(self, gfce):
         # prepare
         oFormat = mock.Mock()
@@ -1097,7 +1097,7 @@ class HelperFormattingTestCase(unittest.TestCase):
         self.assertEqual([
             mock.call.createInstance('com.sun.star.frame.DispatchHelper'),
             mock.call.createInstance().executeDispatch(
-                oController, '.uno:DataFilterAutoFilter', '', 0, [])
+                oController, '.uno:DataFilterAutoFilter', '', 0, tuple())
         ], self.sm.mock_calls)
 
     def test_row_as_header(self):
@@ -1616,7 +1616,7 @@ class HelperOpenTestCase(unittest.TestCase):
         # prepare
         sheets = [mock.Mock(Name=str(i)) for i in range(3)]
         oSheets = mock.Mock()
-        oSheets.getCount.side_effect = [3]
+        oSheets.Count = 3
         oSheets.getByIndex.side_effect = lambda i: sheets[i]
         oDoc = mock.Mock(Sheets=oSheets)
         py4lo_helper.provider.desktop.loadComponentFromURL.side_effect = [oDoc]
@@ -1636,6 +1636,7 @@ class HelperOpenTestCase(unittest.TestCase):
         ], py4lo_helper.provider.desktop.mock_calls)
         self.assertEqual([
             mock.call.lockControllers(),
+            mock.call.Sheets.getByIndex(0),
             mock.call.Sheets.getByIndex(0),
             mock.call.Sheets.copyByName('0', 'a', 1),
             mock.call.Sheets.copyByName('0', 'b', 2),

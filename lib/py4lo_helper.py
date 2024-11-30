@@ -1580,7 +1580,7 @@ class DocBuilder:
                 raise AssertionError("s={} vs oSheets.Count={}".format(
                     s, oSheets.getCount()))
             if self._trunc_if_necessary:
-                self._trunc_to_count(s)
+                self._trunc_to_count(oDoc, s)
 
         return self
 
