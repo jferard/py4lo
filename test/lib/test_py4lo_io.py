@@ -199,8 +199,7 @@ class Py4LOIOTestCase(unittest.TestCase):
             [15, 15]
         ], list(r))
 
-    @mock.patch("py4lo_io.get_used_range_address")
-    def test_reader(self, gura):
+    def test_reader(self):
         # prepare
         oSheet = mock.Mock()
         oRange = mock.Mock(
@@ -222,8 +221,7 @@ class Py4LOIOTestCase(unittest.TestCase):
         ], list(r))
 
     @mock.patch("py4lo_io.get_cell_type")
-    @mock.patch("py4lo_io.get_used_range_address")
-    def test_reader_accurate(self, gura, gct):
+    def test_reader_accurate(self, gct):
         # prepare
         gct.side_effect = ['TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'EMPTY']
         oSheet = mock.Mock()
