@@ -1426,7 +1426,7 @@ def open_document(filename: Union[str, Path], target: str = Target.BLANK,
     Other example:
     ```
     oDoc = open_document("a_csv_doc.csv",
-        FilterName="Text - txt - csv (StarCalc)",
+        FilterName=Filter.CSV,
         FilterOptions=create_import_filter_options(delimiter=';', encoding='latin-1'),
         Hidden=True
     )

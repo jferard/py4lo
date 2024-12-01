@@ -31,7 +31,7 @@ from py4lo_helper import (provider as pr, make_pvs, parent_doc, get_cell_type,
                           get_used_range_address, Target,
                           FrameSearchFlag)
 from py4lo_typing import (UnoCell, UnoSheet, UnoSpreadsheetDocument,
-                          StrPath, UnoService)
+                          StrPath, UnoService, UnoRange)
 
 try:
     # noinspection PyUnresolvedReferences
@@ -47,6 +47,13 @@ except (ModuleNotFoundError, ImportError):
 
 
 class CellTyping(Enum):
+    """
+    The typing for the cell read (see. create_read_cell).
+
+    * "String" means: always return a string
+    * "Minimal" means: return None, a string or a float
+    * "Accurate" means: return None, a string, a float, a date or a bool
+    """
     String = 0
     Minimal = 1
     Accurate = 2
@@ -60,7 +67,8 @@ def create_read_cell(cell_typing: CellTyping = CellTyping.Minimal,
                      oFormats: Optional[UnoService] = None
                      ) -> Callable[[UnoCell], Any]:
     """
-    Create a function to read a cell
+    Create a function to read a cell.
+
     @param cell_typing: one of `CellTyping.String` (return the String value),
                       `CellTyping.Minimal` (String or Value),
                       `CellTyping.Accurate` (the most accurate type)
@@ -70,7 +78,8 @@ def create_read_cell(cell_typing: CellTyping = CellTyping.Minimal,
 
     def read_cell_string(oCell: UnoCell) -> str:
         """
-        Read a cell value
+        Read a cell value as a string
+
         @param oCell: the cell
         @return: the cell value as string
         """
@@ -78,7 +87,8 @@ def create_read_cell(cell_typing: CellTyping = CellTyping.Minimal,
 
     def read_cell_minimal(oCell: UnoCell) -> Any:
         """
-        Read a cell value
+        Read a cell value as None, a float or a string (as in a DataArray)
+
         @param oCell: the cell
         @return: the cell value as float or str
         """
@@ -95,7 +105,8 @@ def create_read_cell(cell_typing: CellTyping = CellTyping.Minimal,
 
     def read_cell_accurate(oCell: UnoCell) -> Any:
         """
-        Read a cell value
+        Read a cell value as any value.
+
         @param oCell: the cell
         @return: the cell value as float, bool, date or str
         """
@@ -133,22 +144,53 @@ def create_read_cell(cell_typing: CellTyping = CellTyping.Minimal,
 
 class reader(Iterator[List[Any]]):
     """
-    A reader that returns rows as lists of values.
+    A reader that returns rows of a range as lists of values.
+
+    Example:
+    ```
+    oRange = ...
+    r = reader.from_typing(oRange, cell_typing=CellTyping.Accurate)
+    for row in r:
+        print(row)
+    ```
     """
 
-    def __init__(self, oSheet: UnoSheet,
-                 cell_typing: CellTyping = CellTyping.Minimal,
-                 oFormats: Optional[UnoService] = None,
-                 read_cell: Optional[Callable[[UnoCell], Any]] = None):
-        if read_cell is not None:
-            self._read_cell = read_cell
-        else:
-            if cell_typing == CellTyping.Accurate and oFormats is None:
-                oFormats = oSheet.DrawPage.Forms.Parent.NumberFormats
-            self._read_cell = create_read_cell(cell_typing, oFormats)
-        self._oSheet = oSheet
+    @staticmethod
+    def from_typing(
+            oRange: UnoRange,
+            cell_typing: CellTyping = CellTyping.Minimal,
+            oFormats: Optional[UnoService] = None
+    ) -> "reader":
+        if cell_typing == CellTyping.Minimal:
+            return iter(oRange.DataArray)
+
+        oSheet = oRange.Spreadsheet
+        if cell_typing == CellTyping.Accurate and oFormats is None:
+            oFormats = oSheet.DrawPage.Forms.Parent.NumberFormats
+
+        read_cell = create_read_cell(cell_typing, oFormats)
+        return reader(oRange, read_cell)
+
+    @staticmethod
+    def from_read_cell(
+            oRange: UnoRange, read_cell: Callable[[UnoCell], Any]
+    ) -> "reader":
+        """
+        @param oRange: the range
+        @param read_cell: the read_cell function
+        """
+        return reader(oRange, read_cell)
+
+    def __init__(self, oRange: UnoRange,
+                 read_cell: Callable[[UnoCell], Any]):
+        """
+        @param oRange: the range
+        @param read_cell: the read_cell function
+        """
+        self._read_cell = read_cell
+        self._oSheet = oRange.Spreadsheet
         self.line_num = 0
-        self._oRangeAddress = get_used_range_address(oSheet)
+        self._oRangeAddress = oRange.RangeAddress
 
     def __iter__(self) -> "reader":
         return self
@@ -172,16 +214,71 @@ class reader(Iterator[List[Any]]):
 
 class dict_reader:
     """
-    A reader that returns rows as dicts.
+    A reader that returns rows of a range as dicts.
+
+    Example:
+    ```
+    oRange = ...
+    r = dict_reader.from_typing(oRange, cell_typing=CellTyping.Accurate)
+    for d in r:
+        print(d)
+    ```
     """
 
-    def __init__(self, oSheet: UnoSheet,
-                 fieldnames: Optional[Tuple[str, ...]] = None,
-                 restkey: Optional[str] = None,
-                 restval: Optional[Any] = None,
-                 cell_typing=CellTyping.Minimal, oFormats=None,
-                 read_cell=None):
-        self._reader = reader(oSheet, cell_typing, oFormats, read_cell)
+    @staticmethod
+    def from_typing(
+            oRange: UnoRange,
+            fieldnames: Optional[Tuple[str, ...]] = None,
+            restkey: Optional[str] = None,
+            restval: Optional[Any] = None,
+            cell_typing: CellTyping = CellTyping.Minimal,
+            oFormats: Optional[UnoService] = None
+    ) -> "dict_reader":
+        """
+        @param oSheet: the sheet
+        @param fieldnames: the names of the fields. If None, the fields are
+        read from the first line
+        @param restkey: the key for additional values
+        @param restval: the value for missings fieldnames
+        @param cell_typing: the cell typing level (ignored if read_cell is set)
+        @param oFormats: the formats of the document (ignored if read_cell is set)
+        """
+        r = reader.from_typing(oRange, cell_typing, oFormats)
+        return dict_reader(r, fieldnames, restkey, restval)
+
+    @staticmethod
+    def from_read_cell(
+            oRange: UnoRange,
+            read_cell: Optional[Callable[[UnoCell], Any]],
+            fieldnames: Optional[Tuple[str, ...]] = None,
+            restkey: Optional[str] = None,
+            restval: Optional[Any] = None,
+    ) -> "dict_reader":
+        """
+        @param oSheet: the sheet
+        @param fieldnames: the names of the fields. If None, the fields are
+        read from the first line
+        @param restkey: the key for additional values
+        @param restval: the value for missings fieldnames
+        @param read_cell: the read_cell function
+        """
+        r = reader.from_read_cell(oRange, read_cell)
+        return dict_reader(r, fieldnames, restkey, restval)
+
+    def __init__(
+            self, r: reader,
+            fieldnames: Optional[Tuple[str, ...]] = None,
+            restkey: Optional[str] = None,
+            restval: Optional[Any] = None
+    ):
+        """
+        @param r: the reader (see. reader)
+        @param fieldnames: the names of the fields. If None, the fields are
+        read from the first line
+        @param cell_typing: the cell typing level (ignored if read_cell is set)
+        @param oFormats: the formats of the document (ignored if read_cell is set)
+        """
+        self._reader = r
         if fieldnames is None:
             self.fieldnames = tuple(
                 [v.strip() if isinstance(v, str) else "" for v in
@@ -212,7 +309,8 @@ class dict_reader:
             return d
 
     @property
-    def line_num(self):
+    def line_num(self) -> int:
+        """The number of the line"""
         return self._reader.line_num
 
 
@@ -222,9 +320,18 @@ class dict_reader:
 def find_number_format_style(oFormats: UnoService, format_id: NumberFormat,
                              oLocale: Locale = Locale()) -> int:
     """
-    @param oFormats: the formats
+    Find the number format style number. Use the return value for
+    oCell.NumberFormat.
+
+    Example:
+    ```
+    oCell.NumberFormat = find_number_format_style(
+        oDoc.NumberFormats, NumberFormat.DATE)
+    ```
+
+    @param oFormats: the formats (see. com.sun.star.util.NumberFormats)
     @param format_id: a NumberFormat
-    @param oLocale: the locale
+    @param oLocale: the locale (see. com.sun.star.lang.Locale)
     @return: the id of the format
     """
     return oFormats.getStandardFormat(format_id, oLocale)
@@ -234,7 +341,14 @@ def create_write_cell(cell_typing: CellTyping = CellTyping.Minimal,
                       oFormats: Optional[UnoService] = None
                       ) -> Callable[[UnoCell, Any], None]:
     """
-    Create a cell writer
+    Create a cell writer.
+
+    Example:
+    ```
+    write_cell = create_write_cell(CellTyping.Accurate)
+    write_cell(oCell, dt.datetime.now())
+    ```
+
     @param cell_typing: see `create_read_cell`
     @param oFormats: the NumberFormats
     @return: a function
@@ -242,7 +356,8 @@ def create_write_cell(cell_typing: CellTyping = CellTyping.Minimal,
 
     def write_cell_string(oCell: UnoCell, value: Any):
         """
-        Write a cell value
+        Write a cell value.
+
         @param oCell: the cell
         @param value: the value
         """
@@ -250,7 +365,8 @@ def create_write_cell(cell_typing: CellTyping = CellTyping.Minimal,
 
     def write_cell_minimal(oCell: UnoCell, value: Any):
         """
-        Write a cell value
+        Write a cell value.
+
         @param oCell: the cell
         @param value: the value
         """
@@ -259,7 +375,7 @@ def create_write_cell(cell_typing: CellTyping = CellTyping.Minimal,
         elif isinstance(value, str):
             oCell.String = value
         elif isinstance(value, (date, datetime, time)):
-            oCell.Value = date_to_float(value)
+            oCell.Value = date_to_float(value)  # to use oDoc.NullDate
         elif isinstance(value, bool):
             oCell.Value = int(value)
         else:
@@ -267,27 +383,31 @@ def create_write_cell(cell_typing: CellTyping = CellTyping.Minimal,
 
     def create_write_cell_all(oFormats: UnoService
                               ) -> Callable[[UnoCell, Any], None]:
-        # todo: Add locale parameter
+        """
+        @param oFormats: the formats (see. com.sun.star.util.NumberFormats)
+        @return: the function
+        """
+        # TODO: Add locale parameter
         date_id = find_number_format_style(oFormats, NumberFormat.DATE)
         datetime_id = find_number_format_style(oFormats, NumberFormat.DATETIME)
         boolean_id = find_number_format_style(oFormats, NumberFormat.LOGICAL)
 
         def write_cell_all(oCell: UnoCell, value: Any):
             """
-            Write a cell value
+            Write a cell value and the format according to the type of the value.
+
             @param oCell: the cell
             @param value: the value
-            @return: the cell value as float or text
             """
             if value is None:
                 oCell.String = ""
             elif isinstance(value, str):
                 oCell.String = value
             elif isinstance(value, (datetime, time)):
-                oCell.Value = date_to_float(value)
+                oCell.Value = date_to_float(value)  # to use oDoc.NullDate
                 oCell.NumberFormat = datetime_id
             elif isinstance(value, date):
-                oCell.Value = date_to_float(value)
+                oCell.Value = date_to_float(value)  # to use oDoc.NullDate
                 oCell.NumberFormat = date_id
             elif isinstance(value, bool):
                 oCell.Value = int(value)
@@ -311,24 +431,64 @@ def create_write_cell(cell_typing: CellTyping = CellTyping.Minimal,
 
 class writer:
     """
-    A writer that takes lists
+    A writer that takes lists of values.
+
+    Example:
+    ```
+    oSheet = ...
+    w = writer.from_typing(oSheet, CellTyping.Accurate)
+    w.write_row(["foo", 1.0, dt.datetime.now()])
+    ```
     """
 
-    def __init__(self, oSheet: UnoSheet,
-                 cell_typing: CellTyping = CellTyping.Minimal,
-                 oFormats: Optional[UnoService] = None,
-                 write_cell: Optional[Callable[[UnoCell, Any], None]] = None,
-                 initial_pos: Tuple[int, int] = (0, 0)):
-        self._oSheet = oSheet
-        self._row, self._base_col = initial_pos
-        if write_cell is not None:
-            self._write_cell = write_cell
-        else:
-            if cell_typing == CellTyping.Accurate and oFormats is None:
-                oFormats = oSheet.DrawPage.Forms.Parent.NumberFormats
-            self._write_cell = create_write_cell(cell_typing, oFormats)
+    @staticmethod
+    def from_typing(
+            oSheet: UnoSheet,
+            cell_typing: CellTyping = CellTyping.Minimal,
+            oFormats: Optional[UnoService] = None,
+            initial_pos: Tuple[int, int] = (0, 0)) -> "writer":
+        """
+        @param oSheet: the destination sheet
+        @param cell_typing: a cell typing level
+        @param oFormats: the formats
+        @param initial_pos: the initial position on the sheet, as a tuple
+        """
+        if cell_typing == CellTyping.Accurate and oFormats is None:
+            oFormats = oSheet.DrawPage.Forms.Parent.NumberFormats
+        write_cell = create_write_cell(cell_typing, oFormats)
+        return writer(oSheet, write_cell, initial_pos)
 
-    def writerow(self, row):
+    @staticmethod
+    def from_write_cell(oSheet: UnoSheet,
+                        write_cell: Callable[[UnoCell, Any], None],
+                        initial_pos: Tuple[int, int] = (0, 0)) -> "writer":
+        """
+        @param oSheet: the destination sheet
+        @param write_cell: the write_cell function (write a value in a cell)
+        @param initial_pos: the initial position on the sheet, as a tuple
+        """
+        return writer(oSheet, write_cell, initial_pos)
+
+    def __init__(self, oSheet: UnoSheet,
+                 write_cell: Callable[[UnoCell, Any], None],
+                 initial_pos: Tuple[int, int] = (0, 0)):
+        """
+        @param oSheet: the destination sheet
+        @param cell_typing: a cell typing level
+        @param oFormats: the formats
+        @param write_cell: the write_cell function (write a value in a cell)
+        @param initial_pos: the initial position on the sheet, as a tuple
+        """
+        self._oSheet = oSheet
+        self._write_cell = write_cell
+        self._row, self._base_col = initial_pos
+
+    def writerow(self, row: List[Any]):
+        """
+        Write a
+        @param row:
+        @return:
+        """
         for i, value in enumerate(row, self._base_col):
             oCell = self._oSheet.getCellByPosition(i, self._row)
             self._write_cell(oCell, value)
@@ -342,29 +502,103 @@ class writer:
 class dict_writer:
     """
     A writer that takes dicts
+
+    Example:
+    ```
+    oSheet = ...
+    w = dict_writer.from_typing(oSheet, CellTyping.Accurate)
+    w.write_row({"x": "foo", "y": 1.0, "z": dt.datetime.now()})
+    ```
     """
 
-    def __init__(self, oSheet: UnoSheet, fieldnames: List[str],
-                 restval: str = '', extrasaction: str = 'raise',
-                 cell_typing: CellTyping = CellTyping.Minimal,
-                 oFormats: Optional[UnoService] = None,
-                 write_cell: Optional[Callable[[UnoCell, Any], None]] = None):
-        self.writer = writer(oSheet, cell_typing, oFormats, write_cell)
+    @staticmethod
+    def from_typing(
+            oSheet: UnoSheet,
+            fieldnames: List[str],
+            cell_typing: CellTyping = CellTyping.Minimal,
+            oFormats: Optional[UnoService] = None,
+            restval: str = '', extrasaction: str = 'raise',
+            initial_pos: Tuple[int, int] = (0, 0)) -> "dict_writer":
+        """
+        @param oSheet: the destination sheet
+        @param fieldnames: the names of the fields. If None, the fields are
+        read from the first line
+        @param restval: the value for missings fieldnames
+        @param extrasaction: if "raise", raise an exception
+        @param cell_typing: a cell typing level
+        @param oFormats: the formats
+        @param initial_pos: the initial position on the sheet, as a tuple
+        """
+        if cell_typing == CellTyping.Accurate and oFormats is None:
+            oFormats = oSheet.DrawPage.Forms.Parent.NumberFormats
+        write_cell = create_write_cell(cell_typing, oFormats)
+        return dict_writer(oSheet, write_cell, fieldnames, restval,
+                           extrasaction, initial_pos)
+
+    @staticmethod
+    def from_write_cell(
+            oSheet: UnoSheet,
+            fieldnames: List[str],
+            write_cell: Callable[[UnoCell, Any], None],
+            restval: str = '', extrasaction: str = 'raise',
+            initial_pos: Tuple[int, int] = (0, 0)) -> "dict_writer":
+        """
+        @param oSheet: the destination sheet
+        @param fieldnames: the names of the fields. If None, the fields are
+        read from the first line
+        @param restval: the value for missings fieldnames
+        @param extrasaction: if "raise", raise an exception
+        @param write_cell: the write_cell function (write a value in a cell)
+        @param initial_pos: the initial position on the sheet, as a tuple
+        """
+        return dict_writer(oSheet, write_cell, fieldnames, restval,
+                           extrasaction, initial_pos)
+
+    def __init__(
+            self, oSheet: UnoSheet,
+            write_cell: Callable[[UnoCell, Any], None],
+            fieldnames: List[str],
+            restval: str = '', extrasaction: str = 'raise',
+            initial_pos: Tuple[int, int] = (0, 0)
+    ):
+        """
+        @param oSheet: the destination sheet
+        @param fieldnames: the names of the fields. If None, the fields are
+        read from the first line
+        @param restval: the value for missings fieldnames
+        @param extrasaction: if "raise", raise an exception
+        @param write_cell: the write_cell function (write a value in a cell)
+        @param initial_pos: the initial position on the sheet, as a tuple
+        """
+        self.writer = writer.from_write_cell(oSheet, write_cell, initial_pos)
         self.fieldnames = fieldnames
         self._set_fieldnames = set(fieldnames)
         self.restval = restval
         self.extrasaction = extrasaction
 
     def writeheader(self):
+        """
+        Write the header
+        """
         self.writer.writerow(self.fieldnames)
 
     def writerow(self, row: Mapping[str, Any]):
+        """
+        Write a row
+
+        @param row: a mapping key -> value.
+        """
         if self.extrasaction == 'raise' and set(row) - self._set_fieldnames:
             raise ValueError()
         flat_row = [row.get(name, self.restval) for name in self.fieldnames]
         self.writer.writerow(flat_row)
 
     def writerows(self, rows: Iterable[Mapping[str, Any]]):
+        """
+        Write rows
+
+        @param rows: an iterable of mappings key -> value.
+        """
         for row in rows:
             self.writerow(row)
 
@@ -372,10 +606,17 @@ class dict_writer:
 #####################
 # Import/Export CSV #
 #####################
+#
+# A CSV import requires a FilterName and some FilterOptions:
+#
 ###
-# Filters
+# FilterName
+# See https://help.libreoffice.org/latest/en-US/text/shared/guide/convertfilters.html
 ###
 class Filter(str, Enum):
+    """
+    See. https://help.libreoffice.org/latest/en-US/text/shared/guide/convertfilters.html
+    """
     XML = "StarOffice XML (Calc)"  # Standard XML filter
     # XML filter for templates
     XML_TEMPLATE = "calc_StarOffice_XML_Calc_Template"
@@ -408,8 +649,20 @@ class Filter(str, Enum):
     DIF = "DIF"  # Data Interchange Format
 
 
-# see https://api.libreoffice.org/docs/cpp/ref/a00391_source.html
-# (rtl/textenc.h)
+###
+# FilterOptipns
+# See https://help.libreoffice.org/latest/en-US/text/shared/guide/csv_params.html
+# token 1 & 2 : field separator & delimiter
+# token 3 : char set
+# token 4 : line start
+# token 5 : cell formats
+# token 6 : language id
+# ...
+###
+##########
+# TOKEN 3
+# see https://api.libreoffice.org/docs/cpp/ref/a00391_source.html (rtl/textenc.h)
+##########
 CHARSET_ID_BY_NAME = {
     'unknown': 0,
     'cp1252': 1,
@@ -511,17 +764,37 @@ CHARSET_ID_BY_NAME = {
     'utf_32': 65534,
     'utf_16': 65535,
 }
+"""
+A mapping charset name -> charset id for token 3 of CSV FilterOptions 
+(see https://api.libreoffice.org/docs/cpp/ref/a00391_source.html (rtl/textenc.h)
+"""
 
-FORMAT_STANDARD = 1
-FORMAT_TEXT = 2
-FORMAT_MM_DD_YY = 3
-FORMAT_DD_MM_YY = 4
-FORMAT_YY_MM_DD = 5
-FORMAT_IGNORE = 9
-FORMAT_US_ENGLISH = 10
 
-# see https://docs.microsoft.com/en-us/openspecs/office_standards
-# /ms-oe376/6c085406-a698-4e12-9d4d-c3b0ee3dbc4a
+##########
+# TOKEN 5
+# See.https://help.libreoffice.org/latest/en-US/text/shared/guide/csv_params.html
+##########
+class Format(IntEnum):
+    """
+    Formatting Codes for Token 5
+
+    See. https://help.libreoffice.org/latest/en-US/text/shared/guide/csv_params.html
+    "Formatting Codes for Token 5".
+    """
+    STANDARD = 1  # Standard
+    TEXT = 2  # Text
+    MM_DD_YY = 3  # MM/DD/YY
+    DD_MM_YY = 4  # DD/MM/YY
+    YY_MM_DD = 5  # YY/MM/DD
+    IGNORE = 9  # IGNORE FIELD (do not import)
+    US = 10  # US-English
+
+
+##########
+# TOKEN 6
+# see https://docs.microsoft.com/en-us/openspecs/office_standards/ms-oe376/6c085406-a698-4e12-9d4d-c3b0ee3dbc4a
+# and https://help.libreoffice.org/latest/en-US/text/shared/guide/csv_params.html,
+##########
 LANGUAGE_ID_BY_CODE = {
     "ar_SA": 1025,
     "bg_BG": 1026,
@@ -746,53 +1019,77 @@ LANGUAGE_ID_BY_CODE = {
     "es_419": 58378,
     "fr_015": 58380
 }
-
-
-class Format(IntEnum):
-    STANDARD = 1  # Standard
-    TEXT = 2  # Text
-    MM_DD_YY = 3  # MM/DD/YY
-    DD_MM_YY = 4  # DD/MM/YY
-    YY_MM_DD = 5  # YY/MM/DD
-    IGNORE = 9  # IGNORE FIELD (do not import)
-    US = 10  # US-English
+"""
+A mapping language_territory -> locale id for token 5 of CSV FilterOptions 
+"""
 
 
 def import_from_csv(oDoc: UnoSpreadsheetDocument, sheet_name: str,
                     dest_position: int,
                     path: StrPath, *args, **kwargs):
     """
-    @param sheet_name: the sheet name
-    @param dest_position: position
+    @param oDoc: the document
+    @param sheet_name: the target sheet name
+    @param dest_position: the target sheet position
     @param path: path to the file
-    @param dialect: the Python csv dialect
+    @param args: if one arg, it is the Python csv dialect, else
     @param encoding: the source file encoding
     @param first_line: the first line
     @param format_by_idx: a mappin col -> type (type is FORMAT_MM_DD_YY)
     @param language_code: en_US
     @param detect_special_numbers: if true, detect numbers
-    @return: the sheet
     """
     filter_options = create_import_filter_options(*args, **kwargs)
     pvs = make_pvs({"FilterName": Filter.CSV, "FilterOptions": filter_options,
                     "Hidden": True})
 
-    oDoc.lockControllers()
     url = uno_path_to_url(path)
     oDesktop = pr.desktop
-    oSource = cast(
-        UnoSpreadsheetDocument,
-        oDesktop.loadComponentFromURL(
-            url, Target.BLANK, FrameSearchFlag.AUTO, pvs)
-    )
-    oSource.Sheets.getByIndex(0).Name = sheet_name
-    name = oSource.Sheets.ElementNames[0]
-    oDoc.Sheets.importSheet(oSource, name, dest_position)
-    oSource.close(True)
-    oDoc.unlockControllers()
 
+    oDoc.lockControllers()
+    try:
+        oSource = cast(
+            UnoSpreadsheetDocument,
+            oDesktop.loadComponentFromURL(
+                url, Target.BLANK, FrameSearchFlag.AUTO, pvs)
+        )
+        try:
+            oSource.Sheets.getByIndex(0).Name = sheet_name
+            name = oSource.Sheets.ElementNames[0]
+            oDoc.Sheets.importSheet(oSource, name, dest_position)
+        finally:
+            oSource.close(True)
+    finally:
+        oDoc.unlockControllers()
+
+
+# IMPORT
 
 def create_import_filter_options(*args, **kwargs) -> str:
+    """
+    Create FilterOptions string for CSV import.
+    See https://help.libreoffice.org/latest/en-US/text/shared/guide/csv_params.html
+
+    Takes 0 or 1 positional argument.
+    If there is 1 positional argument, this is the Python csv dialect.
+    If there is no positional argument, then named arguments are the definition
+    of the CSV FilterOptions.
+
+    Example 1:
+    ```
+    fo = create_import_filter_options(csv.excel_tab, first_line=5)
+    ```
+
+    Example 2:
+    ```
+    fo = create_import_filter_options(delimiter=",", quotechar='"', first_line=5)
+    ```
+
+    @param args: the Python csv dialect or nothing
+    @param kwargs: delimiter, quotechar, quoted_field_as_text, encoding,
+        language_code, first_line, format_by_idx, detect_special_numbers are
+        allowed
+    """
     if len(args) == 1:
         dialect = args[0]
         delimiter = kwargs.pop("delimiter", dialect.delimiter)
@@ -807,7 +1104,7 @@ def create_import_filter_options(*args, **kwargs) -> str:
     elif len(args) == 0:
         return _create_import_filter_options(**kwargs)
     else:
-        raise ValueError("At most one positional parameters allowed")
+        raise ValueError("At most one positional parameter allowed")
 
 
 def _create_import_filter_options(
@@ -818,8 +1115,9 @@ def _create_import_filter_options(
         format_by_idx: Optional[Mapping[int, Format]] = None,
         detect_special_numbers: bool = False) -> str:
     """
-    # See https://wiki.openoffice.org/wiki/Documentation
-    /DevGuide/Spreadsheets/Filter_Options
+    Create FilterOptions string for CSV import.
+    See https://help.libreoffice.org/latest/en-US/text/shared/guide/csv_params.html
+
     @param delimiter: the delimiter
     @param quotechar: the quotechar
     @param quoted_field_as_text: see checkbox
@@ -839,57 +1137,13 @@ def _create_import_filter_options(
     return ",".join(tokens)
 
 
-def export_to_csv(oSheet: UnoSheet, path: StrPath, *args, **kwargs):
-    """
-    save a sheet to a csv file
-
-    @param oSheet:
-    @param path:
-    @param dialect: the Python csv dialect
-    @param encoding: the source file encoding
-    @param first_line: the first line
-    @param language_code: en_US
-    @param overwrite:
-    @return: tokens
-    """
-    overwrite = kwargs.pop("overwrite", True)
-    filter_options = create_export_filter_options(*args, **kwargs)
-    pvs = make_pvs({"FilterName": Filter.CSV, "FilterOptions": filter_options,
-                    "Overwrite": overwrite})
-    oDoc = parent_doc(oSheet)
-    oActive = oDoc.CurrentController.ActiveSheet
-    oDoc.lockControllers()
-    oDoc.CurrentController.ActiveSheet = oSheet
-    url = uno_path_to_url(path)
-    oDoc.storeToURL(url, pvs)
-    oDoc.CurrentController.ActiveSheet = oActive
-    oDoc.unlockControllers()
-
-
-def _get_charset_id(encoding: str) -> int:
-    norm_encoding = encodings.normalize_encoding(encoding)
-    norm_encoding = encodings.aliases.aliases.get(
-        norm_encoding.lower(), norm_encoding)
-    return CHARSET_ID_BY_NAME.get(norm_encoding, 0)
-
-
-def _build_field_formats(format_by_idx: Optional[Mapping[int, int]]) -> str:
-    if format_by_idx is None:
-        field_formats = ""
-    else:
-        field_formats = "/".join(["{}/{}".format(idx, fmt)
-                                  for idx, fmt in format_by_idx.items()])
-    return field_formats
-
-
 def _base_filter_tokens(
         delimiter: str, quotechar: str, encoding: str, language_code: str,
         first_line: int, format_by_idx: Optional[Mapping[int, int]]
 ) -> List[str]:
     """
-    See: https://wiki.openoffice.org/wiki/Documentation
-    /DevGuide/Spreadsheets/Filter_Options
-    Common to import/export
+    The base parameters, common to import/export
+    See: https://wiki.openoffice.org/wiki/Documentation/DevGuide/Spreadsheets/Filter_Options
 
     @param delimiter: the delimiter
     @param quotechar: the quotechar
@@ -906,16 +1160,80 @@ def _base_filter_tokens(
             str(first_line), field_formats, str(language_id)]
 
 
+# EXPORT
+def export_to_csv(oSheet: UnoSheet, path: StrPath, *args, **kwargs):
+    """
+    Save a sheet to a csv file.
+
+    @param oSheet: the sheet
+    @param path: the path of the target file
+    @param args: see create_export_filter_options
+    @param kwargs: see create_export_filter_options
+    """
+    overwrite = kwargs.pop("overwrite", True)
+    filter_options = create_export_filter_options(*args, **kwargs)
+    pvs = make_pvs({"FilterName": Filter.CSV, "FilterOptions": filter_options,
+                    "Overwrite": overwrite})
+    oDoc = parent_doc(oSheet)
+    oActive = oDoc.CurrentController.ActiveSheet
+    oDoc.lockControllers()
+    try:
+        oDoc.CurrentController.ActiveSheet = oSheet
+        url = uno_path_to_url(path)
+        oDoc.storeToURL(url, pvs)
+        oDoc.CurrentController.ActiveSheet = oActive
+    finally:
+        oDoc.unlockControllers()
+
+
+def _get_charset_id(encoding: str) -> int:
+    """
+    Takes the encoding as a string and return the charset id.
+
+    @param encoding: the encoding
+    @return: the charset id
+    """
+    norm_encoding = encodings.normalize_encoding(encoding)
+    norm_encoding = encodings.aliases.aliases.get(
+        norm_encoding.lower(), norm_encoding)
+    return CHARSET_ID_BY_NAME.get(norm_encoding, 0)
+
+
+def _build_field_formats(format_by_idx: Optional[Mapping[int, int]]) -> str:
+    """
+    Build the token 5
+
+    @param format_by_idx: a mapping idx of the column -> format (see Format)
+    @return: then token 5 as a string
+    """
+    if format_by_idx is None:
+        field_formats = ""
+    else:
+        field_formats = "/".join(["{}/{}".format(idx, fmt)
+                                  for idx, fmt in format_by_idx.items()])
+    return field_formats
+
+
 def create_export_filter_options(*args, **kwargs) -> str:
     """
-    See https://wiki.openoffice.org/wiki/Documentation
-    /DevGuide/Spreadsheets/Filter_Options
+    Create the FilterOptions value for a CSV export.
 
-    @param dialect: the Python csv dialect
-    @param encoding: the source file encoding
-    @param first_line: the first line
-    @param language_code: en_US
-    @return: tokens
+    See https://wiki.openoffice.org/wiki/Documentation/DevGuide/Spreadsheets/Filter_Options
+
+    Example 1:
+    ```
+    fo = create_export_filter_options(csv.excel_tab, first_line=5)
+    ```
+
+    Example 2:
+    ```
+    fo = create_export_filter_options(delimiter=",", quotechar='"', first_line=5)
+    ```
+
+    @param args: the Python csv dialect or nothing
+    @param kwargs: delimiter, quotechar, store_numeric_cells_as_text, encoding,
+    language_code, first_line, format_by_idx, save_cell_contents_as_shown
+    @return: the filter options
     """
     if len(args) == 1:
         dialect = args[0]
@@ -941,6 +1259,20 @@ def _create_export_filter_options(
         first_line: int = 1,
         format_by_idx: Optional[Mapping[int, Format]] = None,
         save_cell_contents_as_shown: bool = True) -> str:
+    """
+    Create FilterOptions string for CSV import.
+    See https://help.libreoffice.org/latest/en-US/text/shared/guide/csv_params.html
+
+    @param delimiter: the delimiter
+    @param quotechar: the quotechar
+    @param store_numeric_cells_as_text: see checkbox
+    @param encoding: the source file encoding
+    @param language_code: en_US
+    @param first_line: the first line
+    @param format_by_idx: a mappin col -> type (type is FORMAT_MM_DD_YY)
+    @param save_cell_contents_as_shown: if true, detect numbers
+    @return: a filter options string
+    """
     store_as_text = "true" if store_numeric_cells_as_text else "false"
     save_as_shown = "true" if save_cell_contents_as_shown else "false"
     tokens = _base_filter_tokens(
