@@ -20,14 +20,13 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 The module py4lo_commons deals with ordinary Python objects (POPOs ?).
+
 It allows to:
 * use a Bus for events.
 * get a logger
 * get the current directory
-* convert dates
 """
 import configparser
-import datetime as dt
 import logging
 import sys
 # mypy: disable-error-code="import-untyped"
@@ -36,7 +35,7 @@ from typing import (
     Union, Any, cast, List, Optional, TextIO, Iterable, Mapping, Callable)
 
 from py4lo_typing import (
-    UnoXScriptContext, StrPath, lazy, UnoSpreadsheetDocument)
+    UnoXScriptContext, StrPath, lazy)
 
 try:
     # noinspection PyUnresolvedReferences
@@ -400,137 +399,3 @@ def sanitize(s: str) -> str:
     s = unicodedata.normalize('NFKD', s).encode('ascii', 'ignore').decode(
         'ascii')
     return s
-
-
-class DatesHelper:
-    """
-    A helper for dates, using the NullDate of a document (see
-    com.sun.star.sheet.SpreadsheetDocumentSettings.NullDate).
-
-    Example:
-
-    ```
-    helper = DatesHelper.create(oDoc)
-    helper.date_to_int(dt.date(1899, 12, 30)) # 0 if this is the NullDate
-    ```
-    """
-    @staticmethod
-    def create(oDoc: Optional[UnoSpreadsheetDocument] = None) -> "DatesHelper":
-        """
-        @param oDoc: the document that has a NullDate
-        @return: the helper
-        """
-        if oDoc is None:
-            origin = dt.datetime(1899, 12, 30)
-        else:
-            oNullDate = oDoc.NullDate
-            if oNullDate.Day == 0:
-                origin = dt.datetime(1899, 12, 30)
-            else:
-                origin = dt.datetime(oNullDate.Year, oNullDate.Month,
-                                     oNullDate.Day)
-        return DatesHelper(origin)
-
-    def __init__(self, origin: dt.datetime):
-        """
-        @param origin: the NullDate as Python datetime.
-        """
-        self._origin = origin
-
-    def date_to_int(self, a_date: Union[dt.date, dt.datetime]) -> int:
-        """
-        Converts a date to an int.
-
-        @param a_date: the Python date or datetime to convert
-        @return: the LibreOffice internal representation of the date as an int.
-        """
-        if isinstance(a_date, dt.datetime):
-            pass
-        elif isinstance(a_date, dt.date):
-            a_date = dt.datetime(a_date.year, a_date.month, a_date.day)
-        else:
-            raise ValueError()
-        return (a_date - self._origin).days
-
-    def date_to_float(self,
-                      a_date: Union[dt.date, dt.datetime, dt.time]) -> float:
-        """
-        Converts a date to a float.
-
-        @param a_date: the Python date or datetime to convert
-        @return: the LibreOffice internal representation of the date as a float.
-        """
-        if isinstance(a_date, dt.datetime):
-            time_delta = a_date - self._origin
-        elif isinstance(a_date, dt.date):
-            a_datetime = dt.datetime(a_date.year, a_date.month, a_date.day)
-            time_delta = a_datetime - self._origin
-        elif isinstance(a_date, dt.time):
-            time_delta = dt.timedelta(
-                hours=a_date.hour, minutes=a_date.minute, seconds=a_date.second,
-                microseconds=a_date.microsecond)
-        else:
-            raise ValueError(a_date)
-        return time_delta.total_seconds() / 86400
-
-    def int_to_date(self, days: int) -> dt.datetime:
-        """
-        Converts an int to a date.
-
-        @param days: the LibreOffice internal representation of the date as an int
-        @return: the date
-        """
-        return self._origin + dt.timedelta(days)
-
-    def float_to_date(self, days: float) -> dt.datetime:
-        """
-        Converts a float to a date.
-
-        @param days: the LibreOffice internal representation of the date as a float
-        @return: the datetime
-        """
-        return self._origin + dt.timedelta(days)
-
-
-def date_to_int(a_date: Union[dt.date, dt.datetime]) -> int:
-    """
-    Converts a date to an int, using default origin (1899-12-30)
-
-    @deprecated: use DateHelper
-    @param a_date: the Python date or datetime to convert
-    @return: the LibreOffice internal representation of the date as an int.
-    """
-    return DatesHelper.create().date_to_int(a_date)
-
-
-def date_to_float(a_date: Union[dt.date, dt.datetime, dt.time]) -> float:
-    """
-    Converts a date to a float, using default origin (1899-12-30)
-
-    @deprecated: use DateHelper
-    @param a_date: the Python date or datetime to convert
-    @return: the LibreOffice internal representation of the date as a float.
-    """
-    return DatesHelper.create().date_to_float(a_date)
-
-
-def int_to_date(days: int) -> dt.datetime:
-    """
-    Converts an int to a date, using default origin (1899-12-30)
-
-    @deprecated: use DateHelper
-    @param days: the LibreOffice internal representation of the date as an int.
-    @return: the Python datetime
-    """
-    return DatesHelper.create().int_to_date(days)
-
-
-def float_to_date(days: float) -> dt.datetime:
-    """
-    Converts a float to a date, using default origin (1899-12-30)
-
-    @deprecated: use DateHelper
-    @param days: the LibreOffice internal representation of the date as a float.
-    @return: the Python datetime
-    """
-    return DatesHelper.create().float_to_date(days)

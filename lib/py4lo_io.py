@@ -26,10 +26,10 @@ from typing import (Any, Callable, List, Iterator, Optional, Mapping, Tuple,
                     Iterable, cast)
 
 # values of cell_typing
-from py4lo_commons import float_to_date, date_to_float, uno_path_to_url
+from py4lo_commons import uno_path_to_url
 from py4lo_helper import (
     provider as pr, make_pvs, parent_doc, get_cell_type, Target,
-    FrameSearchFlag)
+    FrameSearchFlag, date_to_float, float_to_date)
 from py4lo_typing import (UnoCell, UnoSheet, UnoSpreadsheetDocument,
                           StrPath, UnoService, UnoRange)
 
