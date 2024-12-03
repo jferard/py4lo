@@ -16,12 +16,14 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
+import datetime as dt
 # mypy: disable-error-code="import-not-found"
 import unittest
 from unittest import mock
 
 import py4lo_helper
 from py4lo_helper import (
+    date_to_int, date_to_float, int_to_date, float_to_date,
     BorderLineStyle, ValidationType, ConditionOperator,
     FrameSearchFlag, ScriptFrameworkErrorException, UnoRuntimeException,
     to_iter, to_enumerate, to_dict, parent_doc, get_cell_type, get_named_cell,
@@ -2082,3 +2084,36 @@ class MiscTestCase(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class TestDate(unittest.TestCase):
+    def test_date_to_int(self):
+        self.assertEqual(0, date_to_int(dt.datetime(1899, 12, 30)))
+        self.assertEqual(44639, date_to_int(dt.datetime(2022, 3, 19)))
+        self.assertEqual(44639, date_to_int(dt.date(2022, 3, 19)))
+        self.assertEqual(44639, date_to_int(dt.datetime(2022, 3, 19)))
+        with self.assertRaises(ValueError):
+            date_to_int(1)
+
+    def test_date_to_float(self):
+        self.assertEqual(0.0, date_to_float(dt.datetime(1899, 12, 30)))
+        self.assertEqual(0.0, date_to_float(dt.date(1899, 12, 30)))
+        self.assertAlmostEqual(44639.723032407404, date_to_float(dt.datetime(
+            2022, 3, 19, 17, 21, 10)), delta=0.0001)
+        self.assertAlmostEqual(0.723032407404, date_to_float(dt.time(
+            17, 21, 10)), delta=0.0001)
+        with self.assertRaises(ValueError):
+            date_to_float(1)
+
+    def test_int_to_date(self):
+        self.assertEqual(dt.datetime(1899, 12, 30), int_to_date(0))
+        self.assertEqual(dt.datetime(2022, 3, 19), int_to_date(44639))
+        self.assertEqual(dt.datetime(2022, 3, 19), int_to_date(44639))
+
+    def test_float_to_date(self):
+        self.assertEqual(dt.datetime(1899, 12, 30), float_to_date(0.0))
+        self.assertEqual(dt.datetime(1899, 12, 30), float_to_date(0.0))
+        self.assertEqual(dt.datetime(
+            2022, 3, 19, 17, 21, 10), float_to_date(44639.723032407404))
+        self.assertEqual(dt.datetime(
+            1899, 12, 30, 17, 21, 10), float_to_date(0.723032407404))
