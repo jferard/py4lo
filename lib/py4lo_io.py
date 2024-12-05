@@ -15,6 +15,11 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+A module to handle I/O:
+* read and write data to LO spreadsheets
+* create import/export filters for CSV files
+"""
 # mypy: disable-error-code="import-untyped,import-not-found"
 import csv
 import encodings
