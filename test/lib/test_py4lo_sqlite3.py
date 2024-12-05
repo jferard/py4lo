@@ -51,7 +51,7 @@ class Sqlite3TestCase(unittest.TestCase):
 
             print("-> create table")
             self.assertEqual(0, db.execute_update(
-                "CREATE TABLE t(a INTEGER, b TEXT, oTextRange REAL, e BLOB)"))
+                "CREATE TABLE t(a INTEGER, b TEXT, c REAL, d BLOB)"))
 
             t2 = datetime.now()
             print(t2 - t1)

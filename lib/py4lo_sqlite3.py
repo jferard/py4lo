@@ -15,6 +15,36 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+A wrapper for the C SQLite3 API (sqlite module is not shipped with LibreOffice).
+The API is **not** compliant to the PEP249 (https://peps.python.org/pep-0249/).
+
+Example:
+```
+with sqlite_open(self._path, "crw") as db:
+    db.execute_update(
+        "CREATE TABLE identifiers(identifier INTEGER, name TEXT)")
+
+    with db.transaction():
+        with db.prepare("INSERT INTO identifiers VALUES(?, ?)") as stmt:
+            stmt.reset()
+            stmt.clear_bindings()
+            stmt.bind_int(1, 1)
+            stmt.bind_text(2, "foo"")
+            try:
+                self.assertEqual(1, stmt.execute_update())
+            except Exception as e:
+                print(e)
+
+    with db.prepare("SELECT * FROM identifiers") as stmt:
+        for db_row in stmt.execute_query():
+            print(db_row)
+```
+
+If the library is not in the standard directories, use the environment
+variable SQLITE3_LIB to set the actual library path (including the name).
+"""
+
 import enum
 import os
 from contextlib import contextmanager
@@ -27,13 +57,17 @@ from typing import Union, Generator, List, Any, Iterator, Mapping
 
 library_name = find_library('sqlite3')
 if library_name is None:
-    path = Path.cwd() / "sqlite3.dll"
+    path = Path.cwd() / "sqlite3.dll" # windows
     if path.exists():
         str_path = str(path)
     else:
-        str_path = os.environ[
-            "SQLITE3_LIB"
-        ]  # will raise an error if not present
+        path = next(Path.cwd().glob("libsqlite3.so*")) # linux / mac
+        if path is None:
+            str_path = os.environ[
+                "SQLITE3_LIB"
+            ]  # will raise an error if not present
+        else:
+            str_path = str(path)
     sqlite3_lib = CDLL(str_path)
 else:
     sqlite3_lib = cdll.LoadLibrary(library_name)
@@ -44,7 +78,15 @@ sqlite3_stmt_p = c_void_p
 
 
 class SQLiteError(Exception):
+    """
+    A SQLite error representation: a result code and a message
+    """
     def __init__(self, result_code: int, msg: str):
+        """
+        @param result_code: the result code of the command (see.
+        https://www.sqlite.org/rescode.html)
+        @param msg: the associated message
+        """
         self.result_code = result_code
         self.msg = msg
 
@@ -52,8 +94,10 @@ class SQLiteError(Exception):
         return "SQLiteError({}, {})".format(self.result_code, repr(self.msg))
 
 
-# Transaction mode
 class TransactionMode(enum.Enum):
+    """
+    See https://sqlite.org/lang_transaction.html.
+    """
     DEFERRED = "DEFERRED"
     IMMEDIATE = "IMMEDIATE"
     EXCLUSIVE = "EXCLUSIVE"
@@ -251,6 +295,10 @@ SQLITE_TRANSIENT = -1
 
 # types
 class SQLType(enum.Enum):
+    """
+    List of SQLite types that can be bound.
+    Values are internal to py4lo_sqlite and are currently not used.
+    """
     TYPE_BLOB = 1
     TYPE_BLOB64 = 2
     TYPE_DOUBLE = 3
@@ -267,32 +315,69 @@ class SQLType(enum.Enum):
 
 
 class Sqlite3Statement:
+    """
+    A SQLite3 statement. See `Sqlite3Database.prepare`.
+    """
     def __init__(self, db: sqlite3_p, stmt: sqlite3_stmt_p):
+        """
+        @param db: sqlite3 handle (see https://www.sqlite.org/c3ref/open.html).
+        @param stmt: the sqlite3 statement (see
+         https://www.sqlite.org/c3ref/prepare.html)
+        """
         self._db = db
         self._stmt = stmt
 
     def bind_text(self, i: int, v: str):
+        """
+        Bind a text parameter
+
+        @param i: number of the col
+        @param v: the text value
+        """
         bs = v.encode("utf-8")
         ret = sqlite3_bind_text(self._stmt, i, bs, len(bs), SQLITE_TRANSIENT)
         if ret != SQLITE_OK:
             raise self._err(ret)
 
     def bind_blob(self, i: int, v: bytes):
+        """
+        Bind a blob parameter
+
+        @param i: number of the col
+        @param v: the blob value
+        """
         ret = sqlite3_bind_blob(self._stmt, i, v, len(v), SQLITE_TRANSIENT)
         if ret != SQLITE_OK:
             raise self._err(ret)
 
     def bind_double(self, i: int, v: float):
+        """
+        Bind a double parameter (float in Python)
+
+        @param i: number of the col
+        @param v: the float value
+        """
         ret = sqlite3_bind_double(self._stmt, i, v)
         if ret != SQLITE_OK:
             raise self._err(ret)
 
     def bind_int(self, i: int, v: int):
+        """
+        Bind an integer parameter
+
+        @param i: number of the col
+        @param v: the int value
+        """
         ret = sqlite3_bind_int(self._stmt, i, v)
         if ret != SQLITE_OK:
             raise self._err(ret)
 
     def bind_null(self, i: int):
+        """
+        Bind a parameter to a null value.
+
+        @param i: number of the col
+        """
         ret = sqlite3_bind_null(self._stmt, i)
         if ret != SQLITE_OK:
             raise self._err(ret)
@@ -301,16 +386,28 @@ class Sqlite3Statement:
         return SQLiteError(ret, sqlite3_errmsg(self._db).decode("utf-8"))
 
     def reset(self):
+        """
+        Reset the statement but keep the current bindings
+        (see https://www.sqlite.org/c3ref/reset.html)
+        """
         ret = sqlite3_reset(self._stmt)
         if ret != SQLITE_OK:
             raise self._err(ret)
 
     def clear_bindings(self):
+        """
+        Reset all bindings (see https://www.sqlite.org/c3ref/reset.html)
+        """
         ret = sqlite3_clear_bindings(self._stmt)
         if ret != SQLITE_OK:
             raise self._err(ret)
 
     def execute_update(self) -> int:
+        """
+        See https://www.sqlite.org/c3ref/step.html
+        @return: the number of rows modified, inserted or deleted
+        (see https://www.sqlite.org/c3ref/changes.html)
+        """
         ret = sqlite3_step(self._stmt)
         if ret != SQLITE_DONE:
             raise self._err(ret)
@@ -318,6 +415,13 @@ class Sqlite3Statement:
 
     def execute_query(self, with_names: bool = False
                       ) -> Iterator[Union[List[Any], Mapping[str, Any]]]:
+        """
+        Execute the query.
+
+        @param with_names: use the name for the return
+        @return: an iterator over results. if `with_names`is True,
+        return a mapping col name -> value, else return a list of values
+        """
         if with_names:
             return self._execute_query_with_names()
         else:
@@ -383,20 +487,44 @@ class Sqlite3Statement:
 
 
 class Sqlite3Database:
+    """
+    A wrapper for a sqlite3 handle (see https://www.sqlite.org/c3ref/open.html).
+    """
     def __init__(self, db: sqlite3_p):
+        """
+        @param db: SQLite db handle
+        """
         self._db = db
 
     def execute_update(self, sql: str) -> int:
+        """
+        Execute an update (see https://www.sqlite.org/c3ref/exec.html).
+
+        @param sql: the sql query
+        @return: the number of rows modified, inserted or deleted
+        (see https://www.sqlite.org/c3ref/changes.html)
+        @raise SQLiteError: if the result is not OK
+        """
         ret = sqlite3_exec(self._db, sql.encode("utf-8"), None, None, None)
         if ret != SQLITE_OK:
             raise self._err(ret)
         return sqlite3_changes(self._db)
 
-    def _err(self, ret):
+    def _err(self, ret: int) -> SQLiteError:
         return SQLiteError(ret, sqlite3_errmsg(self._db).decode("utf-8"))
 
     @contextmanager
     def prepare(self, sql: str) -> Generator[Sqlite3Statement, None, None]:
+        """
+        Context manager to prepare a SQL statement:
+        ```
+        with db.prepare("...") as stmt:
+            ...
+        ```
+
+        @param sql: the statement
+        @yield: the SQLite3Statement
+        """
         stmt_p = sqlite3_stmt_p()
         ret = sqlite3_prepare_v2(self._db, sql.encode("utf-8"), -1,
                                  byref(stmt_p), None)
@@ -416,6 +544,12 @@ class Sqlite3Database:
     def transaction(self, mode: TransactionMode = TransactionMode.DEFERRED
                     ) -> Generator[None, None, None]:
         """
+        Context manager for a transaction:
+        ```
+        with db.transaction():
+            ... # use db here
+        ```
+
         If there is an exception, then we have the following sequence:
         ```
         BEGIN <mode> TRANSACTION
@@ -432,7 +566,7 @@ class Sqlite3Database:
         ```
 
         @param mode: transaction mode
-        @return: a context
+        @yield: a context
         """
         self.execute_update("BEGIN {} TRANSACTION".format(mode.value))
         try:
@@ -452,6 +586,19 @@ class Sqlite3Database:
 def sqlite_open(
         filepath: Union[str, Path], mode: str = "r", timeout: int=-1
 ) -> Generator[Sqlite3Database, None, None]:
+    """
+    Open a SQLite database in a context manager:
+    ```
+    with sqlite_open(...) as db:
+        ...
+    ```
+
+    @param filepath: the path to the file
+    @param mode: the mode ("r" for read, "rw" for readwrite
+    or "crw" for create read write)
+    @param timeout: an optional timeout
+    @yield: a Sqlite3Database object
+    """
     db = c_void_p()
 
     if isinstance(filepath, str):
