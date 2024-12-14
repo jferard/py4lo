@@ -298,6 +298,29 @@ SQLITE_TRANSIENT = -1
 ####################
 # Decode functions #
 ####################
+def create_decode_text_to_str(encoding: str) -> Callable[
+    [sqlite3_stmt_p, int], str]:
+    """
+    Create a new decode function for a given encoding.
+    Use for databases having an encoding different from utf-8.
+    (Otherwise use `decode_text_utf8_to_str`)
+
+    :param encoding: the encoding
+    :return: the decode function
+    """
+    def decode_text_to_str(stmt: sqlite3_stmt_p, i: int):
+        """
+        To decode TEXT stored with a specific encoding
+        If `stmt.bind_text(<i>, <text>)` was used, use `decode_text_utf8_to_str`
+
+        @param stmt: the statement
+        @param i: the column index
+        """
+        return sqlite3_column_text(stmt, i).decode(encoding)
+
+    return decode_text_to_str
+
+
 def decode_text_utf8_to_str(stmt: sqlite3_stmt_p, i: int) -> str:
     """
     To decode data stored with `stmt.bind_text(<i>, <text>)` into a TEXT

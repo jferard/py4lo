@@ -12,7 +12,7 @@ from py4lo_sqlite3 import (
     sqlite_open, SQLiteError, TransactionMode, SQLITE_BUSY, SQLITE_ERROR,
     SQLITE_CONSTRAINT, Sqlite3Database, SQLITE_OK, SQLITE_TEXT, SQLITE_BLOB,
     SQLITE_INTEGER, SQLITE_FLOAT, decode_text_utf8_to_str, decode_blob_to_bytes,
-    sqlite3_column_int, sqlite3_column_double
+    sqlite3_column_int, sqlite3_column_double, create_decode_text_to_str
 )
 
 
@@ -173,7 +173,7 @@ class Sqlite3TestCase(unittest.TestCase):
                 "CREATE TABLE t(a BLOB)"))
             with db.transaction():
                 with db.prepare("INSERT INTO t VALUES(?)") as stmt:
-                    for value in (None, b"foo", b""):
+                    for value in (None, b"foo", b"", b"F\xe9rard"):
                         stmt.reset()
                         stmt.clear_bindings()
                         stmt.bind_blob(1, value)
@@ -184,15 +184,19 @@ class Sqlite3TestCase(unittest.TestCase):
 
             with db.prepare("SELECT * FROM t") as stmt:
                 db_rows = list(stmt.execute_query())
-                self.assertEqual([[None], [b"foo"], [b""]], db_rows)
+                self.assertEqual([[None], [b"foo"], [b""], [b"F\xe9rard"]], db_rows)
 
             with db.prepare("SELECT * FROM t") as stmt:
                 db_rows = list(stmt.execute_query(column_decodes=[SQLITE_BLOB]))
-                self.assertEqual([[None], [b"foo"], [b""]], db_rows)
+                self.assertEqual([[None], [b"foo"], [b""], [b"F\xe9rard"]], db_rows)
 
             with db.prepare("SELECT * FROM t") as stmt:
                 db_rows = list(stmt.execute_query(column_decodes=[decode_blob_to_bytes]))
-                self.assertEqual([[None], [b"foo"], [b""]], db_rows)
+                self.assertEqual([[None], [b"foo"], [b""], [b"F\xe9rard"]], db_rows)
+
+            with db.prepare("SELECT * FROM t") as stmt:
+                db_rows = list(stmt.execute_query(column_decodes=[create_decode_text_to_str("latin-1")]))
+                self.assertEqual([[None], ["foo"], [""], ["Férard"]], db_rows)
 
     def test_integer(self):
         with sqlite_open(self._path, "crw") as db:
