@@ -11,7 +11,8 @@ from unittest import mock
 from py4lo_sqlite3 import (
     sqlite_open, SQLiteError, TransactionMode, SQLITE_BUSY, SQLITE_ERROR,
     SQLITE_CONSTRAINT, Sqlite3Database, SQLITE_OK, SQLITE_TEXT, SQLITE_BLOB,
-    SQLITE_INTEGER, SQLITE_FLOAT
+    SQLITE_INTEGER, SQLITE_FLOAT, decode_text_utf8_to_str, decode_blob_to_bytes,
+    sqlite3_column_int, sqlite3_column_double
 )
 
 
@@ -162,6 +163,10 @@ class Sqlite3TestCase(unittest.TestCase):
                 db_rows = list(stmt.execute_query(column_decodes=[SQLITE_TEXT]))
                 self.assertEqual([[None], ["foo"], [""]], db_rows)
 
+            with db.prepare("SELECT * FROM t") as stmt:
+                db_rows = list(stmt.execute_query(column_decodes=[decode_text_utf8_to_str]))
+                self.assertEqual([[None], ["foo"], [""]], db_rows)
+
     def test_blob(self):
         with sqlite_open(self._path, "crw") as db:
             self.assertEqual(0, db.execute_update(
@@ -183,6 +188,10 @@ class Sqlite3TestCase(unittest.TestCase):
 
             with db.prepare("SELECT * FROM t") as stmt:
                 db_rows = list(stmt.execute_query(column_decodes=[SQLITE_BLOB]))
+                self.assertEqual([[None], [b"foo"], [b""]], db_rows)
+
+            with db.prepare("SELECT * FROM t") as stmt:
+                db_rows = list(stmt.execute_query(column_decodes=[decode_blob_to_bytes]))
                 self.assertEqual([[None], [b"foo"], [b""]], db_rows)
 
     def test_integer(self):
@@ -208,6 +217,10 @@ class Sqlite3TestCase(unittest.TestCase):
                 db_rows = list(stmt.execute_query(column_decodes=[SQLITE_INTEGER]))
                 self.assertEqual([[None], [1], [0]], db_rows)
 
+            with db.prepare("SELECT * FROM t") as stmt:
+                db_rows = list(stmt.execute_query(column_decodes=[sqlite3_column_int]))
+                self.assertEqual([[None], [1], [0]], db_rows)
+
     def test_double(self):
         with sqlite_open(self._path, "crw") as db:
             self.assertEqual(0, db.execute_update(
@@ -229,6 +242,10 @@ class Sqlite3TestCase(unittest.TestCase):
 
             with db.prepare("SELECT * FROM t") as stmt:
                 db_rows = list(stmt.execute_query(column_decodes=[SQLITE_FLOAT]))
+                self.assertEqual([[None], [1.0], [0.0]], db_rows)
+
+            with db.prepare("SELECT * FROM t") as stmt:
+                db_rows = list(stmt.execute_query(column_decodes=[sqlite3_column_double]))
                 self.assertEqual([[None], [1.0], [0.0]], db_rows)
 
     def test_open_rw_missing_file(self):

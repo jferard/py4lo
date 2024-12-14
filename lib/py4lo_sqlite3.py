@@ -298,7 +298,7 @@ SQLITE_TRANSIENT = -1
 ####################
 # Decode functions #
 ####################
-def decode_text_utf8_to_str(stmt: sqlite3_stmt_p, i: int) -> Optional[str]:
+def decode_text_utf8_to_str(stmt: sqlite3_stmt_p, i: int) -> str:
     """
     To decode data stored with `stmt.bind_text(<i>, <text>)` into a TEXT
     field. Example: `stmt.bind_text(1, "foo")`.
@@ -308,12 +308,10 @@ def decode_text_utf8_to_str(stmt: sqlite3_stmt_p, i: int) -> Optional[str]:
     @return: the string
     """
     bs = sqlite3_column_text(stmt, i)
-    if bs is None:
-        return None
     return bs.decode("utf-8")
 
 
-def decode_blob_to_bytes(stmt: sqlite3_stmt_p, i: int) -> Optional[bytes]:
+def decode_blob_to_bytes(stmt: sqlite3_stmt_p, i: int) -> bytes:
     """
     To decode data stored with `stmt.bind_blob(<i>, <bytes>)` into a BLOB
     field. Example: `stmt.bind_blob(1, "foo".encode("utf-8"))`.
@@ -480,7 +478,7 @@ class Sqlite3Statement:
         guess.
         Otherwise, `column_decodes` is a list. Each element may be
         integers (SQLITE_INTEGER, SQLITE_FLOAT, SQLITE_TEXT, SQLITE_BLOB or
-        SQLITE_NULL) to declare the type of the colmun.
+        SQLITE_NULL) to declare the type of the column.
 
         @param with_names: use the name for the return
         @param column_decodes: None or column types as a list of integers (SQLITE_...)
@@ -520,8 +518,10 @@ class Sqlite3Statement:
                 ret = sqlite3_step(self._stmt)
         else:
             column_decodes = [
-                self._sql_type_to_decode(sql_type)
-                for sql_type in column_decodes
+                self._sql_type_to_decode(sql_type_or_decode_func)
+                if isinstance(sql_type_or_decode_func, int)
+                else sql_type_or_decode_func
+                for sql_type_or_decode_func in column_decodes
             ]
             while ret == SQLITE_ROW:
                 row = [
