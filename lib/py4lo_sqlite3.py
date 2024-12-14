@@ -45,6 +45,7 @@ If the library is not in the standard directories, use the environment
 variable SQLITE3_LIB to set the actual library path (including the name).
 """
 
+import datetime as dt
 import enum
 import os
 from contextlib import contextmanager
@@ -53,8 +54,8 @@ from ctypes import (
 )
 from ctypes.util import find_library
 from pathlib import Path
-from typing import Union, Generator, List, Any, Iterator, Mapping, Callable, \
-    Optional
+from typing import (
+    Union, Generator, List, Any, Iterator, Mapping, Callable, Optional)
 
 library_name = find_library('sqlite3')
 if library_name is None:
@@ -351,7 +352,24 @@ def decode_blob_to_bytes(stmt: sqlite3_stmt_p, i: int) -> bytes:
     return string_at(ptr, size)
 
 
-# types
+_MODIFIED_JD_OFFSET = 2400000.500  # 1858-11-17, 00:00
+_MODIFIED_JD_EPOCH = dt.datetime(1858, 11, 17, tzinfo=dt.timezone.utc)
+
+
+def datetime_to_julian(d: dt.datetime) -> float:
+    """
+    Convert a datetime to a number of julian days (fractional part for the
+    hours).
+    If the timezone is None ("naive datetime"), then the local timezone is used.
+    @param d: the date
+    @return: julian days.
+    """
+    if d.tzinfo is None:
+        d = d.astimezone() # set the system local time zone
+    ts = (d - _MODIFIED_JD_EPOCH).total_seconds() / 86400
+    return ts + _MODIFIED_JD_OFFSET
+
+
 class SQLType(enum.Enum):
     """
     List of SQLite types that can be bound.
@@ -455,6 +473,42 @@ class Sqlite3Statement:
         @param i: number of the col
         """
         ret = sqlite3_bind_null(self._stmt, i)
+        if ret != SQLITE_OK:
+            raise self._err(ret)
+
+    def bind_unix_ts(self, i: int, v: dt.datetime):
+        """
+        Bind a datetime as a UNIX timestamp (DOUBLE field).
+
+        @param i: number of the col
+        @param v: the datetime value
+        """
+        double = v.timestamp()
+        ret = sqlite3_bind_double(self._stmt, i, double)
+        if ret != SQLITE_OK:
+            raise self._err(ret)
+
+    def bind_julian(self, i: int, v: dt.datetime):
+        """
+        Bind a datetime as a number of julian days (DOUBLE field).
+
+        @param i: number of the col
+        @param v: the datetime value
+        """
+        double = datetime_to_julian(v)
+        ret = sqlite3_bind_double(self._stmt, i, double)
+        if ret != SQLITE_OK:
+            raise self._err(ret)
+
+    def bind_iso8601(self, i: int, v: dt.datetime):
+        """
+        Bind a datetime as an ISO-8601 string (TEXT field).
+
+        @param i: number of the col
+        @param v: the datetime value.
+        """
+        bs = v.isoformat().encode("ascii")
+        ret = sqlite3_bind_text(self._stmt, i, bs, len(bs), SQLITE_TRANSIENT)
         if ret != SQLITE_OK:
             raise self._err(ret)
 

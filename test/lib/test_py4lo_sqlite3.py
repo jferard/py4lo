@@ -7,12 +7,14 @@ from datetime import datetime
 from time import sleep
 from pathlib import Path
 from unittest import mock
+import datetime as dt
 
 from py4lo_sqlite3 import (
     sqlite_open, SQLiteError, TransactionMode, SQLITE_BUSY, SQLITE_ERROR,
     SQLITE_CONSTRAINT, Sqlite3Database, SQLITE_OK, SQLITE_TEXT, SQLITE_BLOB,
     SQLITE_INTEGER, SQLITE_FLOAT, decode_text_utf8_to_str, decode_blob_to_bytes,
-    sqlite3_column_int, sqlite3_column_double, create_decode_text_to_str
+    sqlite3_column_int, sqlite3_column_double, create_decode_text_to_str,
+    datetime_to_julian
 )
 
 
@@ -251,6 +253,90 @@ class Sqlite3TestCase(unittest.TestCase):
             with db.prepare("SELECT * FROM t") as stmt:
                 db_rows = list(stmt.execute_query(column_decodes=[sqlite3_column_double]))
                 self.assertEqual([[None], [1.0], [0.0]], db_rows)
+
+    def test_unix_ts(self):
+        paris_summer_timezone = dt.timezone(dt.timedelta(hours=2))
+        d1 = dt.datetime(2010, 5, 1, 0, 43, 14, tzinfo=paris_summer_timezone)
+        d2 = dt.datetime(2003, 6, 3, 14, 1, 21, tzinfo=dt.timezone.utc)
+
+        with sqlite_open(self._path, "crw") as db:
+            self.assertEqual(0, db.execute_update(
+                "CREATE TABLE t(a DOUBLE)"))
+            with db.transaction():
+                with db.prepare("INSERT INTO t VALUES(?)") as stmt:
+                    for value in (d1, d2):
+                        stmt.reset()
+                        stmt.clear_bindings()
+                        stmt.bind_unix_ts(1, value)
+                        try:
+                            self.assertEqual(1, stmt.execute_update())
+                        except Exception as e:
+                            print(e)
+
+            with db.prepare("SELECT datetime(a, 'unixepoch') FROM t") as stmt:
+                db_rows = list(stmt.execute_query(column_decodes=[SQLITE_TEXT]))
+                self.assertEqual([['2010-04-30 22:43:14'], ['2003-06-03 14:01:21']], db_rows)
+
+            with db.prepare("SELECT * FROM t") as stmt:
+                db_rows = list(stmt.execute_query())
+                self.assertEqual([[d1.timestamp()], [d2.timestamp()]], db_rows)
+                self.assertEqual([[1272667394.0], [1054648881.0]], db_rows)
+
+    def test_julian(self):
+        paris_summer_timezone = dt.timezone(dt.timedelta(hours=2))
+        d1 = dt.datetime(2010, 5, 1, 0, 43, 14, tzinfo=paris_summer_timezone)
+        d2 = dt.datetime(2003, 6, 3, 14, 1, 21, tzinfo=dt.timezone.utc)
+
+        with sqlite_open(self._path, "crw") as db:
+            self.assertEqual(0, db.execute_update(
+                "CREATE TABLE t(a DOUBLE)"))
+            with db.transaction():
+                with db.prepare("INSERT INTO t VALUES(?)") as stmt:
+                    for value in (d1, d2):
+                        stmt.reset()
+                        stmt.clear_bindings()
+                        stmt.bind_julian(1, value)
+                        try:
+                            self.assertEqual(1, stmt.execute_update())
+                        except Exception as e:
+                            print(e)
+
+            with db.prepare("SELECT datetime(a) FROM t") as stmt:
+                db_rows = list(stmt.execute_query())
+                self.assertEqual([['2010-04-30 22:43:14'], ['2003-06-03 14:01:21']], db_rows)
+
+            with db.prepare("SELECT * FROM t") as stmt:
+                db_rows = list(stmt.execute_query())
+                self.assertEqual([[datetime_to_julian(d1)], [datetime_to_julian(d2)]], db_rows)
+                self.assertEqual([[2455317.446689815], [2452794.0842708335]], db_rows)
+
+    def test_iso8601(self):
+        paris_summer_timezone = dt.timezone(dt.timedelta(hours=2))
+        d1 = dt.datetime(2010, 5, 1, 0, 43, 14, tzinfo=paris_summer_timezone)
+        d2 = dt.datetime(2003, 6, 3, 14, 1, 21, tzinfo=dt.timezone.utc)
+
+        with sqlite_open(self._path, "crw") as db:
+            self.assertEqual(0, db.execute_update(
+                "CREATE TABLE t(a TEXT)"))
+            with db.transaction():
+                with db.prepare("INSERT INTO t VALUES(?)") as stmt:
+                    for value in (d1, d2):
+                        stmt.reset()
+                        stmt.clear_bindings()
+                        stmt.bind_iso8601(1, value)
+                        try:
+                            self.assertEqual(1, stmt.execute_update())
+                        except Exception as e:
+                            print(e)
+
+            with db.prepare("SELECT datetime(a) FROM t") as stmt:
+                db_rows = list(stmt.execute_query())
+                self.assertEqual([['2010-04-30 22:43:14'], ['2003-06-03 14:01:21']], db_rows)
+
+            with db.prepare("SELECT * FROM t") as stmt:
+                db_rows = list(stmt.execute_query())
+                self.assertEqual([[d1.isoformat()], [d2.isoformat()]], db_rows)
+                self.assertEqual([['2010-05-01T00:43:14+02:00'], ['2003-06-03T14:01:21+00:00']], db_rows)
 
     def test_open_rw_missing_file(self):
         with self.assertRaises(FileNotFoundError):
