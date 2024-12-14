@@ -19,26 +19,53 @@
 A wrapper for the C SQLite3 API (sqlite module is not shipped with LibreOffice).
 The API is **not** compliant to the PEP249 (https://peps.python.org/pep-0249/).
 
-Example:
+The module provides specific bindings to datetime values (as UNIX timestamps,
+number of Julian days or ISO-8601 strings).
+
+By default, it uses the standard SQLite type guess to return Python values.
+But the decoding of values is fully customizable: there is a type list (
+SQLITE_INTEGER, SQLITE_FLOAT, SQLITE_TEXT, SQLITE_BLOB, SQLITE_NULL,
+PY4LO_UNIX_TS, PY4LO_JULIAN, PY4LO_ISO) and standard decode functions.
+You can write your own functions, but a NULL value will *always* be returned
+as `None` (because that's the only sensible thing to do... I believe).
+
+Here's a full example:
 ```
-with sqlite_open(self._path, "crw") as db:
+with sqlite_open(":memory:", "crw") as db:
     db.execute_update(
-        "CREATE TABLE identifiers(identifier INTEGER, name TEXT)")
+        "CREATE TABLE identifiers(identifier INTEGER, name TEXT, date DOUBLE)")
 
     with db.transaction():
-        with db.prepare("INSERT INTO identifiers VALUES(?, ?)") as stmt:
+        with db.prepare(
+                "INSERT INTO identifiers VALUES(?, ?, ?)") as stmt:
             stmt.reset()
             stmt.clear_bindings()
             stmt.bind_int(1, 1)
-            stmt.bind_text(2, "foo"")
+            stmt.bind_text(2, "foo")
+            stmt.bind_unix_ts(3, dt.datetime(
+                2024, 12, 14, 13, 20, 59, tzinfo=dt.timezone.utc))
             try:
-                self.assertEqual(1, stmt.execute_update())
+                stmt.execute_update()  # returns 1
             except Exception as e:
                 print(e)
 
+    decodes = [
+        SQLITE_INTEGER,
+        SQLITE_TEXT,
+        create_decode_unix_ts_to_datetime(
+            dt.timezone(dt.timedelta(hours=1)))
+        # we want a specific timezone
+    ]
+
     with db.prepare("SELECT * FROM identifiers") as stmt:
-        for db_row in stmt.execute_query():
+        for db_row in stmt.execute_query(
+                with_names=True, column_decodes=decodes):
             print(db_row)
+            # {'identifier': 1, 'name': 'foo',
+            #  'date': datetime.datetime(
+            #     2024, 12, 14, 14, 20, 59,
+            #     tzinfo=datetime.timezone(datetime.timedelta(seconds=3600))
+            # )}
 ```
 
 If the library is not in the standard directories, use the environment
@@ -487,6 +514,10 @@ class SQLType(enum.Enum):
 class Sqlite3Statement:
     """
     A SQLite3 statement. See `Sqlite3Database.prepare`.
+
+    All `bind_...` methods accept a `None` value (this is the same as
+    a `bind_null` call).
+
     """
 
     def __init__(self, db: sqlite3_p, stmt: sqlite3_stmt_p):

@@ -547,6 +547,43 @@ class Sqlite3TestCase(unittest.TestCase):
             sqlite3_exec.mock_calls
         )
 
+    def test_example(self):
+        with sqlite_open(":memory:", "crw") as db:
+            db.execute_update(
+                "CREATE TABLE identifiers(identifier INTEGER, name TEXT, date DOUBLE)")
+
+            with db.transaction():
+                with db.prepare(
+                        "INSERT INTO identifiers VALUES(?, ?, ?)") as stmt:
+                    stmt.reset()
+                    stmt.clear_bindings()
+                    stmt.bind_int(1, 1)
+                    stmt.bind_text(2, "foo")
+                    stmt.bind_unix_ts(3, dt.datetime(
+                        2024, 12, 14, 13, 20, 59, tzinfo=dt.timezone.utc))
+                    try:
+                        stmt.execute_update()  # returns 1
+                    except Exception as e:
+                        print(e)
+
+            decodes = [
+                SQLITE_INTEGER,
+                SQLITE_TEXT,
+                create_decode_unix_ts_to_datetime(
+                    dt.timezone(dt.timedelta(hours=1)))
+                # we want a specific timezone
+            ]
+
+            with db.prepare("SELECT * FROM identifiers") as stmt:
+                for db_row in stmt.execute_query(
+                        with_names=True, column_decodes=decodes):
+                    print(db_row)
+                    # {'identifier': 1, 'name': 'foo',
+                    #  'date': datetime.datetime(
+                    #     2024, 12, 14, 14, 20, 59,
+                    #     tzinfo=datetime.timezone(datetime.timedelta(seconds=3600))
+                    # )}
+
 
 if __name__ == '__main__':
     unittest.main()
