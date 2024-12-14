@@ -39,7 +39,7 @@ class Sqlite3TestCase(unittest.TestCase):
 
     def test_sqlite3(self):
         with sqlite_open(self._path, "crw") as db:
-            t1 = datetime.now()
+            t1 = dt.datetime.now()
             print("-> generate data")
             n = 1000
             data = [
@@ -52,7 +52,7 @@ class Sqlite3TestCase(unittest.TestCase):
                 ) for _ in range(10000)
             ]
 
-            t2 = datetime.now()
+            t2 = dt.datetime.now()
             print(t2 - t1)
             t1 = t2
 
@@ -60,7 +60,7 @@ class Sqlite3TestCase(unittest.TestCase):
             self.assertEqual(0, db.execute_update(
                 "CREATE TABLE t(a INTEGER, b TEXT, c REAL, d BLOB)"))
 
-            t2 = datetime.now()
+            t2 = dt.datetime.now()
             print(t2 - t1)
             t1 = t2
 
@@ -79,7 +79,7 @@ class Sqlite3TestCase(unittest.TestCase):
                         except Exception as e:
                             print(e)
 
-            t2 = datetime.now()
+            t2 = dt.datetime.now()
             print(t2 - t1)
             t1 = t2
 
@@ -88,12 +88,12 @@ class Sqlite3TestCase(unittest.TestCase):
                 for db_row, data_row in zip(stmt.execute_query(), data):
                     self.assertEqual(list(data_row), db_row)
 
-            t2 = datetime.now()
+            t2 = dt.datetime.now()
             print(t2 - t1)
 
     def test_sqlite_with_names(self):
         with sqlite_open(self._path, "crw") as db:
-            t1 = datetime.now()
+            t1 = dt.datetime.now()
             print("-> generate data")
             n = 1000
             data = [
@@ -106,7 +106,7 @@ class Sqlite3TestCase(unittest.TestCase):
                 ) for _ in range(10000)
             ]
 
-            t2 = datetime.now()
+            t2 = dt.datetime.now()
             print(t2 - t1)
             t1 = t2
 
@@ -114,7 +114,7 @@ class Sqlite3TestCase(unittest.TestCase):
             self.assertEqual(0, db.execute_update(
                 "CREATE TABLE t(a INTEGER, b TEXT, c REAL, d BLOB)"))
 
-            t2 = datetime.now()
+            t2 = dt.datetime.now()
             print(t2 - t1)
             t1 = t2
 
@@ -133,7 +133,7 @@ class Sqlite3TestCase(unittest.TestCase):
                         except Exception as e:
                             print(e)
 
-            t2 = datetime.now()
+            t2 = dt.datetime.now()
             print(t2 - t1)
             t1 = t2
 
@@ -142,7 +142,7 @@ class Sqlite3TestCase(unittest.TestCase):
                 for db_row, data_row in zip(stmt.execute_query(with_names=True), data):
                     self.assertEqual(dict(zip('abcd', data_row)), db_row)
 
-            t2 = datetime.now()
+            t2 = dt.datetime.now()
             print(t2 - t1)
 
     def test_text(self):
