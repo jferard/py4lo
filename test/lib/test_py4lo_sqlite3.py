@@ -84,6 +84,60 @@ class Sqlite3TestCase(unittest.TestCase):
             t2 = datetime.now()
             print(t2 - t1)
 
+    def test_sqlite_with_names(self):
+        with sqlite_open(self._path, "crw") as db:
+            t1 = datetime.now()
+            print("-> generate data")
+            n = 1000
+            data = [
+                (
+                    random.randint(0, 100),
+                    "".join(random.choice(string.ascii_letters) for _ in
+                            range(random.randrange(10, 200))),
+                    random.random() * 100,
+                    randbytes(n)
+                ) for _ in range(10000)
+            ]
+
+            t2 = datetime.now()
+            print(t2 - t1)
+            t1 = t2
+
+            print("-> create table")
+            self.assertEqual(0, db.execute_update(
+                "CREATE TABLE t(a INTEGER, b TEXT, c REAL, d BLOB)"))
+
+            t2 = datetime.now()
+            print(t2 - t1)
+            t1 = t2
+
+            print("-> fill table")
+            with db.transaction():
+                with db.prepare("INSERT INTO t VALUES(?, ?, ?, ?)") as stmt:
+                    for data_row in data:
+                        stmt.reset()
+                        stmt.clear_bindings()
+                        stmt.bind_int(1, data_row[0])
+                        stmt.bind_text(2, data_row[1])
+                        stmt.bind_double(3, data_row[2])
+                        stmt.bind_blob(4, data_row[3])
+                        try:
+                            self.assertEqual(1, stmt.execute_update())
+                        except Exception as e:
+                            print(e)
+
+            t2 = datetime.now()
+            print(t2 - t1)
+            t1 = t2
+
+            print("-> select")
+            with db.prepare("SELECT * FROM t") as stmt:
+                for db_row, data_row in zip(stmt.execute_query(with_names=True), data):
+                    self.assertEqual(dict(zip('abcd', data_row)), db_row)
+
+            t2 = datetime.now()
+            print(t2 - t1)
+
     def test_open_rw_missing_file(self):
         with self.assertRaises(FileNotFoundError):
             with sqlite_open(self._path, "rw") as db:

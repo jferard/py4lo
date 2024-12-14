@@ -429,25 +429,12 @@ class Sqlite3Statement:
 
     def _execute_query_with_names(self) -> Iterator[Mapping[str, Any]]:
         col_count = sqlite3_column_count(self._stmt)
-        ret = sqlite3_step(self._stmt)
         names = [
             sqlite3_column_name(self._stmt, i).decode("utf-8")
             for i in range(col_count)
         ]
-        column_types = [
-            sqlite3_column_type(self._stmt, i)
-            for i in range(col_count)
-        ]
-
-        while ret == SQLITE_ROW:
-            row = dict([
-                (names[i], self._value(i, column_types))
-                for i in range(col_count)
-            ])
-            yield row
-            ret = sqlite3_step(self._stmt)
-        if ret != SQLITE_DONE:
-            raise self._err(ret)
+        for row in self._execute_query_without_names():
+            yield dict(zip(names, row))
 
     def _execute_query_without_names(self) -> Iterator[List[Any]]:
         col_count = sqlite3_column_count(self._stmt)
