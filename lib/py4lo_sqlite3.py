@@ -392,7 +392,10 @@ class Sqlite3Statement:
         @param i: number of the col
         @param v: the blob value
         """
-        ret = sqlite3_bind_blob(self._stmt, i, v, len(v), SQLITE_TRANSIENT)
+        if v is None:
+            ret = sqlite3_bind_null(self._stmt, i)
+        else:
+            ret = sqlite3_bind_blob(self._stmt, i, v, len(v), SQLITE_TRANSIENT)
         if ret != SQLITE_OK:
             raise self._err(ret)
 
@@ -403,7 +406,10 @@ class Sqlite3Statement:
         @param i: number of the col
         @param v: the float value
         """
-        ret = sqlite3_bind_double(self._stmt, i, v)
+        if v is None:
+            ret = sqlite3_bind_null(self._stmt, i)
+        else:
+            ret = sqlite3_bind_double(self._stmt, i, v)
         if ret != SQLITE_OK:
             raise self._err(ret)
 
@@ -414,7 +420,10 @@ class Sqlite3Statement:
         @param i: number of the col
         @param v: the int value
         """
-        ret = sqlite3_bind_int(self._stmt, i, v)
+        if v is None:
+            ret = sqlite3_bind_null(self._stmt, i)
+        else:
+            ret = sqlite3_bind_int(self._stmt, i, v)
         if ret != SQLITE_OK:
             raise self._err(ret)
 

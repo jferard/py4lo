@@ -138,7 +138,7 @@ class Sqlite3TestCase(unittest.TestCase):
             t2 = datetime.now()
             print(t2 - t1)
 
-    def test_null_value_first(self):
+    def test_text(self):
         with sqlite_open(self._path, "crw") as db:
             self.assertEqual(0, db.execute_update(
                 "CREATE TABLE t(a TEXT)"))
@@ -156,6 +156,63 @@ class Sqlite3TestCase(unittest.TestCase):
             with db.prepare("SELECT * FROM t") as stmt:
                 db_rows = list(stmt.execute_query())
                 self.assertEqual([[None], ["foo"], [""]], db_rows)
+
+    def test_blob(self):
+        with sqlite_open(self._path, "crw") as db:
+            self.assertEqual(0, db.execute_update(
+                "CREATE TABLE t(a BLOB)"))
+            with db.transaction():
+                with db.prepare("INSERT INTO t VALUES(?)") as stmt:
+                    for value in (None, b"foo", b""):
+                        stmt.reset()
+                        stmt.clear_bindings()
+                        stmt.bind_blob(1, value)
+                        try:
+                            self.assertEqual(1, stmt.execute_update())
+                        except Exception as e:
+                            print(e)
+
+            with db.prepare("SELECT * FROM t") as stmt:
+                db_rows = list(stmt.execute_query())
+                self.assertEqual([[None], [b"foo"], [b""]], db_rows)
+
+    def test_integer(self):
+        with sqlite_open(self._path, "crw") as db:
+            self.assertEqual(0, db.execute_update(
+                "CREATE TABLE t(a INTEGER)"))
+            with db.transaction():
+                with db.prepare("INSERT INTO t VALUES(?)") as stmt:
+                    for value in (None, 1, 0):
+                        stmt.reset()
+                        stmt.clear_bindings()
+                        stmt.bind_int(1, value)
+                        try:
+                            self.assertEqual(1, stmt.execute_update())
+                        except Exception as e:
+                            print(e)
+
+            with db.prepare("SELECT * FROM t") as stmt:
+                db_rows = list(stmt.execute_query())
+                self.assertEqual([[None], [1], [0]], db_rows)
+
+    def test_double(self):
+        with sqlite_open(self._path, "crw") as db:
+            self.assertEqual(0, db.execute_update(
+                "CREATE TABLE t(a DOUBLE)"))
+            with db.transaction():
+                with db.prepare("INSERT INTO t VALUES(?)") as stmt:
+                    for value in (None, 1.0, 0.0):
+                        stmt.reset()
+                        stmt.clear_bindings()
+                        stmt.bind_double(1, value)
+                        try:
+                            self.assertEqual(1, stmt.execute_update())
+                        except Exception as e:
+                            print(e)
+
+            with db.prepare("SELECT * FROM t") as stmt:
+                db_rows = list(stmt.execute_query())
+                self.assertEqual([[None], [1.0], [0.0]], db_rows)
 
     def test_open_rw_missing_file(self):
         with self.assertRaises(FileNotFoundError):
