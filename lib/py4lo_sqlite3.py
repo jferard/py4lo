@@ -309,6 +309,7 @@ def create_decode_text_to_str(encoding: str) -> Callable[
     :param encoding: the encoding
     :return: the decode function
     """
+
     def decode_text_to_str(stmt: sqlite3_stmt_p, i: int):
         """
         To decode TEXT stored with a specific encoding
@@ -352,6 +353,80 @@ def decode_blob_to_bytes(stmt: sqlite3_stmt_p, i: int) -> bytes:
     return string_at(ptr, size)
 
 
+PY4LO_FIRST_TYPE = 10
+PY4LO_UNIX_TS = 10
+PY4LO_JULIAN = 11
+PY4LO_ISO8601 = 12
+
+
+def create_decode_unix_ts_to_datetime(
+        tz: dt.timezone) -> Callable[[sqlite3_stmt_p, int], dt.datetime]:
+    """
+    Create a `decode_julian_to_datetime` for a given timezone
+    :param tz: the timezone
+    :return: the function
+    """
+
+    def decode_unix_ts_to_datetime(stmt: sqlite3_stmt_p, i: int) -> dt.datetime:
+        """
+        https://www.sqlite.org/lang_datefunc.html
+        > Unix timestamp : The number of seconds including fractional seconds since
+        1970-01-01 00:00:00 Example: 1748528160
+
+        To decode a datetime value inserted into a DOUBLE field
+        with `stmt.bind_unix_ts(<i>, <datetime>)`.
+        Example: `stmt.bind_unix_ts(1, dt.datetime.now())`.
+
+        @param stmt: the statement
+        @param i: the column index
+        @return: the datetime
+        """
+        seconds = sqlite3_column_double(stmt, i)
+        return dt.datetime.fromtimestamp(seconds, tz=tz)
+
+    return decode_unix_ts_to_datetime
+
+
+decode_unix_ts_to_datetime_utc = create_decode_unix_ts_to_datetime(
+    dt.timezone.utc)
+
+
+def create_decode_julian_to_datetime(
+        tz: dt.timezone) -> Callable[[sqlite3_stmt_p, int], dt.datetime]:
+    """
+    Create a `decode_julian_to_datetime` for a given timezone
+    :param tz: the timezone
+    :return: the function
+    """
+
+    def decode_julian_to_datetime(stmt: sqlite3_stmt_p,
+                                      i: int) -> dt.datetime:
+        """
+        https://www.sqlite.org/lang_datefunc.html
+        > Julian day number: The number of days including fractional days since
+        -4713-11-24 12:00:00 Example: 2460825.09444444
+
+        To decode a datetime value inserted into a DOUBLE field
+        with `stmt.bind_julian(<i>, <datetime>)`.
+        Example: `stmt.bind_julian(1, dt.datetime.now())`.
+
+        @param stmt: the statement
+        @param i: the column index
+        @return: the datetime
+        """
+        days = sqlite3_column_double(stmt, i)
+        return _julian_to_datetime(days).astimezone(tz)
+
+    return decode_julian_to_datetime
+
+
+def _julian_to_datetime(days: float) -> dt.datetime:
+    return _MODIFIED_JD_EPOCH + dt.timedelta(days - _MODIFIED_JD_OFFSET)
+
+
+decode_julian_to_datetime_utc = create_decode_julian_to_datetime(
+    dt.timezone.utc)
+
 _MODIFIED_JD_OFFSET = 2400000.500  # 1858-11-17, 00:00
 _MODIFIED_JD_EPOCH = dt.datetime(1858, 11, 17, tzinfo=dt.timezone.utc)
 
@@ -365,10 +440,29 @@ def datetime_to_julian(d: dt.datetime) -> float:
     @return: julian days.
     """
     if d.tzinfo is None:
-        d = d.astimezone() # set the system local time zone
+        d = d.astimezone()  # set the system local time zone
     ts = (d - _MODIFIED_JD_EPOCH).total_seconds() / 86400
     return ts + _MODIFIED_JD_OFFSET
 
+
+def decode_iso8601_to_datetime(stmt: sqlite3_stmt_p, i: int) -> dt.datetime:
+    """
+    https://www.sqlite.org/lang_datefunc.html
+    > ISO-8601: A text string that is an ISO 8601 date/time value. Example: '2025-05-29 14:16:00'
+
+    To decode a datetime value inserted into a TEXT field
+    with `stmt.bind_iso(<i>, <datetime>)`.
+    Example: `stmt.bind_iso(1, dt.datetime.now())`.
+
+    @param stmt: the statement
+    @param i: the column index
+    @return: the datetime (relevant timezone)
+    """
+    iso_str = sqlite3_column_text(stmt, i).decode("ascii")
+    d = dt.datetime.fromisoformat(iso_str)
+    if d.tzinfo is None:
+        d = d.astimezone()
+    return d
 
 class SQLType(enum.Enum):
     """
@@ -479,6 +573,8 @@ class Sqlite3Statement:
     def bind_unix_ts(self, i: int, v: dt.datetime):
         """
         Bind a datetime as a UNIX timestamp (DOUBLE field).
+        Use `PY4LO_UNIX_TS` or `decode_iso_to_unix_ts_utc` or
+        `create_decode_iso_to_unix_ts` to decode the value.
 
         @param i: number of the col
         @param v: the datetime value
@@ -491,6 +587,8 @@ class Sqlite3Statement:
     def bind_julian(self, i: int, v: dt.datetime):
         """
         Bind a datetime as a number of julian days (DOUBLE field).
+        Use `PY4LO_JULIAN` or `decode_iso_to_julian_utc` or
+        `create_decode_iso_to_julian` to decode the value.
 
         @param i: number of the col
         @param v: the datetime value
@@ -503,6 +601,7 @@ class Sqlite3Statement:
     def bind_iso8601(self, i: int, v: dt.datetime):
         """
         Bind a datetime as an ISO-8601 string (TEXT field).
+        Use `PY4LO_ISO8601` or `decode_iso8601_to_datetime` to decode the value.
 
         @param i: number of the col
         @param v: the datetime value.
@@ -595,7 +694,7 @@ class Sqlite3Statement:
                 ret = sqlite3_step(self._stmt)
         else:
             column_decodes = [
-                self._sql_type_to_decode(sql_type_or_decode_func)
+                self._extended_type_to_decode(sql_type_or_decode_func)
                 if isinstance(sql_type_or_decode_func, int)
                 else sql_type_or_decode_func
                 for sql_type_or_decode_func in column_decodes
@@ -644,6 +743,20 @@ class Sqlite3Statement:
             raise ValueError("Unknown type {}".format(sql_type))
         return ret
 
+    def _extended_type_to_decode(
+            self, sql_type: int
+    ) -> Callable[[sqlite3_stmt_p, int], Any]:
+        if sql_type < PY4LO_FIRST_TYPE:
+            ret = self._sql_type_to_decode(sql_type)
+        elif sql_type == PY4LO_UNIX_TS:
+            ret = decode_unix_ts_to_datetime_utc
+        elif sql_type == PY4LO_JULIAN:
+            ret = decode_julian_to_datetime_utc
+        elif sql_type == PY4LO_ISO8601:
+            ret = decode_iso8601_to_datetime
+        else:
+            raise ValueError("Unknown type {}".format(sql_type))
+        return ret
 
 class Sqlite3Database:
     """
