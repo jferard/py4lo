@@ -62,7 +62,7 @@ if library_name is None:
     if path.exists():
         str_path = str(path)
     else:
-        path = next(Path.cwd().glob("libsqlite3.so*"))  # linux / mac
+        path = next(Path.cwd().glob("libsqlite3.so*"), None)  # linux / mac
         if path is None:
             str_path = os.environ[
                 "SQLITE3_LIB"
