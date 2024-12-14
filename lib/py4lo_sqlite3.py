@@ -53,15 +53,15 @@ from ctypes import (
 )
 from ctypes.util import find_library
 from pathlib import Path
-from typing import Union, Generator, List, Any, Iterator, Mapping
+from typing import Union, Generator, List, Any, Iterator, Mapping, Callable
 
 library_name = find_library('sqlite3')
 if library_name is None:
-    path = Path.cwd() / "sqlite3.dll" # windows
+    path = Path.cwd() / "sqlite3.dll"  # windows
     if path.exists():
         str_path = str(path)
     else:
-        path = next(Path.cwd().glob("libsqlite3.so*")) # linux / mac
+        path = next(Path.cwd().glob("libsqlite3.so*"))  # linux / mac
         if path is None:
             str_path = os.environ[
                 "SQLITE3_LIB"
@@ -81,6 +81,7 @@ class SQLiteError(Exception):
     """
     A SQLite error representation: a result code and a message
     """
+
     def __init__(self, result_code: int, msg: str):
         """
         @param result_code: the result code of the command (see.
@@ -292,6 +293,46 @@ SQLITE_NULL = 5
 SQLITE_STATIC = 0
 SQLITE_TRANSIENT = -1
 
+####################
+# Decode functions #
+####################
+def decode_text_utf8_to_str(stmt: sqlite3_stmt_p, i: int) -> str:
+    """
+    To decode data stored with `stmt.bind_text(<i>, <text>)` into a TEXT
+    field. Example: `stmt.bind_text(1, "foo")`.
+
+    @param stmt: the statement
+    @param i: the column index
+    @return: the string
+    """
+    return sqlite3_column_text(stmt, i).decode("utf-8")
+
+def decode_blob_to_bytes(stmt: sqlite3_stmt_p, i: int) -> bytes:
+    """
+    To decode data stored with `stmt.bind_blob(<i>, <bytes>)` into a BLOB
+    field. Example: `stmt.bind_blob(1, "foo".encode("utf-8")`.
+
+    @param stmt: the statement
+    @param i: the column index
+    @return: the bytes
+    """
+    ptr = sqlite3_column_blob(stmt, i)
+    size = sqlite3_column_bytes(stmt, i)
+    return string_at(ptr, size)
+
+
+def decode_null_to_none(_stmt: sqlite3_stmt_p, _i: int) -> None:
+    """
+    To decode null values stored with `stmt.bind_null(<i>)`.
+    Example: `stmt.bind_null(1)`.
+
+    @param _stmt: the statement
+    @param _i: the column index
+    @return: None
+    """
+    return None
+
+
 
 # types
 class SQLType(enum.Enum):
@@ -318,6 +359,7 @@ class Sqlite3Statement:
     """
     A SQLite3 statement. See `Sqlite3Database.prepare`.
     """
+
     def __init__(self, db: sqlite3_p, stmt: sqlite3_stmt_p):
         """
         @param db: sqlite3 handle (see https://www.sqlite.org/c3ref/open.html).
@@ -334,8 +376,12 @@ class Sqlite3Statement:
         @param i: number of the col
         @param v: the text value
         """
-        bs = v.encode("utf-8")
-        ret = sqlite3_bind_text(self._stmt, i, bs, len(bs), SQLITE_TRANSIENT)
+        if v is None:
+            ret = sqlite3_bind_null(self._stmt, i)
+        else:
+            bs = v.encode("utf-8")
+            ret = sqlite3_bind_text(self._stmt, i, bs, len(bs),
+                                    SQLITE_TRANSIENT)
         if ret != SQLITE_OK:
             raise self._err(ret)
 
@@ -439,14 +485,9 @@ class Sqlite3Statement:
     def _execute_query_without_names(self) -> Iterator[List[Any]]:
         col_count = sqlite3_column_count(self._stmt)
         ret = sqlite3_step(self._stmt)
-        column_types = [
-            sqlite3_column_type(self._stmt, i)
-            for i in range(col_count)
-        ]
-
         while ret == SQLITE_ROW:
             row = [
-                self._value(i, column_types)
+                self._value(i)
                 for i in range(col_count)
             ]
             yield row
@@ -454,20 +495,24 @@ class Sqlite3Statement:
         if ret != SQLITE_DONE:
             raise self._err(ret)
 
-    def _value(self, i: int, column_types: List[int]) -> Any:
-        sql_type = column_types[i]
+    def _value(self, i: int) -> Any:
+        sql_type = sqlite3_column_type(self._stmt, i)
+        decode_func = self._sql_type_to_decode(sql_type)
+        return decode_func(self._stmt, i)
+
+    def _sql_type_to_decode(
+            self, sql_type: int
+    ) -> Callable[[sqlite3_stmt_p, int], Any]:
         if sql_type == SQLITE_INTEGER:
-            ret = sqlite3_column_int(self._stmt, i)
+            ret = sqlite3_column_int
         elif sql_type == SQLITE_FLOAT:
-            ret = sqlite3_column_double(self._stmt, i)
+            ret = sqlite3_column_double
         elif sql_type == SQLITE_TEXT:
-            ret = sqlite3_column_text(self._stmt, i).decode("utf-8")
+            ret = decode_text_utf8_to_str
         elif sql_type == SQLITE_BLOB:
-            ptr = sqlite3_column_blob(self._stmt, i)
-            size = sqlite3_column_bytes(self._stmt, i)
-            ret = string_at(ptr, size)
+            ret = decode_blob_to_bytes
         elif sql_type == SQLITE_NULL:
-            ret = None
+            ret = decode_null_to_none
         else:
             raise ValueError("Unknown type {}".format(sql_type))
         return ret
@@ -477,6 +522,7 @@ class Sqlite3Database:
     """
     A wrapper for a sqlite3 handle (see https://www.sqlite.org/c3ref/open.html).
     """
+
     def __init__(self, db: sqlite3_p):
         """
         @param db: SQLite db handle
@@ -562,7 +608,7 @@ class Sqlite3Database:
             self.execute_update("ROLLBACK")
             raise
         else:
-            self.execute_update("END TRANSACTION") # synonym of COMMIT
+            self.execute_update("END TRANSACTION")  # synonym of COMMIT
 
     def interrupt(self) -> bool:
         sqlite3_interrupt(self._db)
@@ -571,7 +617,7 @@ class Sqlite3Database:
 
 @contextmanager
 def sqlite_open(
-        filepath: Union[str, Path], mode: str = "r", timeout: int=-1
+        filepath: Union[str, Path], mode: str = "r", timeout: int = -1
 ) -> Generator[Sqlite3Database, None, None]:
     """
     Open a SQLite database in a context manager:

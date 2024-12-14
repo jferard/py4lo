@@ -138,6 +138,25 @@ class Sqlite3TestCase(unittest.TestCase):
             t2 = datetime.now()
             print(t2 - t1)
 
+    def test_null_value_first(self):
+        with sqlite_open(self._path, "crw") as db:
+            self.assertEqual(0, db.execute_update(
+                "CREATE TABLE t(a TEXT)"))
+            with db.transaction():
+                with db.prepare("INSERT INTO t VALUES(?)") as stmt:
+                    for value in (None, "foo", ""):
+                        stmt.reset()
+                        stmt.clear_bindings()
+                        stmt.bind_text(1, value)
+                        try:
+                            self.assertEqual(1, stmt.execute_update())
+                        except Exception as e:
+                            print(e)
+
+            with db.prepare("SELECT * FROM t") as stmt:
+                db_rows = list(stmt.execute_query())
+                self.assertEqual([[None], ["foo"], [""]], db_rows)
+
     def test_open_rw_missing_file(self):
         with self.assertRaises(FileNotFoundError):
             with sqlite_open(self._path, "rw") as db:
