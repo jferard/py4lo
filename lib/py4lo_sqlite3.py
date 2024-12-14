@@ -53,7 +53,8 @@ from ctypes import (
 )
 from ctypes.util import find_library
 from pathlib import Path
-from typing import Union, Generator, List, Any, Iterator, Mapping, Callable
+from typing import Union, Generator, List, Any, Iterator, Mapping, Callable, \
+    Optional
 
 library_name = find_library('sqlite3')
 if library_name is None:
@@ -293,10 +294,11 @@ SQLITE_NULL = 5
 SQLITE_STATIC = 0
 SQLITE_TRANSIENT = -1
 
+
 ####################
 # Decode functions #
 ####################
-def decode_text_utf8_to_str(stmt: sqlite3_stmt_p, i: int) -> str:
+def decode_text_utf8_to_str(stmt: sqlite3_stmt_p, i: int) -> Optional[str]:
     """
     To decode data stored with `stmt.bind_text(<i>, <text>)` into a TEXT
     field. Example: `stmt.bind_text(1, "foo")`.
@@ -305,33 +307,27 @@ def decode_text_utf8_to_str(stmt: sqlite3_stmt_p, i: int) -> str:
     @param i: the column index
     @return: the string
     """
-    return sqlite3_column_text(stmt, i).decode("utf-8")
+    bs = sqlite3_column_text(stmt, i)
+    if bs is None:
+        return None
+    return bs.decode("utf-8")
 
-def decode_blob_to_bytes(stmt: sqlite3_stmt_p, i: int) -> bytes:
+
+def decode_blob_to_bytes(stmt: sqlite3_stmt_p, i: int) -> Optional[bytes]:
     """
     To decode data stored with `stmt.bind_blob(<i>, <bytes>)` into a BLOB
-    field. Example: `stmt.bind_blob(1, "foo".encode("utf-8")`.
+    field. Example: `stmt.bind_blob(1, "foo".encode("utf-8"))`.
 
     @param stmt: the statement
     @param i: the column index
     @return: the bytes
     """
     ptr = sqlite3_column_blob(stmt, i)
+    if ptr is None:
+        return b''
+
     size = sqlite3_column_bytes(stmt, i)
     return string_at(ptr, size)
-
-
-def decode_null_to_none(_stmt: sqlite3_stmt_p, _i: int) -> None:
-    """
-    To decode null values stored with `stmt.bind_null(<i>)`.
-    Example: `stmt.bind_null(1)`.
-
-    @param _stmt: the statement
-    @param _i: the column index
-    @return: None
-    """
-    return None
-
 
 
 # types
@@ -369,9 +365,10 @@ class Sqlite3Statement:
         self._db = db
         self._stmt = stmt
 
-    def bind_text(self, i: int, v: str):
+    def bind_text(self, i: int, v: Optional[str]):
         """
-        Bind a text parameter
+        Bind a text parameter.
+        If the value is None, then bind NULL value.
 
         @param i: number of the col
         @param v: the text value
@@ -385,9 +382,10 @@ class Sqlite3Statement:
         if ret != SQLITE_OK:
             raise self._err(ret)
 
-    def bind_blob(self, i: int, v: bytes):
+    def bind_blob(self, i: int, v: Optional[bytes]):
         """
-        Bind a blob parameter
+        Bind a blob parameter (bytes).
+        If the value is None, then bind NULL value.
 
         @param i: number of the col
         @param v: the blob value
@@ -399,9 +397,10 @@ class Sqlite3Statement:
         if ret != SQLITE_OK:
             raise self._err(ret)
 
-    def bind_double(self, i: int, v: float):
+    def bind_double(self, i: int, v: Optional[float]):
         """
-        Bind a double parameter (float in Python)
+        Bind a double parameter (float in Python).
+        If the value is None, then bind NULL value.
 
         @param i: number of the col
         @param v: the float value
@@ -413,9 +412,10 @@ class Sqlite3Statement:
         if ret != SQLITE_OK:
             raise self._err(ret)
 
-    def bind_int(self, i: int, v: int):
+    def bind_int(self, i: int, v: Optional[int]):
         """
-        Bind an integer parameter
+        Bind an integer parameter.
+        If the value is None, then bind NULL value.
 
         @param i: number of the col
         @param v: the int value
@@ -468,46 +468,89 @@ class Sqlite3Statement:
             raise self._err(ret)
         return sqlite3_changes(self._db)
 
-    def execute_query(self, with_names: bool = False
-                      ) -> Iterator[Union[List[Any], Mapping[str, Any]]]:
+    def execute_query(
+            self, with_names: bool = False,
+            column_decodes: List[int] = None
+    ) -> Iterator[Union[List[Any], Mapping[str, Any]]]:
         """
-        Execute the query.
+        Execute the query and return the values as rows.
+        If `with_names` is True, then the rows are dict. Otherwise rows
+        are lists.
+        If `column_decodes` is None, then use the standard SQLite type
+        guess.
+        Otherwise, `column_decodes` is a list. Each element may be
+        integers (SQLITE_INTEGER, SQLITE_FLOAT, SQLITE_TEXT, SQLITE_BLOB or
+        SQLITE_NULL) to declare the type of the colmun.
 
         @param with_names: use the name for the return
-        @return: an iterator over results. if `with_names`is True,
-        return a mapping col name -> value, else return a list of values
+        @param column_decodes: None or column types as a list of integers (SQLITE_...)
+        @return: an iterator over results
         """
-        if with_names:
-            return self._execute_query_with_names()
-        else:
-            return self._execute_query_without_names()
-
-    def _execute_query_with_names(self) -> Iterator[Mapping[str, Any]]:
         col_count = sqlite3_column_count(self._stmt)
+        if with_names:
+            return self._execute_query_with_names(
+                col_count, column_decodes)
+        else:
+            return self._execute_query_without_names(
+                col_count, column_decodes)
+
+    def _execute_query_with_names(
+            self, col_count: int,
+            column_decodes: List[int] = None
+    ) -> Iterator[Mapping[str, Any]]:
         names = [
             sqlite3_column_name(self._stmt, i).decode("utf-8")
             for i in range(col_count)
         ]
-        for row in self._execute_query_without_names():
+        for row in self._execute_query_without_names(col_count, column_decodes):
             yield dict(zip(names, row))
 
-    def _execute_query_without_names(self) -> Iterator[List[Any]]:
-        col_count = sqlite3_column_count(self._stmt)
+    def _execute_query_without_names(
+            self, col_count: int,
+            column_decodes: List[int] = None
+    ) -> Iterator[List[Any]]:
         ret = sqlite3_step(self._stmt)
-        while ret == SQLITE_ROW:
-            row = [
-                self._value(i)
-                for i in range(col_count)
+        if column_decodes is None:
+            while ret == SQLITE_ROW:
+                row = [
+                    self._value(i)
+                    for i in range(col_count)
+                ]
+                yield row
+                ret = sqlite3_step(self._stmt)
+        else:
+            column_decodes = [
+                self._sql_type_to_decode(sql_type)
+                for sql_type in column_decodes
             ]
-            yield row
-            ret = sqlite3_step(self._stmt)
+            while ret == SQLITE_ROW:
+                row = [
+                    self._force_decode(column_decodes, i)
+                    for i in range(col_count)
+                ]
+                yield row
+                ret = sqlite3_step(self._stmt)
+
         if ret != SQLITE_DONE:
             raise self._err(ret)
 
     def _value(self, i: int) -> Any:
         sql_type = sqlite3_column_type(self._stmt, i)
+        if sql_type == SQLITE_NULL:
+            return None
+
         decode_func = self._sql_type_to_decode(sql_type)
         return decode_func(self._stmt, i)
+
+    def _force_decode(self,
+                      column_decodes: List[
+                          Callable[[sqlite3_stmt_p, int], Any]],
+                      i: int) -> Any:
+        sql_type = sqlite3_column_type(self._stmt, i)
+        if sql_type == SQLITE_NULL:
+            return None
+
+        return column_decodes[i](self._stmt, i)
 
     def _sql_type_to_decode(
             self, sql_type: int
@@ -520,8 +563,6 @@ class Sqlite3Statement:
             ret = decode_text_utf8_to_str
         elif sql_type == SQLITE_BLOB:
             ret = decode_blob_to_bytes
-        elif sql_type == SQLITE_NULL:
-            ret = decode_null_to_none
         else:
             raise ValueError("Unknown type {}".format(sql_type))
         return ret
