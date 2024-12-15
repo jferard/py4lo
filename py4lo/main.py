@@ -1,5 +1,5 @@
 #  Py4LO - Python Toolkit For LibreOffice Calc
-#     Copyright (C) 2016-2023 J. Férard <https://github.com/jferard>
+#     Copyright (C) 2016-2024 J. Férard <https://github.com/jferard>
 #
 #     This file is part of Py4LO.
 #
@@ -40,7 +40,7 @@ def main(factory: PropertiesProviderFactory, argv: List[str] = sys.argv[1:]):
     args = get_args(argv)
     provider = factory.create(args.toml)
     logger = provider.get_logger()
-    logger.info("Py4LO (C) Julien Férard 2016-2022")
+    logger.info("Py4LO (C) Julien Férard 2016-2024")
     logger.debug("Log Level is: %s", logger.getEffectiveLevel())
     logger.debug("Command line arguments are: %s", args)
 
