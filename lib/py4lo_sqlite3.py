@@ -20,15 +20,16 @@ A wrapper for the C SQLite3 API (sqlite module is not shipped with LibreOffice).
 The API is **not** compliant to the PEP249 (https://peps.python.org/pep-0249/).
 
 The module provides specific bindings to datetime values (as UNIX timestamps,
-number of Julian days or ISO-8601 strings).
+number of Julian days or ISO-8601 strings) and json values.
 
 By default, it uses the standard SQLite type guess to return Python values.
 But the decoding of values is fully customizable: there is a type list (
 SQLITE_INTEGER, SQLITE_FLOAT, SQLITE_TEXT, SQLITE_BLOB, SQLITE_NULL,
-PY4LO_UNIX_TS, PY4LO_JULIAN, PY4LO_ISO) and standard decode functions.
+PY4LO_UNIX_TS, PY4LO_JULIAN, PY4LO_ISO, PY4LO_JSON) and standard decode functions.
 You can write your own functions, but a NULL value will *always* be returned
 as `None` (because that's the only sensible thing to do... I believe).
 
+## Example:
 Here's a full example:
 ```
 with sqlite_open(":memory:", "crw") as db:
