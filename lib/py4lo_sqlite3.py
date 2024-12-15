@@ -601,7 +601,7 @@ class Sqlite3Statement:
         if ret != SQLITE_OK:
             raise self._err(ret)
 
-    def bind_unix_ts(self, i: int, v: dt.datetime):
+    def bind_unix_ts(self, i: int, v: Optional[dt.datetime]):
         """
         Bind a datetime as a UNIX timestamp (DOUBLE field).
         Use `PY4LO_UNIX_TS` or `decode_iso_to_unix_ts_utc` or
@@ -610,12 +610,15 @@ class Sqlite3Statement:
         @param i: number of the col
         @param v: the datetime value
         """
-        double = v.timestamp()
-        ret = sqlite3_bind_double(self._stmt, i, double)
+        if v is None:
+            ret = sqlite3_bind_null(self._stmt, i)
+        else:
+            double = v.timestamp()
+            ret = sqlite3_bind_double(self._stmt, i, double)
         if ret != SQLITE_OK:
             raise self._err(ret)
 
-    def bind_julian(self, i: int, v: dt.datetime):
+    def bind_julian(self, i: int, v: Optional[dt.datetime]):
         """
         Bind a datetime as a number of julian days (DOUBLE field).
         Use `PY4LO_JULIAN` or `decode_iso_to_julian_utc` or
@@ -624,12 +627,15 @@ class Sqlite3Statement:
         @param i: number of the col
         @param v: the datetime value
         """
-        double = datetime_to_julian(v)
-        ret = sqlite3_bind_double(self._stmt, i, double)
+        if v is None:
+            ret = sqlite3_bind_null(self._stmt, i)
+        else:
+            double = datetime_to_julian(v)
+            ret = sqlite3_bind_double(self._stmt, i, double)
         if ret != SQLITE_OK:
             raise self._err(ret)
 
-    def bind_iso8601(self, i: int, v: dt.datetime):
+    def bind_iso8601(self, i: int, v: Optional[dt.datetime]):
         """
         Bind a datetime as an ISO-8601 string (TEXT field).
         Use `PY4LO_ISO8601` or `decode_iso8601_to_datetime` to decode the value.
@@ -637,8 +643,11 @@ class Sqlite3Statement:
         @param i: number of the col
         @param v: the datetime value.
         """
-        bs = v.isoformat().encode("ascii")
-        ret = sqlite3_bind_text(self._stmt, i, bs, len(bs), SQLITE_TRANSIENT)
+        if v is None:
+            ret = sqlite3_bind_null(self._stmt, i)
+        else:
+            bs = v.isoformat().encode("ascii")
+            ret = sqlite3_bind_text(self._stmt, i, bs, len(bs), SQLITE_TRANSIENT)
         if ret != SQLITE_OK:
             raise self._err(ret)
 
