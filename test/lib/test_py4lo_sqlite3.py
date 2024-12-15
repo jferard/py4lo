@@ -16,7 +16,7 @@ from py4lo_sqlite3 import (
     datetime_to_julian, PY4LO_UNIX_TS, decode_unix_ts_to_datetime_utc,
     create_decode_unix_ts_to_datetime, PY4LO_JULIAN,
     decode_julian_to_datetime_utc, create_decode_julian_to_datetime,
-    PY4LO_ISO8601, decode_iso8601_to_datetime
+    PY4LO_ISO8601, decode_iso8601_to_datetime, PY4LO_JSON, decode_text_to_json
 )
 
 
@@ -138,7 +138,8 @@ class Sqlite3TestCase(unittest.TestCase):
 
             print("-> select")
             with db.prepare("SELECT * FROM t") as stmt:
-                for db_row, data_row in zip(stmt.execute_query(with_names=True), data):
+                for db_row, data_row in zip(stmt.execute_query(with_names=True),
+                                            data):
                     self.assertEqual(dict(zip('abcd', data_row)), db_row)
 
             t2 = dt.datetime.now()
@@ -168,7 +169,8 @@ class Sqlite3TestCase(unittest.TestCase):
                 self.assertEqual([[None], ["foo"], [""]], db_rows)
 
             with db.prepare("SELECT * FROM t") as stmt:
-                db_rows = list(stmt.execute_query(column_decodes=[decode_text_utf8_to_str]))
+                db_rows = list(stmt.execute_query(
+                    column_decodes=[decode_text_utf8_to_str]))
                 self.assertEqual([[None], ["foo"], [""]], db_rows)
 
     def test_blob(self):
@@ -188,18 +190,23 @@ class Sqlite3TestCase(unittest.TestCase):
 
             with db.prepare("SELECT * FROM t") as stmt:
                 db_rows = list(stmt.execute_query())
-                self.assertEqual([[None], [b"foo"], [b""], [b"F\xe9rard"]], db_rows)
+                self.assertEqual([[None], [b"foo"], [b""], [b"F\xe9rard"]],
+                                 db_rows)
 
             with db.prepare("SELECT * FROM t") as stmt:
                 db_rows = list(stmt.execute_query(column_decodes=[SQLITE_BLOB]))
-                self.assertEqual([[None], [b"foo"], [b""], [b"F\xe9rard"]], db_rows)
+                self.assertEqual([[None], [b"foo"], [b""], [b"F\xe9rard"]],
+                                 db_rows)
 
             with db.prepare("SELECT * FROM t") as stmt:
-                db_rows = list(stmt.execute_query(column_decodes=[decode_blob_to_bytes]))
-                self.assertEqual([[None], [b"foo"], [b""], [b"F\xe9rard"]], db_rows)
+                db_rows = list(
+                    stmt.execute_query(column_decodes=[decode_blob_to_bytes]))
+                self.assertEqual([[None], [b"foo"], [b""], [b"F\xe9rard"]],
+                                 db_rows)
 
             with db.prepare("SELECT * FROM t") as stmt:
-                db_rows = list(stmt.execute_query(column_decodes=[create_decode_text_to_str("latin-1")]))
+                db_rows = list(stmt.execute_query(
+                    column_decodes=[create_decode_text_to_str("latin-1")]))
                 self.assertEqual([[None], ["foo"], [""], ["Férard"]], db_rows)
 
     def test_blob_with_null_byte(self):
@@ -224,7 +231,6 @@ class Sqlite3TestCase(unittest.TestCase):
                 db_rows = list(stmt.execute_query(column_decodes=[SQLITE_TEXT]))
                 self.assertEqual([["foo"]], db_rows)
 
-
     def test_integer(self):
         with sqlite_open(self._path, "crw") as db:
             self.assertEqual(0, db.execute_update(
@@ -245,11 +251,13 @@ class Sqlite3TestCase(unittest.TestCase):
                 self.assertEqual([[None], [1], [0]], db_rows)
 
             with db.prepare("SELECT * FROM t") as stmt:
-                db_rows = list(stmt.execute_query(column_decodes=[SQLITE_INTEGER]))
+                db_rows = list(
+                    stmt.execute_query(column_decodes=[SQLITE_INTEGER]))
                 self.assertEqual([[None], [1], [0]], db_rows)
 
             with db.prepare("SELECT * FROM t") as stmt:
-                db_rows = list(stmt.execute_query(column_decodes=[sqlite3_column_int]))
+                db_rows = list(
+                    stmt.execute_query(column_decodes=[sqlite3_column_int]))
                 self.assertEqual([[None], [1], [0]], db_rows)
 
     def test_double(self):
@@ -272,11 +280,13 @@ class Sqlite3TestCase(unittest.TestCase):
                 self.assertEqual([[None], [1.0], [0.0]], db_rows)
 
             with db.prepare("SELECT * FROM t") as stmt:
-                db_rows = list(stmt.execute_query(column_decodes=[SQLITE_FLOAT]))
+                db_rows = list(
+                    stmt.execute_query(column_decodes=[SQLITE_FLOAT]))
                 self.assertEqual([[None], [1.0], [0.0]], db_rows)
 
             with db.prepare("SELECT * FROM t") as stmt:
-                db_rows = list(stmt.execute_query(column_decodes=[sqlite3_column_double]))
+                db_rows = list(
+                    stmt.execute_query(column_decodes=[sqlite3_column_double]))
                 self.assertEqual([[None], [1.0], [0.0]], db_rows)
 
     def test_unix_ts(self):
@@ -300,35 +310,46 @@ class Sqlite3TestCase(unittest.TestCase):
 
             with db.prepare("SELECT datetime(a, 'unixepoch') FROM t") as stmt:
                 db_rows = list(stmt.execute_query())
-                self.assertEqual([[None], ['2010-04-30 22:43:14'], ['2003-06-03 14:01:21']], db_rows)
+                self.assertEqual(
+                    [[None], ['2010-04-30 22:43:14'], ['2003-06-03 14:01:21']],
+                    db_rows)
 
             with db.prepare("SELECT * FROM t") as stmt:
                 db_rows = list(stmt.execute_query())
-                self.assertEqual([[None], [d1.timestamp()], [d2.timestamp()]], db_rows)
-                self.assertEqual([[None], [1272667394.0], [1054648881.0]], db_rows)
+                self.assertEqual([[None], [d1.timestamp()], [d2.timestamp()]],
+                                 db_rows)
+                self.assertEqual([[None], [1272667394.0], [1054648881.0]],
+                                 db_rows)
 
             with db.prepare("SELECT * FROM t") as stmt:
-                db_rows = list(stmt.execute_query(column_decodes=[PY4LO_UNIX_TS]))
+                db_rows = list(
+                    stmt.execute_query(column_decodes=[PY4LO_UNIX_TS]))
                 self.assertEqual([
                     [None],
-                    [dt.datetime(2010, 4, 30, 22, 43, 14, tzinfo=dt.timezone.utc)],
+                    [dt.datetime(2010, 4, 30, 22, 43, 14,
+                                 tzinfo=dt.timezone.utc)],
                     [dt.datetime(2003, 6, 3, 14, 1, 21, tzinfo=dt.timezone.utc)]
                 ], db_rows)
 
             with db.prepare("SELECT * FROM t") as stmt:
-                db_rows = list(stmt.execute_query(column_decodes=[decode_unix_ts_to_datetime_utc]))
+                db_rows = list(stmt.execute_query(
+                    column_decodes=[decode_unix_ts_to_datetime_utc]))
                 self.assertEqual([
                     [None],
-                    [dt.datetime(2010, 4, 30, 22, 43, 14, tzinfo=dt.timezone.utc)],
+                    [dt.datetime(2010, 4, 30, 22, 43, 14,
+                                 tzinfo=dt.timezone.utc)],
                     [dt.datetime(2003, 6, 3, 14, 1, 21, tzinfo=dt.timezone.utc)]
                 ], db_rows)
 
             with db.prepare("SELECT * FROM t") as stmt:
-                db_rows = list(stmt.execute_query(column_decodes=[create_decode_unix_ts_to_datetime(paris_summer_timezone)]))
+                db_rows = list(stmt.execute_query(column_decodes=[
+                    create_decode_unix_ts_to_datetime(paris_summer_timezone)]))
                 self.assertEqual([
                     [None],
-                    [dt.datetime(2010, 5, 1, 0, 43, 14, tzinfo=paris_summer_timezone)],
-                    [dt.datetime(2003, 6, 3, 16, 1, 21, tzinfo=paris_summer_timezone)]
+                    [dt.datetime(2010, 5, 1, 0, 43, 14,
+                                 tzinfo=paris_summer_timezone)],
+                    [dt.datetime(2003, 6, 3, 16, 1, 21,
+                                 tzinfo=paris_summer_timezone)]
                 ], db_rows)
 
     def test_julian(self):
@@ -352,35 +373,49 @@ class Sqlite3TestCase(unittest.TestCase):
 
             with db.prepare("SELECT datetime(a) FROM t") as stmt:
                 db_rows = list(stmt.execute_query())
-                self.assertEqual([[None], ['2010-04-30 22:43:14'], ['2003-06-03 14:01:21']], db_rows)
+                self.assertEqual(
+                    [[None], ['2010-04-30 22:43:14'], ['2003-06-03 14:01:21']],
+                    db_rows)
 
             with db.prepare("SELECT * FROM t") as stmt:
                 db_rows = list(stmt.execute_query())
-                self.assertEqual([[None], [datetime_to_julian(d1)], [datetime_to_julian(d2)]], db_rows)
-                self.assertEqual([[None], [2455317.446689815], [2452794.0842708335]], db_rows)
+                self.assertEqual([[None], [datetime_to_julian(d1)],
+                                  [datetime_to_julian(d2)]], db_rows)
+                self.assertEqual(
+                    [[None], [2455317.446689815], [2452794.0842708335]],
+                    db_rows)
 
             with db.prepare("SELECT * FROM t") as stmt:
-                db_rows = list(stmt.execute_query(column_decodes=[PY4LO_JULIAN]))
+                db_rows = list(
+                    stmt.execute_query(column_decodes=[PY4LO_JULIAN]))
                 self.assertEqual([
                     [None],
-                    [dt.datetime(2010, 4, 30, 22, 43, 13, 999998, tzinfo=dt.timezone.utc)],
-                    [dt.datetime(2003, 6, 3, 14, 1, 21, 17, tzinfo=dt.timezone.utc)]
+                    [dt.datetime(2010, 4, 30, 22, 43, 13, 999998,
+                                 tzinfo=dt.timezone.utc)],
+                    [dt.datetime(2003, 6, 3, 14, 1, 21, 17,
+                                 tzinfo=dt.timezone.utc)]
                 ], db_rows)
 
             with db.prepare("SELECT * FROM t") as stmt:
-                db_rows = list(stmt.execute_query(column_decodes=[decode_julian_to_datetime_utc]))
+                db_rows = list(stmt.execute_query(
+                    column_decodes=[decode_julian_to_datetime_utc]))
                 self.assertEqual([
                     [None],
-                    [dt.datetime(2010, 4, 30, 22, 43, 13, 999998, tzinfo=dt.timezone.utc)],
-                    [dt.datetime(2003, 6, 3, 14, 1, 21, 17, tzinfo=dt.timezone.utc)]
+                    [dt.datetime(2010, 4, 30, 22, 43, 13, 999998,
+                                 tzinfo=dt.timezone.utc)],
+                    [dt.datetime(2003, 6, 3, 14, 1, 21, 17,
+                                 tzinfo=dt.timezone.utc)]
                 ], db_rows)
 
             with db.prepare("SELECT * FROM t") as stmt:
-                db_rows = list(stmt.execute_query(column_decodes=[create_decode_julian_to_datetime(paris_summer_timezone)]))
+                db_rows = list(stmt.execute_query(column_decodes=[
+                    create_decode_julian_to_datetime(paris_summer_timezone)]))
                 self.assertEqual([
                     [None],
-                    [dt.datetime(2010, 5, 1, 0, 43, 13, 999998, tzinfo=paris_summer_timezone)],
-                    [dt.datetime(2003, 6, 3, 16, 1, 21, 17, tzinfo=paris_summer_timezone)]
+                    [dt.datetime(2010, 5, 1, 0, 43, 13, 999998,
+                                 tzinfo=paris_summer_timezone)],
+                    [dt.datetime(2003, 6, 3, 16, 1, 21, 17,
+                                 tzinfo=paris_summer_timezone)]
                 ], db_rows)
 
     def test_iso8601(self):
@@ -404,26 +439,34 @@ class Sqlite3TestCase(unittest.TestCase):
 
             with db.prepare("SELECT datetime(a) FROM t") as stmt:
                 db_rows = list(stmt.execute_query())
-                self.assertEqual([[None], ['2010-04-30 22:43:14'], ['2003-06-03 14:01:21']], db_rows)
+                self.assertEqual(
+                    [[None], ['2010-04-30 22:43:14'], ['2003-06-03 14:01:21']],
+                    db_rows)
 
             with db.prepare("SELECT * FROM t") as stmt:
                 db_rows = list(stmt.execute_query())
-                self.assertEqual([[None], [d1.isoformat()], [d2.isoformat()]], db_rows)
-                self.assertEqual([[None], ['2010-05-01T00:43:14+02:00'], ['2003-06-03T14:01:21+00:00']], db_rows)
+                self.assertEqual([[None], [d1.isoformat()], [d2.isoformat()]],
+                                 db_rows)
+                self.assertEqual([[None], ['2010-05-01T00:43:14+02:00'],
+                                  ['2003-06-03T14:01:21+00:00']], db_rows)
 
             with db.prepare("SELECT * FROM t") as stmt:
-                db_rows = list(stmt.execute_query(column_decodes=[PY4LO_ISO8601]))
+                db_rows = list(
+                    stmt.execute_query(column_decodes=[PY4LO_ISO8601]))
                 self.assertEqual([
                     [None],
-                    [dt.datetime(2010, 4, 30, 22, 43, 14, tzinfo=dt.timezone.utc)],
+                    [dt.datetime(2010, 4, 30, 22, 43, 14,
+                                 tzinfo=dt.timezone.utc)],
                     [dt.datetime(2003, 6, 3, 14, 1, 21, tzinfo=dt.timezone.utc)]
                 ], db_rows)
 
             with db.prepare("SELECT * FROM t") as stmt:
-                db_rows = list(stmt.execute_query(column_decodes=[decode_iso8601_to_datetime]))
+                db_rows = list(stmt.execute_query(
+                    column_decodes=[decode_iso8601_to_datetime]))
                 self.assertEqual([
                     [None],
-                    [dt.datetime(2010, 4, 30, 22, 43, 14, tzinfo=dt.timezone.utc)],
+                    [dt.datetime(2010, 4, 30, 22, 43, 14,
+                                 tzinfo=dt.timezone.utc)],
                     [dt.datetime(2003, 6, 3, 14, 1, 21, tzinfo=dt.timezone.utc)]
                 ], db_rows)
                 self.assertEqual([
@@ -431,6 +474,48 @@ class Sqlite3TestCase(unittest.TestCase):
                     [dt.timezone.utc]
                 ], [[d.tzinfo for d in row] for row in db_rows[1:]])
 
+    def test_json(self):
+        with sqlite_open(self._path, "crw") as db:
+            self.assertEqual(0, db.execute_update(
+                "CREATE TABLE t(a TEXT)"))
+            with db.transaction():
+                with db.prepare("INSERT INTO t VALUES(?)") as stmt:
+                    for value in (
+                            "foo", 1, 3.14, True, None, {"x": "foo", "y": 10},
+                            ["foo", 10]):
+                        stmt.reset()
+                        stmt.clear_bindings()
+                        stmt.bind_json(1, value)
+                        try:
+                            self.assertEqual(1, stmt.execute_update())
+                        except Exception as e:
+                            print(e)
+
+            with db.prepare("SELECT * FROM t") as stmt:
+                db_rows = list(stmt.execute_query())
+                self.assertEqual([
+                    ['"foo"'],
+                    ['1'],
+                    ['3.14'],
+                    ['true'],
+                    [None],
+                    ['{"x": "foo", "y": 10}'],
+                    ['["foo", 10]']
+                ], db_rows)
+
+            with db.prepare("SELECT * FROM t") as stmt:
+                db_rows = list(stmt.execute_query(column_decodes=[PY4LO_JSON]))
+                self.assertEqual([
+                    ["foo"], [1], [3.14], [True], [None], [{"x": "foo", "y": 10}],
+                    [["foo", 10]]
+                ], db_rows)
+
+            with db.prepare("SELECT * FROM t") as stmt:
+                db_rows = list(stmt.execute_query(column_decodes=[decode_text_to_json]))
+                self.assertEqual([
+                    ["foo"], [1], [3.14], [True], [None], [{"x": "foo", "y": 10}],
+                    [["foo", 10]]
+                ], db_rows)
 
     def test_open_rw_missing_file(self):
         with self.assertRaises(FileNotFoundError):
@@ -456,7 +541,8 @@ class Sqlite3TestCase(unittest.TestCase):
             db.execute_update("CREATE TABLE t(x INTEGER)")
 
         with self.assertRaises(SQLiteError) as cm:
-            with sqlite_open(self._path, "rw") as db, sqlite_open(self._path, "rw") as db2:
+            with sqlite_open(self._path, "rw") as db, sqlite_open(self._path,
+                                                                  "rw") as db2:
                 with db.transaction(TransactionMode.IMMEDIATE):
                     db2.execute_update("INSERT INTO t VALUES (1)")
 
@@ -468,7 +554,8 @@ class Sqlite3TestCase(unittest.TestCase):
         with sqlite_open(self._path, "crw") as db:
             db.execute_update("CREATE TABLE t(x INTEGER)")
 
-        with sqlite_open(self._path, "rw") as db, sqlite_open(self._path, "rw", 2_000) as db2:
+        with sqlite_open(self._path, "rw") as db, sqlite_open(self._path, "rw",
+                                                              2_000) as db2:
             def func():
                 with db.transaction(TransactionMode.IMMEDIATE):
                     db.execute_update("INSERT INTO t VALUES (1)")
@@ -484,7 +571,9 @@ class Sqlite3TestCase(unittest.TestCase):
             db.execute_update("CREATE TABLE t(x INTEGER)")
 
         with self.assertRaises(SQLiteError) as cm:
-            with sqlite_open(self._path, "rw") as db, sqlite_open(self._path, "rw", 100) as db2:
+            with sqlite_open(self._path, "rw") as db, sqlite_open(self._path,
+                                                                  "rw",
+                                                                  100) as db2:
                 def func():
                     try:
                         with db.transaction(TransactionMode.IMMEDIATE):

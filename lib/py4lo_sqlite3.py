@@ -74,6 +74,7 @@ variable SQLITE3_LIB to set the actual library path (including the name).
 
 import datetime as dt
 import enum
+import json
 import os
 from contextlib import contextmanager
 from ctypes import (
@@ -82,7 +83,8 @@ from ctypes import (
 from ctypes.util import find_library
 from pathlib import Path
 from typing import (
-    Union, Generator, List, Any, Iterator, Mapping, Callable, Optional)
+    Union, Generator, List, Any, Iterator, Mapping, Callable, Optional,
+    Sequence)
 
 library_name = find_library('sqlite3')
 if library_name is None:
@@ -384,6 +386,7 @@ PY4LO_FIRST_TYPE = 10
 PY4LO_UNIX_TS = 10
 PY4LO_JULIAN = 11
 PY4LO_ISO8601 = 12
+PY4LO_JSON = 13
 
 
 def create_decode_unix_ts_to_datetime(
@@ -491,6 +494,22 @@ def decode_iso8601_to_datetime(stmt: sqlite3_stmt_p, i: int) -> dt.datetime:
         d = d.astimezone()
     return d
 
+_PrimitiveJSON = Union[str, int, float, bool, None]
+JSON = Union[Mapping[str, _PrimitiveJSON], Sequence[_PrimitiveJSON], _PrimitiveJSON]
+
+def decode_text_to_json(stmt: sqlite3_stmt_p, i: int) -> JSON:
+    """
+    To decode a json value inserted into a TEXT field
+    with `stmt.bind_json(<i>, <json value>)`.
+    Example: `stmt.bind_json(1, {"a": "foo", "b": 3.14})`.
+
+    @param stmt: the statement
+    @param i: the column index
+    @return: the json value
+    """
+    bs = sqlite3_column_text(stmt, i)
+    return json.loads(bs.decode("utf-8"))
+
 class SQLType(enum.Enum):
     """
     List of SQLite types that can be bound.
@@ -509,7 +528,6 @@ class SQLType(enum.Enum):
     TYPE_POINTER = 11
     TYPE_ZEROBLOB = 12
     TYPE_ZEROBLOB64 = 13
-
 
 class Sqlite3Statement:
     """
@@ -647,6 +665,23 @@ class Sqlite3Statement:
             ret = sqlite3_bind_null(self._stmt, i)
         else:
             bs = v.isoformat().encode("ascii")
+            ret = sqlite3_bind_text(self._stmt, i, bs, len(bs), SQLITE_TRANSIENT)
+        if ret != SQLITE_OK:
+            raise self._err(ret)
+
+    def bind_json(self, i: int, v: Optional[JSON]):
+        """
+        Bind a JSON object as a string (TEXT field).
+        Use `PY4LO_JSON` or `decode_text_to_json` to decode the value.
+
+        @param i: number of the col
+        @param v: the json value.
+        """
+        if v is None:
+            ret = sqlite3_bind_null(self._stmt, i)
+        else:
+            s = json.dumps(v)
+            bs = s.encode("utf-8")
             ret = sqlite3_bind_text(self._stmt, i, bs, len(bs), SQLITE_TRANSIENT)
         if ret != SQLITE_OK:
             raise self._err(ret)
@@ -794,6 +829,8 @@ class Sqlite3Statement:
             ret = decode_julian_to_datetime_utc
         elif sql_type == PY4LO_ISO8601:
             ret = decode_iso8601_to_datetime
+        elif sql_type == PY4LO_JSON:
+            ret = decode_text_to_json
         else:
             raise ValueError("Unknown type {}".format(sql_type))
         return ret
