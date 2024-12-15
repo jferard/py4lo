@@ -202,6 +202,29 @@ class Sqlite3TestCase(unittest.TestCase):
                 db_rows = list(stmt.execute_query(column_decodes=[create_decode_text_to_str("latin-1")]))
                 self.assertEqual([[None], ["foo"], [""], ["Férard"]], db_rows)
 
+    def test_blob_with_null_byte(self):
+        with sqlite_open(self._path, "crw") as db:
+            self.assertEqual(0, db.execute_update(
+                "CREATE TABLE t(a BLOB)"))
+            with db.transaction():
+                with db.prepare("INSERT INTO t VALUES(?)") as stmt:
+                    stmt.reset()
+                    stmt.clear_bindings()
+                    stmt.bind_blob(1, b"foo\0bar")
+                    try:
+                        self.assertEqual(1, stmt.execute_update())
+                    except Exception as e:
+                        print(e)
+
+            with db.prepare("SELECT * FROM t") as stmt:
+                db_rows = list(stmt.execute_query(column_decodes=[SQLITE_BLOB]))
+                self.assertEqual([[b"foo\0bar"]], db_rows)
+
+            with db.prepare("SELECT * FROM t") as stmt:
+                db_rows = list(stmt.execute_query(column_decodes=[SQLITE_TEXT]))
+                self.assertEqual([["foo"]], db_rows)
+
+
     def test_integer(self):
         with sqlite_open(self._path, "crw") as db:
             self.assertEqual(0, db.execute_update(
