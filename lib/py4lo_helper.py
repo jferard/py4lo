@@ -1511,6 +1511,7 @@ class DocBuilder:
     oDoc = d.build()
     ```
     """
+
     def __init__(
             self, url: NewDocumentUrl, target_frame_name: Target,
             search_flags: FrameSearchFlag,
@@ -1624,7 +1625,7 @@ class DocBuilder:
 
         if self._remove:
             while oSheets.Count > len(self._duplicate_sheet_names):
-                oSheets.removeByName(oSheets.getByIndex(oSheets.Count-1).Name)
+                oSheets.removeByName(oSheets.getByIndex(oSheets.Count - 1).Name)
 
     def _build_duplicate_to(self, oDoc: UnoSpreadsheetDocument):
         if self._duplicate_to is None:
@@ -1738,7 +1739,6 @@ class DocBuilder:
         return self
 
 
-
 ###############################################################################
 # MISC
 ###############################################################################
@@ -1842,6 +1842,7 @@ class _Inspector:
     """
     An inspector: MRI or Xray provider.
     """
+
     def __init__(self, provider: _ObjectProvider):
         """
         @param provider: the object provider
@@ -2176,6 +2177,7 @@ class DatesHelper:
     helper.date_to_int(dt.date(1899, 12, 30)) # 0 if this is the NullDate
     ```
     """
+
     @staticmethod
     def create(oDoc: Optional[UnoSpreadsheetDocument] = None) -> "DatesHelper":
         """
