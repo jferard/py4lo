@@ -2298,3 +2298,140 @@ def float_to_date(days: float) -> dt.datetime:
     @return: the Python datetime
     """
     return DatesHelper.create().float_to_date(days)
+
+
+def copy_data_array(
+        oDoc: UnoSpreadsheetDocument, cell_address: UnoCellAddress,
+        data_array: DATA_ARRAY, undo=True, debug=False, step=10000,
+        callback: Callable[[int], None] = None):
+    """
+    Copy a data array to a given address on a sheet. This function provides
+    some convenient helpers.
+    If `undo` is False, don't add the action on the undo stack. Since data array
+    can be a memory expensive operation, storing it on the stack may use a lot
+    of memory.
+    If `debug` is True, the function will check if the data array is a rectangle
+    and if all values are authorized. If the check fails, a ValueError is
+    raised.
+    The `step` will set the size in rows of the slices to be copied. This helps
+    copying without using to much memory. If `step` is -1, then the copy
+    operation is done all at once.
+    The `callback` function is called after every step, with a parameter:
+    the number of rows processed.
+
+    @param oDoc: the document
+    @param cell_address: the cell address of the top left cell of the array
+    @param data_array: the data array
+    @param undo: if False, don't add to undo stack.
+    @param debug: if True, check the data array
+    @param step: size of the slice in rows
+    @param callback: function called after every step
+    """
+    if debug:
+        _check_data_array(data_array)
+
+    row_count = len(data_array)
+    if row_count == 0:
+        return
+
+    col_count = len(data_array[0])
+    if col_count == 0:
+        return
+
+    oSheet = oDoc.Sheets.getByIndex(cell_address.Sheet)
+
+    if undo:
+        if step < 0 or row_count <= step:
+            _copy_whole_data_array(oSheet, cell_address, data_array)
+        else:
+            oUndoManager = oDoc.UndoManager
+            oUndoManager.enterHiddenUndoContext()
+            try:
+                _copy_data_array_by_chunks(
+                    oSheet, cell_address, data_array, step, callback)
+            finally:
+                oUndoManager.leaveUndoContext()
+    else:
+        if step < 0 or row_count <= step:
+            oUndoManager = oDoc.UndoManager
+            oUndoManager.lock()
+            try:
+                _copy_whole_data_array(oSheet, cell_address, data_array)
+            finally:
+                oUndoManager.unlock()
+        else:
+            oUndoManager = oDoc.UndoManager
+            oUndoManager.lock()
+            try:
+                _copy_data_array_by_chunks(
+                    oSheet, cell_address, data_array, step, callback)
+            finally:
+                oUndoManager.unlock()
+
+
+def _copy_whole_data_array(
+        oSheet: UnoSheet, cell_address: UnoCellAddress, data_array: DATA_ARRAY):
+    row_count = len(data_array)
+    col_count = len(data_array[0])
+    column = cell_address.Column
+    row = cell_address.Row
+    oRange = oSheet.getCellRangeByPosition(
+        column, row, column + col_count - 1, row + row_count - 1)
+    oRange.DataArray = data_array
+
+
+def _copy_data_array_by_chunks(
+        oSheet: UnoSheet, cell_address: UnoCellAddress, data_array: DATA_ARRAY,
+        step: int = 10000, callback: Callable[[int], None] = None):
+    if callback is None:
+        def callback(_start_r: int): pass
+
+    row_count = len(data_array)
+    col_count = len(data_array[0])
+    column = cell_address.Column
+    row = cell_address.Row
+
+    start_r = 0
+    end_r = step
+    end_c = column + col_count - 1
+    while end_r < row_count:
+        oRange = oSheet.getCellRangeByPosition(
+            column, row + start_r, end_c, row + end_r - 1)
+        oRange.DataArray = data_array[start_r:end_r]
+        callback(end_r)
+        start_r = end_r
+        end_r += step
+
+    oRange = oSheet.getCellRangeByPosition(
+        column, row + start_r, end_c, row + row_count - 1)
+    oRange.DataArray = data_array[start_r:]
+    callback(row_count)
+
+
+def _check_data_array(data_array: DATA_ARRAY):
+    row_count = len(data_array)
+    if row_count == 0:
+        return
+
+    col_count = len(data_array[0])
+
+    square_errs = []
+    illegal_value_errs = []
+    for i, row in enumerate(data_array):
+        if len(row) != col_count:
+            square_errs.append("* line {}: found {} cols".format(i, len(row)))
+        if not all(v is None or isinstance(v, (str, float, bool, int)) for v in
+                   row):
+            illegal_value_errs.append("* line {}: {}".format(i, repr(row)))
+    errs = []
+    if square_errs:
+        errs.append(
+            "DataArray is not a square (expected {} cols):".format(col_count))
+        errs.extend(square_errs)
+    if illegal_value_errs:
+        errs.append(
+            "Found illegal values "
+            "(only float, str, None, int, bool are allowed):")
+        errs.extend(illegal_value_errs)
+    if errs:
+        raise ValueError("\n".join(errs))

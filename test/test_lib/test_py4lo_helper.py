@@ -41,7 +41,7 @@ from py4lo_helper import (
     get_page_style, set_paper, add_link, _wrap_text, open_in_calc, Target,
     new_doc, NewDocumentUrl, doc_builder, create_uno_service_ctxt,
     create_uno_service, read_options, rtrim_row, read_options_from_sheet_name,
-    copy_row_at_index, FontSlant)
+    copy_row_at_index, FontSlant, copy_data_array)
 from py4lo_typing import UnoTextRange
 
 
@@ -190,7 +190,8 @@ class HelperBaseTestCase(unittest.TestCase):
     def test_to_iter_count(self):
         # prepare
         oIndexAccess = mock.Mock()
-        oIndexAccess.Types = [mock.Mock(typeName="com.sun.star.container.XIndexAccess")]
+        oIndexAccess.Types = [
+            mock.Mock(typeName="com.sun.star.container.XIndexAccess")]
         oIndexAccess.Count = 3
         oIndexAccess.getByIndex.side_effect = [1, 4, 9]
 
@@ -203,7 +204,8 @@ class HelperBaseTestCase(unittest.TestCase):
     def test_to_enumerate_count(self):
         # prepare
         oIndexAccess = mock.Mock()
-        oIndexAccess.Types = [mock.Mock(typeName="com.sun.star.container.XIndexAccess")]
+        oIndexAccess.Types = [
+            mock.Mock(typeName="com.sun.star.container.XIndexAccess")]
         oIndexAccess.Count = 3
         oIndexAccess.getByIndex.side_effect = [1, 4, 9]
 
@@ -217,7 +219,8 @@ class HelperBaseTestCase(unittest.TestCase):
         # prepare
         oEnum = mock.Mock()
         oEnumAccess = mock.Mock(spec=["createEnumeration"])
-        oEnumAccess.Types = [mock.Mock(typeName="com.sun.star.container.XEnumerationAccess")]
+        oEnumAccess.Types = [
+            mock.Mock(typeName="com.sun.star.container.XEnumerationAccess")]
         oEnumAccess.createEnumeration.side_effect = [oEnum]
         oEnum.hasMoreElements.side_effect = [True, True, True, False]
         oEnum.nextElement.side_effect = [1, 4, 9]
@@ -232,7 +235,8 @@ class HelperBaseTestCase(unittest.TestCase):
         # prepare
         oEnum = mock.Mock()
         oEnumAccess = mock.Mock(spec=["createEnumeration"])
-        oEnumAccess.Types = [mock.Mock(typeName="com.sun.star.container.XEnumerationAccess")]
+        oEnumAccess.Types = [
+            mock.Mock(typeName="com.sun.star.container.XEnumerationAccess")]
         oEnumAccess.createEnumeration.side_effect = [oEnum]
         oEnum.hasMoreElements.side_effect = [True, True, True, False]
         oEnum.nextElement.side_effect = [1, 4, 9]
@@ -1333,7 +1337,6 @@ class HelperOpenTestCase(unittest.TestCase):
             self.ctxt, self.sm, self.desktop)
         py4lo_helper._inspect = _Inspector(py4lo_helper.provider)
 
-
     @mock.patch("py4lo_helper.make_pv")
     def test_open_in_calc(self, mkpv):
         mkpv.side_effect = lambda a, b: (a, b)
@@ -1548,7 +1551,8 @@ class HelperOpenTestCase(unittest.TestCase):
         # prepare
         sheets = [mock.Mock() for _ in range(3)]
         oSheets = mock.Mock(Count=3)
-        oSheets.Types = [mock.Mock(typeName="com.sun.star.container.XIndexAccess")]
+        oSheets.Types = [
+            mock.Mock(typeName="com.sun.star.container.XIndexAccess")]
         oSheets.getByIndex.side_effect = lambda i: sheets[i]
         oDoc = mock.Mock(Sheets=oSheets)
         py4lo_helper.provider.desktop.loadComponentFromURL.side_effect = [oDoc]
@@ -1581,7 +1585,8 @@ class HelperOpenTestCase(unittest.TestCase):
         # prepare
         sheets = [mock.Mock(app=None) for _ in range(3)]
         oSheets = mock.Mock(Count=3)
-        oSheets.Types = [mock.Mock(typeName="com.sun.star.container.XIndexAccess")]
+        oSheets.Types = [
+            mock.Mock(typeName="com.sun.star.container.XIndexAccess")]
         oSheets.getByIndex.side_effect = lambda i: sheets[i]
         oDoc = mock.Mock(Sheets=oSheets)
         py4lo_helper.provider.desktop.loadComponentFromURL.side_effect = [oDoc]
@@ -2033,7 +2038,8 @@ class MiscTestCase(unittest.TestCase):
         oPar1Enum.nextElement.side_effect = [
             self._create_chunk("A", CharFontName="Liberation Avec")]
         oPar1 = mock.Mock(name="oPar1", spec=['createEnumeration'])
-        oPar1.Types = [mock.Mock(typeName="com.sun.star.container.XEnumerationAccess")]
+        oPar1.Types = [
+            mock.Mock(typeName="com.sun.star.container.XEnumerationAccess")]
         oPar1.createEnumeration.side_effect = [oPar1Enum]
 
         # PAR 2
@@ -2050,14 +2056,16 @@ class MiscTestCase(unittest.TestCase):
             self._create_chunk("EFG", CharWeight=150)
         ]
         oPar2 = mock.Mock(name="oPar2", spec=['createEnumeration'])
-        oPar2.Types = [mock.Mock(typeName="com.sun.star.container.XEnumerationAccess")]
+        oPar2.Types = [
+            mock.Mock(typeName="com.sun.star.container.XEnumerationAccess")]
         oPar2.createEnumeration.side_effect = [oPar2Enum]
 
         oParEnum = mock.Mock(name="oParEnum")
         oParEnum.hasMoreElements.side_effect = [True, True, False]
         oParEnum.nextElement.side_effect = [oPar1, oPar2]
         oTextRange = mock.Mock(name="oTextRange", spec=['createEnumeration'])
-        oTextRange.Types = [mock.Mock(typeName="com.sun.star.container.XEnumerationAccess")]
+        oTextRange.Types = [
+            mock.Mock(typeName="com.sun.star.container.XEnumerationAccess")]
         oTextRange.createEnumeration.side_effect = [oParEnum]
 
         self.assertEqual(
@@ -2117,3 +2125,231 @@ class TestDate(unittest.TestCase):
             2022, 3, 19, 17, 21, 10), float_to_date(44639.723032407404))
         self.assertEqual(dt.datetime(
             1899, 12, 30, 17, 21, 10), float_to_date(0.723032407404))
+
+
+class CopyDataArrayTestCase(unittest.TestCase):
+    def test_simple_copy(self):
+        # arrange
+        oRange = mock.Mock()
+
+        oSheet = mock.Mock()
+        oSheet.getCellRangeByPosition.side_effect = [oRange]
+
+        oSheets = mock.Mock()
+        oSheets.getByIndex.side_effect = [oSheet]
+
+        oDoc = mock.Mock(Sheets=oSheets)
+        cell_address = mock.Mock(Sheet=1, Column=2, Row=3)
+
+        # act
+        copy_data_array(oDoc, cell_address,
+                        [["A", "B", "C"], [1, 2, "foo"], [4, 5, "bar"]])
+
+        # assert
+        self.assertEqual([
+            mock.call.Sheets.getByIndex(1),
+        ], oDoc.mock_calls)
+        self.assertEqual([
+            mock.call.getCellRangeByPosition(2, 3, 4, 5),
+        ], oSheet.mock_calls)
+        self.assertEqual([
+            ['A', 'B', 'C'], [1, 2, 'foo'], [4, 5, 'bar']
+        ], oRange.DataArray)
+
+    def test_no_undo_fail(self):
+        # arrange
+        da_mock = mock.PropertyMock(side_effect=ValueError)
+        oRange = mock.MagicMock()
+        type(oRange).DataArray = da_mock
+
+        oSheet = mock.Mock()
+        oSheet.getCellRangeByPosition.side_effect = [oRange]
+
+        oSheets = mock.Mock()
+        oSheets.getByIndex.side_effect = [oSheet]
+
+        oDoc = mock.Mock(Sheets=oSheets)
+        cell_address = mock.Mock(Sheet=1, Column=2, Row=3)
+
+        # act
+        with self.assertRaises(ValueError):
+            copy_data_array(oDoc, cell_address,
+                            [["A", "B", "C"], [1, 2, "foo"], [4, 5, "bar"]], undo=False)
+
+        # assert
+        self.assertEqual([
+            mock.call.Sheets.getByIndex(1),
+            mock.call.UndoManager.lock(),
+            mock.call.UndoManager.unlock()
+        ], oDoc.mock_calls)
+        self.assertEqual([
+            mock.call.getCellRangeByPosition(2, 3, 4, 5),
+        ], oSheet.mock_calls)
+        da_mock.assert_called()
+
+    def test_simple_copy_with_huge_step(self):
+        # arrange
+        oRange = mock.Mock()
+
+        oSheet = mock.Mock()
+        oSheet.getCellRangeByPosition.side_effect = [oRange]
+
+        oSheets = mock.Mock()
+        oSheets.getByIndex.side_effect = [oSheet]
+
+        oDoc = mock.Mock(Sheets=oSheets)
+        cell_address = mock.Mock(Sheet=1, Column=2, Row=3)
+
+        # act
+        copy_data_array(oDoc, cell_address,
+                        [["A", "B", "C"], [1, 2, "foo"], [4, 5, "bar"]],
+                        step=100)
+
+        # assert
+        self.assertEqual([
+            mock.call.Sheets.getByIndex(1),
+        ], oDoc.mock_calls)
+        self.assertEqual([
+            mock.call.getCellRangeByPosition(2, 3, 4, 5),
+        ], oSheet.mock_calls)
+        self.assertEqual([
+            ['A', 'B', 'C'], [1, 2, 'foo'], [4, 5, 'bar']
+        ], oRange.DataArray)
+
+    def test_step_copy(self):
+        # arrange
+        oRange1 = mock.Mock()
+        oRange2 = mock.Mock()
+        oRange3 = mock.Mock()
+
+        oSheet = mock.Mock()
+        oSheet.getCellRangeByPosition.side_effect = [oRange1, oRange2, oRange3]
+
+        oSheets = mock.Mock()
+        oSheets.getByIndex.side_effect = [oSheet]
+
+        oDoc = mock.Mock(Sheets=oSheets)
+        cell_address = mock.Mock(Sheet=1, Column=2, Row=3)
+
+        # act
+        acc = []
+
+        copy_data_array(
+            oDoc, cell_address,
+            [["A", "B", "C"], [1, 2, "foo"], [4, 5, "bar"]], step=1,
+            callback=acc.append)
+
+        # assert
+        self.assertEqual([
+            mock.call.Sheets.getByIndex(1),
+            mock.call.UndoManager.enterHiddenUndoContext(),
+            mock.call.UndoManager.leaveUndoContext()
+        ], oDoc.mock_calls)
+        self.assertEqual([
+            mock.call.getCellRangeByPosition(2, 3, 4, 3),
+            mock.call.getCellRangeByPosition(2, 4, 4, 4),
+            mock.call.getCellRangeByPosition(2, 5, 4, 5),
+        ], oSheet.mock_calls)
+        self.assertEqual([
+            ['A', 'B', 'C']
+        ], oRange1.DataArray)
+        self.assertEqual([
+            [1, 2, 'foo']
+        ], oRange2.DataArray)
+        self.assertEqual([
+            [4, 5, 'bar']
+        ], oRange3.DataArray)
+        self.assertEqual([1, 2, 3], acc)
+
+    def test_step_copy2(self):
+        # arrange
+        oRange1 = mock.Mock()
+        oRange2 = mock.Mock()
+
+        oSheet = mock.Mock()
+        oSheet.getCellRangeByPosition.side_effect = [oRange1, oRange2]
+
+        oSheets = mock.Mock()
+        oSheets.getByIndex.side_effect = [oSheet]
+
+        oDoc = mock.Mock(Sheets=oSheets)
+        cell_address = mock.Mock(Sheet=1, Column=2, Row=3)
+
+        # act
+        acc = []
+        copy_data_array(
+            oDoc, cell_address,
+            [["A", "B", "C"], [1, 2, "foo"], [4, 5, "bar"]], step=2,
+            callback=acc.append)
+
+        # assert
+        self.assertEqual([
+            mock.call.Sheets.getByIndex(1),
+            mock.call.UndoManager.enterHiddenUndoContext(),
+            mock.call.UndoManager.leaveUndoContext()
+        ], oDoc.mock_calls)
+        self.assertEqual([
+            mock.call.getCellRangeByPosition(2, 3, 4, 4),
+            mock.call.getCellRangeByPosition(2, 5, 4, 5),
+        ], oSheet.mock_calls)
+        self.assertEqual([
+            ['A', 'B', 'C'],
+            [1, 2, 'foo']
+        ], oRange1.DataArray)
+        self.assertEqual([
+            [4, 5, 'bar']
+        ], oRange2.DataArray)
+        self.assertEqual([2, 3], acc)
+
+    def test_empty(self):
+        # arrange
+        oDoc = mock.Mock()
+        cell_address = mock.Mock(Sheet=1, Column=2, Row=3)
+
+        # act
+        copy_data_array(oDoc, cell_address, [])
+
+        # assert
+        self.assertEqual([], oDoc.mock_calls)
+
+    def test_empty2(self):
+        # arrange
+        oDoc = mock.Mock()
+        cell_address = mock.Mock(Sheet=1, Column=2, Row=3)
+
+        # act
+        copy_data_array(oDoc, cell_address, [[], [], []])
+
+        # assert
+        self.assertEqual([], oDoc.mock_calls)
+
+    def test_debug_illegal_value(self):
+        # arrange
+        oDoc = mock.Mock()
+        cell_address = mock.Mock(Sheet=1, Column=2, Row=3)
+
+        # act
+        with self.assertRaises(ValueError) as e:
+            copy_data_array(oDoc, cell_address, [[tuple()]], debug=True)
+
+        # assert
+        self.assertEqual([], oDoc.mock_calls)
+        self.assertEqual(
+            "Found illegal values (only float, str, None, int, bool are allowed):\n* line 0: [()]",
+            e.exception.args[0])
+
+    def test_debug_not_square(self):
+        # arrange
+        oDoc = mock.Mock()
+        cell_address = mock.Mock(Sheet=1, Column=2, Row=3)
+
+        # act
+        with self.assertRaises(ValueError) as e:
+            copy_data_array(oDoc, cell_address, [[1], [1, 2], [1], [1, 2, 3]],
+                            debug=True)
+
+        # assert
+        self.assertEqual([], oDoc.mock_calls)
+        self.assertEqual(
+            "DataArray is not a square (expected 1 cols):\n* line 1: found 2 cols\n* line 3: found 3 cols",
+            e.exception.args[0])
