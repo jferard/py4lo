@@ -41,7 +41,7 @@ class TestRunCommand(unittest.TestCase):
         self.provider.get.return_value = {"log_level": 0, "python_exe": "py",
                                           "python_version": 3.7,
                                           "test_dir": ".", "src_dir": ".",
-                                          "base_path": ".", "calc_exe": "ca",
+                                          "base_path": ".", "lo_exe": "ca",
                                           "source_file": "ods",
                                           "suffix": ".ext", "src_ignore": "*",
                                           "assets_dir": ".",

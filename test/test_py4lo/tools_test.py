@@ -21,7 +21,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from tools import open_with_calc, nested_merge
+from tools import open_with_libreoffice, nested_merge
 
 
 class TestTools(unittest.TestCase):
@@ -29,9 +29,9 @@ class TestTools(unittest.TestCase):
     @mock.patch('subprocess.call', spec=subprocess.call)
     def test_open_with_calc(self, subprocess_call_mock, secure_mock):
         secure_mock.side_effect = lambda x, _y: x
-        open_with_calc(Path("myfile.ods"), "mycalc.exe")
+        open_with_libreoffice(Path("myfile.ods"), "myoffice.exe")
         self.assertEqual([
-            mock.call(['mycalc.exe', 'myfile.ods'])],
+            mock.call(['myoffice.exe', 'myfile.ods'])],
             subprocess_call_mock.mock_calls)
 
     def test_merge(self):

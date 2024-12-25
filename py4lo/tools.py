@@ -21,12 +21,12 @@ from pathlib import Path
 from typing import List, Dict, Any, Callable, Optional
 
 
-def open_with_calc(ods_path: Path, calc_exe: str):
-    """Open a file with calc"""
-    sec_calc_exe = secure_exe(calc_exe, "scalc")
-    if sec_calc_exe is None:
+def open_with_libreoffice(ods_path: Path, lo_exe: str):
+    """Open a file with LibreOffice"""
+    sec_lo_exe = secure_exe(lo_exe, "soffice")
+    if sec_lo_exe is None:
         return
-    subprocess.call([sec_calc_exe, str(ods_path)])  # nosec: B603
+    subprocess.call([sec_lo_exe, str(ods_path)])  # nosec: B603
 
 
 def nested_merge(d1: Dict[str, Any], d2: Dict[str, Any],

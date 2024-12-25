@@ -20,7 +20,7 @@ python3 ../../../py4lo init
 mv new-project.ods qs.ods
 
 cat >qs.toml<< EOF
-calc_exe = "libreoffice"
+lo_exe = "/usr/bin/soffice"
 python_exe = "python3"
 
 [src]

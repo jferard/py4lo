@@ -1,7 +1,7 @@
 # py4lo_win.toml file
 
 python_version = "3.8"
-calc_exe = "C:\\Program Files\\LibreOffice 7\\program\\scalc.exe"
+lo_exe = "C:\\Program Files\\LibreOffice 7\\program\\soffice.exe"
 python_exe = "C:\\Program Files\\LibreOffice 7\\program\\python.exe"
 log_level = "DEBUG"
 

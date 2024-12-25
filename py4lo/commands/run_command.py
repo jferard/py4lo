@@ -25,29 +25,30 @@ from commands.null_command import NullCommand
 from core.properties import PropertiesProvider
 from commands.command_executor import CommandExecutor
 from commands.update_command import UpdateCommand
-from tools import open_with_calc, secure_exe
+from tools import open_with_libreoffice, secure_exe
 
 
 class RunCommand(Command):
     @staticmethod
     def create_executor(args: List[str], provider: PropertiesProvider) -> CommandExecutor:
-        sec_calc_exe = secure_exe(provider.get("calc_exe"), "scalc")
-        if sec_calc_exe is None:
-            run_command = cast(Command, NullCommand("Can't find calc exe"))
+        sec_lo_exe = secure_exe(provider.get("lo_exe"), "soffice")
+        if sec_lo_exe is None:
+            update_executor = None
+            run_command = cast(Command, NullCommand("Can't find lo exe : {}".format(provider.get("lo_exe"))))
         else:
             update_executor = UpdateCommand.create_executor(args, provider)
-            run_command = RunCommand(sec_calc_exe)
+            run_command = RunCommand(sec_lo_exe)
         return CommandExecutor(provider.get_logger(), run_command,
                                update_executor)
 
-    def __init__(self, calc_exe: str):
-        self._calc_exe = calc_exe
+    def __init__(self, lo_exe: str):
+        self._lo_exe = lo_exe
 
     def execute(self, status: int, dest_name: Path) -> Tuple[Any, ...]:
         if status == 0:
             print("All tests ok")
-            logging.warning("%s %s", self._calc_exe, dest_name)
-            open_with_calc(dest_name, self._calc_exe)
+            logging.warning("%s %s", self._lo_exe, dest_name)
+            open_with_libreoffice(dest_name, self._lo_exe)
         else:
             print("Error: some tests failed")
         return tuple()
