@@ -64,9 +64,105 @@ Todo.
 
 Presentation tier
 -----------------
+Understanding threads
+~~~~~~~~~~~~~~~~~~~~~
+LibreOffice calls a Python script when:
+
+* the user calls a macro from **Tools > Macros > Run macro** menu ;
+* the user hits a button having a linked macro ;
+* the user selects an item linked to a macro from a custom menu;
+* the user triggers an event in a dialog.
+
+When the Python script starts, LibreOffice is interrupted, waiting for
+the end of the script.
+
+We may have the following sequence::
+
+                     user hits                                                   user hits the
+                     a LO button                        the dialog is shown      dialog button
+    LibreOffice:  ------|                             |-------------------------------|
+                        | <-- linked script is called |                               | <--- listener calls Python script.
+    Python     :        |-----------------------------|                               |------------------------
+                          script creates a dialog,                                      python script
+                          adds a button with a
+                          listener
+
+But what if I want to interact with LibreOffice component (document, sheets,
+cells, infobar...) while the script is running? This won't have any visible
+effect until the script ends and LibreOffice takes back the control.
+
+Try this function:
+
+.. code-block:: python
+
+    def func(*_args):
+        oDoc = provider.doc
+        oSheet = oDoc.CurrentController.ActiveSheet
+        oSheet.getCellByPosition(0, 0).String = "foo"
+        time.sleep(1.0)
+        oSheet.getCellByPosition(0, 0).String = "bar"
+        time.sleep(1.0)
+        oSheet.getCellByPosition(0, 0).String = "baz"
+        time.sleep(1.0)
+
+You may think that the "foo", "bar", baz" string will appear successively in
+cell **A1** of the current active sheet instantly, but it won't.
+It will take 3 seconds to leave the Python script and during this 3 seconds,
+nothing will change in the sheet (
+LibreOffice "hangs"). Then the last string, "baz", will appear in the cell **A1**.
+
+Side note: if you understand this, you won't use
+`oDoc.lockControllers() <https://api.libreoffice.org/docs/idl/ref/interfacecom_1_1sun_1_1star_1_1frame_1_1XModel.html#a7b7d36374033ee9210ec0ac5c1a90d9f>`_
+and `oDoc.unlockControllers() <https://api.libreoffice.org/docs/idl/ref/interfacecom_1_1sun_1_1star_1_1frame_1_1XModel.html#abc62472c203de4d1403802509b153270>`_
+anymore in Python: the interface is already locked.
+
+There is a reason why you might want to update the LibreOffice components
+during a script : when running a long script, you need to inform the user
+of what's happening. Furthermore, we don't like when LibreOffice hangs for a
+long time.
+
+There is a solution: Python threads. If we start a thread in the Python script,
+but do not wait until the thread finished (ie do not use `Thread.join() <https://docs.python.org/3/library/threading.html#threading.Thread.join>`_),
+then LibreOffice will take the control back, but the Python thread will
+continue tu be executed::
+
+                     user hits                    main script      end of                                        end of
+                     a LO button                creates a thread   main script                                thread script
+    LibreOffice:  ------|                             |              |------------------ ... -----------------------|-------------------
+                        | <-- linked script is called |              |                     ^                        |
+    Python     :        |-----------------------------|--------------|            updates LibreOffice  component    |
+                                  main script         |                                    |                        |
+    Python thread :                                   |--------------------------------- ... -----------------------|
+                                                                             thread script
+
+This function will give the expected result (write "foo", wait 1 second, write
+"bar", wait 1 second, write "baz", wait 1 second):
+
+.. code-block:: python
+
+    def func(*_args):
+        oDoc = provider.doc
+        oSheet = oDoc.CurrentController.ActiveSheet
+
+        def aux():
+            oSheet.getCellByPosition(0, 0).String = "foo"
+            time.sleep(1.0)
+            oSheet.getCellByPosition(0, 0).String = "bar"
+            time.sleep(1.0)
+            oSheet.getCellByPosition(0, 0).String = "baz"
+            time.sleep(1.0)
+
+        t = threading.Thread(target=aux)
+        t.start()
+
+Use this method if you want to update a dialog, an infobar, etc.
+
+Beware: if there is an error in a Python thread, LibreOffice won't
+show any error message.
+
 Create a dialog
 ~~~~~~~~~~~~~~~
-You can build a dialog from scratch (`py4lo_dialogs` provides some functions
+You can build a dialog from scratch (``py4lo_dialogs`` provides some functions
 taht will help you).
 
 You can also use ``provider.get_dialog("Standard.mydialog")`` to get a dialog
@@ -91,7 +187,7 @@ A button listener
 Todo.
 
 Application tier
----------------
+----------------
 Todo.
 
 Data tier
@@ -193,7 +289,7 @@ One table
 ^^^^^^^^^
 A simple Python object may be stored in a table. Create a
 ``MyObjectHelper.bind(stmt: Sqlite3Statement, obj: MyObject)`` to
-  bind the fields of the object to the columns of the table.
+bind the fields of the object to the columns of the table.
 
 .. code-block:: python
 
