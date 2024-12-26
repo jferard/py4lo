@@ -4,8 +4,164 @@ From LibreOffice Basic to Python
 This document presents a few hints to create application for LibreOffice
 with Python macros using Py4LO. Some hints are not related to Py4LO.
 
+Working with Python
+-------------------
+The Python language
+~~~~~~~~~~~~~~~~~~~
+The Python language is way richer than Basic. But the main difference is
+the Python standard library. On Windows platforms, this library is restricted
+but still contains a lot of interesting modules. Those module provide
+functionalities that are out of reach of Basic.
+
+Note : On Windows platforms, the |sqlite3_module|_ is missing, but Py4LO
+provides a workaround: the ``py4lo_sqlite3`` module.
+
+Some of the differences:
+
+* Python has a rich standard library whereas LibreOffice Basic has the
+  ``Tools`` module and the ``ScriptForge`` library;
+* Python is an object oriented programming language whereas Basic is not, even
+  if you can cheat with ``Option Compatible``;
+* Python has functional programming abilities (functions are variables), Basic
+  has not;
+* Python has a powerful exception mechanism, whereas Basic has ``On Error
+  GoTo``;
+* Python has standard data structures (lists, sets, dicts, heaps...) whereas
+  Basic has arrays and poor ``Collections`` (or the EnumerableMap API from
+  LibreOffice);
+* Python provides plain text, XML and JSON input/output functions whereas
+  Basic is limited;
+* Python has a powerful logging module, whereas Basic has ``MessageBox``;
+* Python is supported by IDEs (PyCharm is my favourite).
+
+.. |sqlite3_module| replace:: ``sqlite3`` module
+.. _sqlite3_module: https://docs.python.org/3/library/sqlite3.html
+
+
+Python his very (case) sensitive
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The API is the same for Python or Basic. If you know how to write macros
+in Basic, you'll see that most of the code will be very similar. But when you
+create macros using Python, you need to pay more attention to the API,
+since the methods and fields are case sensitive.
+
+Something like:
+
+.. code-block:: python
+
+    oSheet = oDoc.currentcontroller
+
+wont' work, because nor the field ``currentcontroller`` neither the function
+``getcurrentcontroller()`` exists in the API. But |getcurcontroller|_
+(and the alias ``CurrentController``) exists:
+
+.. code-block:: python
+
+    oSheet = oDoc.CurrentController
+
+Will work.
+
+.. |getcurcontroller| replace:: ``getCurrentController()``
+.. _getcurcontroller: https://api.libreoffice.org/docs/idl/ref/interfacecom_1_1sun_1_1star_1_1frame_1_1XModel.html#a44c3b26a1116ab41654d60357ccda9e1
+
+
+Calling a function in Python
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+If the fnuction has no parameter, don't forget the parenthesis:
+
+.. code-block:: python
+
+    s = my_function
+
+will assign the *function* to ``s``: ``s`` is now a function, not the result
+of a function. Always add parenthesis:
+
+.. code-block:: python
+
+    s = my_function()
+
+Managing resources in Python
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The typical form in standard Python is:
+
+.. code-block:: python
+
+    r = get_resources()
+    try:
+        do_wathever_you_want(r)
+    except Exception as e:
+        ...
+    finally:
+        free_resources(r)
+
+When possible, you should use the ``with`` statement (see
+`PEP 343 <https://peps.python.org/pep-0343/>`_ and |contextmanager|_
+that ensures that the resources are freed).
+
+.. code-block:: python
+
+    with get_resources() as r:
+        try:
+            do_wathever_you_want(r)
+        except Exception as e:
+            ...
+
+
+.. |contextmanager| replace:: ``@contextmanager``
+.. _contextmanager: https://docs.python.org/3/library/contextlib.html#contextlib.contextmanager
+
+EAFP (Easier to ask for forgiveness than permission)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Pytohn has a lot of exceptions that are part of the control flow. These are
+not errors. Let's have a look at an example:
+
+.. code-block:: python
+
+    try:
+        i = s.index("foo")
+    except ValueError:
+        ... # "foo" was not found
+    else:
+        ... # "foo" was found at index i
+
+Is the same as:
+
+.. code-block:: python
+
+    i = s.find("foo")
+    if i == -1
+        ... # "foo" was not found
+    else:
+        ... # "foo" was found at index i
+
+Python uses a lot of control flow exceptions, because of the
+`EAFP <https://docs.python.org/3/glossary.html#term-EAFP>`_ philosophy. Common
+examples of "EAFP"s: casts (``int``, ``float``...), search in strings or
+sequences, use of attributes that may not exist, decode from bytes to string...
+
+Logging
+~~~~~~~
+Python provides a simple |logging_module|_. You first need to configure the
+logger, then use it like this:
+
+.. code-block:: python
+
+    class Foo:
+        _logger = logging.getLogger(__name__)
+
+        ...
+
+        def f(self, x: int):
+            self._logger.debug("f(%s) was called", i)
+            ...
+
+.. |logging_module| replace:: ``logging`` module
+.. _logging_module: https://docs.python.org/3/library/logging.html
+
+Python and LibreOffice
+----------------------
 The project structure
----------------------
+~~~~~~~~~~~~~~~~~~~~~
 Py4LO has a project structure inspired by Maven (the Apache tool "that can
 manage a project's build, reporting and documentation").
 
@@ -42,28 +198,170 @@ dialog factories.
 
 The `domain` contains objects from the domain.
 
-Quick start
------------
 Call a macro from a button
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-Todo.
+In Basic, you create a command button using the **Forms Controls**. See
+`Adding a Command Button to a Document <https://help.libreoffice.org/latest/en-GB/text/shared/guide/formfields.html>`_.
+But the LibreOffice interface does not provide a simple way to assign a Python
+macro to the button.
+
+Py4LO
+^^^^^
+Py4LO provides a way to create button from functons. If you run the
+``py4lo init`` command, Py4Lo will read the sources files to find functions,
+and create a button for each function. Take the ``new-project.ods`` document
+and start with this document.
+
+Manually
+^^^^^^^^
+Otherwise, you'll have to edit the XML file ``content.xml``.
+
+First, create the button and assign whatever Basic macro you want to the
+"execute" action. LibreOffice will set an URL for the action (see
+`com.sun.star.uri.XVndSunStarScriptUrl <https://api.libreoffice.org/docs/idl/ref/interfacecom_1_1sun_1_1star_1_1uri_1_1XVndSunStarScriptUrl.html>`_
+for details on the URL format).
+
+Open the ODS file with an utility to decompress zip files (Ark, File Roller,
+7-Zip...). You'll the ``content.xml`` file at the root level. Edit this file
+and search the string "vnd.sun.star.script".
+
+You will find a sequence like this one:
+
+.. code-block:: xml
+
+    <script:event-listener script:language="ooo:script" script:event-name="form:performaction" xlink:href="vnd.sun.star.script:[...]?language=Basic&amp;location=document" xlink:type="simple"/>
+
+You have to change the ``xlink:href`` attribute to something like:
+
+.. code-block:: xml
+
+    "vnd.sun.star.script:main.py$function?language=Python&amp;location=document"
+
+and put the modified ``content.xml`` file into the archive.
 
 Get info about the API
 ~~~~~~~~~~~~~~~~~~~~~~
-Todo.
+The main information source about the API is the `LibreOffice SDK API
+Reference <https://api.libreoffice.org/docs/idl/ref/index.html>`_. Bookmark
+this link and use it!
 
-Design
-------
+There are two extensions that you might have used in Basic: `XRay
+<https://wiki.openoffice.org/w/images/c/c6/XrayTool60_en.odt>`_ and `MRI
+<https://extensions.libreoffice.org/en/extensions/show/mri-uno-object-inspection-tool>`_.
+
+Py4LO
+^^^^^
+Py4LO provides the functions ``xray`` and ``mri`` (see ``py4lo_helper`` module).
+Those functions will fail if the extensions are not installed.
+
+Manually
+^^^^^^^^
+Here's a code snippet to use XRay:
+
+.. code-block:: python
+
+    oScriptProvider = oDoc.getScriptProvider()
+    oScript = oScriptProvider.getScript(
+                "vnd.sun.star.script:XrayTool._Main.Xray?"
+                "language=Basic&location=application")
+    oScript.invoke((obj,), tuple(), tuple())
+
 Error handling
 ~~~~~~~~~~~~~~
-Todo.
+Error handling and resources management is quite cumbersome in Basic
+(``On Error GoTo ...`` is not easy to use).
+
+Now that, coming from Basic, you discovered the ``try`` / ``except`` statement,
+you imagine that you'll be able to control everything by fixing errors as soon
+as they are raised. That may be optimistic.
+
+We've alreay seen exceptions that are part of the control flow (see EAFP).
+Those exceptions are handled as soon as they are raised. But what about other
+exceptions (actual errors: network not available, not enough disk space, data
+of unexpected type...)?
+
+Usually, the most sensible thing to do is to log errors to be able to
+understand what went wrong and quit gracefully. That may seem frustrating.
+
+You are not convinced? You want your function that writes a 1kb file to catch
+`OSError <https://docs.python.org/3/library/exceptions.html#OSError>`_,
+`MemoryError <https://docs.python.org/3/library/exceptions.html#MemoryError>`_
+and other kind of errors. Who knows? That might happen and you are never too
+careful.
+
+Okay. Think of responsibility. Is a tiny function responsible for the
+disk space, the memory and a bunch of other "big" things that might go wrong?
+You'd think that is the OS that is responsible for that, not the function!
+And you can't, most of the time, fix the unexpected situation: it's too late.
+Too late for asking the user to correct the data, free some disk space or
+something like that.
+
+**Rule of thumb**: If you think that a function is responsible for handling
+an error, ask yourself if the calling function is not *more responsible*
+than your function.
+
+If you follow this rule of thumb, then you'll discover that the top function
+is often responsible for handling the errors. Thus, always wrap your entry
+points (macro assigned to a function or event listeners) with this code:
+
+.. code-block:: python
+
+    try:
+        ...
+    except Exception as e:
+        self._logger.exception("Something bad happened!")
+        message_box("Error", "Contact me and send the log file")
 
 Testing
 ~~~~~~~
-Todo.
+Python offers a powerful unittest_module_. You can mock objects, including
+LibreOffice API objects, to test your code.
+
+.. |unittest_module| replace:: ``unittest`` module
+.. _unittest_module: https://docs.python.org/3/library/unittest.html
+
+Debugging
+~~~~~~~~~
+In Basic, the switch between the IDE and the running macro is very easy: as
+soon as an error is raised, you are in the IDE at the line of code, and you
+can fix it.
+
+In Python, you will have a murky message and no way to edit the code in place.
+Therefore, you'll have to limited the back and forth between the code and the
+execution.
+
+The solution is to avoid debugging: test and log.
+
+Py4LO configures the logger.
 
 Presentation tier
 -----------------
+Create a dialog
+~~~~~~~~~~~~~~~
+You can build a dialog from scratch (``py4lo_dialogs`` provides some functions
+that will help you).
+
+You can also use ``provider.get_dialog("Standard.mydialog")`` to get a dialog
+built with the LibreOffice dialog editor.
+
+In basic, you assign macros to the dialog elements. In Python, it's a common
+practice to programmatically add a listener:
+
+.. code-block:: python
+
+    def create_dialog(dialog_name: str) -> UnoControl:
+        oDialog = provider.get_dialog("Standard.mydialog")
+
+        oOkListener = OkListener(...)
+        oOkButton = oDialog.getControl("ok_button")
+        oOkButton.addActionListener(oOkListener)
+
+See next section for more details about ``OkListener``.
+
+A button listener
+~~~~~~~~~~~~~~~~~
+Todo.
+
 Understanding threads
 ~~~~~~~~~~~~~~~~~~~~~
 LibreOffice calls a Python script when:
@@ -159,32 +457,6 @@ Use this method if you want to update a dialog, an infobar, etc.
 
 Beware: if there is an error in a Python thread, LibreOffice won't
 show any error message.
-
-Create a dialog
-~~~~~~~~~~~~~~~
-You can build a dialog from scratch (``py4lo_dialogs`` provides some functions
-taht will help you).
-
-You can also use ``provider.get_dialog("Standard.mydialog")`` to get a dialog
-built with the LibreOffice dialog editor.
-
-In basic, you assign macros to the dialog elements. In Python, it's a common
-practice to programmatically add a listener:
-
-.. code-block:: python
-
-    def create_dialog(dialog_name: str) -> UnoControl:
-        oDialog = provider.get_dialog("Standard.mydialog")
-
-        oOkListener = OkListener(...)
-        oOkButton = oDialog.getControl("ok_button")
-        oOkButton.addActionListener(oOkListener)
-
-See next section for more details about ``OkListener``.
-
-A button listener
-~~~~~~~~~~~~~~~~~
-Todo.
 
 Application tier
 ----------------
