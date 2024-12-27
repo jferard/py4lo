@@ -41,7 +41,7 @@ try:
     # noinspection PyUnresolvedReferences
     import uno
 except (ModuleNotFoundError, ImportError):
-    from mock_constants import uno
+    from _mock_constants import uno
 
 _xsc = None
 

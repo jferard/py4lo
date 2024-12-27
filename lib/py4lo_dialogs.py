@@ -111,7 +111,7 @@ try:
         from com.sun.star.awt.PushButtonType import (OK, CANCEL)
 
 except (ModuleNotFoundError, ImportError):
-    from mock_constants import (  # type: ignore[assignment]
+    from _mock_constants import (  # type: ignore[assignment]
         ExecutableDialogResults,  # pyright: ignore[reportGeneralTypeIssues]
         MessageBoxButtons,  # pyright: ignore[reportGeneralTypeIssues]
         MessageBoxType,  # pyright: ignore[reportGeneralTypeIssues]

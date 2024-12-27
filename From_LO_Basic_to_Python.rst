@@ -14,7 +14,7 @@ but still contains a lot of interesting modules. Those module provide
 functionalities that are out of reach of Basic.
 
 Note : On Windows platforms, the |sqlite3_module|_ is missing, but Py4LO
-provides a workaround: the ``py4lo_sqlite3`` module.
+provides a workaround: the |py4lo_sqlite3_module|_.
 
 Some of the differences:
 
@@ -37,6 +37,8 @@ Some of the differences:
 .. |sqlite3_module| replace:: ``sqlite3`` module
 .. _sqlite3_module: https://docs.python.org/3/library/sqlite3.html
 
+.. |py4lo_sqlite3_module| replace:: ``py4lo_sqlite3`` module
+.. _py4lo_sqlite3_module: https://github.com/jferard/py4lo/blob/master/lib/py4lo_sqlite3.py
 
 Python his very (case) sensitive
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -298,7 +300,7 @@ something like that.
 
 **Rule of thumb**: If you think that a function is responsible for handling
 an error, ask yourself if the calling function is not *more responsible*
-than your function.
+than the called function.
 
 If you follow this rule of thumb, then you'll discover that the top function
 is often responsible for handling the errors. Thus, always wrap your entry
@@ -312,27 +314,118 @@ points (macro assigned to a function or event listeners) with this code:
         self._logger.exception("Something bad happened!")
         message_box("Error", "Contact me and send the log file")
 
+Import constants
+~~~~~~~~~~~~~~~~
+To import constants, use the following syntax:
+
+.. code-block:: python
+
+    class MessageBoxButtons:
+        from com.sun.star.awt import (BUTTONS_OK, BUTTONS_OK_CANCEL, ...)
+
+Note: the wildcard import won't work.
+
 Testing
 ~~~~~~~
 Python offers a powerful unittest_module_. You can mock objects, including
 LibreOffice API objects, to test your code.
 
+But Python won't be able to find LibreOffice objects (services, interfaces,
+structures, constants) during the test:
+
+.. code-block:: python
+
+    from com.sun.star.awt import XActionListener
+
+Will raise an ``ImportError`` outside of the LibreOffice runtime. Does that
+mean that the code is not testable? No.
+
+First of all, you should isolate the "application" code (see
+3-tier architecture) from the LibreOffice runtime. That means that application
+code does not rely on "com.sun.star" imports, and thus should be testable.
+
+But what about the "gui" and the "data" code? You can make them testable
+with a simple trick:
+
+.. code-block:: python
+
+    try:
+        from com.sun.star.awt import XActionListener
+    except ImportError:
+        class XActionListener:
+            pass
+
+The ``try / except`` statement means: if we are in LibreOffice runtime, then
+import the objects, else create a void object to make the code runnable.
+
+Py4LO provides two hidden modules: |mock_constants|_ and |mock_objects|_,
+to help you:
+
+.. code-block:: python
+
+    try:
+        from com.sun.star.awt import XActionListener
+    except ImportError:
+        from _mock_objects import XActionListener
+
+Those module do not contain the whole LibreOffice API, but only the most
+useful constants and objects to me. When your project grows, you may create
+a ``dialog_util.py`` module that does this:
+
+.. code-block:: python
+
+    try:
+        import uno
+        import unohelper
+        from com.sun.star.awt import XActionListener
+
+        class MessageBoxButtons:
+            from com.sun.star.awt import (BUTTONS_OK, BUTTONS_OK_CANCEL, ...)
+    except ImportError:
+        from _mock_objects import uno, unohelper, XActionListener
+        from _mock_constants import MessageBoxButtons
+
+And never import anything from "com.sun.star" out of this module. In the
+other modules, just use:
+
+.. code-block:: python
+
+    from dialog_util import uno, unohelper, XActionListener, MessageBoxButtons...
+
 .. |unittest_module| replace:: ``unittest`` module
 .. _unittest_module: https://docs.python.org/3/library/unittest.html
 
+.. |mock_constants| replace:: ``_mock_constants``
+.. _mock_constants: https://github.com/jferard/py4lo/blob/master/lib/_mock_constants.py
+
+.. |mock_objects| replace:: ``_mock_objects``
+.. _mock_objects: https://github.com/jferard/py4lo/blob/master/lib/_mock_objects.py
+
 Debugging
 ~~~~~~~~~
+Py4Lo does not provide any debugging tool.
+
 In Basic, the switch between the IDE and the running macro is very easy: as
 soon as an error is raised, you are in the IDE at the line of code, and you
 can fix it.
 
-In Python, you will have a murky message and no way to edit the code in place.
-Therefore, you'll have to limited the back and forth between the code and the
-execution.
+In Python, unless you use APSO, you will have a murky message and no way to
+edit the code in place. Therefore, you'll have to limited the back and forth
+between the code and the execution.
 
-The solution is to avoid debugging: test and log.
+The Py4Lo solution is to avoid debugging: test and log.
 
-Py4LO configures the logger.
+Py4LO can configure the logger:
+
+.. code-block:: python
+
+    api_py4lo_commons = Commons.create(XSCRIPTCONTEXT)
+    log_file = api_py4lo_commons.join_dir("foo.log") # foo.log in the same directory as the document
+    api_py4lo_commons.init_logger(
+        log_file, mode='w',
+        level=logging.DEBUG,
+        fmt='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    )
 
 Presentation tier
 -----------------
@@ -679,3 +772,4 @@ times.
 Ressources
 ----------
 Todo.
+

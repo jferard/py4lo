@@ -100,7 +100,7 @@ try:
         from com.sun.star.awt.FontSlant import (NONE, OBLIQUE, ITALIC)
 
 except (ModuleNotFoundError, ImportError):
-    from mock_constants import (  # type:ignore[assignment]
+    from _mock_constants import (  # type:ignore[assignment]
         BorderLineStyle,  # pyright: ignore[reportGeneralTypeIssues]
         ConditionOperator,  # pyright: ignore[reportGeneralTypeIssues]
         FontSlant,  # pyright: ignore[reportGeneralTypeIssues]

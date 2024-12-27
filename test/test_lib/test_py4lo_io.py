@@ -28,7 +28,7 @@ from py4lo_io import (create_import_filter_options,
                       create_write_cell, writer, dict_writer, import_from_csv,
                       export_to_csv, Filter)
 from py4lo_typing import UnoCell
-from mock_constants import NumberFormat
+from _mock_constants import NumberFormat
 
 
 class Py4LOIOTestCase(unittest.TestCase):

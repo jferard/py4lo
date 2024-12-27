@@ -15,18 +15,52 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import os
+from pathlib import Path
+from typing import Any
+from unittest import mock
+from urllib.parse import urlparse
+
 
 ##############################
 # # DO NOT EMBED THIS FILE # #
 ##############################
 
+class uno:
+    @staticmethod
+    def fileUrlToSystemPath(url: str) -> str:
+        result = urlparse(url)
+        if result.netloc:
+            return os.path.join(result.netloc, result.path.lstrip("/"))
+        else:
+            return result.path
+
+    @staticmethod
+    def systemPathToFileUrl(path: str) -> str:
+        return Path(path).as_uri()
+
+    @staticmethod
+    def createUnoStruct(struct_id: str) -> mock.Mock:
+        m = mock.Mock(typeName=struct_id)
+        return m
+
+    @staticmethod
+    def Any(name: str, value: Any) -> Any:
+        return value
+
+
 class unohelper:
     class Base:
         pass
 
+    @staticmethod
+    def ImplementationHelper():
+        class C:
+            @staticmethod
+            def addImplementation(*args): return None
 
-class uno:
-    pass
+        return C
+
 
 # Listeners
 
@@ -108,3 +142,25 @@ class XWindowListener:
 
 class XWindowListener2:
     pass
+
+
+# Exceptions
+
+class UnoException(Exception):
+    pass
+
+
+class ScriptFrameworkErrorException(UnoException):
+    pass
+
+
+class UnoRuntimeException(UnoException):
+    pass
+
+
+Locale = object
+
+class XTransferable:
+    pass
+
+
