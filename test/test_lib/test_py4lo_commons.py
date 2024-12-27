@@ -35,7 +35,7 @@ from py4lo_commons import (
 
 class MiscTestCase(unittest.TestCase):
     def test_uno(self):
-        from _mock_constants import uno
+        from _mock_objects import uno
         self.assertEqual("url/", uno.fileUrlToSystemPath("file://url"))
         self.assertEqual("file:///url", uno.systemPathToFileUrl("/url"))
 

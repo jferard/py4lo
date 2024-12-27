@@ -200,7 +200,61 @@ dialog factories.
 
 The `domain` contains objects from the domain.
 
-Call a macro from a button
+FrontEnd and Controller
+^^^^^^^^^^^^^^^^^^^^^^^
+I usually have a ``FrontEnd`` class, in the presentation tier, and a
+``Controller`` class in the application tier.
+The front end is responsible for creating dialog and listener, and call
+the controller that does the job: manipulating the domain objects and loading
+and storing them using classes of the data tier::
+
+                            FrontEnd ----------------
+    presentation tier          uses                 |
+                        AbstractController          |
+                                ^                   |
+                                | implements        |
+                                |                   | depends on
+                        ConcreteController ------------------------ domain
+    application tier           uses                 |
+                        AbstractDataStore           |
+                                ^                   |
+                                | implements        |
+                                |                   |
+    data tier           ConcreteDataStore -----------
+
+
+
+
+
+
+The entry point
+^^^^^^^^^^^^^^^
+Py4LO uses an entry point to insert some boilerplate code (see
+https://github.com/jferard/py4lo/blob/master/inc/py4lo_import.py for the
+boilerplate code) to add the scripts of the document to the ``sys.path``.
+
+.. code-block:: python
+
+    # py4lo: entry
+
+Once the entry point is declared, you can import any embedded module.
+The entry point is the ``main.py`` file, and calls the front end to
+open the main dialog.
+
+Embed modules
+^^^^^^^^^^^^^
+Py4LO provides two directives to embed modules in the LibreOffice document:
+
+.. code-block:: python
+
+    # py4lo: embed lib py4lo_typing
+    # py4lo: embed script a_script
+
+The directive ``embed lib`` embeds modules from the Py4LO standard library.
+The directive ``embed script`` embeds scripts or modules located in the
+``src/opt`` directory.
+
+Assign a macro to a button
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 In Basic, you create a command button using the **Forms Controls**. See
 `Adding a Command Button to a Document <https://help.libreoffice.org/latest/en-GB/text/shared/guide/formfields.html>`_.
@@ -453,7 +507,28 @@ See next section for more details about ``OkListener``.
 
 A button listener
 ~~~~~~~~~~~~~~~~~
-Todo.
+In Basic, you assign a function to each button or widget of the dialog. In
+Python, you won't use this method, but add programmatically the listener
+to a widget.
+
+.. code-block:: python
+
+    class OkListener(unohelper.Base, XActionListener):
+        _logger = logging.getLogger(__name__)
+
+        def __init__(self, front_end: FrontEnd, oDialog: Any):
+            self._front_end = front_end
+            self._oDialog = oDialog
+
+        def actionPerformed(self, e):
+            self._logger.debug("Ok")
+            try:
+                self._front_end.do_something()
+                self._oDialog.endExecute()
+            except:
+                self._logger.exception("Ok")
+
+
 
 Understanding threads
 ~~~~~~~~~~~~~~~~~~~~~
@@ -553,7 +628,25 @@ show any error message.
 
 Application tier
 ----------------
-Todo.
+The application tier contains the logic of the program. It should be
+independant from the presentation tier and depend on interfaces, not on the
+data tier.::
+
+    presentation tier
+
+
+    application tier
+
+
+
+    data tier
+
+
+
+
+
+
+
 
 Data tier
 ---------
