@@ -41,7 +41,7 @@ try:
     # noinspection PyUnresolvedReferences
     import uno
 except (ModuleNotFoundError, ImportError):
-    from _mock_constants import uno
+    from _mock_objects import uno
 
 _xsc = None
 
@@ -343,8 +343,10 @@ def _get_handler(file: Union[StrPath, TextIO], mode: str, level: int,
     @param level: the log level
     @param fmt: the log entry fromat
     """
-    if isinstance(file, (str, Path)):
+    if isinstance(file, Path):
         fh = logging.FileHandler(str(file), mode)
+    elif isinstance(file, str):
+        fh = logging.FileHandler(file, mode)
     else:
         fh = logging.StreamHandler(file)
     formatter = logging.Formatter(fmt)

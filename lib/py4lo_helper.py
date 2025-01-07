@@ -107,12 +107,14 @@ except (ModuleNotFoundError, ImportError):
         FontWeight,  # pyright: ignore[reportGeneralTypeIssues]
         FrameSearchFlag,  # pyright: ignore[reportGeneralTypeIssues]
         PropertyState,  # pyright: ignore[reportGeneralTypeIssues]
+        TableValidationVisibility,  # pyright: ignore[reportGeneralTypeIssues]
+        ValidationType,  # pyright: ignore[reportGeneralTypeIssues]
+    )
+    from _mock_objects import (  # type: ignore[assignment]
         ScriptFrameworkErrorException, \
         # pyright: ignore[reportGeneralTypeIssues]
-        TableValidationVisibility,  # pyright: ignore[reportGeneralTypeIssues]
         UnoException,  # pyright: ignore[reportGeneralTypeIssues]
         UnoRuntimeException,  # pyright: ignore[reportGeneralTypeIssues]
-        ValidationType,  # pyright: ignore[reportGeneralTypeIssues]
         XTransferable,  # pyright: ignore[reportGeneralTypeIssues]
         uno,  # pyright: ignore[reportGeneralTypeIssues]
         unohelper,  # pyright: ignore[reportGeneralTypeIssues]

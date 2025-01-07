@@ -48,7 +48,12 @@ try:
         from com.sun.star.util.NumberFormat import (DATE, TIME, DATETIME,
                                                     LOGICAL)
 except (ModuleNotFoundError, ImportError):
-    from _mock_constants import (Locale, NumberFormat)
+    from _mock_constants import (
+        NumberFormat,
+    )
+    from _mock_objects import (  # type: ignore[assignment]
+        Locale,
+    )
 
 
 class CellTyping(Enum):

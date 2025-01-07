@@ -117,6 +117,8 @@ except (ModuleNotFoundError, ImportError):
         MessageBoxType,  # pyright: ignore[reportGeneralTypeIssues]
         PushButtonType,  # pyright: ignore[reportGeneralTypeIssues]
         MessageBoxResults,  # pyright: ignore[reportGeneralTypeIssues]  # noqa: F401
+    )
+    from _mock_objects import (  # type: ignore[assignment]
         uno,  # pyright: ignore[reportGeneralTypeIssues]
     )
 

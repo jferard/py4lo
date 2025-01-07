@@ -20,7 +20,8 @@ Basic support for uno types out of the LibreOffice engine.
 """
 # mypy: disable-error-code="empty-body"
 from pathlib import Path
-from typing import (NewType, Any, Union, Tuple, List, cast, Optional)
+from typing import (
+    NewType, Any, Union, Tuple, List, cast, Optional, Collection)
 
 UnoXScriptContext = NewType("UnoXScriptContext", Any)
 
@@ -70,8 +71,8 @@ UnoPropertyValues = Union[List[UnoPropertyValue], Tuple[UnoPropertyValue, ...]]
 # DATA_ARRAY
 #####
 DATA_VALUE = Union[str, float]
-DATA_ROW = Union[Tuple[DATA_VALUE, ...], List[DATA_VALUE]]
-DATA_ARRAY = Union[Tuple[DATA_ROW, ...], List[DATA_ROW]]
+DATA_ROW = Collection[DATA_VALUE]
+DATA_ARRAY = Collection[DATA_ROW]
 StrPath = Union[str, Path]
 
 # Misc
