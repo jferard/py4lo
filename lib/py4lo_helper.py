@@ -151,6 +151,18 @@ def init(xsc: UnoXScriptContext):
     xray = _inspect.xray
     mri = _inspect.mri
 
+def init_from_component_context(component_ctxt: UnoContext):
+    """
+    To use Py4LO inside an extension (see XJobExecutor)
+
+    @param component_ctxt: the component context parameter for the JobExecutor
+    """
+    global provider, _inspect, xray, mri
+    provider = _ObjectProvider.create_from_component_context(component_ctxt)
+    _inspect = _Inspector(provider)
+    xray = _inspect.xray
+    mri = _inspect.mri
+
 
 class _ObjectProvider:
     """
@@ -189,6 +201,27 @@ class _ObjectProvider:
         desktop = xsc.getDesktop()
         return _ObjectProvider(doc, controller, frame, parent_win,
                                script_provider, ctxt, service_manager, desktop)
+
+    @staticmethod
+    def create_from_component_context(
+            component_ctxt: UnoContext) -> "_ObjectProvider":
+        """
+        Create a new _ObjectProvider
+
+        @param component_ctxt: the component context
+        @return: the object provider
+        """
+        desktop = component_ctxt.getByName(
+            "/singletons/com.sun.star.frame.theDesktop")
+        doc = cast(UnoSpreadsheetDocument, desktop.getCurrentComponent())
+        controller = doc.CurrentController
+        frame = controller.Frame
+        parent_win = frame.ContainerWindow
+        script_provider = doc.getScriptProvider()
+        service_manager = component_ctxt.getServiceManager()
+        return _ObjectProvider(
+            doc, controller, frame, parent_win,
+            script_provider, component_ctxt, service_manager, desktop)
 
     def __init__(self, doc: UnoSpreadsheetDocument, controller: UnoController,
                  frame, parent_win, script_provider,
