@@ -32,7 +32,8 @@ import sys
 # mypy: disable-error-code="import-untyped"
 from pathlib import Path
 from typing import (
-    Union, Any, cast, List, Optional, TextIO, Iterable, Mapping, Callable)
+    Union, Any, cast, List, Optional, TextIO, Iterable, Mapping, Callable,
+    Generic, TypeVar)
 
 from py4lo_typing import (
     UnoXScriptContext, StrPath, lazy)
@@ -401,3 +402,8 @@ def sanitize(s: str) -> str:
     s = unicodedata.normalize('NFKD', s).encode('ascii', 'ignore').decode(
         'ascii')
     return s
+
+T = TypeVar("T")
+
+def secure_strip(v: Generic[T]) -> Generic[T]:
+    return v.strip() if isinstance(v, str) else v

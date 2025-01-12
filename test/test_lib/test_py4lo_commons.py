@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import configparser
-import subprocess   # nosec: B404
+import subprocess  # nosec: B404
 import tempfile
 import unittest
 import zipfile
@@ -29,6 +29,7 @@ from unittest import mock
 
 import py4lo_commons
 from py4lo_commons import (
+    secure_strip,
     uno_url_to_path, uno_path_to_url, create_bus, Commons, init, sanitize,
     read_config)
 
@@ -158,8 +159,15 @@ class TestCommons(unittest.TestCase):
     def testCurDir(self):
         self.assertEqual(Path("/temp"), self.c.cur_dir())
 
-    def testSanitize(self):
+    def test_sanitize(self):
         self.assertEqual("e", sanitize("é"))
+
+    def test_secure_strip(self):
+        self.assertEqual("x", secure_strip("x"))
+        self.assertEqual("x", secure_strip("x "))
+        self.assertEqual("x", secure_strip(" x"))
+        self.assertEqual("x", secure_strip(" x "))
+        self.assertEqual(10, secure_strip(10))
 
     def test_logger(self):
         t = tempfile.NamedTemporaryFile(delete=False, mode='w')
