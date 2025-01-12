@@ -180,3 +180,7 @@ class PosSize:
     POS = 3
     SIZE = 12
     POSSIZE = 15
+
+class ScrollBarOrientation:
+    HORIZONTAL = 0
+    VERTICAL = 1
