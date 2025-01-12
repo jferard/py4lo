@@ -37,7 +37,8 @@ from py4lo_typing import (UnoSpreadsheetDocument, UnoController, UnoContext,
                           UnoCell, UnoObject, DATA_ARRAY, UnoCellAddress,
                           UnoPropertyValue, DATA_ROW, UnoXScriptContext,
                           UnoColumn, UnoStruct, UnoEnum, UnoRow, DATA_VALUE,
-                          UnoPropertyValues, UnoTextRange, lazy, UnoControl)
+                          UnoPropertyValues, UnoTextRange, lazy, UnoControl,
+                          UnoDispatcher, UnoDesktop)
 
 try:
     # noinspection PyUnresolvedReferences
@@ -226,7 +227,7 @@ class _ObjectProvider:
 
     def __init__(self, doc: UnoSpreadsheetDocument, controller: UnoController,
                  frame, parent_win, script_provider,
-                 ctxt: UnoContext, service_manager, desktop):
+                 ctxt: UnoContext, service_manager, desktop: UnoDesktop):
         """
         @param doc: the document (ThisComponent in Basic, see: com.sun.star.frame.XModel)
         @param controller: the current controller of the document (see: com.sun.star.frame.XController)
@@ -248,7 +249,7 @@ class _ObjectProvider:
         self._script_provider_factory = lazy(UnoService)
         self._script_provider = lazy(UnoService)
         self._reflect = lazy(UnoService)
-        self._dispatcher = lazy(UnoService)
+        self._dispatcher = lazy(UnoDispatcher)
 
     def get_script_provider_factory(self) -> UnoService:
         """
@@ -295,7 +296,7 @@ class _ObjectProvider:
         return self._reflect
 
     @property
-    def dispatcher(self):
+    def dispatcher(self) -> UnoDispatcher:
         """
         provides an easy way to dispatch a URL using one call instead of
         multiple ones.
@@ -304,7 +305,7 @@ class _ObjectProvider:
         """
         if self._dispatcher is None:
             self._dispatcher = cast(
-                UnoService,
+                UnoDispatcher,
                 self.service_manager.createInstance(
                     "com.sun.star.frame.DispatchHelper")
             )

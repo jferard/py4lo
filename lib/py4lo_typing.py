@@ -56,6 +56,8 @@ UnoPresentationDocument = NewType("UnoPresentationDocument", UnoOfficeDocument)
 
 UnoController = NewType("UnoController", UnoService)
 UnoContext = NewType("UnoContext", UnoService)
+UnoDesktop = NewType("UnoDesktop", UnoService)
+UnoDispatcher = NewType("UnoDispatcher", UnoService)
 
 UnoControlModel = NewType("UnoControlModel", UnoService)
 UnoControl = NewType("UnoControl", UnoService)
