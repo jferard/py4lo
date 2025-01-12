@@ -62,7 +62,7 @@ from enum import Enum
 from threading import Thread
 from typing import Any, Callable, Optional, List, Union, NamedTuple, cast
 
-from py4lo_helper import (create_uno_service_ctxt, provider,
+from py4lo_helper import (create_uno_service_ctxt, get_provider,
                           create_uno_service, create_uno_struct)
 from py4lo_typing import UnoControlModel, UnoControl, StrPath
 
@@ -237,7 +237,7 @@ def get_text_size(oDialogModel: UnoControlModel, text: str) -> Size:
 def message_box(msg_title: str, msg_text: str,
                 msg_type=MessageBoxType.MESSAGEBOX,
                 msg_buttons=MessageBoxButtons.BUTTONS_OK,
-                parent_win=None) -> int:
+                parent_win=None) -> MessageBoxResults:
     """
     Create a message box
 
@@ -252,7 +252,7 @@ def message_box(msg_title: str, msg_text: str,
     # (thanks Bernard !)
     toolkit = create_uno_service_ctxt("com.sun.star.awt.Toolkit")
     if parent_win is None:
-        parent_win = provider.parent_win
+        parent_win = get_provider().parent_win
     mb = toolkit.createMessageBox(parent_win, msg_type, msg_buttons, msg_title,
                                   msg_text)
     return mb.execute()
@@ -317,7 +317,7 @@ class InputBox:
         @return: the value inside the input box
         """
         if parent_win is None:
-            parent_win = provider.parent_win
+            parent_win = get_provider().parent_win
         oToolkit = create_uno_service_ctxt("com.sun.star.awt.Toolkit")
 
         if x is None or y is None:

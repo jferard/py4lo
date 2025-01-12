@@ -326,6 +326,11 @@ class _ObjectProvider:
         return oDialog
 
 
+def get_provider() -> _ObjectProvider:
+    """For use in other modules, inside an LibreOffice extension"""
+    return provider
+
+
 def create_uno_service(sname: str, args: Optional[List[Any]] = None,
                        ctxt: Optional[UnoContext] = None) -> UnoService:
     """

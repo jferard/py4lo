@@ -33,7 +33,7 @@ from typing import (Any, Callable, List, Iterator, Optional, Mapping, Tuple,
 # values of cell_typing
 from py4lo_commons import uno_path_to_url
 from py4lo_helper import (
-    provider as pr, make_pvs, parent_doc, get_cell_type, Target,
+    get_provider, make_pvs, parent_doc, get_cell_type, Target,
     FrameSearchFlag, date_to_float, float_to_date)
 from py4lo_typing import (UnoCell, UnoSheet, UnoSpreadsheetDocument,
                           StrPath, UnoService, UnoRange)
@@ -1054,7 +1054,7 @@ def import_from_csv(oDoc: UnoSpreadsheetDocument, sheet_name: str,
                     "Hidden": True})
 
     url = uno_path_to_url(path)
-    oDesktop = pr.desktop
+    oDesktop = get_provider().desktop
 
     oDoc.lockControllers()
     try:

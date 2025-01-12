@@ -65,8 +65,8 @@ class Py4LODialogsTestCase(unittest.TestCase):
         ], oControl.mock_calls)
 
     @mock.patch("py4lo_dialogs.create_uno_service_ctxt")
-    @mock.patch("py4lo_dialogs.provider")
-    def test_message_box(self, provider, usc):
+    @mock.patch("py4lo_dialogs.get_provider")
+    def test_message_box(self, get_provider, usc):
         self.maxDiff = None
 
         # prepare
@@ -79,15 +79,14 @@ class Py4LODialogsTestCase(unittest.TestCase):
         # verify
         self.assertEqual(usc.mock_calls, [
             mock.call('com.sun.star.awt.Toolkit'),
-            mock.call().createMessageBox(provider.parent_win,
+            mock.call().createMessageBox(get_provider().parent_win,
                                          MessageBoxType.MESSAGEBOX, 1,
                                          'title', 'text'),
             mock.call().createMessageBox().execute()
         ])
 
     @mock.patch("py4lo_dialogs.create_uno_service_ctxt")
-    @mock.patch("py4lo_dialogs.provider")
-    def test_message_box_parent_win(self, provider, usc):
+    def test_message_box_parent_win(self, usc):
         self.maxDiff = None
 
         # prepare

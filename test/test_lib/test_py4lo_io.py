@@ -657,9 +657,9 @@ class Py4LOIOTestCase(unittest.TestCase):
 
 class IOCSVTestCase(unittest.TestCase):
     @mock.patch("py4lo_io.uno_path_to_url")
-    @mock.patch("py4lo_io.pr")
+    @mock.patch("py4lo_io.get_provider")
     @mock.patch("py4lo_helper.make_pv")
-    def test_import_from_csv(self, mkpv, pr, ptu):
+    def test_import_from_csv(self, mkpv, get_provider, ptu):
         mkpv.side_effect = lambda a, b: (a, b)
 
         # prepare
@@ -669,7 +669,10 @@ class IOCSVTestCase(unittest.TestCase):
         ptu.side_effect = ["url"]
         oOtherSheets = mock.Mock(ElementNames=["a", "b", "oTextRange"])
         oOtherDoc = mock.Mock(Sheets=oOtherSheets)
-        pr.desktop.loadComponentFromURL.side_effect = [oOtherDoc]
+        oDesktop = mock.Mock()
+        oDesktop.loadComponentFromURL.side_effect = [oOtherDoc]
+        provider = mock.Mock(desktop=oDesktop)
+        get_provider.side_effect = [provider]
 
         # play
         import_from_csv(oDoc, "foo", 2, p, language_code="en_US")
@@ -685,7 +688,7 @@ class IOCSVTestCase(unittest.TestCase):
                     ("FilterOptions", "44,34,76,1,,1033,false,false"),
                     ("Hidden", True))
             )
-        ], pr.mock_calls)
+        ], provider.mock_calls)
 
     def test_import_options_dialect(self):
         self.assertEqual('59,34,76,1,,1033,true,false',
