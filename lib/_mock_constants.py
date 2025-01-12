@@ -152,3 +152,31 @@ class FontSlant:
     NONE = 0
     OBLIQUE = 1
     ITALIC = 2
+
+
+class WindowClass:
+    TOP = 0
+    MODALTOP = 1
+    CONTAINER = 2
+    SIMPLE = 3
+
+class WindowAttribute:
+    SHOW = 1
+    FULLSIZE = 2
+    OPTIMUMSIZE = 4
+    MINSIZE = 8
+    BORDER = 16
+    SIZEABLE = 32
+    MOVEABLE = 64
+    CLOSEABLE = 128
+    SYSTEMDEPENDENT = 256
+    NODECORATION = 512
+
+class PosSize:
+    X = 1
+    Y = 2
+    WIDTH = 4
+    HEIGHT = 8
+    POS = 3
+    SIZE = 12
+    POSSIZE = 15
