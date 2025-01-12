@@ -124,7 +124,7 @@ except (ModuleNotFoundError, ImportError):
 # BASE
 ###############################################################################
 provider = cast(Optional["_ObjectProvider"], None)
-_inspect = cast(Optional["_Inspector"], None)
+_inspector = cast(Optional["_Inspector"], None)
 xray = cast(Optional[Callable], None)
 mri = cast(Optional[Callable], None)
 
@@ -145,11 +145,12 @@ def init(xsc: UnoXScriptContext):
 
     @param xsc: XSCRIPTCONTEXT
     """
-    global provider, _inspect, xray, mri
+    global provider, _inspector, xray, mri
     provider = _ObjectProvider.create(xsc)
-    _inspect = _Inspector(provider)
-    xray = _inspect.xray
-    mri = _inspect.mri
+    _inspector = _Inspector(provider)
+    xray = _inspector.xray
+    mri = _inspector.mri
+
 
 def init_from_component_context(component_ctxt: UnoContext):
     """
@@ -157,11 +158,11 @@ def init_from_component_context(component_ctxt: UnoContext):
 
     @param component_ctxt: the component context parameter for the JobExecutor
     """
-    global provider, _inspect, xray, mri
+    global provider, _inspector, xray, mri
     provider = _ObjectProvider.create_from_component_context(component_ctxt)
-    _inspect = _Inspector(provider)
-    xray = _inspect.xray
-    mri = _inspect.mri
+    _inspector = _Inspector(provider)
+    xray = _inspector.xray
+    mri = _inspector.mri
 
 
 class _ObjectProvider:
@@ -1956,6 +1957,10 @@ class _Inspector:
                     return
 
         self._oMRI.inspect(obj)
+
+
+def get_inspector() -> _Inspector:
+    return _inspector
 
 
 TEXT_FLAVOR = ("text/plain;charset=utf-16", "Unicode-text")

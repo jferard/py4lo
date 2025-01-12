@@ -66,13 +66,13 @@ class HelperBaseTestCase(unittest.TestCase):
                                         self.parent_win, self.msp, self.ctxt,
                                         self.sm, self.desktop)
         py4lo_helper.provider = self.provider
-        py4lo_helper._inspect = _Inspector(py4lo_helper.provider)
+        py4lo_helper._inspector = _Inspector(py4lo_helper.provider)
 
     def test_init(self):
         xsc = mock.Mock()
         init(xsc)
         self.assertIsNotNone(py4lo_helper.provider)
-        self.assertIsNotNone(py4lo_helper._inspect)
+        self.assertIsNotNone(py4lo_helper._inspector)
         self.assertIsNotNone(py4lo_helper.xray)
         self.assertIsNotNone(py4lo_helper.mri)
 
@@ -476,7 +476,7 @@ class HelperRangesTestCase(unittest.TestCase):
         py4lo_helper.provider = _ObjectProvider(
             self.doc, self.ctrl, self.frame, self.parent_win, self.msp,
             self.ctxt, self.sm, self.desktop)
-        py4lo_helper._inspect = _Inspector(py4lo_helper.provider)
+        py4lo_helper._inspector = _Inspector(py4lo_helper.provider)
 
     def test_get_last_used_row(self):
         # prepare
@@ -881,7 +881,7 @@ class HelperFormattingTestCase(unittest.TestCase):
         py4lo_helper.provider = _ObjectProvider(
             self.doc, self.ctrl, self.frame, self.parent_win, self.msp,
             self.ctxt, self.sm, self.desktop)
-        py4lo_helper._inspect = _Inspector(py4lo_helper.provider)
+        py4lo_helper._inspector = _Inspector(py4lo_helper.provider)
 
     def test_validation_builder(self):
         # prepare
@@ -1335,7 +1335,7 @@ class HelperOpenTestCase(unittest.TestCase):
         py4lo_helper.provider = _ObjectProvider(
             self.doc, self.ctrl, self.frame, self.parent_win, self.msp,
             self.ctxt, self.sm, self.desktop)
-        py4lo_helper._inspect = _Inspector(py4lo_helper.provider)
+        py4lo_helper._inspector = _Inspector(py4lo_helper.provider)
 
     @mock.patch("py4lo_helper.make_pv")
     def test_open_in_calc(self, mkpv):
@@ -1745,7 +1745,7 @@ class HelperMiscTestCase(unittest.TestCase):
         py4lo_helper.provider = _ObjectProvider(
             self.doc, self.ctrl, self.frame, self.parent_win, self.msp,
             self.ctxt, self.sm, self.desktop)
-        py4lo_helper._inspect = _Inspector(py4lo_helper.provider)
+        py4lo_helper._inspector = _Inspector(py4lo_helper.provider)
 
     def testUnoService(self):
         create_uno_service_ctxt("x")
