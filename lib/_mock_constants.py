@@ -160,6 +160,7 @@ class WindowClass:
     CONTAINER = 2
     SIMPLE = 3
 
+
 class WindowAttribute:
     SHOW = 1
     FULLSIZE = 2
@@ -172,6 +173,7 @@ class WindowAttribute:
     SYSTEMDEPENDENT = 256
     NODECORATION = 512
 
+
 class PosSize:
     X = 1
     Y = 2
@@ -181,6 +183,37 @@ class PosSize:
     SIZE = 12
     POSSIZE = 15
 
+
 class ScrollBarOrientation:
     HORIZONTAL = 0
     VERTICAL = 1
+
+
+class GeneralFunction2:
+    NONE = 0
+    AUTO = 1
+    SUM = 2
+    COUNT = 3
+    AVERAGE = 4
+    MAX = 5
+    MIN = 6
+    PRODUCT = 7
+    COUNTNUMS = 8
+    STDEV = 9
+    STDEVP = 10
+    VAR = 11
+    VARP = 12
+    MEDIAN = 13
+
+
+class DataPilotOutputRangeType:
+    WHOLE = 0
+    TABLE = 1
+    RESULT = 2
+
+
+class CellContentType:
+    EMPTY = 0
+    VALUE = 1
+    TEXT = 2
+    FORMULA = 3

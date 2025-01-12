@@ -150,6 +150,10 @@ class UnoException(Exception):
     pass
 
 
+class IOException(Exception):
+    pass
+
+
 class ScriptFrameworkErrorException(UnoException):
     pass
 
@@ -162,5 +166,6 @@ Locale = object
 
 class XTransferable:
     pass
+
 
 
