@@ -217,3 +217,36 @@ class CellContentType:
     VALUE = 1
     TEXT = 2
     FORMULA = 3
+
+
+class TypeClass(object):
+    VOID = 0
+    CHAR = 1
+    BOOLEAN = 2
+    BYTE = 3
+    SHORT = 4
+    UNSIGNED_SHORT = 5
+    LONG = 6
+    UNSIGNED_LONG = 7
+    HYPER = 8
+    UNSIGNED_HYPER = 9
+    FLOAT = 10
+    DOUBLE = 11
+    STRING = 12
+    TYPE = 13
+    ANY = 14
+    ENUM = 15
+    TYPEDEF = 16
+    STRUCT = 17
+    EXCEPTION = 19
+    SEQUENCE = 20
+    INTERFACE = 22
+    SERVICE = 23
+    MODULE = 24
+    INTERFACE_METHOD = 25
+    INTERFACE_ATTRIBUTE = 26
+    UNKNOWN = 27
+    PROPERTY = 28
+    CONSTANT = 29
+    CONSTANTS = 30
+    SINGLETON = 31
