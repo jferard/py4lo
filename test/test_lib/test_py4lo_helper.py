@@ -21,7 +21,7 @@ import datetime as dt
 import unittest
 from unittest import mock
 
-# import py4lo_helper
+import py4lo_helper
 from py4lo_helper import (
     date_to_int, date_to_float, int_to_date, float_to_date,
     BorderLineStyle, ValidationType, ConditionOperator,

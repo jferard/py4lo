@@ -84,7 +84,7 @@ from ctypes import (
 from ctypes.util import find_library
 from pathlib import Path
 from typing import (
-    Union, Generator, List, Any, Iterator, Mapping, Callable, Optional,
+    Union, List, Any, Iterator, Mapping, Callable, Optional,
     Sequence, ContextManager)
 
 library_name = find_library('sqlite3')
