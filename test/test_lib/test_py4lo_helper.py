@@ -21,7 +21,7 @@ import datetime as dt
 import unittest
 from unittest import mock
 
-import py4lo_helper
+# import py4lo_helper
 from py4lo_helper import (
     date_to_int, date_to_float, int_to_date, float_to_date,
     BorderLineStyle, ValidationType, ConditionOperator,
@@ -41,7 +41,8 @@ from py4lo_helper import (
     get_page_style, set_paper, add_link, _wrap_text, open_in_calc, Target,
     new_doc, NewDocumentUrl, doc_builder, create_uno_service_ctxt,
     create_uno_service, read_options, rtrim_row, read_options_from_sheet_name,
-    copy_row_at_index, FontSlant, copy_data_array)
+    copy_row_at_index, FontSlant, copy_data_array, undo_context,
+    no_undo_context)
 from py4lo_typing import UnoTextRange
 
 
@@ -2174,7 +2175,8 @@ class CopyDataArrayTestCase(unittest.TestCase):
         # act
         with self.assertRaises(ValueError):
             copy_data_array(oDoc, cell_address,
-                            [["A", "B", "C"], [1, 2, "foo"], [4, 5, "bar"]], undo=False)
+                            [["A", "B", "C"], [1, 2, "foo"], [4, 5, "bar"]],
+                            undo=False)
 
         # assert
         self.assertEqual([
@@ -2353,3 +2355,94 @@ class CopyDataArrayTestCase(unittest.TestCase):
         self.assertEqual(
             "DataArray is not a square (expected 1 cols):\n* line 1: found 2 cols\n* line 3: found 3 cols",
             e.exception.args[0])
+
+
+class UnoTestCase(unittest.TestCase):
+    def test_undo_context_none(self):
+        # arrange
+        oDoc = mock.Mock()
+
+        # act
+        with undo_context(oDoc):
+            pass
+
+        # assert
+        self.assertEqual(oDoc.mock_calls,
+                         [mock.call.UndoManager.enterHiddenUndoContext(),
+                          mock.call.UndoManager.leaveUndoContext()])
+
+    def test_undo_context_title(self):
+        # arrange
+        oDoc = mock.Mock()
+
+        # act
+        with undo_context(oDoc, "foo"):
+            pass
+
+        # assert
+        self.assertEqual(
+            oDoc.mock_calls, [mock.call.UndoManager.enterUndoContext('foo'),
+                              mock.call.UndoManager.leaveUndoContext()])
+
+    def test_undo_context_none_err(self):
+        # arrange
+        oDoc = mock.Mock()
+
+        # act
+        try:
+            with undo_context(oDoc):
+                int("bar")
+        except ValueError:
+            pass
+
+        # assert
+        self.assertEqual(oDoc.mock_calls,
+                         [mock.call.UndoManager.enterHiddenUndoContext(),
+                          mock.call.UndoManager.leaveUndoContext()])
+
+    def test_undo_context_title_err(self):
+        # arrange
+        oDoc = mock.Mock()
+
+        # act
+        try:
+            with undo_context(oDoc, "foo"):
+                int("bar")
+        except ValueError:
+            pass
+
+        # assert
+        self.assertEqual(oDoc.mock_calls,
+                         [mock.call.UndoManager.enterUndoContext('foo'),
+                          mock.call.UndoManager.leaveUndoContext()])
+
+    def test_no_undo_context(self):
+        # arrange
+        oDoc = mock.Mock()
+
+        # act
+        with no_undo_context(oDoc):
+            pass
+
+        # assert
+        self.assertEqual(oDoc.mock_calls, [mock.call.UndoManager.lock(),
+                                           mock.call.UndoManager.unlock()])
+
+    def test_no_undo_context_err(self):
+        # arrange
+        oDoc = mock.Mock()
+
+        # act
+        try:
+            with no_undo_context(oDoc):
+                int("bar")
+        except ValueError:
+            pass
+
+        # assert
+        self.assertEqual(oDoc.mock_calls, [mock.call.UndoManager.lock(),
+                                           mock.call.UndoManager.unlock()])
+
+
+if __name__ == "__main__":
+    unittest.main()

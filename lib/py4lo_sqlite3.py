@@ -85,7 +85,7 @@ from ctypes.util import find_library
 from pathlib import Path
 from typing import (
     Union, Generator, List, Any, Iterator, Mapping, Callable, Optional,
-    Sequence)
+    Sequence, ContextManager)
 
 library_name = find_library('sqlite3')
 if library_name is None:
@@ -865,7 +865,7 @@ class Sqlite3Database:
         return SQLiteError(ret, sqlite3_errmsg(self._db).decode("utf-8"))
 
     @contextmanager
-    def prepare(self, sql: str) -> Generator[Sqlite3Statement, None, None]:
+    def prepare(self, sql: str) -> ContextManager[Sqlite3Statement]:
         """
         Context manager to prepare a SQL statement:
         ```
@@ -893,7 +893,7 @@ class Sqlite3Database:
 
     @contextmanager
     def transaction(self, mode: TransactionMode = TransactionMode.DEFERRED
-                    ) -> Generator[None, None, None]:
+                    ) -> ContextManager[None]:
         """
         Context manager for a transaction:
         ```
@@ -936,7 +936,7 @@ class Sqlite3Database:
 @contextmanager
 def sqlite_open(
         filepath: Union[str, Path], mode: str = "r", timeout: int = -1
-) -> Generator[Sqlite3Database, None, None]:
+) -> ContextManager[Sqlite3Database]:
     """
     Open a SQLite database in a context manager:
     ```

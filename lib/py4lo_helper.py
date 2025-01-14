@@ -25,11 +25,12 @@ It provides a lot of simple functions to handle those objects.
 import datetime as dt
 # mypy: disable-error-code="import-untyped,import-not-found"
 import logging
+from contextlib import contextmanager
 from enum import Enum
 from locale import getlocale
 from pathlib import Path
 from typing import (Any, Optional, List, cast, Callable, Mapping, Tuple,
-                    Iterator, Union, Iterable)
+                    Iterator, Union, Iterable, ContextManager)
 
 from py4lo_commons import uno_path_to_url
 from py4lo_typing import (UnoSpreadsheetDocument, UnoController, UnoContext,
@@ -2390,29 +2391,17 @@ def copy_data_array(
         if step < 0 or row_count <= step:
             _copy_whole_data_array(oSheet, cell_address, data_array)
         else:
-            oUndoManager = oDoc.UndoManager
-            oUndoManager.enterHiddenUndoContext()
-            try:
+            with undo_context(oDoc):
                 _copy_data_array_by_chunks(
                     oSheet, cell_address, data_array, step, callback)
-            finally:
-                oUndoManager.leaveUndoContext()
     else:
         if step < 0 or row_count <= step:
-            oUndoManager = oDoc.UndoManager
-            oUndoManager.lock()
-            try:
+            with no_undo_context(oDoc):
                 _copy_whole_data_array(oSheet, cell_address, data_array)
-            finally:
-                oUndoManager.unlock()
         else:
-            oUndoManager = oDoc.UndoManager
-            oUndoManager.lock()
-            try:
+            with no_undo_context(oDoc):
                 _copy_data_array_by_chunks(
                     oSheet, cell_address, data_array, step, callback)
-            finally:
-                oUndoManager.unlock()
 
 
 def _copy_whole_data_array(
@@ -2481,3 +2470,40 @@ def _check_data_array(data_array: DATA_ARRAY):
         errs.extend(illegal_value_errs)
     if errs:
         raise ValueError("\n".join(errs))
+
+
+@contextmanager
+def undo_context(oDoc: UnoSpreadsheetDocument, title: Optional[str] = None
+                 ) -> ContextManager[None]:
+    """
+    Do something inside an undo context
+    @param oDoc: the document
+    @param title: then undo title
+    """
+    oUndoManager = oDoc.UndoManager
+    if title is None:
+        oUndoManager.enterHiddenUndoContext()
+        try:
+            yield
+        finally:
+            oUndoManager.leaveUndoContext()
+    else:
+        oUndoManager.enterUndoContext(title)
+        try:
+            yield
+        finally:
+            oUndoManager.leaveUndoContext()
+
+
+@contextmanager
+def no_undo_context(oDoc: UnoSpreadsheetDocument) -> ContextManager[None]:
+    """
+    Do something out of the undo context
+    @param oDoc: the document
+    """
+    oUndoManager = oDoc.UndoManager
+    oUndoManager.lock()
+    try:
+        yield
+    finally:
+        oUndoManager.unlock()
