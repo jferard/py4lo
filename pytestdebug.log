@@ -2419,8 +2419,8 @@ args=('--debug', '--cov-report', 'term-missing', '--ignore=examples', '--cov=py4
         finish pytest_pycollect_makeitem --> None [hook]
         pytest_pycollect_makeitem [hook]
             collector: <Module test/lib/test_py4lo_dialogs.py>
-            name: ProgressHandler
-            obj: <class 'py4lo_dialogs.ProgressHandler'>
+            name: StandardProgressHandler
+            obj: <class 'py4lo_dialogs.StandardProgressHandler'>
         finish pytest_pycollect_makeitem --> None [hook]
         pytest_pycollect_makeitem [hook]
             collector: <Module test/lib/test_py4lo_dialogs.py>
@@ -2429,8 +2429,8 @@ args=('--debug', '--cov-report', 'term-missing', '--ignore=examples', '--cov=py4
         finish pytest_pycollect_makeitem --> None [hook]
         pytest_pycollect_makeitem [hook]
             collector: <Module test/lib/test_py4lo_dialogs.py>
-            name: ConsoleHandler
-            obj: <class 'py4lo_dialogs.ConsoleHandler'>
+            name: StandardConsoleHandler
+            obj: <class 'py4lo_dialogs.StandardConsoleHandler'>
         finish pytest_pycollect_makeitem --> None [hook]
         pytest_pycollect_makeitem [hook]
             collector: <Module test/lib/test_py4lo_dialogs.py>

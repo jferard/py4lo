@@ -23,8 +23,8 @@ from py4lo_dialogs import (MessageBoxType, ExecutableDialogResults)
 from py4lo_dialogs import (message_box, place_widget,
                            get_text_size, file_dialog, Size, FileFilter,
                            folder_dialog, ProgressExecutorBuilder,
-                           ProgressHandler, ConsoleExecutorBuilder,
-                           ConsoleHandler)
+                           StandardProgressHandler, ConsoleExecutorBuilder,
+                           StandardConsoleHandler)
 
 
 class Py4LODialogsTestCase(unittest.TestCase):
@@ -256,7 +256,8 @@ class ProgressExecutorTestCase(unittest.TestCase):
         oDialogModel = mock.Mock()
         oDialogModel.createInstance.side_effect = [oBarModel, oTextModel]
 
-        oBar = mock.Mock()
+        oBar = mock.Mock(Value=0)
+        oBar.Model = mock.Mock(ProgressValueMin=0, ProgressValueMax=100)
         oText = mock.Mock()
         oDialog = mock.Mock()
         oDialog.getControl.side_effect = [oBar, oText]
@@ -266,7 +267,7 @@ class ProgressExecutorTestCase(unittest.TestCase):
         # play
         pe = ProgressExecutorBuilder().build()
 
-        def func(h: ProgressHandler):
+        def func(h: StandardProgressHandler):
             h.progress(10)
             h.message("foo")
 
@@ -305,6 +306,7 @@ class ProgressExecutorTestCase(unittest.TestCase):
         oDialogModel.createInstance.side_effect = [oBarModel, oTextModel]
 
         oBar = mock.Mock()
+        oBar.Model = mock.Mock(ProgressValueMin=0, ProgressValueMax=100)
         oText = mock.Mock()
         oDialog = mock.Mock()
         oDialog.getControl.side_effect = [oBar, oText]
@@ -317,7 +319,7 @@ class ProgressExecutorTestCase(unittest.TestCase):
             False).dialog_rectangle(10, 10, 120, 60).bar_progress(
             100, 1000).message("base msg").build()
 
-        def func(h: ProgressHandler):
+        def func(h: StandardProgressHandler):
             h.progress(1000)
             h.message("foo")
 
@@ -344,7 +346,7 @@ class ProgressExecutorTestCase(unittest.TestCase):
             mock.call.createPeer(oTK, None),
             mock.call.execute()
         ], oDialog.mock_calls)
-        self.assertEqual(1000, oBar.Value)
+        self.assertEqual(100, oBar.Value)
         self.assertEqual("foo", oText.Text)
 
 
@@ -365,7 +367,7 @@ class ConsoleExecutorTestCase(unittest.TestCase):
         # play
         ce = ConsoleExecutorBuilder().build()
 
-        def func(h: ConsoleHandler):
+        def func(h: StandardConsoleHandler):
             h.message("foo")
 
         ce.execute(func)

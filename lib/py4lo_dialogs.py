@@ -55,6 +55,7 @@ oDialog.dispose()
 To load an XML dialog (like in Basic), see: `_ObjectProvider.get_dialog`
 from py4lo_helper.
 """
+import logging
 # mypy: disable-error-code="import-untyped,import-not-found"
 
 from collections import namedtuple
@@ -64,7 +65,7 @@ from typing import Any, Callable, Optional, List, Union, NamedTuple, cast
 
 from py4lo_helper import (create_uno_service_ctxt, get_provider,
                           create_uno_service, create_uno_struct)
-from py4lo_typing import UnoControlModel, UnoControl, StrPath
+from py4lo_typing import UnoControlModel, UnoControl, StrPath, lazy
 
 try:
     # noinspection PyUnresolvedReferences
@@ -579,10 +580,23 @@ def _set_rectangle(oWidgetModel: UnoControlModel, rectangle: Rectangle):
     oWidgetModel.Height = rectangle.h
 
 
-# ProgressExecutor
-class VoidProgressHandler:
+class ProgressActionStopped(Exception):
     """
-    A VoidProgressHandler. This is the base class for ProgressHandler.
+    Exception thrown by a handler or a function to stop the progress action.
+    """
+    pass
+
+
+class ProgressHandler:
+    """
+    Any object can be a handler.
+    """
+
+
+# ProgressExecutor
+class VoidProgressHandler(ProgressHandler):
+    """
+    A VoidProgressHandler. This is the base class for StandardProgressHandler.
 
     A progress handler allows to trigger a progress, to set a progress value
     or to set a progress text.
@@ -633,15 +647,15 @@ class VoidProgressHandler:
         pass
 
 
-class ProgressHandler(VoidProgressHandler):
+class StandardProgressHandler(VoidProgressHandler):
     """
-    A ProgressHandler will send progress value updates to a progress bar
+    A StandardProgressHandler will send progress value updates to a progress bar
     and the progress message to a text box.
 
     Typically, it is passed to a function as the only parameter:
 
     ```
-    progress_handler = ProgressHandler(...) # or another handler
+    progress_handler = StandardProgressHandler(...) # or another handler
     def myfunc(progress_handler: VoidProgressHandler):
         do_something()
         progress_handler.progress(10)
@@ -653,7 +667,7 @@ class ProgressHandler(VoidProgressHandler):
     return a value.
     """
 
-    def __init__(self, oBar: UnoControlModel, bar_progress_min: int,
+    def __init__(self, oBar: UnoControl, bar_progress_min: int,
                  bar_progress_max: int, oText: UnoControl):
         """
         @param oBar: the progress bar (see: com.sun.star.awt.UnoControlProgressBar)
@@ -662,26 +676,26 @@ class ProgressHandler(VoidProgressHandler):
         @param oText: the progress text box (see: com.sun.star.awt.UnoControlFixedTextModel)
         """
         VoidProgressHandler.__init__(self)
-        self._oBar = oBar
-        self._oBar.Value = bar_progress_min
+        self.oBar = oBar
+        self.oBar.Value = bar_progress_min
         self._bar_progress_min = bar_progress_min
         self._bar_progress_max = bar_progress_max
         self._oText = oText
         self.response = None
 
     def progress(self, n: int = 1):
-        self._oBar.Value = self._oBar.Value + n
-        if self._oBar.Value > self._bar_progress_max:
-            self._oBar.Value = self._bar_progress_max
+        self.oBar.Value = self.oBar.Value + n
+        if self.oBar.Value > self._bar_progress_max:
+            self.oBar.Value = self._bar_progress_max
 
     def set(self, i: int):
         if i > self._bar_progress_max:
-            self._oBar.Value = self._bar_progress_max
+            self.oBar.Value = self._bar_progress_max
         else:
-            self._oBar.Value = i
+            self.oBar.Value = i
 
     def reset(self):
-        self._oBar.Value = self._bar_progress_min
+        self.oBar.Value = self._bar_progress_min
 
     def message(self, text: str):
         self._oText.Text = text
@@ -707,10 +721,11 @@ class ProgressExecutor:
     x = executor.response
     ```
     """
+    _logger = logging.getLogger(__name__)
 
     @staticmethod
     def create(oDialog: UnoControl, autoclose: bool,
-               oBar: UnoControlModel, bar_progress_min: int,
+               oBar: UnoControl, bar_progress_min: int,
                bar_progress_max: int, oText: UnoControl) -> "ProgressExecutor":
         """
         @param oDialog: the dialog containing the bar and the text box
@@ -720,12 +735,12 @@ class ProgressExecutor:
         @param bar_progress_max: the maximum progress value
         @param oText: the progress text box (see: com.sun.star.awt.UnoControlFixedTextModel)
         """
-        progress_handler = ProgressHandler(
+        progress_handler = StandardProgressHandler(
             oBar, bar_progress_min, bar_progress_max, oText)
         return ProgressExecutor(oDialog, autoclose, progress_handler)
 
     def __init__(self, oDialog: UnoControl, autoclose: bool,
-                 progress_handler: VoidProgressHandler):
+                 progress_handler: ProgressHandler):
         """
         @param oDialog: the dialog containing the bar and the text box
         @param autoclose: if True, close the dialog when maximum is reached
@@ -735,12 +750,12 @@ class ProgressExecutor:
         self._autoclose = autoclose
         self._progress_handler = progress_handler
 
-    def execute(self, func: Callable[[VoidProgressHandler], None]):
+    def execute(self, func: Callable[[ProgressHandler], None]):
         """
-        Execute the function in a thread and reverberate ProgressHandler
+        Execute the function in a thread and reverberate StandardProgressHandler
         commands to the dialog.
 
-        @param func: a function that takes a `ProgressHandler` object. The
+        @param func: a function that takes a `StandardProgressHandler` object. The
         function may set the `response` attribute of the progress_handler to
         return a value.
         """
@@ -749,13 +764,19 @@ class ProgressExecutor:
         def aux():
             self._oDialog.setVisible(True)
             self._oDialog.createPeer(oToolkit, None)
-            func(self._progress_handler)
-            if self._autoclose:
-                # free all resources as soon as the function is executed
-                self._oDialog.dispose()
-            else:
-                # wait for the user to close the window
-                self._oDialog.execute()
+            try:
+                func(self._progress_handler)
+            except ProgressActionStopped:
+                pass
+            except Exception:
+                self._logger.exception("Progress exception!")
+            finally:
+                if self._autoclose:
+                    # free all resources as soon as the function is executed
+                    self._oDialog.dispose()
+                else:
+                    # wait for the user to close the window
+                    self._oDialog.execute()
 
         t = Thread(target=aux)
         t.start()
@@ -770,14 +791,14 @@ class ProgressExecutor:
         return self._progress_handler.response
 
 
-class ProgressExecutorBuilder:
+class ProgressDialogBuilder:
     """
-    A ProgessExecutorBuilder.
+    A dialog builder for ProgessExecutor.
 
     Example:
     ```
-    builder = ProgressExecutorBuilder()
-    executor = builder.title("See the progress").autoclose(True).build()
+    builder = ProgressDialogBuilder()
+    oDialog = builder.title("See the progress").build()
     ```
     """
 
@@ -793,13 +814,12 @@ class ProgressExecutorBuilder:
         self._oDialog = cast(UnoControl,
                              create_uno_service(Control.Dialog))
         self.title("Please wait...")
-        self._dialog_rectangle = Rectangle(150, 150, 150, 30)
+        self._dialog_rectangle = Rectangle(150, 150, 150, 40)
         self._bar_dimensions = Size(140, 12)
         self._bar_progress = Progress(0, 100)
         self._message = None
-        self._autoclose = True
 
-    def build(self) -> ProgressExecutor:
+    def build(self) -> UnoControl:
         """
         @return: the executor
         """
@@ -821,11 +841,7 @@ class ProgressExecutorBuilder:
         _set_rectangle(self._oTextModel, Rectangle(MARGIN, y, w, h))
         if self._message is not None:
             self._oTextModel.Label = self._message
-
-        return ProgressExecutor.create(
-            self._oDialog, self._autoclose, self._oDialog.getControl("bar"),
-            self._bar_progress.min, self._bar_progress.max,
-            cast(UnoControl, self._oDialog.getControl("text")))
+        return self._oDialog
 
     def _centered(self, outer_w: int, inner_w: int) -> int:
         if outer_w <= inner_w:
@@ -833,7 +849,7 @@ class ProgressExecutorBuilder:
         else:
             return (outer_w - inner_w) // 2
 
-    def title(self, title: str) -> "ProgressExecutorBuilder":
+    def title(self, title: str) -> "ProgressDialogBuilder":
         """
         Set the title
         @param title: the title
@@ -843,17 +859,8 @@ class ProgressExecutorBuilder:
         self._oDialogModel.Title = title
         return self
 
-    def autoclose(self, b: bool) -> "ProgressExecutorBuilder":
-        """
-        Set the autoclose value : if False, don't close
-        @param b: the value of autoclose
-        @return:
-        """
-        self._autoclose = b
-        return self
-
     def dialog_rectangle(self, x: int, y: int, w: int,
-                         h: int) -> "ProgressExecutorBuilder":
+                         h: int) -> "ProgressDialogBuilder":
         """
         Set the dialog rectangle
 
@@ -866,7 +873,7 @@ class ProgressExecutorBuilder:
         self._dialog_rectangle = Rectangle(x, y, w, h)
         return self
 
-    def bar_dimensions(self, w, h):
+    def bar_dimensions(self, w: int, h: int) -> "ProgressDialogBuilder":
         """
         Set the dialog rectangle
 
@@ -878,7 +885,7 @@ class ProgressExecutorBuilder:
         return self
 
     def bar_progress(self, progress_min: int,
-                     progress_max: int) -> "ProgressExecutorBuilder":
+                     progress_max: int) -> "ProgressDialogBuilder":
         """
         Set the dialog rectangle
 
@@ -889,7 +896,7 @@ class ProgressExecutorBuilder:
         self._bar_progress = Progress(progress_min, progress_max)
         return self
 
-    def message(self, message: str) -> "ProgressExecutorBuilder":
+    def message(self, message: str) -> "ProgressDialogBuilder":
         """
         Set the message
         @param message: the message
@@ -899,10 +906,99 @@ class ProgressExecutorBuilder:
         return self
 
 
-# ConsoleExecutor
-class VoidConsoleHandler:
+class ProgressExecutorBuilder:
     """
-    A VoidConsoleHandler. This is the base class for ConsoleHandler objects.
+    A ProgessExecutorBuilder.
+
+    Example:
+    ```
+    builder = ProgressExecutorBuilder()
+    executor = builder.title("See the progress").autoclose(True).build()
+    ```
+    """
+
+    def __init__(self):
+        self._dialog_builder = ProgressDialogBuilder()
+        self._progress_handler = lazy(ProgressHandler)
+        self._autoclose = True
+
+    def build(self) -> ProgressExecutor:
+        """
+        @return: the executor
+        """
+        oDialog = self._dialog_builder.build()
+        if self._progress_handler is None:
+            oBar = oDialog.getControl("bar")
+            oText = oDialog.getControl("text")
+            bar_progress_min = oBar.Model.ProgressValueMin
+            bar_progress_max = oBar.Model.ProgressValueMax
+            progress_handler = StandardProgressHandler(
+                oBar, bar_progress_min, bar_progress_max,
+                oText
+            )
+        else:
+            progress_handler = self._progress_handler
+
+        return ProgressExecutor(oDialog, self._autoclose, progress_handler)
+
+    def handler(self, handler: ProgressHandler) -> "ProgressExecutorBuilder":
+        """
+        Sets a specific handler for this executor
+        @param handler: the handler
+        @return: self for fluent style
+        """
+        self._progress_handler = handler
+        return self
+
+    def title(self, title: str) -> "ProgressExecutorBuilder":
+        """See ProgressDialogBuilder.title"""
+        self._dialog_builder.title(title)
+        return self
+
+    def autoclose(self, b: bool) -> "ProgressExecutorBuilder":
+        """
+        Set the autoclose value : if False, don't close
+        @param b: the value of autoclose
+        @return: self for fluent style
+        """
+        self._autoclose = b
+        return self
+
+    def dialog_rectangle(self, x: int, y: int, w: int,
+                         h: int) -> "ProgressExecutorBuilder":
+        """See ProgressDialogBuilder.dialog_rectangle"""
+        self._dialog_builder.dialog_rectangle(x, y, w, h)
+        return self
+
+    def bar_dimensions(self, w, h):
+        """See ProgressDialogBuilder.bar_dimensions"""
+        self._dialog_builder.bar_dimensions(w, h)
+        return self
+
+    def bar_progress(self, progress_min: int,
+                     progress_max: int) -> "ProgressExecutorBuilder":
+        """See ProgressDialogBuilder.bar_progress"""
+        self._dialog_builder.bar_progress(progress_min, progress_max)
+        return self
+
+    def message(self, message: str) -> "ProgressExecutorBuilder":
+        """See ProgressDialogBuilder.message"""
+        self._dialog_builder.message(message)
+        return self
+
+
+# ConsoleExecutor
+
+class ConsoleHandler:
+    """
+    Base class for console handlers
+    """
+    pass
+
+
+class VoidConsoleHandler(ConsoleHandler):
+    """
+    A VoidConsoleHandler. This is the base class for StandardConsoleHandler objects.
 
     Typically, it is passed to a function as the only parameter:
 
@@ -929,15 +1025,15 @@ class VoidConsoleHandler:
         pass
 
 
-class ConsoleHandler(VoidConsoleHandler):
+class StandardConsoleHandler(VoidConsoleHandler):
     """
-    A ConsoleHandler will send the progress message to a text box.
+    A StandardConsoleHandler will send the progress message to a text box.
 
     Typically, it is passed to a function as the only parameter:
 
     ```
-    progress_handler = ConsoleHandler(...)
-    def myfunc(console_handler: ConsoleHandler):
+    progress_handler = StandardConsoleHandler(...)
+    def myfunc(console_handler: StandardConsoleHandler):
         do_something()
         console_handler.message("Something done")
         ...
@@ -983,24 +1079,12 @@ class ConsoleExecutor:
     x = executor.response
     ```
     """
-
-    @staticmethod
-    def create(oDialog: UnoControl, autoclose: bool,
-               oText: UnoControl) -> "ConsoleExecutor":
-        """
-        @param oDialog: the dialog containing the text box
-        @param autoclose: if True, close the dialog when the function is executed
-        @param oText: the progress text box (see: com.sun.star.awt.UnoControlFixedTextModel)
-        """
-        console_handler = ConsoleHandler(oText)
-        return ConsoleExecutor(oDialog, autoclose, console_handler)
-
     def __init__(self, oDialog: UnoControl, autoclose: bool,
                  console_handler: VoidConsoleHandler):
         """
         @param oDialog: the dialog containing the text box
         @param autoclose: if True, close the dialog when the function is executed
-        @param console_handler: the ConsoleHandler
+        @param console_handler: the StandardConsoleHandler
         """
         self._oDialog = oDialog
         self._autoclose = autoclose
@@ -1008,10 +1092,10 @@ class ConsoleExecutor:
 
     def execute(self, func: Callable[[VoidConsoleHandler], None]):
         """
-        Execute the function in a thread and reverberate ConsoleHandler
+        Execute the function in a thread and reverberate StandardConsoleHandler
         commands to the dialog.
 
-        @param func: a function that takes a `ConsoleHandler` object. The
+        @param func: a function that takes a `StandardConsoleHandler` object. The
         function may set the `response` attribute of the progress_handler to
         return a value.
         """
@@ -1041,7 +1125,7 @@ class ConsoleExecutor:
         return self._console_handler.response
 
 
-class ConsoleExecutorBuilder:
+class ConsoleDialogBuilder:
     """
     A ConsoleExecutorBuilder
 
@@ -1064,11 +1148,24 @@ class ConsoleExecutorBuilder:
         self._oTextModel.ReadOnly = True
         self._oTextModel.MultiLine = True
         self._oTextModel.VScroll = True
-        self._autoclose = False
         self._console_rectangle = Rectangle(100, 150, 250, 100)
         self.title("Console")
 
-    def title(self, title: str) -> "ConsoleExecutorBuilder":
+    def build(self) -> UnoControl:
+        """
+        @return: the executor
+        """
+        self._oDialog.setModel(self._oDialogModel)
+        self._oDialogModel.insertByName("text", self._oTextModel)
+        _set_rectangle(self._oDialogModel, self._console_rectangle)
+        text_rectangle = Rectangle(
+            MARGIN, MARGIN, self._console_rectangle.w - MARGIN * 2,
+                            self._console_rectangle.h - MARGIN * 2
+        )
+        _set_rectangle(self._oTextModel, text_rectangle)
+        return self._oDialog
+
+    def title(self, title: str) -> "ConsoleDialogBuilder":
         """
         Set the title
         @param title: the title
@@ -1076,6 +1173,64 @@ class ConsoleExecutorBuilder:
         @return: self for fluent style
         """
         self._oDialogModel.Title = title
+        return self
+
+    def console_rectangle(
+            self, x: int, y: int, w: int, h: int) -> "ConsoleDialogBuilder":
+        """
+        Set the dialog rectangle
+
+        @param x: abscissa
+        @param y: ordinate
+        @param w: width
+        @param h: height
+        @return: self for fluent style
+        """
+        self._console_rectangle = Rectangle(x, y, w, h)
+        return self
+
+
+
+class ConsoleExecutorBuilder:
+    """
+    A ConsoleExecutorBuilder
+
+    Example:
+    ```
+    builder = ConsoleExecutorBuilder()
+    executor = builder.title("See the messages").autoclose(True).build()
+    ```
+    """
+
+    def __init__(self):
+        self._dialog_builder = ConsoleDialogBuilder()
+        self._autoclose = False
+        self._progress_handler = lazy(ConsoleHandler)
+
+    def build(self) -> ConsoleExecutor:
+        """
+        @return: the executor
+        """
+        oDialog = self._dialog_builder.build()
+        if self._progress_handler is None:
+            progress_handler = StandardConsoleHandler(oDialog.getControl("text"))
+        else:
+            progress_handler = self._progress_handler
+
+        return ConsoleExecutor(oDialog, self._autoclose, progress_handler)
+
+    def handler(self, handler: ProgressHandler) -> "ConsoleExecutorBuilder":
+        """
+        Sets a specific handler for this executor
+        @param handler: the handler
+        @return: self for fluent style
+        """
+        self._progress_handler = handler
+        return self
+
+    def title(self, title: str) -> "ConsoleExecutorBuilder":
+        """See ConsoleDialogBuilder.title"""
+        self._dialog_builder.title(title)
         return self
 
     def autoclose(self, b: bool) -> "ConsoleExecutorBuilder":
@@ -1089,30 +1244,6 @@ class ConsoleExecutorBuilder:
 
     def console_rectangle(
             self, x: int, y: int, w: int, h: int) -> "ConsoleExecutorBuilder":
-        """
-        Set the dialog rectangle
-
-        @param x: abscissa
-        @param y: ordinate
-        @param w: width
-        @param h: height
-        @return: self for fluent style
-        """
-        self._console_rectangle = Rectangle(x, y, w, h)
+        """See ConsoleDialogBuilder.rectangle"""
+        self._dialog_builder.console_rectangle(x, y, w, h)
         return self
-
-    def build(self) -> ConsoleExecutor:
-        """
-        @return: the executor
-        """
-        self._oDialog.setModel(self._oDialogModel)
-        self._oDialogModel.insertByName("text", self._oTextModel)
-        _set_rectangle(self._oDialogModel, self._console_rectangle)
-        text_rectangle = Rectangle(
-            MARGIN, MARGIN, self._console_rectangle.w - MARGIN * 2,
-                            self._console_rectangle.h - MARGIN * 2
-        )
-        _set_rectangle(self._oTextModel, text_rectangle)
-        return ConsoleExecutor.create(
-            self._oDialog, self._autoclose,
-            cast(UnoControl, self._oDialog.getControl("text")))
