@@ -19,6 +19,7 @@ import time
 import unittest
 from unittest import mock
 
+import py4lo_dialogs
 from py4lo_dialogs import (MessageBoxType, ExecutableDialogResults)
 from py4lo_dialogs import (message_box, place_widget,
                            get_text_size, file_dialog, Size, FileFilter,
@@ -64,47 +65,45 @@ class Py4LODialogsTestCase(unittest.TestCase):
             mock.call.setModel(oModel)
         ], oControl.mock_calls)
 
-    @mock.patch("py4lo_dialogs.create_uno_service_ctxt")
+    @mock.patch("py4lo_dialogs.get_toolkit")
     @mock.patch("py4lo_dialogs.get_provider")
-    def test_message_box(self, get_provider, usc):
+    def test_message_box(self, get_provider, gt):
         self.maxDiff = None
 
         # prepare
         toolkit = mock.Mock()
-        usc.return_value = toolkit
+        gt.side_effect = [toolkit]
 
         # play
         message_box("title", "text")
 
         # verify
-        self.assertEqual(usc.mock_calls, [
-            mock.call('com.sun.star.awt.Toolkit'),
-            mock.call().createMessageBox(get_provider().parent_win,
+        self.assertEqual(toolkit.mock_calls, [
+            mock.call.createMessageBox(get_provider().parent_win,
                                          MessageBoxType.MESSAGEBOX, 1,
                                          'title', 'text'),
-            mock.call().createMessageBox().execute()
+            mock.call.createMessageBox().execute()
         ])
 
-    @mock.patch("py4lo_dialogs.create_uno_service_ctxt")
-    def test_message_box_parent_win(self, usc):
+    @mock.patch("py4lo_dialogs.get_toolkit")
+    def test_message_box_parent_win(self, gt):
         self.maxDiff = None
 
         # prepare
         toolkit = mock.Mock()
-        usc.return_value = toolkit
+        gt.side_effect = [toolkit]
         pw = mock.Mock()
 
         # play
         message_box("title", "text", parent_win=pw)
 
         # verify
-        self.assertEqual([
-            mock.call('com.sun.star.awt.Toolkit'),
-            mock.call().createMessageBox(pw,
+        self.assertEqual(toolkit.mock_calls, [
+            mock.call.createMessageBox(pw,
                                          MessageBoxType.MESSAGEBOX, 1,
                                          'title', 'text'),
-            mock.call().createMessageBox().execute()
-        ], usc.mock_calls)
+            mock.call.createMessageBox().execute()
+        ])
 
     @mock.patch("py4lo_dialogs.create_uno_service")
     def test_file_dialog_single(self, us):
@@ -250,7 +249,8 @@ class Py4LODialogsTestCase(unittest.TestCase):
 class ProgressExecutorTestCase(unittest.TestCase):
     @mock.patch("py4lo_dialogs.create_uno_service")
     def test_simple(self, us):
-        # prepare
+        # arrange
+        py4lo_dialogs._oToolkit = None
         oBarModel = mock.Mock()
         oTextModel = mock.Mock()
         oDialogModel = mock.Mock()
@@ -264,42 +264,43 @@ class ProgressExecutorTestCase(unittest.TestCase):
         oTK = mock.Mock()
         us.side_effect = [oDialogModel, oDialog, oTK]
 
-        # play
         pe = ProgressExecutorBuilder().build()
 
         def func(h: StandardProgressHandler):
             h.progress(10)
             h.message("foo")
 
+        # act
         pe.execute(func)
         time.sleep(1)
 
-        # verify
-        self.assertEqual([
+        # assert
+        self.assertEqual(us.mock_calls, [
             mock.call('com.sun.star.awt.UnoControlDialogModel'),
             mock.call('com.sun.star.awt.UnoControlDialog'),
             mock.call('com.sun.star.awt.Toolkit')
-        ], us.mock_calls)
-        self.assertEqual([
+        ])
+        self.assertEqual(oDialogModel.mock_calls, [
             mock.call.createInstance('com.sun.star.awt.UnoControlProgressBarModel'),
             mock.call.createInstance('com.sun.star.awt.UnoControlFixedTextModel'),
             mock.call.insertByName('bar', oBarModel),
             mock.call.insertByName('text', oTextModel),
-        ], oDialogModel.mock_calls)
-        self.assertEqual([
+        ])
+        self.assertEqual(oDialog.mock_calls, [
             mock.call.setModel(oDialogModel),
             mock.call.getControl('bar'),
             mock.call.getControl('text'),
             mock.call.setVisible(True),
             mock.call.createPeer(oTK, None),
             mock.call.dispose()
-        ], oDialog.mock_calls)
+        ])
         self.assertEqual(10, oBar.Value)
         self.assertEqual("foo", oText.Text)
 
     @mock.patch("py4lo_dialogs.create_uno_service")
     def test_build(self, us):
         # prepare
+        py4lo_dialogs._oToolkit = None
         oBarModel = mock.Mock()
         oTextModel = mock.Mock()
         oDialogModel = mock.Mock()
@@ -327,25 +328,25 @@ class ProgressExecutorTestCase(unittest.TestCase):
         time.sleep(1)
 
         # verify
-        self.assertEqual([
+        self.assertEqual(us.mock_calls, [
             mock.call('com.sun.star.awt.UnoControlDialogModel'),
             mock.call('com.sun.star.awt.UnoControlDialog'),
             mock.call('com.sun.star.awt.Toolkit')
-        ], us.mock_calls)
-        self.assertEqual([
+        ])
+        self.assertEqual(oDialogModel.mock_calls, [
             mock.call.createInstance('com.sun.star.awt.UnoControlProgressBarModel'),
             mock.call.createInstance('com.sun.star.awt.UnoControlFixedTextModel'),
             mock.call.insertByName('bar', oBarModel),
             mock.call.insertByName('text', oTextModel),
-        ], oDialogModel.mock_calls)
-        self.assertEqual([
+        ])
+        self.assertEqual(oDialog.mock_calls, [
             mock.call.setModel(oDialogModel),
             mock.call.getControl('bar'),
             mock.call.getControl('text'),
             mock.call.setVisible(True),
             mock.call.createPeer(oTK, None),
             mock.call.execute()
-        ], oDialog.mock_calls)
+        ])
         self.assertEqual(100, oBar.Value)
         self.assertEqual("foo", oText.Text)
 
@@ -353,7 +354,8 @@ class ProgressExecutorTestCase(unittest.TestCase):
 class ConsoleExecutorTestCase(unittest.TestCase):
     @mock.patch("py4lo_dialogs.create_uno_service")
     def test_simple(self, us):
-        # prepare
+        # arrange
+        py4lo_dialogs._oToolkit = None
         oTextModel = mock.Mock()
         oDialogModel = mock.Mock()
         oDialogModel.createInstance.side_effect = [oTextModel]
@@ -364,20 +366,16 @@ class ConsoleExecutorTestCase(unittest.TestCase):
         oTK = mock.Mock()
         us.side_effect = [oDialogModel, oDialog, oTK]
 
-        # play
         ce = ConsoleExecutorBuilder().build()
 
         def func(h: StandardConsoleHandler):
             h.message("foo")
 
+        # act
         ce.execute(func)
         time.sleep(1)
 
-        # verify
-        # TODO: might not
-        # self.assertEqual([
-        #     call.insertText(ANY,  'foo\n')
-        # ], oText.mock_calls)
+        # assert
         self.assertEqual([
             mock.call('com.sun.star.awt.UnoControlDialogModel'),
             mock.call('com.sun.star.awt.UnoControlDialog'),

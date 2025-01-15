@@ -43,7 +43,7 @@ oOkModel.PushButtonType = PushButtonType.OK
 oOkModel.DefaultButton = True
 oDialogModel.insertByName("button", oOkModel)
 
-oToolkit = create_uno_service_ctxt("com.sun.star.awt.Toolkit")
+oToolkit = get_toolkit()
 oDialog.createPeer(oToolkit, None)
 
 if oDialog.execute() == ExecutableDialogResults.OK:
@@ -63,9 +63,10 @@ from enum import Enum
 from threading import Thread
 from typing import Any, Callable, Optional, List, Union, NamedTuple, cast
 
-from py4lo_helper import (create_uno_service_ctxt, get_provider,
-                          create_uno_service, create_uno_struct)
-from py4lo_typing import UnoControlModel, UnoControl, StrPath, lazy
+from py4lo_helper import (
+    get_provider, create_uno_service, create_uno_struct)
+from py4lo_typing import (
+    UnoControlModel, UnoControl, StrPath, lazy, UnoService)
 
 try:
     # noinspection PyUnresolvedReferences
@@ -111,7 +112,7 @@ try:
         # noinspection PyUnresolvedReferences
         from com.sun.star.awt.PushButtonType import (OK, CANCEL)
 
-except (ModuleNotFoundError, ImportError):
+except ImportError:
     from _mock_constants import (  # type: ignore[assignment]
         ExecutableDialogResults,  # pyright: ignore[reportGeneralTypeIssues]
         MessageBoxButtons,  # pyright: ignore[reportGeneralTypeIssues]
@@ -189,6 +190,17 @@ class Control(str, Enum):
     TimeField = "com.sun.star.awt.UnoControlTimeField"
     ColumnDescriptor = "com.sun.star.sdb.ColumnDescriptorControl"
 
+_oToolkit = lazy(UnoService)
+
+
+def get_toolkit() -> UnoService:
+    """
+    @return: the com.sun.star.awt.Toolkit instance
+    """
+    global _oToolkit
+    if _oToolkit is None:
+        _oToolkit = create_uno_service("com.sun.star.awt.Toolkit")
+    return _oToolkit
 
 ###
 # Common functions
@@ -251,10 +263,10 @@ def message_box(msg_title: str, msg_text: str,
     """
     # from https://forum.openoffice.org/fr/forum/viewtopic.php?f=15&t=47603#
     # (thanks Bernard !)
-    toolkit = create_uno_service_ctxt("com.sun.star.awt.Toolkit")
+    oToolkit = get_toolkit()
     if parent_win is None:
         parent_win = get_provider().parent_win
-    mb = toolkit.createMessageBox(parent_win, msg_type, msg_buttons, msg_title,
+    mb = oToolkit.createMessageBox(parent_win, msg_type, msg_buttons, msg_title,
                                   msg_text)
     return mb.execute()
 
@@ -319,7 +331,7 @@ class InputBox:
         """
         if parent_win is None:
             parent_win = get_provider().parent_win
-        oToolkit = create_uno_service_ctxt("com.sun.star.awt.Toolkit")
+        oToolkit = get_toolkit()
 
         if x is None or y is None:
             ps = parent_win.PosSize
@@ -759,7 +771,7 @@ class ProgressExecutor:
         function may set the `response` attribute of the progress_handler to
         return a value.
         """
-        oToolkit = create_uno_service("com.sun.star.awt.Toolkit")
+        oToolkit = get_toolkit()
 
         def aux():
             self._oDialog.setVisible(True)
@@ -1099,7 +1111,7 @@ class ConsoleExecutor:
         function may set the `response` attribute of the progress_handler to
         return a value.
         """
-        oToolkit = create_uno_service("com.sun.star.awt.Toolkit")
+        oToolkit = get_toolkit()
 
         def aux():
             self._oDialog.setVisible(True)
