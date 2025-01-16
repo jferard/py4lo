@@ -41,7 +41,7 @@ from py4lo_typing import (
 try:
     # noinspection PyUnresolvedReferences
     import uno
-except (ModuleNotFoundError, ImportError):
+except ImportError:
     from _mock_objects import uno
 
 _xsc = None

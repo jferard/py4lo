@@ -45,7 +45,7 @@ try:
             NO_NULLS, NULLABLE, NULLABLE_UNKNOWN
         )
 
-except (ModuleNotFoundError, ImportError):
+except ImportError:
     from _mock_constants import ( # type:ignore[assignment]
         DataType,
         ColumnValue  # noqa: F401

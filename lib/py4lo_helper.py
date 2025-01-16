@@ -101,7 +101,7 @@ try:
         # noinspection PyUnresolvedReferences
         from com.sun.star.awt.FontSlant import (NONE, OBLIQUE, ITALIC)
 
-except (ModuleNotFoundError, ImportError):
+except ImportError:
     from _mock_constants import (  # type:ignore[assignment]
         BorderLineStyle,  # pyright: ignore[reportGeneralTypeIssues]
         ConditionOperator,  # pyright: ignore[reportGeneralTypeIssues]

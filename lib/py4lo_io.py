@@ -47,7 +47,7 @@ try:
         # noinspection PyUnresolvedReferences
         from com.sun.star.util.NumberFormat import (DATE, TIME, DATETIME,
                                                     LOGICAL)
-except (ModuleNotFoundError, ImportError):
+except ImportError:
     from _mock_constants import (
         NumberFormat,
     )
