@@ -2136,20 +2136,13 @@ class CopyDataArrayTestCase(unittest.TestCase):
         oSheet = mock.Mock()
         oSheet.getCellRangeByPosition.side_effect = [oRange]
 
-        oSheets = mock.Mock()
-        oSheets.getByIndex.side_effect = [oSheet]
-
-        oDoc = mock.Mock(Sheets=oSheets)
         cell_address = mock.Mock(Sheet=1, Column=2, Row=3)
+        oCell = mock.Mock(CellAddress=cell_address, Spreadsheet=oSheet)
 
         # act
-        copy_data_array(oDoc, cell_address,
-                        [["A", "B", "C"], [1, 2, "foo"], [4, 5, "bar"]])
+        copy_data_array(oCell, [["A", "B", "C"], [1, 2, "foo"], [4, 5, "bar"]])
 
         # assert
-        self.assertEqual([
-            mock.call.Sheets.getByIndex(1),
-        ], oDoc.mock_calls)
         self.assertEqual([
             mock.call.getCellRangeByPosition(2, 3, 4, 5),
         ], oSheet.mock_calls)
@@ -2166,26 +2159,19 @@ class CopyDataArrayTestCase(unittest.TestCase):
         oSheet = mock.Mock()
         oSheet.getCellRangeByPosition.side_effect = [oRange]
 
-        oSheets = mock.Mock()
-        oSheets.getByIndex.side_effect = [oSheet]
-
-        oDoc = mock.Mock(Sheets=oSheets)
         cell_address = mock.Mock(Sheet=1, Column=2, Row=3)
+        oCell = mock.Mock(CellAddress=cell_address, Spreadsheet=oSheet)
 
         # act
         with self.assertRaises(ValueError):
-            copy_data_array(oDoc, cell_address,
-                            [["A", "B", "C"], [1, 2, "foo"], [4, 5, "bar"]],
-                            undo=False)
+            copy_data_array(
+                oCell, [["A", "B", "C"], [1, 2, "foo"], [4, 5, "bar"]], undo=False)
 
         # assert
         self.assertEqual([
-            mock.call.Sheets.getByIndex(1),
-            mock.call.UndoManager.lock(),
-            mock.call.UndoManager.unlock()
-        ], oDoc.mock_calls)
-        self.assertEqual([
+            mock.call.DrawPage.Forms.Parent.UndoManager.lock(),
             mock.call.getCellRangeByPosition(2, 3, 4, 5),
+            mock.call.DrawPage.Forms.Parent.UndoManager.unlock()
         ], oSheet.mock_calls)
         da_mock.assert_called()
 
@@ -2196,21 +2182,15 @@ class CopyDataArrayTestCase(unittest.TestCase):
         oSheet = mock.Mock()
         oSheet.getCellRangeByPosition.side_effect = [oRange]
 
-        oSheets = mock.Mock()
-        oSheets.getByIndex.side_effect = [oSheet]
-
-        oDoc = mock.Mock(Sheets=oSheets)
         cell_address = mock.Mock(Sheet=1, Column=2, Row=3)
+        oCell = mock.Mock(CellAddress=cell_address, Spreadsheet=oSheet)
 
         # act
-        copy_data_array(oDoc, cell_address,
+        copy_data_array(oCell,
                         [["A", "B", "C"], [1, 2, "foo"], [4, 5, "bar"]],
                         step=100)
 
         # assert
-        self.assertEqual([
-            mock.call.Sheets.getByIndex(1),
-        ], oDoc.mock_calls)
         self.assertEqual([
             mock.call.getCellRangeByPosition(2, 3, 4, 5),
         ], oSheet.mock_calls)
@@ -2227,30 +2207,23 @@ class CopyDataArrayTestCase(unittest.TestCase):
         oSheet = mock.Mock()
         oSheet.getCellRangeByPosition.side_effect = [oRange1, oRange2, oRange3]
 
-        oSheets = mock.Mock()
-        oSheets.getByIndex.side_effect = [oSheet]
-
-        oDoc = mock.Mock(Sheets=oSheets)
         cell_address = mock.Mock(Sheet=1, Column=2, Row=3)
+        oCell = mock.Mock(CellAddress=cell_address, Spreadsheet=oSheet)
 
         # act
         acc = []
 
         copy_data_array(
-            oDoc, cell_address,
-            [["A", "B", "C"], [1, 2, "foo"], [4, 5, "bar"]], step=1,
+            oCell, [["A", "B", "C"], [1, 2, "foo"], [4, 5, "bar"]], step=1,
             callback=acc.append)
 
         # assert
         self.assertEqual([
-            mock.call.Sheets.getByIndex(1),
-            mock.call.UndoManager.enterHiddenUndoContext(),
-            mock.call.UndoManager.leaveUndoContext()
-        ], oDoc.mock_calls)
-        self.assertEqual([
+            mock.call.DrawPage.Forms.Parent.UndoManager.enterHiddenUndoContext(),
             mock.call.getCellRangeByPosition(2, 3, 4, 3),
             mock.call.getCellRangeByPosition(2, 4, 4, 4),
             mock.call.getCellRangeByPosition(2, 5, 4, 5),
+            mock.call.DrawPage.Forms.Parent.UndoManager.leaveUndoContext()
         ], oSheet.mock_calls)
         self.assertEqual([
             ['A', 'B', 'C']
@@ -2271,28 +2244,26 @@ class CopyDataArrayTestCase(unittest.TestCase):
         oSheet = mock.Mock()
         oSheet.getCellRangeByPosition.side_effect = [oRange1, oRange2]
 
-        oSheets = mock.Mock()
-        oSheets.getByIndex.side_effect = [oSheet]
-
-        oDoc = mock.Mock(Sheets=oSheets)
         cell_address = mock.Mock(Sheet=1, Column=2, Row=3)
+        oCell = mock.Mock(CellAddress=cell_address, Spreadsheet=oSheet)
 
         # act
         acc = []
         copy_data_array(
-            oDoc, cell_address,
+            oCell,
             [["A", "B", "C"], [1, 2, "foo"], [4, 5, "bar"]], step=2,
             callback=acc.append)
 
         # assert
         self.assertEqual([
-            mock.call.Sheets.getByIndex(1),
             mock.call.UndoManager.enterHiddenUndoContext(),
             mock.call.UndoManager.leaveUndoContext()
-        ], oDoc.mock_calls)
+        ], oSheet.DrawPage.Forms.Parent.mock_calls)
         self.assertEqual([
+            mock.call.DrawPage.Forms.Parent.UndoManager.enterHiddenUndoContext(),
             mock.call.getCellRangeByPosition(2, 3, 4, 4),
             mock.call.getCellRangeByPosition(2, 5, 4, 5),
+            mock.call.DrawPage.Forms.Parent.UndoManager.leaveUndoContext(),
         ], oSheet.mock_calls)
         self.assertEqual([
             ['A', 'B', 'C'],
@@ -2307,9 +2278,10 @@ class CopyDataArrayTestCase(unittest.TestCase):
         # arrange
         oDoc = mock.Mock()
         cell_address = mock.Mock(Sheet=1, Column=2, Row=3)
+        oCell = mock.Mock(CellAddress=cell_address)
 
         # act
-        copy_data_array(oDoc, cell_address, [])
+        copy_data_array(oCell, [])
 
         # assert
         self.assertEqual([], oDoc.mock_calls)
@@ -2318,9 +2290,10 @@ class CopyDataArrayTestCase(unittest.TestCase):
         # arrange
         oDoc = mock.Mock()
         cell_address = mock.Mock(Sheet=1, Column=2, Row=3)
+        oCell = mock.Mock(CellAddress=cell_address)
 
         # act
-        copy_data_array(oDoc, cell_address, [[], [], []])
+        copy_data_array(oCell, [[], [], []])
 
         # assert
         self.assertEqual([], oDoc.mock_calls)
@@ -2329,10 +2302,11 @@ class CopyDataArrayTestCase(unittest.TestCase):
         # arrange
         oDoc = mock.Mock()
         cell_address = mock.Mock(Sheet=1, Column=2, Row=3)
+        oCell = mock.Mock(CellAddress=cell_address)
 
         # act
         with self.assertRaises(ValueError) as e:
-            copy_data_array(oDoc, cell_address, [[tuple()]], debug=True)
+            copy_data_array(oCell, [[tuple()]], debug=True)
 
         # assert
         self.assertEqual([], oDoc.mock_calls)
@@ -2344,10 +2318,11 @@ class CopyDataArrayTestCase(unittest.TestCase):
         # arrange
         oDoc = mock.Mock()
         cell_address = mock.Mock(Sheet=1, Column=2, Row=3)
+        oCell = mock.Mock(CellAddress=cell_address)
 
         # act
         with self.assertRaises(ValueError) as e:
-            copy_data_array(oDoc, cell_address, [[1], [1, 2], [1], [1, 2, 3]],
+            copy_data_array(oCell, [[1], [1, 2], [1], [1, 2, 3]],
                             debug=True)
 
         # assert

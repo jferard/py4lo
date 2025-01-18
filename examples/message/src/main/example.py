@@ -30,8 +30,9 @@ from datetime import datetime
 import example_lib
 from py4lo_dialogs import (ProgressExecutorBuilder, ConsoleExecutorBuilder,
                            message_box, input_box, ConsoleExecutor,
-                           ProgressExecutor)
-from py4lo_helper import provider as pr, xray, mri, parent_doc, to_iter, to_dict
+                           ProgressExecutor, ProgressHandler)
+from py4lo_helper import provider as pr, xray, mri, parent_doc, to_iter, \
+    to_dict, get_provider, copy_data_array
 from py4lo_io import (dict_reader, dict_writer, export_to_csv,
                       import_from_csv, CellTyping)
 from py4lo_typing import lazy
@@ -112,7 +113,7 @@ def progress_example(*_args):
     if progress_executor is None:
         progress_executor = ProgressExecutorBuilder().build()
 
-    def test(progress_handler):
+    def test(progress_handler: ProgressHandler):
         """The test function"""
         progress_handler.message("a message")
         for i in range(1, 101):
@@ -149,3 +150,7 @@ def console_example(*_args):
             console_handler.message("next message: {}".format(i))
 
     console_executor.execute(test)
+
+def copy_data_array_example(*_args):
+    oSheet = get_provider().controller.ActiveSheet
+    copy_data_array(oSheet.getCellByPosition(6, 7), [["a", "b", "c"], [1, 2, 3], [4, 5, 6], [7, 8, 9]])
