@@ -23,6 +23,7 @@ from unittest import mock
 
 import py4lo_helper
 from py4lo_helper import (
+    SheetsHelper,
     date_to_int, date_to_float, int_to_date, float_to_date,
     BorderLineStyle, ValidationType, ConditionOperator,
     FrameSearchFlag, ScriptFrameworkErrorException, UnoRuntimeException,
@@ -2165,7 +2166,8 @@ class CopyDataArrayTestCase(unittest.TestCase):
         # act
         with self.assertRaises(ValueError):
             copy_data_array(
-                oCell, [["A", "B", "C"], [1, 2, "foo"], [4, 5, "bar"]], undo=False)
+                oCell, [["A", "B", "C"], [1, 2, "foo"], [4, 5, "bar"]],
+                undo=False)
 
         # assert
         self.assertEqual([
@@ -2331,6 +2333,97 @@ class CopyDataArrayTestCase(unittest.TestCase):
             "DataArray is not a square (expected 1 cols):\n* line 1: found 2 cols\n* line 3: found 3 cols",
             e.exception.args[0])
 
+
+class SheetsHelperTestCase(unittest.TestCase):
+    def test_clean_sheet_name(self):
+        for name, clean_name in [
+            ("foo'bar('", "foo_bar(_"),
+            ("foo\\bar\n('", "foo_bar(_"),
+            ("foo\t\abar", "foobar"),
+        ]:
+            self.assertEqual(SheetsHelper.clean_sheet_name(name), clean_name)
+
+    def test_append_sheet(self):
+        # arrange
+        oSheets = mock.Mock(Count=3)
+        oSheets.hasByName.side_effect = [True, True, False]
+
+        # act
+        SheetsHelper(oSheets).append_sheet("&z&eéfg")
+
+        # assert
+        self.assertEqual([
+            mock.call.hasByName('&z&eéfg'),
+            mock.call.hasByName('&z&eéfg-1'),
+            mock.call.hasByName('&z&eéfg-2'),
+            mock.call.insertNewByName('&z&eéfg-2', 3),
+            mock.call.getByIndex(3)
+        ], oSheets.mock_calls)
+
+
+    def test_append_sheet_err(self):
+        oSheets = mock.Mock(Count=3)
+        oSheets.hasByName.return_value = True
+
+        with self.assertRaises(NameError):
+            SheetsHelper(oSheets).append_sheet("&z&eéfg")
+
+    def test_get_or_append_sheet_get(self):
+        # arrange
+        oSheet = mock.Mock()
+
+        oSheets = mock.Mock(Count=5)
+        oSheets.hasByName.side_effect = [True]
+        oSheets.getByName.side_effect = [oSheet]
+
+        # act
+        h = SheetsHelper(oSheets)
+        self.assertEqual(oSheet, h.get_or_append_sheet("foo"))
+
+        # assert
+        self.assertEqual([
+            mock.call.hasByName('foo'),
+            mock.call.getByName('foo'),
+        ], oSheets.mock_calls)
+
+    def test_get_or_append_sheet_append(self):
+        # arrange
+        oSheet = mock.Mock()
+
+        oSheets = mock.Mock(Count=5)
+        oSheets.hasByName.side_effect = [False]
+        oSheets.getByIndex.side_effect = [oSheet]
+
+        # act
+        h = SheetsHelper(oSheets)
+        self.assertEqual(oSheet, h.get_or_append_sheet("bar"))
+
+        # assert
+        self.assertEqual([
+            mock.call.hasByName('bar'),
+            mock.call.insertNewByName('bar', 5),
+            mock.call.getByIndex(5)
+        ], oSheets.mock_calls)
+
+    def test_duplicate_sheet(self):
+        # arrange
+        oSheet = mock.Mock(Name="foo")
+        oSheet.RangeAddress.Sheet = 2
+
+        oSheets = mock.Mock(Count = 5)
+        oSheets.hasByName.side_effect = [False]
+        oSheets.getByIndex.side_effect = [oSheet]
+
+        # act
+        h = SheetsHelper(oSheets)
+        self.assertEqual(oSheet, h.duplicate_sheet(oSheet, "suffix"))
+
+        # assert
+        self.assertEqual([
+            mock.call.hasByName('foo-suffix'),
+            mock.call.copyByName('foo', 'foo-suffix', 3),
+            mock.call.getByIndex(3)
+        ], oSheets.mock_calls)
 
 class UnoTestCase(unittest.TestCase):
     def test_undo_context_none(self):

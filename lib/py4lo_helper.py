@@ -1505,6 +1505,94 @@ open_in_calc = open_document
 
 # Create a document
 ####
+class SheetsHelper:
+    _TRANS = str.maketrans({**dict.fromkeys("[]*?:/\\'", "_"), **{chr(i):"" for i in range(32)}})
+
+    @staticmethod
+    def create(oDoc: UnoSpreadsheetDocument) -> "SheetsHelper":
+        return SheetsHelper(oDoc.Sheets)
+
+    def __init__(self, oSheets):
+        self._oSheets = oSheets
+
+    @staticmethod
+    def clean_sheet_name(name: str) -> str:
+        """
+        >>> SheetsHelper.clean_sheet_name("a/b")
+        'a_b'
+
+        :param name:
+        :return:
+        """
+        return name.translate(SheetsHelper._TRANS)
+
+    def append_sheet(self, name: str) -> UnoSheet:
+        """
+        Add a sheet. First, clean the name.
+        Then try the sequence : <clean_name>, <clean_name>-1,
+        <clean_name>-2, ..., <clean_name>-100.
+        Then raise an NameError.
+
+        @param name: name of the sheet
+        @return: the new sheet
+        @raise NameError: if no derived name is not available
+        """
+        count = self._oSheets.Count
+        free_name = self._get_free_name(name)
+        self._oSheets.insertNewByName(free_name, count)
+        return self._oSheets.getByIndex(count)
+
+    def _get_free_name(self, base_name: str) -> str:
+        """
+        Get a free name for a sheet:
+        1. clean the name.
+        2. try the sequence : <clean_name>, <clean_name>-1,
+        <clean_name>-2, ..., <clean_name>-100.
+        3. if no name is available, raise an NameError.
+
+        @param base_name: name chosen for the sheet
+        @return: the free name.
+        @raise NameError: if no derived name is not available
+        """
+        clean_base_name = self.clean_sheet_name(base_name)
+        if not self._oSheets.hasByName(clean_base_name):
+            return clean_base_name
+
+        for i in range(1, 1000):
+            name = "{}-{}".format(clean_base_name, i)
+            if not self._oSheets.hasByName(name):
+                return name
+        raise NameError("Impossible d'ajouter la feuille {}".format(name))
+
+    def get_or_append_sheet(self, name: str) -> UnoSheet:
+        """
+        Get a sheet by name, or append it to the document.
+        @param name: name of the sheet
+        @return: the sheet
+        @raise NameError: if no derived name is not available
+        """
+        if self._oSheets.hasByName(name):
+            oSheet = self._oSheets.getByName(name)
+        else:
+            count = self._oSheets.Count
+            self._oSheets.insertNewByName(name, count)
+            oSheet = self._oSheets.getByIndex(count)
+
+        return oSheet
+
+    def duplicate_sheet(self, oSheet: UnoSheet, suffix: str):
+        """
+        Duplicate a sheet.
+        @param oSheet: the sheet
+        @return: the new sheet
+        @raise NameError: if no derived name is not available
+        """
+        free_name = self._get_free_name("{}-{}".format(oSheet.Name, suffix))
+        new_index = oSheet.RangeAddress.Sheet + 1
+        self._oSheets.copyByName(oSheet.Name, free_name, new_index)
+        return self._oSheets.getByIndex(new_index)
+
+
 def doc_builder(
         url: NewDocumentUrl = NewDocumentUrl.Calc,
         taget_frame_name: Target = Target.BLANK,
