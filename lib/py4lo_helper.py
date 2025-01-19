@@ -2437,7 +2437,7 @@ def float_to_date(days: float) -> dt.datetime:
 
 def copy_data_array(
         oCell: UnoCell,
-        data_array: DATA_ARRAY, undo=True, debug=False, step=10000,
+        data_array: DATA_ARRAY, undo=True, debug=False, chunk_size=10000,
         callback: Callable[[int], None] = None):
     """
     Copy a data array to a given address on a sheet. This function provides
@@ -2459,10 +2459,10 @@ def copy_data_array(
     @param data_array: the data array
     @param undo: if False, don't add to undo stack.
     @param debug: if True, check the data array
-    @param step: size of the slice in rows
+    @param chunk_size: size of the slice in rows
     @param callback: function called after every chunk_size
     """
-    DataArrayCopier(undo, debug, step, callback).copy(oCell, data_array)
+    DataArrayCopier(undo, debug, chunk_size, callback).copy(oCell, data_array)
 
 
 class DataArrayCopier:
@@ -2484,7 +2484,7 @@ class DataArrayCopier:
 
     @param undo: if False, don't add to undo stack.
     @param debug: if True, check the data array
-    @param step: size of the slice in rows
+    @param chunk_size: size of the slice in rows
     @param callback: function called after every chunk_size
     """
 

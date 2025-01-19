@@ -2190,7 +2190,7 @@ class CopyDataArrayTestCase(unittest.TestCase):
         # act
         copy_data_array(oCell,
                         [["A", "B", "C"], [1, 2, "foo"], [4, 5, "bar"]],
-                        step=100)
+                        chunk_size=100)
 
         # assert
         self.assertEqual([
@@ -2216,7 +2216,7 @@ class CopyDataArrayTestCase(unittest.TestCase):
         acc = []
 
         copy_data_array(
-            oCell, [["A", "B", "C"], [1, 2, "foo"], [4, 5, "bar"]], step=1,
+            oCell, [["A", "B", "C"], [1, 2, "foo"], [4, 5, "bar"]], chunk_size=1,
             callback=acc.append)
 
         # assert
@@ -2253,7 +2253,7 @@ class CopyDataArrayTestCase(unittest.TestCase):
         acc = []
         copy_data_array(
             oCell,
-            [["A", "B", "C"], [1, 2, "foo"], [4, 5, "bar"]], step=2,
+            [["A", "B", "C"], [1, 2, "foo"], [4, 5, "bar"]], chunk_size=2,
             callback=acc.append)
 
         # assert
