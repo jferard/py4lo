@@ -33,8 +33,8 @@ from py4lo_helper import (
     make_pv, make_full_pv, make_pvs, update_pvs, make_locale, make_border,
     make_sort_field, get_last_used_row, get_used_range_address, get_used_range,
     narrow_range_to_address, get_range_size, copy_range, paste_range,
-    narrow_range, top_void_row_count, bottom_void_row_count,
-    left_void_column_count, right_void_column_count, data_array,
+    narrow_range_to_used_page_range, top_void_row_count, bottom_void_row_count,
+    left_void_column_count, right_void_column_count, to_data_array,
     ListValidationBuilder, set_validation_list_by_cell, sort_range,
     quote_element, clear_conditional_format, conditional_format_on_formulas,
     get_formula_conditional_entry_values, find_or_create_number_format_style,
@@ -43,7 +43,7 @@ from py4lo_helper import (
     new_doc, NewDocumentUrl, doc_builder, create_uno_service_ctxt,
     create_uno_service, read_options, rtrim_row, read_options_from_sheet_name,
     copy_row_at_index, FontSlant, copy_data_array, undo_context,
-    no_undo_context)
+    no_undo_context, narrow_range_to_data)
 from py4lo_typing import UnoTextRange
 
 
@@ -679,8 +679,138 @@ class HelperRangesTestCase(unittest.TestCase):
             mock.call.executeDispatch(oController, '.uno:Paste', '', 0, [])
         ], oDisp.mock_calls)
 
+
+class NarrowToPageTestCase(unittest.TestCase):
     @mock.patch("py4lo_helper.get_used_range_address")
-    def test_narrow_range(self, gura):
+    def test_narrow_range_to_used_page_range_inside(self, gura):
+        # arrange
+        oSheet = mock.Mock()
+        oRange = mock.Mock(Spreadsheet=oSheet,
+                           RangeAddress=mock.Mock(StartColumn=1, EndColumn=7,
+                                                  StartRow=1, EndRow=5))
+        gura.side_effect = [mock.Mock(StartColumn=0, EndColumn=10,
+                                      StartRow=0, EndRow=50)]
+        ret = object()
+        oSheet.getCellRangeByPosition.side_effect = [ret]
+
+        # act
+        oNarrowedRange = narrow_range_to_used_page_range(oRange)
+
+        # assert
+        self.assertEqual([mock.call.getCellRangeByPosition(1, 1, 7, 5)],
+                         oSheet.mock_calls)
+        self.assertIs(oNarrowedRange, ret)
+
+    @mock.patch("py4lo_helper.get_used_range_address")
+    def test_narrow_range_to_used_page_range_cut_tl(self, gura):
+        # arrange
+        oSheet = mock.Mock()
+        oRange = mock.Mock(Spreadsheet=oSheet,
+                           RangeAddress=mock.Mock(StartColumn=1, EndColumn=17,
+                                                  StartRow=1, EndRow=45))
+        gura.side_effect = [mock.Mock(StartColumn=10, EndColumn=20,
+                                      StartRow=10, EndRow=50)]
+
+        ret = object()
+        oSheet.getCellRangeByPosition.side_effect = [ret]
+
+        # act
+        oNarrowedRange = narrow_range_to_used_page_range(oRange)
+
+        # assert
+        self.assertEqual([mock.call.getCellRangeByPosition(10, 10, 17, 45)],
+                         oSheet.mock_calls)
+        self.assertIs(oNarrowedRange, ret)
+
+    @mock.patch("py4lo_helper.get_used_range_address")
+    def test_narrow_range_to_used_page_range_cut_br(self, gura):
+        # arrange
+        oSheet = mock.Mock()
+        oRange = mock.Mock(Spreadsheet=oSheet,
+                           RangeAddress=mock.Mock(StartColumn=8, EndColumn=17,
+                                                  StartRow=1, EndRow=500))
+        gura.side_effect = [mock.Mock(StartColumn=0, EndColumn=10,
+                                      StartRow=0, EndRow=50)]
+
+        ret = object()
+        oSheet.getCellRangeByPosition.side_effect = [ret]
+
+        # act
+        oNarrowedRange = narrow_range_to_used_page_range(oRange)
+
+        # assert
+        self.assertEqual([mock.call.getCellRangeByPosition(8, 1, 10, 50)],
+                         oSheet.mock_calls)
+        self.assertIs(oNarrowedRange, ret)
+
+    @mock.patch("py4lo_helper.get_used_range_address")
+    def test_narrow_range_to_used_page_range_top(self, gura):
+        # arrange
+        oSheet = mock.Mock()
+        oRange = mock.Mock(Spreadsheet=oSheet,
+                           RangeAddress=mock.Mock(StartColumn=1, EndColumn=7,
+                                                  StartRow=1, EndRow=5))
+        gura.side_effect = [mock.Mock(StartColumn=0, EndColumn=10,
+                                      StartRow=10, EndRow=50)]
+
+        # act
+        oNarrowedRange = narrow_range_to_used_page_range(oRange)
+
+        # assert
+        self.assertIsNone(oNarrowedRange)
+
+    @mock.patch("py4lo_helper.get_used_range_address")
+    def test_narrow_range_to_used_page_range_bottom(self, gura):
+        # arrange
+        oSheet = mock.Mock()
+        oRange = mock.Mock(Spreadsheet=oSheet,
+                           RangeAddress=mock.Mock(StartColumn=1, EndColumn=7,
+                                                  StartRow=101, EndRow=105))
+        gura.side_effect = [mock.Mock(StartColumn=0, EndColumn=10,
+                                      StartRow=10, EndRow=50)]
+
+        # act
+        oNarrowedRange = narrow_range_to_used_page_range(oRange)
+
+        # assert
+        self.assertIsNone(oNarrowedRange)
+
+    @mock.patch("py4lo_helper.get_used_range_address")
+    def test_narrow_range_to_used_page_range_left(self, gura):
+        # arrange
+        oSheet = mock.Mock()
+        oRange = mock.Mock(Spreadsheet=oSheet,
+                           RangeAddress=mock.Mock(StartColumn=1, EndColumn=7,
+                                                  StartRow=1, EndRow=5))
+        gura.side_effect = [mock.Mock(StartColumn=10, EndColumn=20,
+                                      StartRow=0, EndRow=50)]
+
+        # act
+        oNarrowedRange = narrow_range_to_used_page_range(oRange)
+
+        # assert
+        self.assertIsNone(oNarrowedRange)
+
+    @mock.patch("py4lo_helper.get_used_range_address")
+    def test_narrow_range_to_used_page_range_right(self, gura):
+        # arrange
+        oSheet = mock.Mock()
+        oRange = mock.Mock(Spreadsheet=oSheet,
+                           RangeAddress=mock.Mock(StartColumn=100,
+                                                  EndColumn=107,
+                                                  StartRow=1, EndRow=5))
+        gura.side_effect = [mock.Mock(StartColumn=0, EndColumn=10,
+                                      StartRow=0, EndRow=50)]
+
+        # act
+        oNarrowedRange = narrow_range_to_used_page_range(oRange)
+
+        # assert
+        self.assertIsNone(oNarrowedRange)
+
+
+class NarrowToDataTestCase(unittest.TestCase):
+    def test_narrow_empty_data(self):
         # prepare
         data_array = [
             ("", "", "", "", "", "", "",),
@@ -689,52 +819,19 @@ class HelperRangesTestCase(unittest.TestCase):
             ("", "", "", "", "", "", "",),
             ("", "", "", "", "", "", "",),
         ]
-        oSheet = mock.Mock()
-        oRange = mock.Mock(Spreadsheet=oSheet,
-                           RangeAddress=mock.Mock(StartColumn=1, EndColumn=7,
-                                                  StartRow=1, EndRow=5))
-        gura.side_effect = [mock.Mock(StartColumn=0, EndColumn=60,
-                                      StartRow=0, EndRow=50)]
-        oNRange = mock.Mock(DataArray=data_array)
-        oSheet.getCellRangeByPosition.side_effect = [oNRange]
+        oRange = mock.Mock(
+            DataArray=data_array,
+            RangeAddress=mock.Mock(StartColumn=0, StartRow=0, EndColumn=6,
+                                   EndRow=4)
+        )
 
         # play
-        nr = narrow_range(oRange, True)
+        oNarrowedRange = narrow_range_to_data(oRange)
 
         # verify
-        self.assertIsNone(nr)
-        self.assertEqual([mock.call.getCellRangeByPosition(1, 1, 7, 5)],
-                         oSheet.mock_calls)
+        self.assertIsNone(oNarrowedRange)
 
-    @mock.patch("py4lo_helper.get_used_range_address")
-    def test_narrow_range_dont_narrow_data(self, gura):
-        # prepare
-        data_array = [
-            ("", "", "", "", "", "", "",),
-            ("", "", "", "", "", "", "",),
-            ("", "", "", "", "", "", "",),
-            ("", "", "", "", "", "", "",),
-            ("", "", "", "", "", "", "",),
-        ]
-        oSheet = mock.Mock()
-        oRange = mock.Mock(Spreadsheet=oSheet,
-                           RangeAddress=mock.Mock(StartColumn=1, EndColumn=7,
-                                                  StartRow=1, EndRow=5))
-        gura.side_effect = [mock.Mock(StartColumn=0, EndColumn=60,
-                                      StartRow=0, EndRow=50)]
-        oNRange = mock.Mock(DataArray=data_array)
-        oSheet.getCellRangeByPosition.side_effect = [oNRange]
-
-        # play
-        nr = narrow_range(oRange)
-
-        # verify
-        self.assertEqual(oNRange, nr)
-        self.assertEqual([mock.call.getCellRangeByPosition(1, 1, 7, 5)],
-                         oSheet.mock_calls)
-
-    @mock.patch("py4lo_helper.get_used_range_address")
-    def test_narrow_range2(self, gura):
+    def test_narrow_range_not_empty(self):
         # prepare
         data_array = [
             ("", "", "", "", "", "", "",),
@@ -743,25 +840,96 @@ class HelperRangesTestCase(unittest.TestCase):
             ("", "", "", "z", "", "t", "",),
             ("", "", "", "", "", "", "",),
         ]
-        oSheet = mock.Mock()
-        oRange = mock.Mock(Spreadsheet=oSheet,
+        oRange = mock.Mock(DataArray=data_array,
                            RangeAddress=mock.Mock(StartColumn=1, EndColumn=7,
                                                   StartRow=1, EndRow=5))
-        gura.side_effect = [mock.Mock(StartColumn=0, EndColumn=60,
-                                      StartRow=0, EndRow=50)]
-        oNRange = mock.Mock(DataArray=data_array)
-        oNRange2 = mock.Mock()
-        oSheet.getCellRangeByPosition.side_effect = [oNRange, oNRange2]
 
-        # play
-        nr = narrow_range(oRange, True)
+        ret = object()
+        oRange.Spreadsheet.getCellRangeByPosition.side_effect = [ret]
 
-        # verify
-        self.assertEqual(oNRange2, nr)
-        self.assertEqual([mock.call.getCellRangeByPosition(1, 1, 7, 5),
-                          mock.call.getCellRangeByPosition(2, 2, 6, 4)],
-                         oSheet.mock_calls)
+        # act
+        oNarrowedRange = narrow_range_to_data(oRange)
 
+        # assert
+        self.assertEqual(oNarrowedRange, ret)
+        self.assertEqual([
+            mock.call.getCellRangeByPosition(2, 2, 6, 4)
+        ], oRange.Spreadsheet.mock_calls)
+
+    def test_narrow_range_not_empty_top_right(self):
+        # prepare
+        data_array = [
+            ("", "", "", "", "", "", "",),
+            ("", "x", "", "", "", "", "",),
+            ("", "", "y", "", "", "", "",),
+            ("", "", "", "z", "", "t", "",),
+            ("", "", "", "", "", "", "",),
+        ]
+        oRange = mock.Mock(DataArray=data_array,
+                           RangeAddress=mock.Mock(StartColumn=1, EndColumn=7,
+                                                  StartRow=1, EndRow=5))
+
+        ret = object()
+        oRange.Spreadsheet.getCellRangeByPosition.side_effect = [ret]
+
+        # act
+        oNarrowedRange = narrow_range_to_data(oRange, clean_bottom=False, clean_left=False)
+
+        # assert
+        self.assertEqual(oNarrowedRange, ret)
+        self.assertEqual([
+            mock.call.getCellRangeByPosition(1, 2, 6, 5)
+        ], oRange.Spreadsheet.mock_calls)
+
+    def test_narrow_range_not_empty_bottom_right(self):
+        # prepare
+        data_array = [
+            ("", "", "", "", "", "", "",),
+            ("", "x", "", "", "", "", "",),
+            ("", "", "y", "", "", "", "",),
+            ("", "", "", "z", "", "t", "",),
+            ("", "", "", "", "", "", "",),
+        ]
+        oRange = mock.Mock(DataArray=data_array,
+                           RangeAddress=mock.Mock(StartColumn=1, EndColumn=7,
+                                                  StartRow=1, EndRow=5))
+
+        ret = object()
+        oRange.Spreadsheet.getCellRangeByPosition.side_effect = [ret]
+
+        # act
+        oNarrowedRange = narrow_range_to_data(oRange, clean_top=False, clean_left=False)
+
+        # assert
+        self.assertEqual(oNarrowedRange, ret)
+        self.assertEqual([
+            mock.call.getCellRangeByPosition(1, 1, 6, 4)
+        ], oRange.Spreadsheet.mock_calls)
+
+    def test_narrow_range_not_empty_remove_header(self):
+        # prepare
+        data_array = [
+            ("A", "B", "C", "D", "E", "F", "",),
+            ("", "x", "", "", "", "", "",),
+            ("", "", "y", "", "", "", "",),
+            ("", "", "", "z", "", "t", "",),
+            ("", "", "", "", "", "", "",),
+        ]
+        oRange = mock.Mock(DataArray=data_array,
+                           RangeAddress=mock.Mock(StartColumn=1, EndColumn=7,
+                                                  StartRow=1, EndRow=5))
+
+        ret = object()
+        oRange.Spreadsheet.getCellRangeByPosition.side_effect = [ret]
+
+        # act
+        oNarrowedRange = narrow_range_to_data(oRange, remove_header_lines=1)
+
+        # assert
+        self.assertEqual(oNarrowedRange, ret)
+        self.assertEqual([
+            mock.call.getCellRangeByPosition(1, 2, 6, 4)
+        ], oRange.Spreadsheet.mock_calls)
 
 ##########################################################################
 # DATA ARRAY
@@ -846,7 +1014,7 @@ class HelperDataArrayTestCase(unittest.TestCase):
         oRange = mock.Mock(DataArray=da)
         gura.side_effect = [oRange]
         # play
-        act_da = data_array(oSheet)
+        act_da = to_data_array(oSheet)
 
         # verify
         self.assertEqual(da, act_da)
@@ -859,7 +1027,7 @@ class HelperDataArrayTestCase(unittest.TestCase):
         oRange = mock.Mock(DataArray=da)
         gura.side_effect = [oRange]
         # play
-        act_da = data_array(oSheet)
+        act_da = to_data_array(oSheet)
 
         # verify
         self.assertEqual(da, act_da)
@@ -2216,7 +2384,8 @@ class CopyDataArrayTestCase(unittest.TestCase):
         acc = []
 
         copy_data_array(
-            oCell, [["A", "B", "C"], [1, 2, "foo"], [4, 5, "bar"]], chunk_size=1,
+            oCell, [["A", "B", "C"], [1, 2, "foo"], [4, 5, "bar"]],
+            chunk_size=1,
             callback=acc.append)
 
         # assert
@@ -2360,7 +2529,6 @@ class SheetsHelperTestCase(unittest.TestCase):
             mock.call.getByIndex(3)
         ], oSheets.mock_calls)
 
-
     def test_append_sheet_err(self):
         oSheets = mock.Mock(Count=3)
         oSheets.hasByName.return_value = True
@@ -2410,7 +2578,7 @@ class SheetsHelperTestCase(unittest.TestCase):
         oSheet = mock.Mock(Name="foo")
         oSheet.RangeAddress.Sheet = 2
 
-        oSheets = mock.Mock(Count = 5)
+        oSheets = mock.Mock(Count=5)
         oSheets.hasByName.side_effect = [False]
         oSheets.getByIndex.side_effect = [oSheet]
 
@@ -2424,6 +2592,7 @@ class SheetsHelperTestCase(unittest.TestCase):
             mock.call.copyByName('foo', 'foo-suffix', 3),
             mock.call.getByIndex(3)
         ], oSheets.mock_calls)
+
 
 class UnoTestCase(unittest.TestCase):
     def test_undo_context_none(self):

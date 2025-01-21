@@ -816,14 +816,12 @@ def paste_range(oDestSheet: UnoSheet, oDestAddress: UnoCellAddress,
     oDestController.select(oRanges)
 
 
-def narrow_range(oRange: UnoRange, narrow_data: bool = False
-                 ) -> Optional[UnoRange]:
+def narrow_range_to_used_page_range(
+        oRange: UnoRange) -> Optional[UnoRange]:
     """
-    Narrow the range to the used range ("used" here means: "having data").
+    Narrow the range to the used range of the page.
 
     @param oRange: the range, usually a row or a column
-    @param narrow_data: if True, remove top/bottom blank lines and left/right
-     blank colmuns
     @return the narrowed range or None if there is nothing left
     """
     oSheet = oRange.Spreadsheet
@@ -839,29 +837,63 @@ def narrow_range(oRange: UnoRange, narrow_data: bool = False
     if start_row > end_row:
         return None
 
-    oNarrowedRange = oSheet.getCellRangeByPosition(
+    return oSheet.getCellRangeByPosition(
         start_column, start_row, end_column, end_row)
 
-    if narrow_data:
-        data_array = oNarrowedRange.DataArray
-        count = top_void_row_count(data_array)
-        if count == len(data_array):
-            return None
+def narrow_range_to_data(
+        oRange: UnoRange,
+        clean_top: bool = True, clean_bottom: bool = True,
+        clean_left: bool = True, clean_right: bool = True,
+        remove_header_lines: int = -1,
+) -> Optional[UnoRange]:
+    """
+    Remove void rows or columns from a range.
+    If remove_header_lines is > 0, then the top is never cleaned.
 
-        start_row += count
+    @param oRange: the range
+    @param clean_top: clean the top part
+    @param clean_bottom: clean the bottom part
+    @param clean_left: clean the left part
+    @param clean_right: clean the right part
+    @param remove_header_lines: the number of header lines to remove
+           (if <= 0, don't remove any line)
+    @return: the range or None if there is nothing left
+    """
+    data_array = oRange.DataArray
+    oRangeAddress = oRange.RangeAddress
+
+    start_row = oRangeAddress.StartRow
+    if remove_header_lines > 0:
+        start_row += remove_header_lines
+    elif clean_top:
+        start_row += top_void_row_count(data_array)
+
+    end_row = oRangeAddress.EndRow
+    if clean_bottom:
         end_row -= bottom_void_row_count(data_array)
-        start_column += left_void_column_count(data_array)
-        end_column -= right_void_column_count(data_array)
-        oNarrowedRange = oSheet.getCellRangeByPosition(
-            start_column, start_row, end_column, end_row)
 
-    return oNarrowedRange
+    if start_row > end_row:
+        return None
+
+    start_column = oRangeAddress.StartColumn
+    if clean_left:
+        start_column += left_void_column_count(data_array)
+
+    end_column = oRangeAddress.EndColumn
+    if clean_right:
+        end_column -= right_void_column_count(data_array)
+
+    if start_column > end_column:
+        return None
+
+    return oRange.Spreadsheet.getCellRangeByPosition(
+        start_column, start_row, end_column, end_row)
 
 
 ##############################################################################
 # DATA ARRAY
 ##############################################################################
-def data_array(oSheet: UnoSheet) -> DATA_ARRAY:
+def to_data_array(oSheet: UnoSheet) -> DATA_ARRAY:
     """
     Return the used data array from a sheet
     @param oSheet: the sheet
