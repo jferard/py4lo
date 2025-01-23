@@ -840,11 +840,45 @@ def narrow_range_to_used_page_range(
     return oSheet.getCellRangeByPosition(
         start_column, start_row, end_column, end_row)
 
+
+def crop_range(
+        oRange: UnoRange,
+        top: int = 0, bottom: int = 0,
+        left: int = 0, right: int = 0
+) -> Optional[UnoRange]:
+    """
+    Crop a range by a number of rows or columns
+
+    @param oRange: the range
+    @param top: the count of top rows to remove
+    @param bottom: the count of bottom rows to remove
+    @param left: the count of left columns to remove
+    @param right: the count of right columns to remove
+    @return: the cropped range or None if there is nothing left.
+    """
+    if top == bottom == left == right == 0:
+        return oRange
+    oRangeAddress = oRange.RangeAddress
+    start_row = oRangeAddress.StartRow + top
+    end_row = oRangeAddress.EndRow - bottom
+    if start_row > end_row:
+        return None
+
+    start_column = oRangeAddress.StartColumn + left
+    end_column = oRangeAddress.EndColumn - right
+
+    if start_column > end_column:
+        return None
+
+    return oRange.Spreadsheet.getCellRangeByPosition(
+        start_column, start_row, end_column, end_row
+    )
+
+
 def narrow_range_to_data(
         oRange: UnoRange,
         clean_top: bool = True, clean_bottom: bool = True,
         clean_left: bool = True, clean_right: bool = True,
-        remove_header_lines: int = -1,
 ) -> Optional[UnoRange]:
     """
     Remove void rows or columns from a range.
@@ -855,39 +889,14 @@ def narrow_range_to_data(
     @param clean_bottom: clean the bottom part
     @param clean_left: clean the left part
     @param clean_right: clean the right part
-    @param remove_header_lines: the number of header lines to remove
-           (if <= 0, don't remove any line)
     @return: the range or None if there is nothing left
     """
     data_array = oRange.DataArray
-    oRangeAddress = oRange.RangeAddress
-
-    start_row = oRangeAddress.StartRow
-    if remove_header_lines > 0:
-        start_row += remove_header_lines
-    elif clean_top:
-        start_row += top_void_row_count(data_array)
-
-    end_row = oRangeAddress.EndRow
-    if clean_bottom:
-        end_row -= bottom_void_row_count(data_array)
-
-    if start_row > end_row:
-        return None
-
-    start_column = oRangeAddress.StartColumn
-    if clean_left:
-        start_column += left_void_column_count(data_array)
-
-    end_column = oRangeAddress.EndColumn
-    if clean_right:
-        end_column -= right_void_column_count(data_array)
-
-    if start_column > end_column:
-        return None
-
-    return oRange.Spreadsheet.getCellRangeByPosition(
-        start_column, start_row, end_column, end_row)
+    top = top_void_row_count(data_array) if clean_top else 0
+    bottom = bottom_void_row_count(data_array) if clean_bottom else 0
+    left = left_void_column_count(data_array) if clean_left else 0
+    right = right_void_column_count(data_array) if clean_right else 0
+    return crop_range(oRange, top, bottom, left, right)
 
 
 ##############################################################################
@@ -1538,7 +1547,8 @@ open_in_calc = open_document
 # Create a document
 ####
 class SheetsHelper:
-    _TRANS = str.maketrans({**dict.fromkeys("[]*?:/\\'", "_"), **{chr(i):"" for i in range(32)}})
+    _TRANS = str.maketrans(
+        {**dict.fromkeys("[]*?:/\\'", "_"), **{chr(i): "" for i in range(32)}})
 
     @staticmethod
     def create(oDoc: UnoSpreadsheetDocument) -> "SheetsHelper":

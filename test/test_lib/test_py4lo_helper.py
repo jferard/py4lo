@@ -43,7 +43,7 @@ from py4lo_helper import (
     new_doc, NewDocumentUrl, doc_builder, create_uno_service_ctxt,
     create_uno_service, read_options, rtrim_row, read_options_from_sheet_name,
     copy_row_at_index, FontSlant, copy_data_array, undo_context,
-    no_undo_context, narrow_range_to_data)
+    no_undo_context, narrow_range_to_data, crop_range)
 from py4lo_typing import UnoTextRange
 
 
@@ -873,7 +873,8 @@ class NarrowToDataTestCase(unittest.TestCase):
         oRange.Spreadsheet.getCellRangeByPosition.side_effect = [ret]
 
         # act
-        oNarrowedRange = narrow_range_to_data(oRange, clean_bottom=False, clean_left=False)
+        oNarrowedRange = narrow_range_to_data(oRange, clean_bottom=False,
+                                              clean_left=False)
 
         # assert
         self.assertEqual(oNarrowedRange, ret)
@@ -898,7 +899,8 @@ class NarrowToDataTestCase(unittest.TestCase):
         oRange.Spreadsheet.getCellRangeByPosition.side_effect = [ret]
 
         # act
-        oNarrowedRange = narrow_range_to_data(oRange, clean_top=False, clean_left=False)
+        oNarrowedRange = narrow_range_to_data(oRange, clean_top=False,
+                                              clean_left=False)
 
         # assert
         self.assertEqual(oNarrowedRange, ret)
@@ -915,21 +917,29 @@ class NarrowToDataTestCase(unittest.TestCase):
             ("", "", "", "z", "", "t", "",),
             ("", "", "", "", "", "", "",),
         ]
-        oRange = mock.Mock(DataArray=data_array,
-                           RangeAddress=mock.Mock(StartColumn=1, EndColumn=7,
-                                                  StartRow=1, EndRow=5))
+        oSheet = mock.Mock()
+        oRange = mock.Mock(
+            Spreadsheet=oSheet, DataArray=data_array,
+            RangeAddress=mock.Mock(
+                StartColumn=1, StartRow=1, EndColumn=7, EndRow=5))
 
-        ret = object()
-        oRange.Spreadsheet.getCellRangeByPosition.side_effect = [ret]
+        oNRange = mock.Mock(
+            Spreadsheet=oSheet,
+            RangeAddress=mock.Mock(
+            StartColumn=1, StartRow=1, EndColumn=6, EndRow=4))
+        ret = object
+        oSheet.getCellRangeByPosition.side_effect = [oNRange, ret]
 
         # act
-        oNarrowedRange = narrow_range_to_data(oRange, remove_header_lines=1)
+        oNarrowedRange = crop_range(narrow_range_to_data(oRange), top=1)
 
         # assert
         self.assertEqual(oNarrowedRange, ret)
         self.assertEqual([
-            mock.call.getCellRangeByPosition(1, 2, 6, 4)
+            mock.call.getCellRangeByPosition(1, 1, 6, 4),
+            mock.call.getCellRangeByPosition(1, 2, 6, 4),
         ], oRange.Spreadsheet.mock_calls)
+
 
 ##########################################################################
 # DATA ARRAY
