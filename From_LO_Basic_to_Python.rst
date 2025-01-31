@@ -626,6 +626,85 @@ Use this method if you want to update a dialog, an infobar, etc.
 Beware: if there is an error in a Python thread, LibreOffice won't
 show any error message.
 
+Event listeners
+~~~~~~~~~~~~~~~
+In Basic, you have to use a trick to create event listeners: the function
+``CreateUnoListener`` takes a ``prefix`` parameter that is used to declare
+the methods of the listener.
+
+In Python, you just need to subclass the right ``XEventListener`` sub interface.
+See an example with the ``XActionListener`` interface:
+
+.. code-block:: python
+
+    class MyActionListener(unohelper.Base, XActionListener):
+        def actionPerformed(self, e):
+            ... do someting
+
+And somewhere else:
+
+.. code-block:: python
+
+    oButton = oDialog.getControl("button")
+    obutton.addActionListener(MyActionListener())
+
+The ``unohelper.Base`` class provides a default implementation for
+``com.sun.star.lang.XTypeProvider``, and the subclass `MyActionListener`
+has to provide the ``actionPerformed`` method implementation.
+
+Communication with the main thread
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+If you want the main thread to be informed of something, just use an observer
+in `MyActionListener`. Example:
+
+.. code-block:: python
+
+    class MyActionListener(unohelper.Base, XActionListener):
+        def __init__(self, observer):
+            self._observer = observer
+
+        def actionPerformed(self, e):
+            ... do someting
+            observer.notify("hey, I'm the event listener")
+
+
+Exceptions and tracing
+^^^^^^^^^^^^^^^^^^^^^^
+If an unexpected exception is raised inside the event listener method
+(`actionPerformed` here), then the event thread ends abruptly and no one will
+know about the exception: neither the event thread nor the main thread.
+Since, ignoring an exception is not usually a good pratice (
+although that may be the right choice in some cases), you will end adding
+boilerplate code to each event listener method:
+
+.. code-block:: python
+
+    class ActionListener(unohelper.Base, XActionListener):
+        def actionPerformed(self, e):
+            try:
+                ... do someting
+            except:
+                logging.getLogger(__name__).exception("Exception")
+
+You might also want to trace when the method is called. Py4LO provides
+a useful decorator to make both:
+
+.. code-block:: python
+
+    class ActionListener(unohelper.Base, XActionListener):
+        @trace_event(__name__)
+        def actionPerformed(self, e):
+            ... do someting
+
+If you don't want to trace the enter/exit events, then use:
+
+.. code-block:: python
+
+    class TextListener(unohelper.Base, XTextListener):
+        @trace_event(__name__, enter_exit=False)
+        def textChanged(self, e):
+            ... do someting
+
 Application tier
 ----------------
 The application tier contains the logic of the program. It should be

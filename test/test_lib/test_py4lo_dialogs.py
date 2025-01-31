@@ -15,17 +15,17 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import logging
 import time
 import unittest
 from unittest import mock
 
 import py4lo_dialogs
 from py4lo_dialogs import (MessageBoxType, ExecutableDialogResults)
-from py4lo_dialogs import (message_box, place_widget,
-                           get_text_size, file_dialog, Size, FileFilter,
-                           folder_dialog, ProgressExecutorBuilder,
-                           StandardProgressHandler, ConsoleExecutorBuilder,
-                           StandardConsoleHandler)
+from py4lo_dialogs import (
+    message_box, place_widget, get_text_size, file_dialog, Size, FileFilter,
+    folder_dialog, ProgressExecutorBuilder, StandardProgressHandler,
+    ConsoleExecutorBuilder, StandardConsoleHandler, trace_event)
 
 
 class Py4LODialogsTestCase(unittest.TestCase):
@@ -80,8 +80,8 @@ class Py4LODialogsTestCase(unittest.TestCase):
         # verify
         self.assertEqual(toolkit.mock_calls, [
             mock.call.createMessageBox(get_provider().parent_win,
-                                         MessageBoxType.MESSAGEBOX, 1,
-                                         'title', 'text'),
+                                       MessageBoxType.MESSAGEBOX, 1,
+                                       'title', 'text'),
             mock.call.createMessageBox().execute()
         ])
 
@@ -100,8 +100,8 @@ class Py4LODialogsTestCase(unittest.TestCase):
         # verify
         self.assertEqual(toolkit.mock_calls, [
             mock.call.createMessageBox(pw,
-                                         MessageBoxType.MESSAGEBOX, 1,
-                                         'title', 'text'),
+                                       MessageBoxType.MESSAGEBOX, 1,
+                                       'title', 'text'),
             mock.call.createMessageBox().execute()
         ])
 
@@ -281,8 +281,10 @@ class ProgressExecutorTestCase(unittest.TestCase):
             mock.call('com.sun.star.awt.Toolkit')
         ])
         self.assertEqual(oDialogModel.mock_calls, [
-            mock.call.createInstance('com.sun.star.awt.UnoControlProgressBarModel'),
-            mock.call.createInstance('com.sun.star.awt.UnoControlFixedTextModel'),
+            mock.call.createInstance(
+                'com.sun.star.awt.UnoControlProgressBarModel'),
+            mock.call.createInstance(
+                'com.sun.star.awt.UnoControlFixedTextModel'),
             mock.call.insertByName('bar', oBarModel),
             mock.call.insertByName('text', oTextModel),
         ])
@@ -334,8 +336,10 @@ class ProgressExecutorTestCase(unittest.TestCase):
             mock.call('com.sun.star.awt.Toolkit')
         ])
         self.assertEqual(oDialogModel.mock_calls, [
-            mock.call.createInstance('com.sun.star.awt.UnoControlProgressBarModel'),
-            mock.call.createInstance('com.sun.star.awt.UnoControlFixedTextModel'),
+            mock.call.createInstance(
+                'com.sun.star.awt.UnoControlProgressBarModel'),
+            mock.call.createInstance(
+                'com.sun.star.awt.UnoControlFixedTextModel'),
             mock.call.insertByName('bar', oBarModel),
             mock.call.insertByName('text', oTextModel),
         ])
@@ -399,6 +403,53 @@ class ConsoleExecutorTestCase(unittest.TestCase):
         self.assertTrue(oTextModel.ReadOnly)
         self.assertTrue(oTextModel.MultiLine)
         self.assertTrue(oTextModel.VScroll)
+
+
+class TraceEventTestCase(unittest.TestCase):
+    def test_enter_exit(self):
+        with self.assertLogs("foo", level=logging.DEBUG) as log:
+            self.traced_one()
+
+        self.assertEqual([
+            'DEBUG:foo:Enter TraceEventTestCase.traced_one',
+            'DEBUG:foo:Exit TraceEventTestCase.traced_one'
+        ], log.output)
+
+    def test_enter_raise_exit(self):
+        with self.assertLogs("foo", level=logging.DEBUG) as log:
+            self.traced_two()
+
+        exc_lines = log.output[1].split("\n")
+
+        self.assertEqual(3, len(log.output))
+        self.assertEqual('DEBUG:foo:Enter TraceEventTestCase.traced_two',
+                         log.output[0])
+        self.assertEqual('ERROR:foo:Exception', exc_lines[0])
+        self.assertEqual('Exception: bar', exc_lines[-1])
+        self.assertEqual('DEBUG:foo:Exit TraceEventTestCase.traced_two',
+                         log.output[2])
+
+    def test_raise(self):
+        with self.assertLogs("foo", level=logging.DEBUG) as log:
+            self.traced_three()
+
+        exc_lines = log.output[0].split("\n")
+
+        self.assertEqual(1, len(log.output))
+        self.assertEqual('ERROR:foo:Exception', exc_lines[0])
+        self.assertEqual('Exception: bar', exc_lines[-1])
+
+    @trace_event("foo")
+    def traced_one(self):
+        pass
+
+    @trace_event("foo")
+    def traced_two(self):
+        raise Exception("bar")
+
+    @trace_event("foo", enter_exit=False)
+    def traced_three(self):
+        raise Exception("bar")
 
 
 if __name__ == '__main__':

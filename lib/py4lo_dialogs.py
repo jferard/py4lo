@@ -55,6 +55,7 @@ oDialog.dispose()
 To load an XML dialog (like in Basic), see: `_ObjectProvider.get_dialog`
 from py4lo_helper.
 """
+import functools
 import logging
 # mypy: disable-error-code="import-untyped,import-not-found"
 
@@ -1259,3 +1260,57 @@ class ConsoleExecutorBuilder:
         """See ConsoleDialogBuilder.rectangle"""
         self._dialog_builder.console_rectangle(x, y, w, h)
         return self
+
+
+def trace_event(logname: str, enter_exit: bool=True
+                ) -> Callable[[Callable], Callable]:
+    """
+    A decorator for methods of LibreOffice `XEventListener`s
+    (see https://api.libreoffice.org/docs/idl/ref/interfacecom_1_1sun_1_1star_1_1lang_1_1XEventListener.html).
+
+    ```
+    class ActionListener(unohelper.Base, XActionListener):
+        ...
+        @trace_event(__name__)
+        def actionPerformed(self, e):
+            ... do something
+    ```
+
+    If "do something" fails, you'll have a trace in the log file with the
+    call stack. Set the `enter_exit` parameter to False when using the
+    decorator on event methods that might be called frequently
+    (eg. `XTextListener.textChanged`) to avoid logging overhead.
+
+    @param logname: the name of the log
+    @param enter_exit: if `True`, then log when the control flow enters and
+                        exits the event method. Default is `False`
+    """
+    logger = logging.getLogger(logname)
+
+    if enter_exit:
+        def _trace_event(func: Callable) -> Callable:
+            @functools.wraps(func)
+            def decorated_func(*args, **kwargs):
+                _self = args[0]
+                name = _self.__class__.__name__
+                logger.debug("Enter %s.%s", name, func.__name__)
+                try:
+                    func(*args, **kwargs)
+                except:
+                    logger.exception("Exception")
+                finally:
+                    logger.debug("Exit %s.%s", name, func.__name__)
+
+            return decorated_func
+    else:
+        def _trace_event(func: Callable) -> Callable:
+            @functools.wraps(func)
+            def decorated_func(*args, **kwargs):
+                try:
+                    func(*args, **kwargs)
+                except:
+                    logger.exception("Exception")
+
+            return decorated_func
+
+    return _trace_event
