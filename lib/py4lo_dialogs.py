@@ -1296,7 +1296,7 @@ def trace_event(logname: str, enter_exit: bool=True
                 logger.debug("Enter %s.%s", name, func.__name__)
                 try:
                     func(*args, **kwargs)
-                except:
+                except BaseException:
                     logger.exception("Exception")
                 finally:
                     logger.debug("Exit %s.%s", name, func.__name__)
@@ -1308,7 +1308,7 @@ def trace_event(logname: str, enter_exit: bool=True
             def decorated_func(*args, **kwargs):
                 try:
                     func(*args, **kwargs)
-                except:
+                except BaseException:
                     logger.exception("Exception")
 
             return decorated_func
