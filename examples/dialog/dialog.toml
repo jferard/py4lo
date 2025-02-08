@@ -1,0 +1,5 @@
+lo_exe = "soffice"
+python_exe = "python3"
+
+[src]
+source_ods_file = "{project}/dialog.ods"

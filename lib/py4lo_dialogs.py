@@ -73,6 +73,8 @@ try:
     # noinspection PyUnresolvedReferences
     import uno
 
+    # noinspection PyUnresolvedReferences
+    import unohelper
 
     class MessageBoxType:
         # noinspection PyUnresolvedReferences
@@ -113,6 +115,10 @@ try:
         # noinspection PyUnresolvedReferences
         from com.sun.star.awt.PushButtonType import (OK, CANCEL)
 
+
+    # noinspection PyUnresolvedReferences
+    from com.sun.star.lang import XEventListener
+
 except ImportError:
     from _mock_constants import (  # type: ignore[assignment]
         ExecutableDialogResults,  # pyright: ignore[reportGeneralTypeIssues]
@@ -123,6 +129,8 @@ except ImportError:
     )
     from _mock_objects import (  # type: ignore[assignment]
         uno,  # pyright: ignore[reportGeneralTypeIssues]
+        unohelper,  # pyright: ignore[reportGeneralTypeIssues]
+        XEventListener,  # pyright: ignore[reportGeneralTypeIssues]
     )
 
 
@@ -1314,3 +1322,10 @@ def trace_event(logname: str, enter_exit: bool=True
             return decorated_func
 
     return _trace_event
+
+class EventListener(unohelper.Base, XEventListener):
+    """
+    A base class for all event listeners.
+    """
+    def disposing(self, _e):
+        pass

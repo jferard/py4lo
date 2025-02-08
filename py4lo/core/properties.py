@@ -120,7 +120,7 @@ class PropertiesProviderFactory:
         else:
             suffix = dest["suffix"]
             if source_ods_file is None:
-                dest_ods_file = Path("new-project.ods")
+                dest_ods_file = Path("dialog.ods")
             else:
                 name = (source_ods_file.stem + "-"
                         + suffix + source_ods_file.suffix)

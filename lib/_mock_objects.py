@@ -64,6 +64,10 @@ class unohelper:
 
 # Listeners
 
+class XEventListener:
+    pass
+
+
 class XActionListener:
     pass
 
