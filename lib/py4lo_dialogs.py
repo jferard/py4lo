@@ -55,17 +55,18 @@ oDialog.dispose()
 To load an XML dialog (like in Basic), see: `_ObjectProvider.get_dialog`
 from py4lo_helper.
 """
+# mypy: disable-error-code="import-untyped,import-not-found"
+from collections import namedtuple
+import datetime as dt
+from enum import Enum
 import functools
 import logging
-# mypy: disable-error-code="import-untyped,import-not-found"
-
-from collections import namedtuple
-from enum import Enum
 from threading import Thread
 from typing import Any, Callable, Optional, List, Union, NamedTuple, cast
 
 from py4lo_helper import (
-    get_provider, create_uno_service, create_uno_struct)
+    get_provider, create_uno_service, create_uno_struct, to_uno_date,
+    from_uno_date)
 from py4lo_typing import (
     UnoControlModel, UnoControl, StrPath, lazy, UnoService)
 
@@ -75,6 +76,7 @@ try:
 
     # noinspection PyUnresolvedReferences
     import unohelper
+
 
     class MessageBoxType:
         # noinspection PyUnresolvedReferences
@@ -199,6 +201,7 @@ class Control(str, Enum):
     TimeField = "com.sun.star.awt.UnoControlTimeField"
     ColumnDescriptor = "com.sun.star.sdb.ColumnDescriptorControl"
 
+
 _oToolkit = lazy(UnoService)
 
 
@@ -210,6 +213,7 @@ def get_toolkit() -> UnoService:
     if _oToolkit is None:
         _oToolkit = create_uno_service("com.sun.star.awt.Toolkit")
     return _oToolkit
+
 
 ###
 # Common functions
@@ -276,7 +280,7 @@ def message_box(msg_title: str, msg_text: str,
     if parent_win is None:
         parent_win = get_provider().parent_win
     mb = oToolkit.createMessageBox(parent_win, msg_type, msg_buttons, msg_title,
-                                  msg_text)
+                                   msg_text)
     return mb.execute()
 
 
@@ -1100,6 +1104,7 @@ class ConsoleExecutor:
     x = executor.response
     ```
     """
+
     def __init__(self, oDialog: UnoControl, autoclose: bool,
                  console_handler: VoidConsoleHandler):
         """
@@ -1211,7 +1216,6 @@ class ConsoleDialogBuilder:
         return self
 
 
-
 class ConsoleExecutorBuilder:
     """
     A ConsoleExecutorBuilder
@@ -1234,7 +1238,8 @@ class ConsoleExecutorBuilder:
         """
         oDialog = self._dialog_builder.build()
         if self._progress_handler is None:
-            progress_handler = StandardConsoleHandler(oDialog.getControl("text"))
+            progress_handler = StandardConsoleHandler(
+                oDialog.getControl("text"))
         else:
             progress_handler = self._progress_handler
 
@@ -1270,7 +1275,7 @@ class ConsoleExecutorBuilder:
         return self
 
 
-def trace_event(logname: str, enter_exit: bool=True
+def trace_event(logname: str, enter_exit: bool = True
                 ) -> Callable[[Callable], Callable]:
     """
     A decorator for methods of LibreOffice `XEventListener`s
@@ -1323,9 +1328,51 @@ def trace_event(logname: str, enter_exit: bool=True
 
     return _trace_event
 
+
 class EventListener(unohelper.Base, XEventListener):
     """
     A base class for all event listeners.
     """
+
     def disposing(self, _e):
         pass
+
+
+def set_uno_control_date(oControl: UnoControl, date: Optional[dt.date]):
+    """
+    Set a date into a UnoControlDateField
+    :param oControl: the UnoControlDateField
+    :param date: the date or None
+    """
+    if date is None:
+        oControl.setEmpty()
+    else:
+        oControl.Date = to_uno_date(date)
+
+
+def get_uno_control_date(oControl: UnoControl) -> Optional[dt.date]:
+    """
+    :param oControl: the UnoControlDateField
+    :return: the date or None
+    """
+    if oControl.isEmpty():
+        return None
+    else:
+        return from_uno_date(oControl.Date)
+
+
+def set_uno_control_bool(oControl: UnoControl, value: bool):
+    """
+    Set a value into a UnoControlRadio/CheckField
+    :param oControl: the UnoControlRadio/CheckField
+    :param value: the value
+    """
+    oControl.State = 1 if value else 0
+
+
+def get_uno_control_bool(oControl: UnoControl) -> bool:
+    """
+    :param oControl: the UnoControlRadio/CheckField
+    :return: the value
+    """
+    return oControl.State == 1

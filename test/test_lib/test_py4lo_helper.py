@@ -28,10 +28,10 @@ from py4lo_helper import (
     BorderLineStyle, ValidationType, ConditionOperator,
     FrameSearchFlag, ScriptFrameworkErrorException, UnoRuntimeException,
     to_iter, to_enumerate, to_dict, parent_doc, get_cell_type, get_named_cell,
-    get_named_cells, get_main_cell,
-    init, _ObjectProvider, _Inspector, PropertyState, create_uno_struct,
-    make_pv, make_full_pv, make_pvs, update_pvs, make_locale, make_border,
-    make_sort_field, get_last_used_row, get_used_range_address, get_used_range,
+    get_named_cells, get_main_cell, init, _ObjectProvider, _Inspector,
+    PropertyState, create_uno_struct, make_pv, make_full_pv, make_pvs,
+    update_pvs, make_locale, make_border, make_sort_field, to_uno_date,
+    from_uno_date, get_last_used_row, get_used_range_address, get_used_range,
     narrow_range_to_address, get_range_size, copy_range, paste_range,
     narrow_range_to_used_page_range, top_void_row_count, bottom_void_row_count,
     left_void_column_count, right_void_column_count, to_data_array,
@@ -458,6 +458,30 @@ class HelperStructTestCase(unittest.TestCase):
         # verify
         self.assertEqual(1, struct.Field)
         self.assertFalse(struct.IsAscending)
+
+    @mock.patch("py4lo_helper.uno")
+    def test_to_uno_date(self, uno):
+        # arrange
+        struct = mock.Mock()
+        uno.createUnoStruct.side_effect = [struct]
+
+        # act
+        struct = to_uno_date(dt.date(2025, 5, 1))
+
+        # assert
+        self.assertEqual(1, struct.Day)
+        self.assertEqual(5, struct.Month)
+        self.assertEqual(2025, struct.Year)
+
+    def test_from_uno_date(self):
+        # arrange
+        struct = mock.Mock(Day=17, Month=9, Year=2014)
+
+        # act
+        d = from_uno_date(struct)
+
+        # assert
+        self.assertEqual(dt.date(2014, 9, 17), d)
 
 
 #########################################################################
@@ -926,7 +950,7 @@ class NarrowToDataTestCase(unittest.TestCase):
         oNRange = mock.Mock(
             Spreadsheet=oSheet,
             RangeAddress=mock.Mock(
-            StartColumn=1, StartRow=1, EndColumn=6, EndRow=4))
+                StartColumn=1, StartRow=1, EndColumn=6, EndRow=4))
         ret = object
         oSheet.getCellRangeByPosition.side_effect = [oNRange, ret]
 

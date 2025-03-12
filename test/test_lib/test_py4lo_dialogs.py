@@ -15,6 +15,7 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import datetime as dt
 import logging
 import time
 import unittest
@@ -25,7 +26,10 @@ from py4lo_dialogs import (MessageBoxType, ExecutableDialogResults)
 from py4lo_dialogs import (
     message_box, place_widget, get_text_size, file_dialog, Size, FileFilter,
     folder_dialog, ProgressExecutorBuilder, StandardProgressHandler,
-    ConsoleExecutorBuilder, StandardConsoleHandler, trace_event)
+    ConsoleExecutorBuilder, StandardConsoleHandler, trace_event,
+    set_uno_control_date, get_uno_control_date, set_uno_control_bool,
+    get_uno_control_bool
+)
 
 
 class Py4LODialogsTestCase(unittest.TestCase):
@@ -450,6 +454,73 @@ class TraceEventTestCase(unittest.TestCase):
     @trace_event("foo", enter_exit=False)
     def traced_three(self):
         raise Exception("bar")
+
+
+class GetSetUnoDialogTestCase(unittest.TestCase):
+    def test_set_uno_control_date_empty(self):
+        # arrange
+        oControl = mock.Mock()
+
+        # act
+        set_uno_control_date(oControl, None)
+
+        # assert
+        self.assertEqual([mock.call.setEmpty()], oControl.mock_calls)
+
+    def test_set_uno_control_date_date(self):
+        # arrange
+        oControl = mock.Mock()
+
+        # act
+        set_uno_control_date(oControl, dt.date(2017, 11, 21))
+
+        # assert
+        self.assertEqual(2017, oControl.Date.Year)
+        self.assertEqual(11, oControl.Date.Month)
+        self.assertEqual(21, oControl.Date.Day)
+
+    def test_get_uno_control_date_empty(self):
+        # arrange
+        oControl = mock.Mock()
+        oControl.isEmpty.side_effect = [True]
+
+        # act
+        d = get_uno_control_date(oControl)
+
+        # assert
+        self.assertIsNone(d)
+
+    def test_get_uno_control_date(self):
+        # arrange
+        struct = mock.Mock(Year=2003, Month=6, Day=3)
+        oControl = mock.Mock(Date=struct)
+        oControl.isEmpty.side_effect = [False]
+
+        # act
+        d = get_uno_control_date(oControl)
+
+        # assert
+        self.assertEqual(d, dt.date(2003, 6, 3))
+
+    def test_set_uno_control_bool(self):
+        # arrange
+        oControl = mock.Mock()
+
+        # act
+        set_uno_control_bool(oControl, True)
+
+        # assert
+        self.assertEqual(1, oControl.State)
+
+    def test_get_uno_control_bool(self):
+        # arrange
+        oControl = mock.Mock(State=True)
+
+        # act
+        b = get_uno_control_bool(oControl)
+
+        # assert
+        self.assertTrue(b)
 
 
 if __name__ == '__main__':

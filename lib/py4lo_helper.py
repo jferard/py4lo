@@ -696,6 +696,28 @@ def make_sort_field(field_position: int, asc: bool = True) -> UnoStruct:
     return sf
 
 
+def to_uno_date(date: dt.date) -> UnoStruct:
+    """
+    Create a com.sun.star.util.Date struct from a given date
+    :param date: the Python date
+    :return: the LibreOffice date
+    """
+    d = uno.createUnoStruct("com.sun.star.util.Date")
+    d.Day = date.day
+    d.Month = date.month
+    d.Year = date.year
+    return d
+
+
+def from_uno_date(uno_date: UnoStruct) -> dt.date:
+    """
+    Create a date from a com.sun.star.util.Date struct.
+    :param uno_date: the UNO date
+    :return: the Python date
+    """
+    return dt.date(year=uno_date.Year, month=uno_date.Month, day=uno_date.Day)
+
+
 ##############################################################################
 # RANGES
 ##############################################################################
