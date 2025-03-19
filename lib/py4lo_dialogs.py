@@ -1376,3 +1376,93 @@ def get_uno_control_bool(oControl: UnoControl) -> bool:
     :return: the value
     """
     return oControl.State == 1
+
+
+def replace_all_items(oListControl: UnoControl, items: List[str]):
+    """
+    Replace all items of a UnoControlListBox.
+    @param oListControl: the UnoControlListBox
+    @param items: the new items
+    """
+    oListControl.removeItems(0, oListControl.ItemCount)
+    oListControl.addItems(items, 0)
+
+
+class ListBoxWrapper:
+    """
+    A wrapper for a UnoControlListBox in mutliple mode.
+    Warning: the wrapper is stateful. Build the wrapper once and then use it
+    each time you need acces to the control.
+
+    You can have values associated to the items of the list box.
+    """
+    def __init__(self, oListControl: UnoControl):
+        self._oListControl = oListControl
+        self._items = cast(List[str], [])
+        self._values = cast(List[Any], [])
+
+    def replace_all_items(self, items: List[str], values: List[Any] = None):
+        """
+        @param items: the items
+        @param values: the associated values (optional)
+        """
+        if values is None:
+            self._items = items
+            self._values = items
+        else:
+            if len(items) != len(values):
+                raise ValueError()
+
+            self._items = items
+            self._values = values
+
+        replace_all_items(self._oListControl, items)
+
+
+    def get_selected_items(self) -> List[str]:
+        """
+        @return: the selected items
+        """
+        positions = self._oListControl.SelectedItemsPos
+        if positions:
+            return [self._items[i] for i in positions]
+        else:
+            return []
+
+    def get_selected_values(self) -> List[Any]:
+        """
+        @return: the selected values
+        """
+        positions = self._oListControl.SelectedItemsPos
+        if positions:
+            return [self._values[i] for i in positions]
+        else:
+            return []
+
+    def select_items(self, items: List[str]):
+        """
+        @param items: the items to select
+        """
+        items = set(items)
+        count = self._oListControl.ItemCount
+        selected_positions = [
+            i for i in range(count) if self._items[i] in items]
+        unselected_positions = [
+            i for i in range(count) if self._items[i] not in items]
+
+        self._oListControl.selectItemsPos(unselected_positions, False)
+        self._oListControl.selectItemsPos(selected_positions, True)
+
+    def select_values(self, values: List[Any]):
+        """
+        @param values: the values to select
+        """
+        values = set(values)
+        count = self._oListControl.ItemCount
+        selected_positions = [
+            i for i in range(count) if self._values[i] in values]
+        unselected_positions = [
+            i for i in range(count) if self._values[i] not in values]
+
+        self._oListControl.selectItemsPos(unselected_positions, False)
+        self._oListControl.selectItemsPos(selected_positions, True)
