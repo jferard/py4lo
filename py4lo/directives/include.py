@@ -49,7 +49,7 @@ class Include(Directive):
             s.extend(IncludeStripper(path).process())
         else:
             with path.open('r', encoding='utf-8') as f:
-                s.extend(f)
+                s.extend(map(str.rstrip, f))
         s.append("# end py4lo include\n")
 
         line_processor.append("\n".join(s))

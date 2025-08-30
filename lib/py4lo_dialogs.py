@@ -1394,7 +1394,8 @@ class ListBoxWrapper:
     Warning: the wrapper is stateful. Build the wrapper once and then use it
     each time you need acces to the control.
 
-    You can have values associated to the items of the list box.
+    You can have values associated to the items of the list box (like the
+    model item data).
     """
     def __init__(self, oListControl: UnoControl):
         self._oListControl = oListControl

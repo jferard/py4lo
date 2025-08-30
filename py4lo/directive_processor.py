@@ -27,6 +27,7 @@ from directives import DirectiveProvider
 
 PY4LO_REGEX = re.compile(r"^#\s*py4lo\s*:(.*)$")
 
+
 class DirectiveProcessor:
     """A DirectiveProcessor processes directives, ie line that begins with #,
     in scripts. When a directive is parsed, the processor is passed to the
