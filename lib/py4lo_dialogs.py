@@ -1419,7 +1419,6 @@ class ListBoxWrapper:
 
         replace_all_items(self._oListControl, items)
 
-
     def get_selected_items(self) -> List[str]:
         """
         @return: the selected items
