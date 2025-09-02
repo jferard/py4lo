@@ -55,12 +55,12 @@ oDialog.dispose()
 To load an XML dialog (like in Basic), see: `_ObjectProvider.get_dialog`
 from py4lo_helper.
 """
-# mypy: disable-error-code="import-untyped,import-not-found"
-from collections import namedtuple
 import datetime as dt
-from enum import Enum
 import functools
 import logging
+# mypy: disable-error-code="import-untyped,import-not-found"
+from collections import namedtuple
+from enum import Enum
 from threading import Thread
 from typing import Any, Callable, Optional, List, Union, NamedTuple, cast
 
@@ -121,6 +121,25 @@ try:
     # noinspection PyUnresolvedReferences
     from com.sun.star.lang import XEventListener
 
+
+    class TemplateDescription:
+        # noinspection PyUnresolvedReferences
+        from com.sun.star.ui.dialogs.TemplateDescription import (
+            FILEOPEN_SIMPLE,
+            FILESAVE_SIMPLE,
+            FILESAVE_AUTOEXTENSION_PASSWORD,
+            FILESAVE_AUTOEXTENSION_PASSWORD_FILTEROPTIONS,
+            FILESAVE_AUTOEXTENSION_SELECTION,
+            FILESAVE_AUTOEXTENSION_TEMPLATE,
+            FILEOPEN_LINK_PREVIEW_IMAGE_TEMPLATE,
+            FILEOPEN_PLAY,
+            FILEOPEN_READONLY_VERSION,
+            FILEOPEN_LINK_PREVIEW,
+            FILESAVE_AUTOEXTENSION,
+            FILEOPEN_PREVIEW,
+            FILEOPEN_LINK_PLAY,
+            FILEOPEN_LINK_PREVIEW_IMAGE_ANCHOR,
+        )
 except ImportError:
     from _mock_constants import (  # type: ignore[assignment]
         ExecutableDialogResults,  # pyright: ignore[reportGeneralTypeIssues]
@@ -128,6 +147,7 @@ except ImportError:
         MessageBoxType,  # pyright: ignore[reportGeneralTypeIssues]
         PushButtonType,  # pyright: ignore[reportGeneralTypeIssues]
         MessageBoxResults,  # pyright: ignore[reportGeneralTypeIssues]  # noqa: F401
+        TemplateDescription,  # pyright: ignore[reportGeneralTypeIssues]
     )
     from _mock_objects import (  # type: ignore[assignment]
         uno,  # pyright: ignore[reportGeneralTypeIssues]
@@ -522,9 +542,11 @@ def input_box(msg_title: str, msg_text: str, msg_default="", parent_win=None,
 FileFilter = NamedTuple("FileFilter", [("title", str), ("filter", str)])
 
 
-def file_dialog(title: str, filters: Optional[List[FileFilter]] = None,
-                display_dir: StrPath = "",
-                single: bool = True) -> Union[Optional[str], List[str]]:
+def file_dialog(
+        title: str, filters: Optional[List[FileFilter]] = None,
+        display_dir: StrPath = "", single: bool = True,
+        template_description: Optional[TemplateDescription] = None
+) -> Union[Optional[str], List[str]]:
     """
     Open a file dialog.
 
@@ -537,10 +559,14 @@ def file_dialog(title: str, filters: Optional[List[FileFilter]] = None,
     @param title: the title of the dialog
     @param filters: the filter
     @param display_dir: the base directory of the dialog
-    @param single: if True, select one files, otherwise allows multiple selction.
+    @param single: if True, select one files, otherwise allow multiple selection.
+    @param template_description: the template of the file picker
     @return: if single is True, url or None, else a list of urls
     """
     oFilePicker = create_uno_service("com.sun.star.ui.dialogs.FilePicker")
+    if template_description is not None:
+        oFilePicker.initialize((template_description,))
+        
     if filters is not None:
         for flt in filters:
             oFilePicker.appendFilter(flt.title, flt.filter)
@@ -1397,6 +1423,7 @@ class ListBoxWrapper:
     You can have values associated to the items of the list box (like the
     model item data).
     """
+
     def __init__(self, oListControl: UnoControl):
         self._oListControl = oListControl
         self._items = cast(List[str], [])

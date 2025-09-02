@@ -168,8 +168,6 @@ class UnoRuntimeException(UnoException):
 
 Locale = object
 
+
 class XTransferable:
     pass
-
-
-
