@@ -2587,7 +2587,7 @@ class DataArrayCopier:
             if self._chunk_size < 0 or row_count <= self._chunk_size:
                 self._copy_whole_data_array(oCell, data_array)
             else:
-                with undo_context(oDoc):
+                with undo_context(oDoc, "copy"):
                     self._copy_data_array_by_chunks(oCell, data_array)
         else:
             if self._chunk_size < 0 or row_count <= self._chunk_size:
