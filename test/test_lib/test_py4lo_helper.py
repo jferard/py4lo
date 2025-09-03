@@ -2424,7 +2424,7 @@ class CopyDataArrayTestCase(unittest.TestCase):
 
         # assert
         self.assertEqual([
-            mock.call.DrawPage.Forms.Parent.UndoManager.enterHiddenUndoContext(),
+            mock.call.DrawPage.Forms.Parent.UndoManager.enterUndoContext("copy"),
             mock.call.getCellRangeByPosition(2, 3, 4, 3),
             mock.call.getCellRangeByPosition(2, 4, 4, 4),
             mock.call.getCellRangeByPosition(2, 5, 4, 5),
@@ -2461,11 +2461,11 @@ class CopyDataArrayTestCase(unittest.TestCase):
 
         # assert
         self.assertEqual([
-            mock.call.UndoManager.enterHiddenUndoContext(),
+            mock.call.UndoManager.enterUndoContext("copy"),
             mock.call.UndoManager.leaveUndoContext()
         ], oSheet.DrawPage.Forms.Parent.mock_calls)
         self.assertEqual([
-            mock.call.DrawPage.Forms.Parent.UndoManager.enterHiddenUndoContext(),
+            mock.call.DrawPage.Forms.Parent.UndoManager.enterUndoContext("copy"),
             mock.call.getCellRangeByPosition(2, 3, 4, 4),
             mock.call.getCellRangeByPosition(2, 5, 4, 5),
             mock.call.DrawPage.Forms.Parent.UndoManager.leaveUndoContext(),

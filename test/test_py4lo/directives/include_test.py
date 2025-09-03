@@ -18,6 +18,7 @@
 import io
 import unittest
 from pathlib import Path
+from typing import cast, List
 from unittest import mock
 
 from directives import Include
@@ -65,12 +66,14 @@ class TestInclude(unittest.TestCase):
         verify_open_path(self, inc_path, 'r', encoding="utf-8")
 
     def test_py4l_import_py(self):
+        self.maxDiff = None
         path = Path(__file__).parents[3] / "inc"
 
-        line_processor = []
+        line_processor = cast(List[str], [])
         Include(path).execute(mock.Mock(), line_processor, ["py4lo_import.py", True])
-        self.assertEqual('''# begin py4lo include: /home/jferard/prog/python/py4lo/inc/py4lo_import.py
-# -*- coding: utf-8 -*-
+        begin, text = line_processor[0].split("\n", maxsplit=1)
+        self.assertTrue(begin.startswith('# begin py4lo include: '))
+        self.assertEqual('''# -*- coding: utf-8 -*-
 """Py4LO - Python Toolkit For LibreOffice Calc
       Copyright (C) 2016-2024 J. Férard <https://github.com/jferard>
 
@@ -107,7 +110,7 @@ else:
     if spath not in sys.path:
         sys.path.insert(0, spath)
 # end py4lo include
-''', line_processor[0])
+''', text)
 
 
 if __name__ == '__main__':
