@@ -118,7 +118,7 @@ class Bus:
         """
         self._subscribers.append(s)
 
-    def post(self, event_type: str, event_data: Any):
+    def post(self, event_type: str, *event_data: Any):
         """
         Post an event. If a subscriber does not implement this event,
         the event is simply ignored.
@@ -130,7 +130,7 @@ class Bus:
             m_name = "_handle_" + event_type.lower()
             if hasattr(s, m_name):
                 m = getattr(s, m_name)
-                m(event_data)
+                m(*event_data)
 
 
 def create_bus() -> Bus:
