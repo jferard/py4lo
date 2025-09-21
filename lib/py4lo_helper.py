@@ -25,7 +25,6 @@ It provides a lot of simple functions to handle those objects.
 import datetime as dt
 # mypy: disable-error-code="import-untyped,import-not-found"
 import logging
-import string
 from contextlib import contextmanager
 from enum import Enum
 from locale import getlocale
@@ -2715,7 +2714,7 @@ ORD_A = ord("A")
 
 def col_letters_to_pos(letters: str) -> int:
     """
-    >>> col_letter_to_pos("GH")
+    >>> col_letters_to_pos("GH")
     189
 
     :param letters: the letter of the col
@@ -2738,7 +2737,7 @@ def col_letters_to_pos(letters: str) -> int:
 def col_pos_to_letters(pos: int) -> str:
     """
     >>> col_pos_to_letters(189)
-    GH
+    'GH'
 
     :param pos: the position of the col, starting with 0
     :return: the letter

@@ -2746,10 +2746,11 @@ class ColLetterTestCase(unittest.TestCase):
 
     def test_to_pos_err(self):
         with self.assertRaises(ValueError):
-            self.assertEqual(0, col_letters_to_pos("&"))
+            col_letters_to_pos("&")
 
     def test_to_pos_empty(self):
-        self.assertEqual(0, col_letters_to_pos(""))
+        with self.assertRaises(ValueError):
+            col_letters_to_pos("")
 
     def test_random(self):
         for _ in range(100):
