@@ -185,7 +185,7 @@ class Py4LOIOTestCase(unittest.TestCase):
         # prepare
         oSheet = mock.Mock()
         oRange = mock.Mock(
-            RangeAddress =self._range_address_mock(0, 0, 1, 2),
+            RangeAddress=self._range_address_mock(0, 0, 1, 2),
             Spreadsheet=oSheet
         )
 
@@ -227,7 +227,7 @@ class Py4LOIOTestCase(unittest.TestCase):
         oSheet = mock.Mock()
         oRange = mock.Mock(
             RangeAddress=self._range_address_mock(0, 0, 1, 2),
-            Spreadsheet =oSheet
+            Spreadsheet=oSheet
         )
         oSheet.getCellByPosition.side_effect = [
             mock.Mock(String="A1"), mock.Mock(String="B1"),
@@ -248,7 +248,7 @@ class Py4LOIOTestCase(unittest.TestCase):
         # prepare
         oSheet = mock.Mock()
         oRange = mock.Mock(
-            RangeAddress =self._range_address_mock(0, 0, 1, 2),
+            RangeAddress=self._range_address_mock(0, 0, 1, 2),
             Spreadsheet=oSheet)
         oSheet.getCellByPosition.side_effect = [
             mock.Mock(String="A1"), mock.Mock(String="B1"),
@@ -281,7 +281,8 @@ class Py4LOIOTestCase(unittest.TestCase):
         ]
 
         # play
-        r = dict_reader.from_typing(oRange, ("foo", "bar"), cell_typing=CellTyping.String)
+        r = dict_reader.from_typing(oRange, ("foo", "bar"),
+                                    cell_typing=CellTyping.String)
 
         # verify
         self.assertEqual([
@@ -306,8 +307,9 @@ class Py4LOIOTestCase(unittest.TestCase):
         gct.side_effect = ['TEXT', 'EMPTY', 'EMPTY', 'TEXT', 'TEXT', 'TEXT']
 
         # play
-        r = dict_reader.from_typing(oRange, ("foo", "bar"), restkey="RK", restval="RV",
-                        cell_typing=CellTyping.Accurate)
+        r = dict_reader.from_typing(oRange, ("foo", "bar"), restkey="RK",
+                                    restval="RV",
+                                    cell_typing=CellTyping.Accurate)
 
         # verify
         self.assertEqual([
@@ -579,7 +581,8 @@ class Py4LOIOTestCase(unittest.TestCase):
         def wc(oCell: UnoCell, value: Any):
             oCell.t = value
 
-        w = dict_writer.from_write_cell(oSheet, ['a', 'b', 'oTextRange'], write_cell=wc)
+        w = dict_writer.from_write_cell(oSheet, ['a', 'b', 'oTextRange'],
+                                        write_cell=wc)
 
         w.writeheader()
         w.writerows([
@@ -612,7 +615,8 @@ class Py4LOIOTestCase(unittest.TestCase):
         def wc(oCell: UnoCell, value: Any):
             oCell.t = value
 
-        w = dict_writer.from_write_cell(oSheet, ['a', 'b', 'oTextRange'], write_cell=wc)
+        w = dict_writer.from_write_cell(oSheet, ['a', 'b', 'oTextRange'],
+                                        write_cell=wc)
 
         w.writeheader()
         with self.assertRaises(ValueError):
@@ -636,8 +640,9 @@ class Py4LOIOTestCase(unittest.TestCase):
         def wc(oCell: UnoCell, value: Any):
             oCell.t = value
 
-        w = dict_writer.from_write_cell(oSheet, ['a', 'b', 'oTextRange'], restval="foo",
-                        write_cell=wc)
+        w = dict_writer.from_write_cell(oSheet, ['a', 'b', 'oTextRange'],
+                                        restval="foo",
+                                        write_cell=wc)
 
         w.writeheader()
         w.writerow({"a": 1, "b": 2})
@@ -734,8 +739,8 @@ class IOCSVTestCase(unittest.TestCase):
             mock.call.storeToURL(
                 'url',
                 (("FilterName", "Text - txt - csv (StarCalc)"),
-                ("FilterOptions", "44,34,76,1,,1033,false,false,true"),
-                ( "Overwrite", True))),
+                 ("FilterOptions", "44,34,76,1,,1033,false,false,true"),
+                 ("Overwrite", True))),
             mock.call.unlockControllers()
         ], oDoc.mock_calls)
 
@@ -753,6 +758,7 @@ class IOCSVTestCase(unittest.TestCase):
     def test_export_options_two_parameters(self):
         with self.assertRaises(ValueError):
             create_export_filter_options(1, 2)
+
 
 if __name__ == '__main__':
     unittest.main()

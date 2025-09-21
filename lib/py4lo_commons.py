@@ -403,7 +403,9 @@ def sanitize(s: str) -> str:
         'ascii')
     return s
 
+
 T = TypeVar("T")
+
 
 def secure_strip(v: Generic[T]) -> Generic[T]:
     return v.strip() if isinstance(v, str) else v
