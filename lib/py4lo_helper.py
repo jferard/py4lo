@@ -25,6 +25,7 @@ It provides a lot of simple functions to handle those objects.
 import datetime as dt
 # mypy: disable-error-code="import-untyped,import-not-found"
 import logging
+import string
 from contextlib import contextmanager
 from enum import Enum
 from locale import getlocale
@@ -2707,3 +2708,49 @@ def no_undo_context(oDoc: UnoSpreadsheetDocument) -> ContextManager[None]:
         yield
     finally:
         oUndoManager.unlock()
+
+
+ORD_A = ord("A")
+
+
+def col_letters_to_pos(letters: str) -> int:
+    """
+    >>> col_letter_to_pos("GH")
+    189
+
+    :param letters: the letter of the col
+    :return: the position of the col starting with 0
+    """
+    alpha_positions = [ord(letter.upper()) - ORD_A for letter in letters]
+    if not (
+        alpha_positions
+        and all(0 <= alpha_pos <= 25 for alpha_pos in alpha_positions)
+    ):
+        raise ValueError()
+
+    pos = 0
+    for alpha_pos in alpha_positions[:-1]:
+        pos = pos * 26 + alpha_pos + 1
+
+    return pos * 26 + alpha_positions[-1]
+
+
+def col_pos_to_letters(pos: int) -> str:
+    """
+    >>> col_pos_to_letters(189)
+    GH
+
+    :param pos: the position of the col, starting with 0
+    :return: the letter
+    """
+    if pos < 0:
+        raise ValueError()
+
+    arr = []
+
+    while pos >= 26:
+        arr.insert(0, chr(ORD_A + (pos % 26)))
+        pos = pos // 26 - 1
+
+    arr.insert(0, chr(ORD_A + pos))
+    return "".join(arr)

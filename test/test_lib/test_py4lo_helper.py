@@ -17,6 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import datetime as dt
+import random
 # mypy: disable-error-code="import-not-found"
 import unittest
 from unittest import mock
@@ -43,7 +44,8 @@ from py4lo_helper import (
     new_doc, NewDocumentUrl, doc_builder, create_uno_service_ctxt,
     create_uno_service, read_options, rtrim_row, read_options_from_sheet_name,
     copy_row_at_index, FontSlant, copy_data_array, undo_context,
-    no_undo_context, narrow_range_to_data, crop_range)
+    no_undo_context, narrow_range_to_data, crop_range, col_pos_to_letters,
+    col_letters_to_pos)
 from py4lo_typing import UnoTextRange
 
 
@@ -2424,7 +2426,8 @@ class CopyDataArrayTestCase(unittest.TestCase):
 
         # assert
         self.assertEqual([
-            mock.call.DrawPage.Forms.Parent.UndoManager.enterUndoContext("copy"),
+            mock.call.DrawPage.Forms.Parent.UndoManager.enterUndoContext(
+                "copy"),
             mock.call.getCellRangeByPosition(2, 3, 4, 3),
             mock.call.getCellRangeByPosition(2, 4, 4, 4),
             mock.call.getCellRangeByPosition(2, 5, 4, 5),
@@ -2465,7 +2468,8 @@ class CopyDataArrayTestCase(unittest.TestCase):
             mock.call.UndoManager.leaveUndoContext()
         ], oSheet.DrawPage.Forms.Parent.mock_calls)
         self.assertEqual([
-            mock.call.DrawPage.Forms.Parent.UndoManager.enterUndoContext("copy"),
+            mock.call.DrawPage.Forms.Parent.UndoManager.enterUndoContext(
+                "copy"),
             mock.call.getCellRangeByPosition(2, 3, 4, 4),
             mock.call.getCellRangeByPosition(2, 5, 4, 5),
             mock.call.DrawPage.Forms.Parent.UndoManager.leaveUndoContext(),
@@ -2713,6 +2717,44 @@ class UnoTestCase(unittest.TestCase):
         # assert
         self.assertEqual(oDoc.mock_calls, [mock.call.UndoManager.lock(),
                                            mock.call.UndoManager.unlock()])
+
+
+class ColLetterTestCase(unittest.TestCase):
+    def test_to_letter(self):
+        self.assertEqual("A", col_pos_to_letters(0))
+        self.assertEqual("Z", col_pos_to_letters(25))
+        self.assertEqual("AA", col_pos_to_letters(26))
+        self.assertEqual("AB", col_pos_to_letters(27))
+        self.assertEqual("BA", col_pos_to_letters(52))
+        self.assertEqual("NZ", col_pos_to_letters(389))
+        self.assertEqual("AMJ", col_pos_to_letters(1023))
+        self.assertEqual("XFD", col_pos_to_letters(16383))
+
+    def test_to_lettern_neg(self):
+        with self.assertRaises(ValueError):
+            self.assertEqual("XFD", col_pos_to_letters(-1))
+
+    def test_to_pos(self):
+        self.assertEqual(0, col_letters_to_pos("A"))
+        self.assertEqual(25, col_letters_to_pos("Z"))
+        self.assertEqual(26, col_letters_to_pos("AA"))
+        self.assertEqual(27, col_letters_to_pos("AB"))
+        self.assertEqual(52, col_letters_to_pos("BA"))
+        self.assertEqual(389, col_letters_to_pos("NZ"))
+        self.assertEqual(1023, col_letters_to_pos("AMJ"))
+        self.assertEqual(16383, col_letters_to_pos("XFD"))
+
+    def test_to_pos_err(self):
+        with self.assertRaises(ValueError):
+            self.assertEqual(0, col_letters_to_pos("&"))
+
+    def test_to_pos_empty(self):
+        self.assertEqual(0, col_letters_to_pos(""))
+
+    def test_random(self):
+        for _ in range(100):
+            pos = random.randint(1, 1000000)
+            self.assertEqual(pos, col_letters_to_pos(col_pos_to_letters(pos)))
 
 
 if __name__ == "__main__":
