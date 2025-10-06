@@ -2753,3 +2753,14 @@ def col_pos_to_letters(pos: int) -> str:
 
     arr.insert(0, chr(ORD_A + pos))
     return "".join(arr)
+
+
+def odf_path_to_lock(path: Path) -> Path:
+    """
+    >>> str(odf_path_to_lock(Path("/foo/bar/baz.odt")))
+    '/foo/bar/.lock.baz.odt#'
+
+    :param path: the ODF file path
+    :return: the path of the file lock
+    """
+    return path.parent / ".lock.{}#".format(path.name)

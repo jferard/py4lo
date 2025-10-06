@@ -20,6 +20,7 @@ import datetime as dt
 import random
 # mypy: disable-error-code="import-not-found"
 import unittest
+from pathlib import Path
 from unittest import mock
 
 import py4lo_helper
@@ -45,7 +46,7 @@ from py4lo_helper import (
     create_uno_service, read_options, rtrim_row, read_options_from_sheet_name,
     copy_row_at_index, FontSlant, copy_data_array, undo_context,
     no_undo_context, narrow_range_to_data, crop_range, col_pos_to_letters,
-    col_letters_to_pos)
+    col_letters_to_pos, odf_path_to_lock)
 from py4lo_typing import UnoTextRange
 
 
@@ -2756,6 +2757,18 @@ class ColLetterTestCase(unittest.TestCase):
         for _ in range(100):
             pos = random.randint(1, 1000000)
             self.assertEqual(pos, col_letters_to_pos(col_pos_to_letters(pos)))
+
+
+class LockPathTestCase(unittest.TestCase):
+    def test_none(self):
+        with self.assertRaises(AttributeError):
+            odf_path_to_lock(None)
+
+    def test_path(self):
+        self.assertEqual(
+            Path('/foo/bar/.lock.baz.odt#'),
+            odf_path_to_lock(Path("/foo/bar/baz.odt"))
+        )
 
 
 if __name__ == "__main__":
