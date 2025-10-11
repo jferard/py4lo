@@ -28,7 +28,8 @@ from py4lo_dialogs import (
     folder_dialog, ProgressExecutorBuilder, StandardProgressHandler,
     ConsoleExecutorBuilder, StandardConsoleHandler, trace_event,
     set_uno_control_date, get_uno_control_date, set_uno_control_bool,
-    get_uno_control_bool
+    get_uno_control_bool, set_uno_control_text, get_uno_control_text,
+    set_uno_control_text_from_list, get_uno_control_text_as_list
 )
 
 
@@ -521,6 +522,76 @@ class GetSetUnoDialogTestCase(unittest.TestCase):
 
         # assert
         self.assertTrue(b)
+
+    def test_set_uno_control_text_none(self):
+        # arrange
+        oControl = mock.Mock()
+
+        # act
+        set_uno_control_text(oControl, None)
+
+        # assert
+        self.assertEqual("", oControl.Text)
+
+    def test_set_uno_control_text_blank(self):
+        # arrange
+        oControl = mock.Mock()
+
+        # act
+        set_uno_control_text(oControl, "  ")
+
+        # assert
+        self.assertEqual("", oControl.Text)
+
+    def test_set_uno_control_text_foo(self):
+        # arrange
+        oControl = mock.Mock()
+
+        # act
+        set_uno_control_text(oControl, " foo ")
+
+        # assert
+        self.assertEqual("foo", oControl.Text)
+
+    def test_get_uno_control_text_blank(self):
+        # arrange
+        oControl = mock.Mock(Text="  ")
+
+        # act
+        text = get_uno_control_text(oControl)
+
+        # assert
+        self.assertIsNone(text)
+
+    def test_get_uno_control_text_foo(self):
+        # arrange
+        oControl = mock.Mock(Text=" foo ")
+
+        # act
+        text = get_uno_control_text(oControl)
+
+        # assert
+        self.assertEqual("foo", text)
+
+    def test_set_uno_control_text_from_list(self):
+        # arrange
+        oControl = mock.Mock()
+
+        # act
+        set_uno_control_text_from_list(oControl, [" foo ", " ", "bar"])
+
+        # assert
+        self.assertEqual("foo\nbar", oControl.Text)
+
+    def test_get_uno_control_text_as_list(self):
+        # arrange
+        oControl = mock.Mock(Text=" foo\nbar ")
+
+        # act
+        text = get_uno_control_text_as_list(oControl)
+
+        # assert
+        self.assertEqual(["foo", "bar"], text)
 
 
 if __name__ == '__main__':

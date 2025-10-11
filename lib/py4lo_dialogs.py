@@ -566,7 +566,7 @@ def file_dialog(
     oFilePicker = create_uno_service("com.sun.star.ui.dialogs.FilePicker")
     if template_description is not None:
         oFilePicker.initialize((template_description,))
-        
+
     if filters is not None:
         for flt in filters:
             oFilePicker.appendFilter(flt.title, flt.filter)
@@ -1402,6 +1402,51 @@ def get_uno_control_bool(oControl: UnoControl) -> bool:
     :return: the value
     """
     return oControl.State == 1
+
+
+def set_uno_control_text(oControl: UnoControl, text: Optional[str]):
+    """
+    Set a value into a UnoControlEdit/ComboBox/DateField/...
+    :param oControl: the UnoControlEdit/...
+    :param text: the text
+    """
+    if text is None:
+        oControl.Text = ""
+    else:
+        text = text.strip()
+        oControl.Text = text
+
+
+def get_uno_control_text(oControl: UnoControl) -> Optional[str]:
+    """
+    :param oControl: the UnoControlEdit/...
+    :return: the text
+    """
+    text = oControl.Text.strip()
+    return text if text else None
+
+
+def set_uno_control_text_from_list(
+        oControl: UnoControl, texts: List[str], delim: str = "\n"):
+    """
+    Set a value into a UnoControlEdit/ComboBox/DateField/...
+    :param oControl: the UnoControlEdit/...
+    :param texts: the texts
+    :param delim: the delimiter
+    """
+    texts = [t.strip() for t in texts]
+    oControl.Text = delim.join([t for t in texts if t])
+
+
+def get_uno_control_text_as_list(
+        oControl: UnoControl, delim: str = "\n") -> List[str]:
+    """
+    :param oControl: the UnoControlEdit/...
+    :param delim: the delimiter
+    :return: the text
+    """
+    text = oControl.Text.strip()
+    return text.split(delim)
 
 
 def replace_all_items(oListControl: UnoControl, items: List[str]):
