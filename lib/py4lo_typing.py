@@ -21,11 +21,11 @@ Basic support for uno types out of the LibreOffice engine.
 # mypy: disable-error-code="empty-body"
 from pathlib import Path
 from typing import (
-    NewType, Any, Union, Tuple, List, cast, Optional, Sequence)
+    NewType, Union, Tuple, List, cast, Optional, Sequence)
 
-UnoXScriptContext = NewType("UnoXScriptContext", Any)
+UnoXScriptContext = NewType("UnoXScriptContext", object)
 
-UnoObject = NewType("UnoObject", Any)
+UnoObject = NewType("UnoObject", object)
 UnoStruct = NewType("UnoStruct", UnoObject)
 UnoEnum = NewType("UnoEnum", UnoObject)
 UnoService = NewType("UnoService", UnoObject)
