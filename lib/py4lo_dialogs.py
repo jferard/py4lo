@@ -1445,8 +1445,8 @@ def get_uno_control_text_as_list(
     :param delim: the delimiter
     :return: the text
     """
-    text = oControl.Text.strip()
-    return text.split(delim)
+    texts = [t.strip() for t in oControl.Text.split(delim)]
+    return [t for t in texts if t]
 
 
 def replace_all_items(oListControl: UnoControl, items: List[str]):

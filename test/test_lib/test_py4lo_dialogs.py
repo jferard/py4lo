@@ -585,7 +585,7 @@ class GetSetUnoDialogTestCase(unittest.TestCase):
 
     def test_get_uno_control_text_as_list(self):
         # arrange
-        oControl = mock.Mock(Text=" foo\nbar ")
+        oControl = mock.Mock(Text=" foo\n  \nbar ")
 
         # act
         text = get_uno_control_text_as_list(oControl)
