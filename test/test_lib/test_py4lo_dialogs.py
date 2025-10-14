@@ -20,17 +20,46 @@ import logging
 import time
 import unittest
 from unittest import mock
+from webbrowser import get
 
 import py4lo_dialogs
 from py4lo_dialogs import (MessageBoxType, ExecutableDialogResults)
 from py4lo_dialogs import (
-    message_box, place_widget, get_text_size, file_dialog, Size, FileFilter,
+    get_toolkit, message_box, input_box,
+    place_widget, get_text_size, file_dialog, Size, FileFilter,
     folder_dialog, ProgressExecutorBuilder, StandardProgressHandler,
     ConsoleExecutorBuilder, StandardConsoleHandler, trace_event,
     set_uno_control_date, get_uno_control_date, set_uno_control_bool,
     get_uno_control_bool, set_uno_control_text, get_uno_control_text,
     set_uno_control_text_from_list, get_uno_control_text_as_list
 )
+
+
+class ToolkitTestCase(unittest.TestCase):
+    @mock.patch('py4lo_dialogs.create_uno_service')
+    def test_new_toolkit(self, create_uno_service):
+        # arrange
+        py4lo_dialogs._oToolkit = None
+        service = mock.Mock()
+        create_uno_service.side_effect = [service]
+
+        # act
+        ret = get_toolkit()
+
+        # assert
+        self.assertEqual(service, ret)
+        self.assertEqual([mock.call('com.sun.star.awt.Toolkit')],
+                         create_uno_service.mock_calls)
+
+    def test_existing_toolkit(self):
+        # arrange
+        py4lo_dialogs._oToolkit = 1
+
+        # act
+        ret = get_toolkit()
+
+        # assert
+        self.assertEqual(1, ret)
 
 
 class Py4LODialogsTestCase(unittest.TestCase):
@@ -109,6 +138,27 @@ class Py4LODialogsTestCase(unittest.TestCase):
                                        'title', 'text'),
             mock.call.createMessageBox().execute()
         ])
+
+    @mock.patch("py4lo_dialogs.create_uno_service")
+    @mock.patch("py4lo_dialogs.get_toolkit")
+    def test_input_box(self, gt, cus):
+        self.maxDiff = None
+
+        # prepare
+        toolkit = mock.Mock()
+        gt.side_effect = [toolkit]
+        pw = mock.Mock(PosSize=mock.Mock(Width=10, Height=20))
+
+        dialog = mock.Mock()
+        dialog_model = mock.Mock()
+        cus.side_effect = [dialog_model, dialog]
+        dialog.getControl.side_effect = [mock.Mock(Text="foo")]
+
+        # play
+        ret = input_box("title", "text", parent_win=pw)
+
+        # verify
+        self.assertEqual("foo", ret)
 
     @mock.patch("py4lo_dialogs.create_uno_service")
     def test_file_dialog_single(self, us):
@@ -578,7 +628,8 @@ class GetSetUnoDialogTestCase(unittest.TestCase):
         oControl = mock.Mock()
 
         # act
-        set_uno_control_text(oControl, " foo ", apply=lambda s: s.strip().capitalize())
+        set_uno_control_text(oControl, " foo ",
+                             apply=lambda s: s.strip().capitalize())
 
         # assert
         self.assertEqual("Foo", oControl.Text)
@@ -608,7 +659,8 @@ class GetSetUnoDialogTestCase(unittest.TestCase):
         oControl = mock.Mock(Text="")
 
         # act
-        text = get_uno_control_text(oControl, apply=lambda x: x.strip().capitalize())
+        text = get_uno_control_text(oControl,
+                                    apply=lambda x: x.strip().capitalize())
 
         # assert
         self.assertIsNone(text)
@@ -638,7 +690,8 @@ class GetSetUnoDialogTestCase(unittest.TestCase):
         oControl = mock.Mock(Text=" foo ")
 
         # act
-        text = get_uno_control_text(oControl, apply=lambda x: x.strip().capitalize())
+        text = get_uno_control_text(oControl,
+                                    apply=lambda x: x.strip().capitalize())
 
         # assert
         self.assertEqual("Foo", text)
@@ -682,7 +735,7 @@ class GetSetUnoDialogTestCase(unittest.TestCase):
 
         # act
         text = get_uno_control_text_as_list(oControl, delim=";", apply=None,
-            filter_values=False)
+                                            filter_values=False)
 
         # assert
         self.assertEqual([' foo', '  ', 'bar '], text)
