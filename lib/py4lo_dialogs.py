@@ -1404,49 +1404,71 @@ def get_uno_control_bool(oControl: UnoControl) -> bool:
     return oControl.State == 1
 
 
-def set_uno_control_text(oControl: UnoControl, text: Optional[str]):
+def set_uno_control_text(
+        oControl: UnoControl, text: Optional[str],
+        apply: Optional[Callable[[str], Optional[str]]] = str.strip,
+):
     """
     Set a value into a UnoControlEdit/ComboBox/DateField/...
     :param oControl: the UnoControlEdit/...
     :param text: the text
     """
     if text is None:
-        oControl.Text = ""
-    else:
-        text = text.strip()
-        oControl.Text = text
+        text = ""
+    elif apply is not None:
+        text = apply(text)
+
+    oControl.Text = text
 
 
-def get_uno_control_text(oControl: UnoControl) -> Optional[str]:
+def get_uno_control_text(
+        oControl: UnoControl,
+        apply: Optional[Callable[[str], Optional[str]]] = str.strip,
+) -> Optional[str]:
     """
     :param oControl: the UnoControlEdit/...
     :return: the text
     """
-    text = oControl.Text.strip()
+    text = oControl.Text
+    if apply is not None:
+        text = apply(text)
     return text if text else None
 
 
 def set_uno_control_text_from_list(
-        oControl: UnoControl, texts: List[str], delim: str = "\n"):
+        oControl: UnoControl, texts: List[str], delim: str = "\n",
+        apply: Optional[Callable[[str], Optional[str]]] = str.strip,
+        filter_values: bool = True,
+):
     """
     Set a value into a UnoControlEdit/ComboBox/DateField/...
     :param oControl: the UnoControlEdit/...
     :param texts: the texts
     :param delim: the delimiter
     """
-    texts = [t.strip() for t in texts]
-    oControl.Text = delim.join([t for t in texts if t])
+    if apply is not None:
+        texts = [apply(t) for t in texts]
+    if filter_values:
+        texts = [t for t in texts if t]
+    oControl.Text = delim.join(texts)
 
 
 def get_uno_control_text_as_list(
-        oControl: UnoControl, delim: str = "\n") -> List[str]:
+        oControl: UnoControl, delim: str = "\n",
+        apply: Optional[Callable[[str], Optional[str]]] = str.strip,
+        filter_values: bool = True
+) -> List[str]:
     """
     :param oControl: the UnoControlEdit/...
     :param delim: the delimiter
     :return: the text
     """
-    texts = [t.strip() for t in oControl.Text.split(delim)]
-    return [t for t in texts if t]
+    texts = oControl.Text.split(delim)
+    if apply is not None:
+        texts = [apply(t) for t in texts]
+    if filter_values:
+        texts = [t for t in texts if t]
+    return texts
 
 
 def replace_all_items(oListControl: UnoControl, items: List[str]):

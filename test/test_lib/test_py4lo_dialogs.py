@@ -543,6 +543,16 @@ class GetSetUnoDialogTestCase(unittest.TestCase):
         # assert
         self.assertEqual("", oControl.Text)
 
+    def test_set_uno_control_text_blank_none(self):
+        # arrange
+        oControl = mock.Mock()
+
+        # act
+        set_uno_control_text(oControl, "  ", apply=None)
+
+        # assert
+        self.assertEqual("  ", oControl.Text)
+
     def test_set_uno_control_text_foo(self):
         # arrange
         oControl = mock.Mock()
@@ -553,12 +563,52 @@ class GetSetUnoDialogTestCase(unittest.TestCase):
         # assert
         self.assertEqual("foo", oControl.Text)
 
+    def test_set_uno_control_text_foo2(self):
+        # arrange
+        oControl = mock.Mock()
+
+        # act
+        set_uno_control_text(oControl, " foo ", apply=str.upper)
+
+        # assert
+        self.assertEqual(" FOO ", oControl.Text)
+
+    def test_set_uno_control_text_foo3(self):
+        # arrange
+        oControl = mock.Mock()
+
+        # act
+        set_uno_control_text(oControl, " foo ", apply=lambda s: s.strip().capitalize())
+
+        # assert
+        self.assertEqual("Foo", oControl.Text)
+
     def test_get_uno_control_text_blank(self):
         # arrange
         oControl = mock.Mock(Text="  ")
 
         # act
         text = get_uno_control_text(oControl)
+
+        # assert
+        self.assertIsNone(text)
+
+    def test_get_uno_control_text_blank_none(self):
+        # arrange
+        oControl = mock.Mock(Text="  ")
+
+        # act
+        text = get_uno_control_text(oControl, apply=None)
+
+        # assert
+        self.assertEqual("  ", text)
+
+    def test_get_uno_control_text_void(self):
+        # arrange
+        oControl = mock.Mock(Text="")
+
+        # act
+        text = get_uno_control_text(oControl, apply=lambda x: x.strip().capitalize())
 
         # assert
         self.assertIsNone(text)
@@ -573,6 +623,26 @@ class GetSetUnoDialogTestCase(unittest.TestCase):
         # assert
         self.assertEqual("foo", text)
 
+    def test_get_uno_control_text_foo2(self):
+        # arrange
+        oControl = mock.Mock(Text=" foo ")
+
+        # act
+        text = get_uno_control_text(oControl, apply=None)
+
+        # assert
+        self.assertEqual(" foo ", text)
+
+    def test_get_uno_control_text_foo3(self):
+        # arrange
+        oControl = mock.Mock(Text=" foo ")
+
+        # act
+        text = get_uno_control_text(oControl, apply=lambda x: x.strip().capitalize())
+
+        # assert
+        self.assertEqual("Foo", text)
+
     def test_set_uno_control_text_from_list(self):
         # arrange
         oControl = mock.Mock()
@@ -583,6 +653,19 @@ class GetSetUnoDialogTestCase(unittest.TestCase):
         # assert
         self.assertEqual("foo\nbar", oControl.Text)
 
+    def test_set_uno_control_text_from_list_none(self):
+        # arrange
+        oControl = mock.Mock()
+
+        # act
+        set_uno_control_text_from_list(
+            oControl, [" foo ", " ", "bar"], delim=";", apply=None,
+            filter_values=False
+        )
+
+        # assert
+        self.assertEqual(' foo ; ;bar', oControl.Text)
+
     def test_get_uno_control_text_as_list(self):
         # arrange
         oControl = mock.Mock(Text=" foo\n  \nbar ")
@@ -592,6 +675,17 @@ class GetSetUnoDialogTestCase(unittest.TestCase):
 
         # assert
         self.assertEqual(["foo", "bar"], text)
+
+    def test_get_uno_control_text_as_list_none(self):
+        # arrange
+        oControl = mock.Mock(Text=" foo;  ;bar ")
+
+        # act
+        text = get_uno_control_text_as_list(oControl, delim=";", apply=None,
+            filter_values=False)
+
+        # assert
+        self.assertEqual([' foo', '  ', 'bar '], text)
 
 
 if __name__ == '__main__':
