@@ -62,7 +62,8 @@ import logging
 from collections import namedtuple
 from enum import Enum
 from threading import Thread
-from typing import Any, Callable, Optional, List, Union, NamedTuple, cast
+from typing import (
+    Any, Callable, Optional, List, Union, NamedTuple, cast, TypeVar)
 
 from py4lo_helper import (
     get_provider, create_uno_service, create_uno_struct, to_uno_date,
@@ -1404,71 +1405,92 @@ def get_uno_control_bool(oControl: UnoControl) -> bool:
     return oControl.State == 1
 
 
+T = TypeVar('T')
+
+
 def set_uno_control_text(
-        oControl: UnoControl, text: Optional[str],
-        apply: Optional[Callable[[str], Optional[str]]] = str.strip,
+        oControl: UnoControl, value: Optional[T],
+        apply: Optional[Callable[[T], Optional[str]]] = str.strip,
 ):
     """
     Set a value into a UnoControlEdit/ComboBox/DateField/...
     :param oControl: the UnoControlEdit/...
-    :param text: the text
+    :param value: the text
     """
-    if text is None:
+    if value is None:
         text = ""
-    elif apply is not None:
-        text = apply(text)
+    elif apply is None:
+        text = str(value)
+    else:
+        value = apply(value)
+        if value is None:
+            text = ""
+        else:
+            text = value
 
     oControl.Text = text
 
 
 def get_uno_control_text(
         oControl: UnoControl,
-        apply: Optional[Callable[[str], Optional[str]]] = str.strip,
-) -> Optional[str]:
+        apply: Optional[Callable[[str], Optional[T]]] = str.strip,
+) -> Optional[T]:
     """
     :param oControl: the UnoControlEdit/...
-    :return: the text
+    :return: the value
     """
     text = oControl.Text
-    if apply is not None:
-        text = apply(text)
-    return text if text else None
+    if apply is None:
+        value = text
+    else:
+        value = apply(text)
+    return value if value else None
 
 
 def set_uno_control_text_from_list(
-        oControl: UnoControl, texts: List[str], delim: str = "\n",
-        apply: Optional[Callable[[str], Optional[str]]] = str.strip,
+        oControl: UnoControl, values: List[T], delim: str = "\n",
+        apply: Optional[Callable[[T], Optional[str]]] = str.strip,
         filter_values: bool = True,
 ):
     """
     Set a value into a UnoControlEdit/ComboBox/DateField/...
     :param oControl: the UnoControlEdit/...
-    :param texts: the texts
+    :param values: the texts
     :param delim: the delimiter
     """
-    if apply is not None:
-        texts = [apply(t) for t in texts]
+    if apply is None:
+        texts = [str(t) for t in values]
+    else:
+        texts = [apply(t) for t in values]
     if filter_values:
-        texts = [t for t in texts if t]
-    oControl.Text = delim.join(texts)
+        new_texts = [t for t in texts if t]
+    else:
+        new_texts = ["" if t is None else t for t in texts]
+
+    oControl.Text = delim.join(new_texts)
 
 
 def get_uno_control_text_as_list(
         oControl: UnoControl, delim: str = "\n",
-        apply: Optional[Callable[[str], Optional[str]]] = str.strip,
+        apply: Optional[Callable[[str], Optional[T]]] = str.strip,
         filter_values: bool = True
-) -> List[str]:
+) -> List[T]:
     """
     :param oControl: the UnoControlEdit/...
     :param delim: the delimiter
-    :return: the text
+    :return: the value
     """
     texts = oControl.Text.split(delim)
-    if apply is not None:
-        texts = [apply(t) for t in texts]
+    if apply is None:
+        values = texts
+    else:
+        values = [apply(t) for t in texts]
     if filter_values:
-        texts = [t for t in texts if t]
-    return texts
+        new_values = [t for t in values if t]
+    else:
+        new_values = values
+
+    return new_values
 
 
 def replace_all_items(oListControl: UnoControl, items: List[str]):

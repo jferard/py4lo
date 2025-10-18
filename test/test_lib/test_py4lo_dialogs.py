@@ -20,7 +20,6 @@ import logging
 import time
 import unittest
 from unittest import mock
-from webbrowser import get
 
 import py4lo_dialogs
 from py4lo_dialogs import (MessageBoxType, ExecutableDialogResults)
@@ -634,6 +633,17 @@ class GetSetUnoDialogTestCase(unittest.TestCase):
         # assert
         self.assertEqual("Foo", oControl.Text)
 
+    def test_set_uno_control_text_apply_int(self):
+        # arrange
+        oControl = mock.Mock()
+
+        # act
+        set_uno_control_text(oControl, 1,
+                             apply=lambda n: str(n * 10))
+
+        # assert
+        self.assertEqual("10", oControl.Text)
+
     def test_get_uno_control_text_blank(self):
         # arrange
         oControl = mock.Mock(Text="  ")
@@ -696,6 +706,16 @@ class GetSetUnoDialogTestCase(unittest.TestCase):
         # assert
         self.assertEqual("Foo", text)
 
+    def test_get_uno_control_text_apply_int(self):
+        # arrange
+        oControl = mock.Mock(Text="10")
+
+        # act
+        text = get_uno_control_text(oControl, apply=int)
+
+        # assert
+        self.assertEqual(10, text)
+
     def test_set_uno_control_text_from_list(self):
         # arrange
         oControl = mock.Mock()
@@ -719,6 +739,19 @@ class GetSetUnoDialogTestCase(unittest.TestCase):
         # assert
         self.assertEqual(' foo ; ;bar', oControl.Text)
 
+    def test_set_uno_control_text_from_list_apply_int(self):
+        # arrange
+        oControl = mock.Mock()
+
+        # act
+        set_uno_control_text_from_list(
+            oControl, [1, 0, 10], delim=";", apply=lambda n: str(n) if n != 0 else None,
+            filter_values=True
+        )
+
+        # assert
+        self.assertEqual('1;10', oControl.Text)
+
     def test_get_uno_control_text_as_list(self):
         # arrange
         oControl = mock.Mock(Text=" foo\n  \nbar ")
@@ -739,6 +772,23 @@ class GetSetUnoDialogTestCase(unittest.TestCase):
 
         # assert
         self.assertEqual([' foo', '  ', 'bar '], text)
+
+    def test_get_uno_control_text_as_list_apply_int(self):
+        # arrange
+        oControl = mock.Mock(Text="1;  ;10")
+        def f(s):
+            try:
+                return int(s)
+            except ValueError:
+                return None
+
+        # act
+
+        text = get_uno_control_text_as_list(oControl, delim=";", apply=f,
+                                            filter_values=True)
+
+        # assert
+        self.assertEqual([1, 10], text)
 
 
 if __name__ == '__main__':
