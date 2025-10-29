@@ -17,21 +17,27 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import configparser
+import datetime as dt
+import os
 import subprocess  # nosec: B404
 import tempfile
 import unittest
 import zipfile
+from decimal import Decimal
 from io import TextIOWrapper
-import os
 from pathlib import Path
-
 from unittest import mock
 
 import py4lo_commons
 from py4lo_commons import (
     secure_strip,
     uno_url_to_path, uno_path_to_url, create_bus, Commons, init, sanitize,
-    read_config)
+    read_config, create_parse_int_or, create_format_int_or,
+    create_parse_float_or, create_parse_decimal_or, create_parse_date_or,
+    create_parse_datetime_or, create_parse_time_or, create_format_float_or,
+    create_format_decimal_or, create_format_date_or, create_format_datetime_or,
+    create_format_time_or
+)
 
 
 class MiscTestCase(unittest.TestCase):
@@ -271,6 +277,175 @@ class TestCommons(unittest.TestCase):
         with (Path(t) / "py4lo.log").open("r") as s:
             text = s.read()
             self.assertTrue(text.endswith(" - root - DEBUG - test\n"))
+
+
+class ParseTestCase(unittest.TestCase):
+    def test_parse_int1(self):
+        parse_int = create_parse_int_or(" ", None)
+        self.assertEqual(12345, parse_int("12345"))
+        self.assertEqual(12345, parse_int("12 345"))
+        self.assertEqual(-12345, parse_int("-12 345"))
+        self.assertEqual(12345, parse_int("+12 345"))
+        self.assertIsNone(parse_int("12,345"))
+        self.assertIsNone(parse_int("foo"))
+
+    def test_parse_int2(self):
+        parse_int = create_parse_int_or(" ,", None)
+        self.assertEqual(12345, parse_int("12345"))
+        self.assertEqual(12345, parse_int("12 345"))
+        self.assertEqual(12345, parse_int("12,345"))
+        self.assertEqual(-12345, parse_int("-12,345"))
+        self.assertEqual(12345, parse_int("+12,345"))
+        self.assertEqual(12345789, parse_int("12,345 789"))
+        self.assertIsNone(parse_int("foo"))
+
+    def test_parse_float1(self):
+        parse_float = create_parse_float_or(",", ".", None)
+        self.assertAlmostEqual(12345.678, parse_float("12345.678"))
+        self.assertAlmostEqual(12345.678, parse_float("12,345.678"))
+        self.assertAlmostEqual(-12345.678, parse_float("-12,345.678"))
+        self.assertAlmostEqual(12345.678, parse_float("+12,345.678"))
+        self.assertIsNone(parse_float("12 345.678"))
+        self.assertIsNone(parse_float("foo"))
+
+    def test_parse_float2(self):
+        parse_float = create_parse_float_or("\xa0. ", ",", None)
+        self.assertAlmostEqual(12345.678, parse_float("12345,678"))
+        self.assertAlmostEqual(12345.678, parse_float("12\xa0345,678"))
+        self.assertAlmostEqual(12345.678, parse_float("12.345,678"))
+        self.assertAlmostEqual(12345.678, parse_float("12 345,678"))
+        self.assertAlmostEqual(-12345.678, parse_float("-12 345,678"))
+        self.assertAlmostEqual(12345.678, parse_float("+12 345,678"))
+        self.assertAlmostEqual(12345678.0, parse_float("12 345.678"))
+        self.assertIsNone(parse_float("foo"))
+
+    def test_parse_decimal1(self):
+        parse_decimal = create_parse_decimal_or(",", ".", None)
+        self.assertEqual(Decimal("12345.678"), parse_decimal("12345.678"))
+        self.assertEqual(Decimal("12345.678"), parse_decimal("12,345.678"))
+        self.assertEqual(Decimal("-12345.678"), parse_decimal("-12,345.678"))
+        self.assertEqual(Decimal("12345.678"), parse_decimal("+12,345.678"))
+        self.assertIsNone(parse_decimal("12 345.678"))
+        self.assertIsNone(parse_decimal("foo"))
+
+    def test_parse_decimal2(self):
+        parse_decimal = create_parse_decimal_or("\xa0. ", ",", None)
+        self.assertEqual(Decimal("12345.678"), parse_decimal("12345,678"))
+        self.assertEqual(Decimal("12345.678"), parse_decimal("12\xa0345,678"))
+        self.assertEqual(Decimal("12345.678"), parse_decimal("12.345,678"))
+        self.assertEqual(Decimal("12345.678"), parse_decimal("12 345,678"))
+        self.assertEqual(Decimal("-12345.678"), parse_decimal("-12 345,678"))
+        self.assertEqual(Decimal("12345.678"), parse_decimal("+12 345,678"))
+        self.assertEqual(Decimal("12345678"), parse_decimal("12 345.678"))
+        self.assertIsNone(parse_decimal("foo"))
+
+    def test_parse_date(self):
+        parse_date = create_parse_date_or("%d/%m/%Y", "NULL")
+        self.assertEqual(dt.date(2025, 10, 25), parse_date("25/10/2025"))
+        self.assertEqual("NULL", parse_date("1/25/2025"))
+
+    def test_parse_datetime(self):
+        parse_datetime = create_parse_datetime_or("%d/%m/%Y %H:%M:%S", "NULL")
+        self.assertEqual(dt.datetime(2025, 10, 25, 17, 40, 53),
+                         parse_datetime("25/10/2025 17:40:53"))
+        self.assertEqual("NULL", parse_datetime("1/25/2025 17:40:53"))
+
+    def test_parse_time(self):
+        parse_time = create_parse_time_or("%H:%M:%S", "NULL")
+        self.assertEqual(dt.time(17, 40, 53),
+                         parse_time("17:40:53"))
+        self.assertEqual("NULL", parse_time("17-40-53"))
+
+
+class FormatTestCase(unittest.TestCase):
+    def test_format_int1(self):
+        format_int = create_format_int_or("\xa0", "NULL")
+        self.assertEqual('123', format_int(123))
+        self.assertEqual('12\xa0345', format_int(12345))
+        self.assertEqual("NULL", format_int(None))
+
+    def test_format_int2(self):
+        format_int = create_format_int_or(",", "NULL")
+        self.assertEqual('123', format_int(123))
+        self.assertEqual('12,345', format_int(12345))
+        self.assertEqual("NULL", format_int(None))
+
+    def test_format_float(self):
+        format_float = create_format_float_or("", ".", -1, "NULL")
+        self.assertEqual('12345.678', format_float(12345.678))
+        self.assertEqual('NULL', format_float(None))
+
+        format_float = create_format_float_or("", ",", -1, "NULL")
+        self.assertEqual('12345,678', format_float(12345.678))
+        self.assertEqual('NULL', format_float(None))
+
+        format_float = create_format_float_or("_", ",", 2, "NULL")
+        self.assertEqual('12_345,68', format_float(12345.678))
+        self.assertEqual('NULL', format_float(None))
+
+        format_float = create_format_float_or("_", ".", -1, "NULL")
+        self.assertEqual('12_345.678', format_float(12345.678))
+        self.assertEqual('NULL', format_float(None))
+
+        format_float = create_format_float_or(",", ",", -1, "NULL")
+        self.assertEqual('12,345,678', format_float(12345.678))
+        self.assertEqual('NULL', format_float(None))
+
+        format_float = create_format_float_or("\xa0", ",", 2, "NULL")
+        self.assertEqual('12\xa0345,68', format_float(12345.678))
+        self.assertEqual('NULL', format_float(None))
+
+        format_float = create_format_float_or("\xa0", ".", -1, "NULL")
+        self.assertEqual('12\xa0345.678', format_float(12345.678))
+        self.assertEqual('NULL', format_float(None))
+
+        format_float = create_format_float_or("\xa0", ",", -1, "NULL")
+        self.assertEqual('12\xa0345,678', format_float(12345.678))
+        self.assertEqual('NULL', format_float(None))
+
+        format_float = create_format_float_or("\xa0", ".", 2, "NULL")
+        self.assertEqual('12\xa0345.68', format_float(12345.678))
+
+        format_float = create_format_float_or("_", ".", 2, "NULL")
+        self.assertEqual('12_345.68', format_float(12345.678))
+
+        format_float = create_format_float_or("", ",", 2, "NULL")
+        self.assertEqual('12345,68', format_float(12345.678))
+
+        format_float = create_format_float_or("", ".", 2, "NULL")
+        self.assertEqual('12345.68', format_float(12345.678))
+
+    def test_format_decimal(self):
+        format_decimal = create_format_decimal_or("_", ",", 2, "NULL")
+        self.assertEqual('12_345,68', format_decimal(Decimal("12345.678")))
+        self.assertEqual('-12_345,68', format_decimal(Decimal("-12345.678")))
+        self.assertEqual('NULL', format_decimal(None))
+
+        format_decimal = create_format_decimal_or("\xa0", ",", 2, "NULL")
+        self.assertEqual('12\xa0345,68', format_decimal(Decimal("12345.678")))
+        self.assertEqual('-12\xa0345,68', format_decimal(Decimal("-12345.678")))
+        self.assertEqual('NULL', format_decimal(None))
+
+        format_decimal = create_format_decimal_or("_", ",", -1, "NULL")
+        self.assertEqual('12_345,0', format_decimal(Decimal("12345")))
+        self.assertEqual('12_345,0', format_decimal(Decimal("12345.0")))
+        self.assertEqual('12_345,678', format_decimal(Decimal("12345.678")))
+        self.assertEqual('NULL', format_decimal(None))
+
+    def test_format_date(self):
+        format_date = create_format_date_or("%d/%m/%Y", "NULL")
+        self.assertEqual('29/10/2025', format_date(dt.date(2025, 10, 29)))
+        self.assertEqual("NULL", format_date(None))
+
+    def test_format_datetime(self):
+        format_datetime = create_format_datetime_or("%d/%m/%Y %H:%M:%S", "NULL")
+        self.assertEqual('29/10/2025 19:50:04', format_datetime(dt.datetime(2025, 10, 29, 19, 50, 4)))
+        self.assertEqual("NULL", format_datetime(None))
+
+    def test_format_time(self):
+        format_time = create_format_time_or("%H:%M:%S", "NULL")
+        self.assertEqual('19:50:04', format_time(dt.time(19, 50, 4)))
+        self.assertEqual("NULL", format_time(None))
 
 
 if __name__ == '__main__':

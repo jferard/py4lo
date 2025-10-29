@@ -27,13 +27,15 @@ It allows to:
 * get the current directory
 """
 import configparser
+import datetime as dt
 import logging
 import sys
+from decimal import Decimal
 # mypy: disable-error-code="import-untyped"
 from pathlib import Path
 from typing import (
     Union, Any, cast, List, Optional, TextIO, Iterable, Mapping, Callable,
-    Generic, TypeVar)
+    TypeVar)
 
 from py4lo_typing import (
     UnoXScriptContext, StrPath, lazy)
@@ -405,7 +407,257 @@ def sanitize(s: str) -> str:
 
 
 T = TypeVar("T")
+U = TypeVar("U")
 
 
-def secure_strip(v: Generic[T]) -> Generic[T]:
+def secure_strip(v: T) -> Union[str, T]:
     return v.strip() if isinstance(v, str) else v
+
+
+def create_parse_int_or(thousands_seps: str, default: T) -> Callable[
+    [str], Union[int, T]]:
+    trans_table = str.maketrans("", "", thousands_seps)
+
+    def func(int_str: str) -> Union[int, T]:
+        int_str = int_str.translate(trans_table)
+        try:
+            return int(int_str)
+        except ValueError:
+            return default
+
+    return func
+
+
+def create_parse_float_or(
+        thousands_seps: str, decimal_seps: str, default: T
+) -> Callable[[str], Union[float, T]]:
+    return _create_parse_number_or(float, thousands_seps, decimal_seps, default)
+
+
+def create_parse_decimal_or(
+        thousands_seps: str, decimal_seps: str, default: T
+) -> Callable[[str], Union[Decimal, T]]:
+    return _create_parse_number_or(
+        Decimal, thousands_seps, decimal_seps, default)
+
+
+def _create_parse_number_or(
+        target: Callable[[str], U], thousands_seps: str,
+        decimal_seps: str, default: T
+) -> Callable[[str], Union[U, T]]:
+    th_trans_table = str.maketrans("", "", thousands_seps)
+    dec_trans_table = str.maketrans(decimal_seps, "." * len(decimal_seps))
+
+    def func(number_str: str) -> Union[U, T]:
+        number_str = number_str.translate(th_trans_table)
+        number_str = number_str.translate(dec_trans_table)
+        try:
+            return target(number_str)
+        except (ValueError, ArithmeticError):
+            return default
+
+    return func
+
+
+def create_parse_date_or(
+        format_str: str, default: T) -> Callable[[str], Union[dt.date, T]]:
+    def func(date_string: str) -> Union[dt.date, T]:
+        try:
+            d = dt.datetime.strptime(date_string, format_str)
+        except ValueError:
+            return default
+        else:
+            return d.date()
+
+    return func
+
+
+def create_parse_datetime_or(format_str: str, default: T) -> Union[dt.date, T]:
+    def func(date_string: str) -> Union[dt.date, T]:
+        try:
+            return dt.datetime.strptime(date_string, format_str)
+        except ValueError:
+            return default
+
+    return func
+
+
+def create_parse_time_or(format_str: str, default: T) -> Union[dt.date, T]:
+    def func(date_string: str) -> Union[dt.date, T]:
+        try:
+            d = dt.datetime.strptime(date_string, format_str)
+        except ValueError:
+            return default
+        else:
+            return d.time()
+
+    return func
+
+
+def create_format_int_or(thousands_sep: str, default: T) -> Callable[
+    [Optional[int]], Union[str, T]]:
+    if thousands_sep in (",", "_"):
+        format_spec = thousands_sep + "d"
+
+        def func(value: Optional[int]) -> Union[str, T]:
+            if value is None:
+                return default
+            return format(value, format_spec)
+
+    else:
+        def func(value: Optional[int]) -> Union[str, T]:
+            if value is None:
+                return default
+            return format(value, "_d").replace("_", thousands_sep)
+
+    return func
+
+
+def create_format_float_or(
+        thousands_sep: str, decimal_sep: str,
+        decimals: int, default: T
+) -> Callable[[Optional[float]], Union[str, T]]:
+    if thousands_sep == "":
+        if decimal_sep == ".":
+            if decimals < 0:
+                apply = str
+            else:
+                format_spec = ".{}f".format(decimals)
+
+                def apply(value: int) -> str:
+                    return format(value, format_spec)
+        else: # a decimal sep
+            if decimals < 0:
+                def apply(value: int) -> str:
+                    return str(value).replace(".", decimal_sep)
+            else:
+                format_spec = ".{}f".format(decimals)
+
+                def apply(value: int) -> str:
+                    return format(value, format_spec).replace(".", decimal_sep)
+    elif thousands_sep in (",", "_"):
+        if decimal_sep == ".":
+            if decimals < 0:
+                format_spec = "{}f".format(thousands_sep)
+
+                def apply(value: int) -> str:
+                    return format(value, format_spec).rstrip("0")
+            else:
+                format_spec = "{}.{}f".format(thousands_sep, decimals)
+
+                def apply(value: int) -> str:
+                    return format(value, format_spec)
+        else:
+            if decimals < 0:
+                format_spec = "{}f".format(thousands_sep)
+
+                def apply(value: int) -> str:
+                    return format(value, format_spec).rstrip("0").replace(".", decimal_sep)
+            else:
+                format_spec = "{}.{}f".format(thousands_sep, decimals)
+
+                def apply(value: int) -> str:
+                    return format(value, format_spec).replace(".", decimal_sep)
+    else:
+        if decimal_sep == ".":
+            if decimals < 0:
+                def apply(value: int) -> str:
+                    return format(value, "_f").rstrip("0").replace("_", thousands_sep)
+            else:
+                format_spec = "_.{}f".format(decimals)
+
+                def apply(value: int) -> str:
+                    return format(value, format_spec).replace("_", thousands_sep)
+        else:
+            if decimals < 0:
+                def apply(value: int) -> str:
+                    return format(value, "_f").rstrip("0").replace("_", thousands_sep).replace(".", decimal_sep)
+            else:
+                format_spec = "_.{}f".format(decimals)
+
+                def apply(value: int) -> str:
+                    return format(value, format_spec).replace("_", thousands_sep).replace(".", decimal_sep)
+
+    def func(value: Optional[int]) -> Union[str, T]:
+        if value is None:
+            return default
+        return apply(value)
+
+    return func
+
+
+DECIMAL_ZERO = Decimal(0)
+
+
+def create_format_decimal_or(
+        thousands_sep: str, decimal_sep: str,
+        decimals: int, default: T
+) -> Callable[[Optional[Decimal]], Union[str, T]]:
+    if thousands_sep in (",", "_"):
+        format_spec = thousands_sep + "d"
+
+        def format_int(value: int) -> str:
+            return format(value, format_spec)
+
+    else:
+        def format_int(value: int) -> str:
+            return format(value, "_d").replace("_", thousands_sep)
+
+    if decimals >= 0:
+        def func(value: Optional[Decimal]) -> Union[str, T]:
+            if value is None:
+                return default
+
+            int_value = int(value // 1)
+            dec_value = abs(value % 1)
+            dec_value = round(dec_value * 10 ** decimals)
+            return "{}{}{}".format(
+                format_int(int_value), decimal_sep, dec_value)
+    else:
+        def func(value: Optional[Decimal]) -> Union[str, T]:
+            if value is None:
+                return default
+
+            int_value = int(value // 1)
+            dec_value = abs(value % 1)
+            if dec_value == DECIMAL_ZERO:
+                return "{}{}0".format(
+                    format_int(int_value), decimal_sep)
+            else:
+                return "{}{}{}".format(
+                    format_int(int_value), decimal_sep, str(dec_value)[2:])
+
+    return func
+
+
+def create_format_date_or(
+        format_str: str, default: T
+) -> Callable[[Optional[dt.date]], Union[str, T]]:
+    def func(value: Optional[dt.date]) -> Union[str, T]:
+        if value is None:
+            return default
+        return value.strftime(format_str)
+
+    return func
+
+
+def create_format_datetime_or(
+        format_str: str, default: T
+) -> Callable[[Optional[dt.datetime]], Union[str, T]]:
+    def func(value: Optional[dt.datetime]) -> Union[str, T]:
+        if value is None:
+            return default
+        return value.strftime(format_str)
+
+    return func
+
+
+def create_format_time_or(
+        format_str: str, default: T
+) -> Callable[[Optional[dt.time]], Union[str, T]]:
+    def func(value: Optional[dt.time]) -> Union[str, T]:
+        if value is None:
+            return default
+        return value.strftime(format_str)
+
+    return func
