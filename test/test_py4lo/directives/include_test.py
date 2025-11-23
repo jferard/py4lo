@@ -1,5 +1,5 @@
 #  Py4LO - Python Toolkit For LibreOffice Calc
-#     Copyright (C) 2016-2024 J. Férard <https://github.com/jferard>
+#     Copyright (C) 2016-2025 J. Férard <https://github.com/jferard>
 #
 #     This file is part of Py4LO.
 #
@@ -75,7 +75,7 @@ class TestInclude(unittest.TestCase):
         self.assertTrue(begin.startswith('# begin py4lo include: '))
         self.assertEqual('''# -*- coding: utf-8 -*-
 """Py4LO - Python Toolkit For LibreOffice Calc
-      Copyright (C) 2016-2024 J. Férard <https://github.com/jferard>
+      Copyright (C) 2016-2025 J. Férard <https://github.com/jferard>
 
    This file is part of Py4LO.
 
