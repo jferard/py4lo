@@ -268,3 +268,40 @@ class TemplateDescription:
     FILEOPEN_PREVIEW = 11
     FILEOPEN_LINK_PLAY = 12
     FILEOPEN_LINK_PREVIEW_IMAGE_ANCHOR = 13
+
+
+class DataPilotFieldOrientation:
+    HIDDEN = 0
+    ROW = 1
+    COLUMN = 2
+    DATA = 3
+    PAGE = 4
+
+
+class DataPilotFieldGroupBy:
+    SECONDS = 1
+    MINUTES = 2
+    HOURS = 4
+    DAYS = 8
+    MONTHS = 16
+    QUARTERS = 32
+    YEARS = 64
+
+
+class DataPilotFieldSortMode:
+    NONE = 0
+    MANUAL = 1
+    NAME = 2
+    DATA = 3
+
+
+class DataPilotFieldLayoutMode:
+    TABULAR_LAYOUT = 0
+    OUTLINE_SUBTOTALS_TOP = 1
+    OUTLINE_SUBTOTALS_BOTTOM = 2
+    COMPACT_LAYOUT = 3
+
+
+class DataPilotFieldShowItemsMode:
+    FROM_TOP = 0
+    FROM_BOTTOM = 1
