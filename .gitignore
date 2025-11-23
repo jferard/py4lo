@@ -17,6 +17,7 @@ examples/**/*.log
 !examples/csv/csv-opener.ods
 !examples/sqlite3/sqlite3.ods
 !examples/dialog/dialog.ods
+!examples/data_pilot/data_pilot.ods
 examples/*.ods#
 examples/**/target
 examples/**/target/*

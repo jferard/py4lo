@@ -1,0 +1,9 @@
+# py4lo.toml file
+
+python_version = "3.8"
+lo_exe = "/usr/bin/soffice"
+python_exe = "/usr/bin/python3"
+log_level = "DEBUG"
+
+[src]
+source_ods_file = "{project}/data_pilot.ods"
