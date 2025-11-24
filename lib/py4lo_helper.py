@@ -1353,7 +1353,10 @@ def find_or_create_number_format_style(oDoc: UnoSpreadsheetDocument, fmt: str,
         oLocale = locale
     format_key = oFormats.queryKey(fmt, oLocale, True)
     if format_key == -1:
-        format_key = oFormats.addNew(fmt, oLocale)
+        try:
+            format_key = oFormats.addNew(fmt, oLocale)
+        except:
+            format_key = 0
 
     return format_key
 
@@ -1408,6 +1411,8 @@ def column_optimal_width(oColumn: UnoColumn, min_width: int = 2 * 1000,
     @param min_width: the minimum width
     @param max_width: the maximum width
     """
+    oColumn.OptimalWidth = True
+
     if oColumn.Width < min_width:
         oColumn.OptimalWidth = False
         oColumn.Width = min_width
@@ -2456,7 +2461,7 @@ class DatesHelper:
         elif isinstance(a_date, dt.date):
             a_date = dt.datetime(a_date.year, a_date.month, a_date.day)
         else:
-            raise ValueError()
+            raise ValueError(a_date)
         return (a_date - self._origin).days
 
     def date_to_float(self,
