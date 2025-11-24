@@ -1355,7 +1355,7 @@ def find_or_create_number_format_style(oDoc: UnoSpreadsheetDocument, fmt: str,
     if format_key == -1:
         try:
             format_key = oFormats.addNew(fmt, oLocale)
-        except:
+        except: # nosec: B110 # noqa: E722
             format_key = 0
 
     return format_key
