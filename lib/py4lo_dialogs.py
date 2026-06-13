@@ -58,6 +58,7 @@ from py4lo_helper.
 import datetime as dt
 import functools
 import logging
+import sys
 # mypy: disable-error-code="import-untyped,import-not-found"
 from collections import namedtuple
 from enum import Enum
@@ -543,6 +544,14 @@ def input_box(msg_title: str, msg_text: str, msg_default="", parent_win=None,
 FileFilter = NamedTuple("FileFilter", [("title", str), ("filter", str)])
 
 
+if sys.platform == "win32":
+    FILEPICKER_SERVICE = "com.sun.star.ui.dialogs.FilePicker"
+    FOLDERPICKER_SERVICE = "com.sun.star.ui.dialogs.FolderPicker"
+else:
+    FILEPICKER_SERVICE = "com.sun.star.ui.dialogs.OfficeFilePicker"
+    FOLDERPICKER_SERVICE = "com.sun.star.ui.dialogs.OfficeFolderPicker"
+
+
 def file_dialog(
         title: str, filters: Optional[List[FileFilter]] = None,
         display_dir: StrPath = "", single: bool = True,
@@ -564,9 +573,11 @@ def file_dialog(
     @param template_description: the template of the file picker
     @return: if single is True, url or None, else a list of urls
     """
-    oFilePicker = create_uno_service("com.sun.star.ui.dialogs.FilePicker")
-    if template_description is not None:
-        oFilePicker.initialize((template_description,))
+    oFilePicker = create_uno_service(FILEPICKER_SERVICE)
+    if template_description is None:
+        template_description = TemplateDescription.FILEOPEN_SIMPLE
+
+    oFilePicker.initialize((template_description,))
 
     if filters is not None:
         for flt in filters:
@@ -602,7 +613,7 @@ def folder_dialog(title: str,
     @param title: the title of the dialog
     @return: url or None
     """
-    oFolder = create_uno_service("com.sun.star.ui.dialogs.FolderPicker")
+    oFolder = create_uno_service(FOLDERPICKER_SERVICE)
     oFolder.Title = title
     oFolder.DisplayDirectory = str(display_dir)
     if oFolder.execute() == ExecutableDialogResults.OK:
