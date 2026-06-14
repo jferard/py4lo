@@ -27,7 +27,7 @@ from typing import Iterable, Union, Dict, Mapping
 
 from py4lo_helper import (uno_path_to_url, create_uno_service, to_items,
                           remove_all)
-from py4lo_typing import UnoObject, UnoService, lazy
+from py4lo_typing import UnoObject, UnoService, lazy, UnoNameAccess
 
 try:
     class DataType:
@@ -176,7 +176,7 @@ class BaseDB:
 
         return BaseTableBuilder(oConnection, name)
 
-    def get_tables(self) -> UnoObject:
+    def get_tables(self) -> UnoNameAccess:
         """
         @return: the table container (a XNameAccess)
         """
@@ -302,7 +302,7 @@ class BaseDB:
                 return True
         return False
 
-    def _drop_table(self, oTables: UnoObject, name: str):
+    def _drop_table(self, oTables: UnoNameAccess, name: str):
         oTable = oTables.getByName(name)
         drop_all(oTable.Keys)
         drop_all(oTable.Indexes)

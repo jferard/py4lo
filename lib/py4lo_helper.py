@@ -39,7 +39,8 @@ from py4lo_typing import (UnoSpreadsheetDocument, UnoController, UnoContext,
                           UnoPropertyValue, DATA_ROW, UnoXScriptContext,
                           UnoColumn, UnoStruct, UnoEnum, UnoRow, DATA_VALUE,
                           UnoPropertyValues, UnoTextRange, lazy, UnoControl,
-                          UnoDispatcher, UnoDesktop)
+                          UnoDispatcher, UnoDesktop, UnoNameAccess, UnoIndexAccess, UnoEnumerable, UnoDateStruct,
+                          UnoRanges, UnoSizeStruct, UnoOfficeDocument, UnoSheets, UnoText)
 
 try:
     # noinspection PyUnresolvedReferences
@@ -100,6 +101,7 @@ try:
     class FontSlant:
         # noinspection PyUnresolvedReferences
         from com.sun.star.awt.FontSlant import (NONE, OBLIQUE, ITALIC)
+
 
     class DataPilotFieldOrientation:
         # noinspection PyUnresolvedReferences
@@ -258,8 +260,8 @@ class _ObjectProvider:
         @param component_ctxt: the component context
         @return: the object provider
         """
-        desktop = component_ctxt.getByName(
-            "/singletons/com.sun.star.frame.theDesktop")
+        desktop = cast(UnoDesktop, component_ctxt.getByName(
+            "/singletons/com.sun.star.frame.theDesktop"))
         doc = cast(UnoSpreadsheetDocument, desktop.getCurrentComponent())
         controller = doc.CurrentController
         frame = controller.Frame
@@ -375,6 +377,8 @@ class _ObjectProvider:
 
 def get_provider() -> _ObjectProvider:
     """For use in other modules, inside an LibreOffice extension"""
+    if provider is None:
+        raise ValueError("Provider not set")
     return provider
 
 
@@ -387,7 +391,7 @@ def create_uno_service(sname: str, args: Optional[List[Any]] = None,
     @param ctxt: optional context
     @return: the service
     """
-    sm = provider.service_manager
+    sm = get_provider().service_manager
     if ctxt is None:
         return sm.createInstance(sname)
     else:
@@ -414,7 +418,7 @@ uno_service = create_uno_service
 uno_service_ctxt = create_uno_service_ctxt
 
 
-def to_iter(o: UnoObject) -> Iterator[UnoObject]:
+def to_iter[S](o: Union[UnoIndexAccess[S], UnoEnumerable[S]]) -> Iterator[S]:
     """
     Return an iterator from a com.sun.star.container.XIndexAccess or a
     com.sun.star.container.XEnumerationAccess.
@@ -441,7 +445,7 @@ def to_iter(o: UnoObject) -> Iterator[UnoObject]:
             raise TypeError(repr(o))
 
 
-def to_enumerate(o: UnoObject) -> Iterator[Tuple[int, UnoObject]]:
+def to_enumerate[S](o: Union[UnoIndexAccess[S], UnoEnumerable[S]]) -> Iterator[Tuple[int, S]]:
     """
     Return an iterator from a com.sun.star.container.XIndexAccess or a
     com.sun.star.container.XEnumerationAccess object.
@@ -456,12 +460,12 @@ def to_enumerate(o: UnoObject) -> Iterator[Tuple[int, UnoObject]]:
     @return: an enumerate iterator (number, value)
     """
     try:
-        count = o.Count  # type: ignore[union-attr]
+        count = o.Count
         for i in range(count):
-            yield i, o.getByIndex(i)  # type: ignore[union-attr]
+            yield i, o.getByIndex(i)
     except AttributeError:
         try:
-            oEnum = o.createEnumeration()  # type: ignore[union-attr]
+            oEnum = o.createEnumeration()
             i = 0
             while oEnum.hasMoreElements():
                 yield i, oEnum.nextElement()
@@ -470,7 +474,7 @@ def to_enumerate(o: UnoObject) -> Iterator[Tuple[int, UnoObject]]:
             raise TypeError(repr(o))
 
 
-def to_dict(oXNameAccess: UnoObject) -> Mapping[str, UnoObject]:
+def to_dict[S](oXNameAccess: UnoNameAccess[S]) -> Mapping[str, S]:
     """
     Return a dictionary from a com.sun.star.container.XNameAccess object.
 
@@ -491,7 +495,7 @@ def to_dict(oXNameAccess: UnoObject) -> Mapping[str, UnoObject]:
         raise TypeError(repr(oXNameAccess) + str(e))
 
 
-def to_items(oXNameAccess: UnoObject) -> Iterator[Tuple[str, UnoObject]]:
+def to_items[S](oXNameAccess: UnoNameAccess[S]) -> Iterator[Tuple[str, S]]:
     """
     Return a dictionary from a com.sun.star.container.XNameAccess object.
 
@@ -513,7 +517,7 @@ def to_items(oXNameAccess: UnoObject) -> Iterator[Tuple[str, UnoObject]]:
         raise TypeError(repr(oXNameAccess))
 
 
-def remove_all(o: UnoObject):
+def remove_all(o: Union[UnoIndexAccess, UnoNameAccess]):
     """
     Remove all elements from a container (com.sun.star.container.XIndexContainer
     or com.sun.star.container.XNameContainer)
@@ -710,7 +714,7 @@ def make_locale(language: str = "", region: str = "",
 
 
 def make_border(color: int, width: int,
-                style: BorderLineStyle = BorderLineStyle.SOLID) -> UnoStruct:
+                style: int = BorderLineStyle.SOLID) -> UnoStruct:
     """
     Create a border object
 
@@ -753,7 +757,7 @@ def to_uno_date(date: dt.date) -> UnoStruct:
     return d
 
 
-def from_uno_date(uno_date: UnoStruct) -> dt.date:
+def from_uno_date(uno_date: UnoDateStruct) -> dt.date:
     """
     Create a date from a com.sun.star.util.Date struct.
     :param uno_date: the UNO date
@@ -839,10 +843,10 @@ def copy_range(oSourceRange: UnoRange):
     oSourceDoc = parent_doc(oSourceRange)
     oSourceController = oSourceDoc.CurrentController
     oSourceController.select(oSourceRange)
-    provider.dispatcher.executeDispatch(
+    get_provider().dispatcher.executeDispatch(
         oSourceController, ".uno:Copy", "", 0, [])
     # unselect
-    oRanges = oSourceDoc.createInstance("com.sun.star.sheet.SheetCellRanges")
+    oRanges = cast(UnoRanges, oSourceDoc.createInstance("com.sun.star.sheet.SheetCellRanges"))
     oSourceController.select(oRanges)
 
 
@@ -866,8 +870,9 @@ def paste_range(oDestSheet: UnoSheet, oDestAddress: UnoCellAddress,
     oDestCell = oDestSheet.getCellByPosition(oDestAddress.Column,
                                              oDestAddress.Row)
     oDestController.select(oDestCell)
+    dispatcher = get_provider().dispatcher
     if formulas:
-        provider.dispatcher.executeDispatch(
+        dispatcher.executeDispatch(
             oDestController, ".uno:Paste", "", 0, [])
     else:
         # TODO: propose more options
@@ -875,10 +880,10 @@ def paste_range(oDestSheet: UnoSheet, oDestAddress: UnoCellAddress,
             "Flags": "SVDT", "FormulaCommand": 0, "SkipEmptyCells": False,
             "Transpose": False, "AsLink": False, "MoveMode": 4
         })
-        provider.dispatcher.executeDispatch(
+        dispatcher.executeDispatch(
             oDestController, ".uno:InsertContents", "", 0, args)
     # unselect
-    oRanges = oDestDoc.createInstance("com.sun.star.sheet.SheetCellRanges")
+    oRanges = cast(UnoRanges, oDestDoc.createInstance("com.sun.star.sheet.SheetCellRanges"))
     oDestController.select(oRanges)
 
 
@@ -1312,7 +1317,7 @@ def get_formula_conditional_entry_values(
 
 
 def get_conditional_entry_values(
-        formula1: str, formula2: str, operator: str, style_name: str,
+        formula1: str, formula2: str, operator: int, style_name: str,
         oSrcAddress: UnoCellAddress) -> Tuple[UnoPropertyValue, ...]:
     """
     Return a condition format entry. It seems surpring, but we don't build
@@ -1333,9 +1338,10 @@ def get_conditional_entry_values(
     })
 
 
-def find_or_create_number_format_style(oDoc: UnoSpreadsheetDocument, fmt: str,
-                                       locale: Optional[UnoStruct] = None
-                                       ) -> int:
+def find_or_create_number_format_style(
+        oDoc: UnoSpreadsheetDocument, fmt: str,
+        locale: Optional[UnoStruct] = None
+) -> int:
     """
     Get the key for a number format. If the format does not exist, create it.
 
@@ -1355,7 +1361,7 @@ def find_or_create_number_format_style(oDoc: UnoSpreadsheetDocument, fmt: str,
     if format_key == -1:
         try:
             format_key = oFormats.addNew(fmt, oLocale)
-        except: # nosec: B110 # noqa: E722
+        except:  # nosec: B110 # noqa: E722
             format_key = 0
 
     return format_key
@@ -1370,10 +1376,10 @@ def create_filter(oRange: UnoRange):
     oDoc = parent_doc(oRange)
     oController = oDoc.CurrentController
     oController.select(oRange)
-    provider.dispatcher.executeDispatch(
+    get_provider().dispatcher.executeDispatch(
         oController, ".uno:DataFilterAutoFilter", "", 0, tuple())
     # unselect
-    oRanges = oDoc.createInstance("com.sun.star.sheet.SheetCellRanges")
+    oRanges = cast(UnoRanges, oDoc.createInstance("com.sun.star.sheet.SheetCellRanges"))
     oController.select(oRanges)
 
 
@@ -1453,9 +1459,9 @@ def get_page_style(oSheet: UnoSheet) -> UnoService:
     """
     page_style_name = oSheet.PageStyle
     oDoc = parent_doc(oSheet)
-    oStyle = oDoc.StyleFamilies.getByName("PageStyles").getByName(
-        page_style_name)
-    return oStyle  # type: ignore[return-value]
+    oPageStyles = cast(UnoNameAccess, oDoc.StyleFamilies.getByName("PageStyles"))
+    oStyle = oPageStyles.getByName(page_style_name)
+    return oStyle
 
 
 def set_paper(oSheet: UnoSheet):
@@ -1469,7 +1475,7 @@ def set_paper(oSheet: UnoSheet):
     set_paper_to_size(oPageStyle, size)
 
 
-def set_paper_to_size(oPageStyle: UnoService, size: UnoStruct):
+def set_paper_to_size(oPageStyle: UnoService, size: UnoSizeStruct):
     """
     Make the paper of this style match this area.
 
@@ -1570,7 +1576,7 @@ class Target(str, Enum):
 
 def open_document(filename: Union[str, Path], target: str = Target.BLANK,
                   frame_flags=FrameSearchFlag.AUTO,
-                  **kwargs) -> UnoSpreadsheetDocument:
+                  **kwargs) -> UnoOfficeDocument:
     """
     Open a document in LibreOffice.
 
@@ -1605,10 +1611,7 @@ def open_document(filename: Union[str, Path], target: str = Target.BLANK,
         params = make_pvs(kwargs)
     else:
         params = ()
-    return cast(
-        UnoSpreadsheetDocument,
-        provider.desktop.loadComponentFromURL(url, target, frame_flags, params)
-    )
+    return provider.desktop.loadComponentFromURL(url, target, frame_flags, params)
 
 
 """@deprecated use open_document"""
@@ -1625,7 +1628,7 @@ class SheetsHelper:
     def create(oDoc: UnoSpreadsheetDocument) -> "SheetsHelper":
         return SheetsHelper(oDoc.Sheets)
 
-    def __init__(self, oSheets):
+    def __init__(self, oSheets: UnoSheets):
         self._oSheets = oSheets
 
     @staticmethod
@@ -1675,7 +1678,7 @@ class SheetsHelper:
             name = "{}-{}".format(clean_base_name, i)
             if not self._oSheets.hasByName(name):
                 return name
-        raise NameError("Impossible d'ajouter la feuille {}".format(name))
+        raise NameError("Impossible d'ajouter la feuille {}".format(clean_base_name))
 
     def get_or_append_sheet(self, name: str) -> UnoSheet:
         """
@@ -1709,7 +1712,7 @@ class SheetsHelper:
 def doc_builder(
         url: NewDocumentUrl = NewDocumentUrl.Calc,
         taget_frame_name: Target = Target.BLANK,
-        search_flags: FrameSearchFlag = FrameSearchFlag.AUTO,
+        search_flags: int = FrameSearchFlag.AUTO,
         pvs: Optional[UnoPropertyValues] = None
 ) -> "DocBuilder":
     """
@@ -1729,7 +1732,7 @@ def doc_builder(
 
 def new_doc(url: NewDocumentUrl = NewDocumentUrl.Calc,
             taget_frame_name: Target = Target.BLANK,
-            search_flags: FrameSearchFlag = FrameSearchFlag.AUTO,
+            search_flags: int = FrameSearchFlag.AUTO,
             pvs: Optional[UnoPropertyValues] = None) -> UnoSpreadsheetDocument:
     """
     Create a blank new doc
@@ -1758,23 +1761,22 @@ class DocBuilder:
 
     def __init__(
             self, url: NewDocumentUrl, target_frame_name: Target,
-            search_flags: FrameSearchFlag,
-            pvs: UnoPropertyValues):
+            search_flags: int, pvs: UnoPropertyValues):
         """Create a blank new doc"""
         self._url = url
         self._target_frame_name = target_frame_name
         self._search_flags = search_flags
         self._pvs = pvs
-        self._sheet_names = cast(List[str], None)
+        self._sheet_names = lazy(List[str])
         self._expand_if_necessary = True
         self._trunc_if_necessary = True
-        self._apply_func = cast(Callable[[UnoSheet], None], None)
-        self._apply_funcs = cast(List[Callable[[UnoSheet], None]], None)
-        self._make_func = cast(Callable[[UnoSheet], None], None)
-        self._duplicate_sheet_names = cast(List[str], None)
+        self._apply_func = lazy(Callable[[UnoSheet], None])
+        self._apply_funcs = lazy(List[Callable[[UnoSheet], None]])
+        self._make_func = lazy(Callable[[UnoSheet], None])
+        self._duplicate_sheet_names = lazy(List[str])
         self._remove = True
-        self._duplicate_to = cast(int, None)
-        self._final_sheet_count = cast(int, None)
+        self._duplicate_to = lazy(int)
+        self._final_sheet_count = lazy(int)
 
     def build(self) -> UnoSpreadsheetDocument:
         oDoc = cast(
@@ -1824,7 +1826,7 @@ class DocBuilder:
         except StopIteration:  # it
             if s > initial_count:
                 raise AssertionError("s={} vs oSheets.Count={}".format(
-                    s, oSheets.getCount()))
+                    s, oSheets.Count))
             if self._trunc_if_necessary:
                 self._trunc_to_count(oDoc, s)
 
@@ -1992,7 +1994,7 @@ _ApplyType = Callable[
 
 
 def read_options(
-        oSheet: UnoSpreadsheetDocument, aAddress: UnoRangeAddress,
+        oSheet: UnoSheet, aAddress: UnoRangeAddress,
         apply: Optional[_ApplyType] = None
 ) -> Mapping[str, Union[DATA_ROW, DATA_VALUE]]:
     """
@@ -2163,6 +2165,8 @@ class _Inspector:
 
 
 def get_inspector() -> _Inspector:
+    if _inspector is None:
+        raise ValueError("inspector not initialized")
     return _inspector
 
 
@@ -2231,7 +2235,7 @@ class Transferable(unohelper.Base, XTransferable):
                                    HumanPresentableName=self._flavor[1])
         return [flavor]
 
-    def isDataFlavorSupported(self, aFlavor: UnoObject) -> bool:
+    def isDataFlavorSupported(self, aFlavor: UnoStruct) -> bool:
         """see. com.sun.star.datatransfer.XTransferable.isDataFlavorSupported"""
         return aFlavor.MimeType == self._flavor[0]
 
@@ -2255,7 +2259,7 @@ class HTMLConverter:
     def __init__(self, html_line_break: str = "<br>"):
         self._html_line_break = html_line_break
 
-    def convert(self, oTextRange: UnoTextRange) -> str:
+    def convert(self, oText: UnoText) -> str:
         """
         Convert a sequence of chars in a text range to HTML
 
@@ -2264,7 +2268,7 @@ class HTMLConverter:
         """
         html = self._html_line_break.join(
             self._par_to_html(par_text_range) for par_text_range in
-            to_iter(oTextRange))
+            to_iter(oText))
         return html
 
     def _par_to_html(self, par_text_range: UnoTextRange) -> str:
@@ -2771,8 +2775,8 @@ def col_letters_to_pos(letters: str) -> int:
     """
     alpha_positions = [ord(letter.upper()) - ORD_A for letter in letters]
     if not (
-        alpha_positions
-        and all(0 <= alpha_pos <= 25 for alpha_pos in alpha_positions)
+            alpha_positions
+            and all(0 <= alpha_pos <= 25 for alpha_pos in alpha_positions)
     ):
         raise ValueError()
 
@@ -3177,17 +3181,18 @@ class FieldHelper:
     """
     A field helper. Don't use directly.
     """
+
     def __init__(self, field_name: str, oField: UnoService):
         self._field_name = field_name
         self._oField = oField
 
     def make_row_or_column(
-        self, orientation: int,
-        groups: Union[NameGroups, DateGroups, None],
-        sort: Optional[UnoStruct],
-        subtotals: Optional[Tuple[GeneralFunction2, ...]],
-        layout: UnoStruct, auto_show: UnoStruct,
-        show_empty: bool,
+            self, orientation: int,
+            groups: Union[NameGroups, DateGroups, None],
+            sort: Optional[UnoStruct],
+            subtotals: Optional[Tuple[GeneralFunction2, ...]],
+            layout: UnoStruct, auto_show: UnoStruct,
+            show_empty: bool,
     ):
         """
         Create a row or a colmun field
