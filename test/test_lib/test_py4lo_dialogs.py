@@ -175,6 +175,7 @@ class Py4LODialogsTestCase(unittest.TestCase):
         self.assertEqual("baz", oPicker.DisplayDirectory)
         self.assertFalse(oPicker.MultiSelectionMode)
         self.assertEqual([
+            mock.call.initialize((0,)),
             mock.call.appendFilter('bar', '*.bar'), mock.call.execute(),
         ], oPicker.mock_calls)
         self.assertEqual("foo", actual)
@@ -195,6 +196,7 @@ class Py4LODialogsTestCase(unittest.TestCase):
         self.assertEqual("baz", oPicker.DisplayDirectory)
         self.assertFalse(oPicker.MultiSelectionMode)
         self.assertEqual([
+            mock.call.initialize((0,)),
             mock.call.execute(),
         ], oPicker.mock_calls)
         self.assertEqual("foo", actual)
@@ -215,6 +217,7 @@ class Py4LODialogsTestCase(unittest.TestCase):
         self.assertEqual("baz", oPicker.DisplayDirectory)
         self.assertFalse(oPicker.MultiSelectionMode)
         self.assertEqual([
+            mock.call.initialize((0,)),
             mock.call.appendFilter('bar', '*.bar'), mock.call.execute()
         ], oPicker.mock_calls)
         self.assertIsNone(actual)
@@ -236,6 +239,7 @@ class Py4LODialogsTestCase(unittest.TestCase):
         self.assertEqual("baz", oPicker.DisplayDirectory)
         self.assertTrue(oPicker.MultiSelectionMode)
         self.assertEqual([
+            mock.call.initialize((0,)),
             mock.call.appendFilter('bar', '*.bar'), mock.call.execute(),
         ], oPicker.mock_calls)
         self.assertEqual(["foo", "bar"], actual)
@@ -257,6 +261,7 @@ class Py4LODialogsTestCase(unittest.TestCase):
         self.assertEqual("baz", oPicker.DisplayDirectory)
         self.assertTrue(oPicker.MultiSelectionMode)
         self.assertEqual([
+            mock.call.initialize((0,)),
             mock.call.appendFilter('bar', '*.bar'), mock.call.execute()
         ], oPicker.mock_calls)
         self.assertEqual([], actual)
