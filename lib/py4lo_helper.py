@@ -37,93 +37,93 @@ from py4lo_typing import (UnoSpreadsheetDocument, UnoController, UnoContext,
                           UnoService, UnoSheet, UnoRangeAddress, UnoRange,
                           UnoCell, UnoObject, DATA_ARRAY, UnoCellAddress,
                           UnoPropertyValue, DATA_ROW, UnoXScriptContext,
-                          UnoColumn, UnoStruct, UnoEnum, UnoRow, DATA_VALUE,
+                          UnoColumn, UnoStruct, UnoEnumeration, UnoRow, DATA_VALUE,
                           UnoPropertyValues, UnoTextRange, lazy, UnoControl,
                           UnoDispatcher, UnoDesktop, UnoNameAccess, UnoIndexAccess, UnoEnumerable, UnoDateStruct,
                           UnoRanges, UnoSizeStruct, UnoOfficeDocument, UnoSheets, UnoText)
 
 try:
-    # noinspection PyUnresolvedReferences
+    # noinspection PyUnresolvedReferences,PyPackageRequirements
     import unohelper
 
-    # noinspection PyUnresolvedReferences
+    # noinspection PyUnresolvedReferences,PyPackageRequirements
     import uno
 
-    # noinspection PyUnresolvedReferences
+    # noinspection PyUnresolvedReferences,PyPackageRequirements
     from com.sun.star.datatransfer import XTransferable
 
 
     class FrameSearchFlag:
-        # noinspection PyUnresolvedReferences
+        # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.frame.FrameSearchFlag import (
             AUTO, PARENT, SELF, CHILDREN, CREATE, SIBLINGS, TASKS, ALL, GLOBAL)
 
 
     class BorderLineStyle:
-        # noinspection PyUnresolvedReferences
+        # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.table.BorderLineStyle import (SOLID, )
 
 
     class ConditionOperator:
-        # noinspection PyUnresolvedReferences
+        # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.sheet.ConditionOperator import (FORMULA, )
 
 
     class FontWeight:
-        # noinspection PyUnresolvedReferences
+        # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.awt.FontWeight import (BOLD, )
 
 
     class ValidationType:
-        # noinspection PyUnresolvedReferences
+        # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.sheet.ValidationType import (LIST, )
 
 
     class TableValidationVisibility:
-        # noinspection PyUnresolvedReferences
+        # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.sheet.TableValidationVisibility import (
             SORTEDASCENDING, UNSORTED)
 
 
-    # noinspection PyUnresolvedReferences
+    # noinspection PyUnresolvedReferences,PyPackageRequirements
     from com.sun.star.script.provider import ScriptFrameworkErrorException
-    # noinspection PyUnresolvedReferences
+    # noinspection PyUnresolvedReferences,PyPackageRequirements
     from com.sun.star.uno import (RuntimeException as UnoRuntimeException,
                                   Exception as UnoException)
 
 
     class PropertyState:
-        # noinspection PyUnresolvedReferences
+        # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.beans.PropertyState import (
             AMBIGUOUS_VALUE, DIRECT_VALUE)
 
 
     class FontSlant:
-        # noinspection PyUnresolvedReferences
+        # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.awt.FontSlant import (NONE, OBLIQUE, ITALIC)
 
 
     class DataPilotFieldOrientation:
-        # noinspection PyUnresolvedReferences
+        # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.sheet.DataPilotFieldOrientation import (
             HIDDEN, ROW, COLUMN, DATA, PAGE)
 
 
     class DataPilotFieldGroupBy:
-        # noinspection PyUnresolvedReferences
+        # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.sheet.DataPilotFieldGroupBy import (
             SECONDS, MINUTES, HOURS, DAYS, MONTHS, QUARTERS, YEARS)
 
 
     class DataPilotFieldSortMode:
-        # noinspection PyUnresolvedReferences
+        # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.sheet.DataPilotFieldSortMode import (
             NONE, MANUAL, NAME, DATA
         )
 
 
     class GeneralFunction2:
-        # noinspection PyUnresolvedReferences
+        # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.sheet.GeneralFunction2 import (
             NONE, AUTO, SUM, COUNT, AVERAGE, MAX, MIN, PRODUCT, COUNTNUMS,
             STDEV, STDEVP, VAR, VARP, MEDIAN
@@ -131,7 +131,7 @@ try:
 
 
     class DataPilotFieldLayoutMode:
-        # noinspection PyUnresolvedReferences
+        # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.sheet.DataPilotFieldLayoutMode import (
             TABULAR_LAYOUT, OUTLINE_SUBTOTALS_TOP, OUTLINE_SUBTOTALS_BOTTOM,
             COMPACT_LAYOUT
@@ -139,7 +139,7 @@ try:
 
 
     class DataPilotFieldShowItemsMode:
-        # noinspection PyUnresolvedReferences
+        # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.sheet.DataPilotFieldShowItemsMode import (
             FROM_TOP, FROM_BOTTOM)
 
@@ -153,7 +153,6 @@ except ImportError:
         PropertyState,  # pyright: ignore[reportGeneralTypeIssues]
         TableValidationVisibility,  # pyright: ignore[reportGeneralTypeIssues]
         ValidationType,  # pyright: ignore[reportGeneralTypeIssues]
-        GeneralFunction2,  # pyright: ignore[reportGeneralTypeIssues]
         DataPilotFieldOrientation,  # pyright: ignore[reportGeneralTypeIssues]
         DataPilotFieldGroupBy,  # pyright: ignore[reportGeneralTypeIssues]
         DataPilotFieldSortMode,  # pyright: ignore[reportGeneralTypeIssues]
@@ -636,7 +635,7 @@ def make_pv(name: str, value: Any) -> UnoPropertyValue:
 
 
 def make_full_pv(name: str, value: str, handle: int = -1,
-                 state: Optional[UnoEnum] = None) -> UnoPropertyValue:
+                 state: Optional[UnoEnumeration] = None) -> UnoPropertyValue:
     """
     Create a com.sun.star.beans.PropertyValue object with handle and state
 
@@ -1460,7 +1459,7 @@ def get_page_style(oSheet: UnoSheet) -> UnoService:
     page_style_name = oSheet.PageStyle
     oDoc = parent_doc(oSheet)
     oPageStyles = cast(UnoNameAccess, oDoc.StyleFamilies.getByName("PageStyles"))
-    oStyle = oPageStyles.getByName(page_style_name)
+    oStyle = cast(UnoService, oPageStyles.getByName(page_style_name))
     return oStyle
 
 
@@ -1798,9 +1797,9 @@ class DocBuilder:
             oDoc.unlockControllers()
         return oDoc
 
-    def _build_sheet_names(self, oDoc: UnoSpreadsheetDocument):
+    def _build_sheet_names(self, oDoc: UnoSpreadsheetDocument) -> "DocBuilder":
         if self._sheet_names is None:
-            return
+            return self
 
         oSheets = oDoc.Sheets
         it = iter(self._sheet_names)
@@ -1842,9 +1841,9 @@ class DocBuilder:
             self._apply_func(oSheet)
 
     def _build_apply_func_list_to_sheets(
-            self, oDoc: UnoSpreadsheetDocument):
+            self, oDoc: UnoSpreadsheetDocument) -> "DocBuilder":
         if self._apply_funcs is None:
-            return
+            return self
 
         oSheets = oDoc.Sheets
         for func, oSheet in zip(self._apply_funcs, to_iter(oSheets)):
@@ -2223,10 +2222,12 @@ class Transferable(unohelper.Base, XTransferable):
         self._value = value
         self._flavor = flavor
 
-    def getTransferData(self, aFlavor: UnoObject):
+    def getTransferData(self, aFlavor: UnoObject) -> Any:
         """see. com.sun.star.datatransfer.XTransferable.getTransferData"""
         if aFlavor.MimeType == self._flavor[0]:
             return self._value
+        else:
+            return None
 
     def getTransferDataFlavors(self):
         """see. com.sun.star.datatransfer.XTransferable.getTransferDataFlavors"""
@@ -2555,7 +2556,7 @@ def float_to_date(days: float) -> dt.datetime:
 def copy_data_array(
         oCell: UnoCell,
         data_array: DATA_ARRAY, undo=True, debug=False, chunk_size=10000,
-        callback: Callable[[int], None] = None):
+        callback: Optional[Callable[[int], None]] = None):
     """
     Copy a data array to a given address on a sheet. This function provides
     some convenient helpers.
@@ -2606,7 +2607,7 @@ class DataArrayCopier:
     """
 
     def __init__(self, undo=True, debug=False, chunk_size=10000,
-                 callback: Callable[[int], None] = None):
+                 callback: Optional[Callable[[int], None]] = None):
         self._undo = undo
         self._debug = debug
         self._chunk_size = chunk_size
@@ -3055,11 +3056,11 @@ class DataPilotBuilder:
         return self._oChartDoc
 
     def add_row(
-            self, field_name: str, groups: Union[NameGroups, DateGroups] = None,
-            sort: UnoStruct = None,
-            subtotals: Tuple[int, ...] = None,
-            layout: UnoStruct = None,
-            auto_show=None,
+            self, field_name: str, groups: Optional[Union[NameGroups, DateGroups]] = None,
+            sort: Optional[UnoStruct] = None,
+            subtotals: Optional[Tuple[int, ...]] = None,
+            layout: Optional[UnoStruct] = None,
+            auto_show: Optional[UnoStruct] = None,
             show_empty: bool = False,
     ):
         """
@@ -3083,11 +3084,11 @@ class DataPilotBuilder:
             show_empty)
 
     def add_column(
-            self, field_name: str, groups: Union[NameGroups, DateGroups] = None,
-            sort: UnoStruct = None,
-            subtotals: Tuple[GeneralFunction2, ...] = None,
-            layout: UnoStruct = None,
-            auto_show=None,
+            self, field_name: str, groups: Optional[Union[NameGroups, DateGroups]] = None,
+            sort: Optional[UnoStruct] = None,
+            subtotals: Optional[Tuple[int, ...]] = None,
+            layout: Optional[UnoStruct] = None,
+            auto_show: Optional[UnoStruct] = None,
             show_empty: bool = False,
     ):
         """
@@ -3112,15 +3113,15 @@ class DataPilotBuilder:
 
     def _add_row_or_column(
             self, field_name: str, orientation: int,
-            groups: Union[NameGroups, DateGroups, None],
+            groups: Optional[Union[NameGroups, DateGroups]],
             sort: Optional[UnoStruct],
-            subtotals: Optional[Tuple[GeneralFunction2, ...]],
-            layout: UnoStruct, auto_show,
+            subtotals: Optional[Tuple[int, ...]],
+            layout: Optional[UnoStruct], auto_show: Optional[UnoStruct],
             show_empty: bool,
     ):
         index = self._index_by_name[field_name]
         oField = self._oFields.getByIndex(index)
-        FieldHelper(field_name, oField).make_row_or_column(
+        FieldHelper(self._dates_helper, field_name, oField).make_row_or_column(
             orientation, groups, sort, subtotals, layout, auto_show, show_empty)
 
     def add_page(self, field_name: str):
@@ -3182,16 +3183,17 @@ class FieldHelper:
     A field helper. Don't use directly.
     """
 
-    def __init__(self, field_name: str, oField: UnoService):
+    def __init__(self, dates_helper: DatesHelper, field_name: str, oField: UnoService):
+        self._dates_helper = dates_helper
         self._field_name = field_name
         self._oField = oField
 
     def make_row_or_column(
             self, orientation: int,
-            groups: Union[NameGroups, DateGroups, None],
+            groups: Optional[Union[NameGroups, DateGroups]],
             sort: Optional[UnoStruct],
-            subtotals: Optional[Tuple[GeneralFunction2, ...]],
-            layout: UnoStruct, auto_show: UnoStruct,
+            subtotals: Optional[Tuple[int, ...]],
+            layout: Optional[UnoStruct], auto_show: Optional[UnoStruct],
             show_empty: bool,
     ):
         """
@@ -3285,5 +3287,6 @@ class FieldHelper:
         oGroupedField.Name = groups.name
 
         for group in groups.groups[1:]:
+            # noinspection PyStatementEffect
             oGroupedField.GroupInfo  # side-effect: avoids LO crash
             self._oField.createNameGroup(group.values)

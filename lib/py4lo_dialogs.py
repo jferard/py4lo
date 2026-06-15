@@ -74,21 +74,21 @@ from py4lo_typing import (
     UnoFilePicker, UnoFolderPicker)
 
 try:
-    # noinspection PyUnresolvedReferences
+    # noinspection PyUnresolvedReferences,PyPackageRequirements
     import uno
 
-    # noinspection PyUnresolvedReferences
+    # noinspection PyUnresolvedReferences,PyPackageRequirements
     import unohelper
 
 
     class MessageBoxType:
-        # noinspection PyUnresolvedReferences
+        # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.awt.MessageBoxType import (
             MESSAGEBOX, INFOBOX, WARNINGBOX, ERRORBOX, QUERYBOX, )
 
 
     class MessageBoxButtons:
-        # noinspection PyUnresolvedReferences
+        # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.awt.MessageBoxButtons import (
             BUTTONS_OK, BUTTONS_OK_CANCEL, BUTTONS_YES_NO,
             BUTTONS_YES_NO_CANCEL, BUTTONS_RETRY_CANCEL,
@@ -99,34 +99,34 @@ try:
 
 
     class MessageBoxResults:
-        # noinspection PyUnresolvedReferences
+        # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.awt.MessageBoxResults import (
             CANCEL, OK, YES, NO, RETRY, IGNORE
         )
 
 
     class FontWeight:
-        # noinspection PyUnresolvedReferences
+        # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.awt.FontWeight import (BOLD, )
 
 
     class ExecutableDialogResults:
-        # noinspection PyUnresolvedReferences
+        # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.ui.dialogs.ExecutableDialogResults import (
             OK, CANCEL)
 
 
     class PushButtonType:
-        # noinspection PyUnresolvedReferences
+        # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.awt.PushButtonType import (OK, CANCEL)
 
 
-    # noinspection PyUnresolvedReferences
+    # noinspection PyUnresolvedReferences,PyPackageRequirements
     from com.sun.star.lang import XEventListener
 
 
     class TemplateDescription:
-        # noinspection PyUnresolvedReferences
+        # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.ui.dialogs.TemplateDescription import (
             FILEOPEN_SIMPLE,
             FILESAVE_SIMPLE,
@@ -285,7 +285,7 @@ def get_text_size(oDialogModel: UnoMainControlModel, text: str) -> Size:
 def message_box(msg_title: str, msg_text: str,
                 msg_type=MessageBoxType.MESSAGEBOX,
                 msg_buttons=MessageBoxButtons.BUTTONS_OK,
-                parent_win=None) -> MessageBoxResults:
+                parent_win=None) -> int:
     """
     Create a message box
 
@@ -525,7 +525,7 @@ class InputBoxBuilder:
 
 def input_box(msg_title: str, msg_text: str, msg_default="", parent_win=None,
               x: Optional[int] = None,
-              y: Optional[int] = None) -> str:
+              y: Optional[int] = None) -> Optional[str]:
     """
     Execute an input box.
 
@@ -537,8 +537,8 @@ def input_box(msg_title: str, msg_text: str, msg_default="", parent_win=None,
     @param y: the y position of the box
     @return: the value inside the input box
     """
-    return InputBoxBuilder().build().input(msg_title, msg_text, msg_default,
-                                           parent_win, x, y)
+    return InputBoxBuilder().build().input(
+        msg_title, msg_text, msg_default, parent_win, x, y)
 
 
 FileFilter = NamedTuple("FileFilter", [("title", str), ("filter", str)])
@@ -555,7 +555,7 @@ else:
 def file_dialog(
         title: str, filters: Optional[List[FileFilter]] = None,
         display_dir: StrPath = "", single: bool = True,
-        template_description: Optional[TemplateDescription] = None
+        template_description: Optional[int] = None
 ) -> Union[Optional[str], Sequence[str]]:
     """
     Open a file dialog.
@@ -787,7 +787,7 @@ class ProgressExecutor:
     _logger = logging.getLogger(__name__)
 
     @staticmethod
-    def create(oDialog: UnoControl, autoclose: bool,
+    def create(oDialog: UnoMainControl, autoclose: bool,
                oBar: UnoControl, bar_progress_min: int,
                bar_progress_max: int, oText: UnoControl) -> "ProgressExecutor":
         """
@@ -1103,6 +1103,7 @@ class StandardConsoleHandler(VoidConsoleHandler):
     """
 
     def __init__(self, oText: UnoControl):
+        VoidConsoleHandler.__init__(self)
         self._oText = oText
         self.response = None
         self._cur_pos = 0
@@ -1522,10 +1523,10 @@ class ListBoxWrapper:
 
     def __init__(self, oListControl: UnoControl):
         self._oListControl = oListControl
-        self._items = cast(List[str], [])
-        self._values = cast(List[Any], [])
+        self._items: List[str] = []
+        self._values: List[Any] = []
 
-    def replace_all_items(self, items: List[str], values: List[Any] = None):
+    def replace_all_items(self, items: List[str], values: Optional[List[Any]] = None):
         """
         @param items: the items
         @param values: the associated values (optional)
@@ -1546,7 +1547,7 @@ class ListBoxWrapper:
         """
         @return: the selected items
         """
-        positions = self._oListControl.SelectedItemsPos
+        positions: List[int] = self._oListControl.SelectedItemsPos
         if positions:
             return [self._items[i] for i in positions]
         else:

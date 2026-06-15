@@ -41,7 +41,7 @@ from py4lo_typing import (
     UnoXScriptContext, StrPath, lazy)
 
 try:
-    # noinspection PyUnresolvedReferences
+    # noinspection PyUnresolvedReferences,PyPackageRequirements
     import uno
 except ImportError:
     from _mock_objects import uno

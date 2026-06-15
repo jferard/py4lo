@@ -31,7 +31,7 @@ from py4lo_typing import UnoObject, UnoService, lazy, UnoNameAccess
 
 try:
     class DataType:
-        # noinspection PyUnresolvedReferences
+        # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.sdbc.DataType import (
             BIT, TINYINT, SMALLINT, INTEGER, BIGINT, FLOAT, REAL, DOUBLE,
             NUMERIC, DECIMAL, CHAR, VARCHAR, LONGVARCHAR, DATE, TIME,
@@ -40,7 +40,7 @@ try:
         )
 
     class ColumnValue:
-        # noinspection PyUnresolvedReferences
+        # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.sdbc.ColumnValue import (
             NO_NULLS, NULLABLE, NULLABLE_UNKNOWN
         )
@@ -129,7 +129,7 @@ class BaseDB:
         self._oDB = oDB
         self._oConnection = lazy(UnoService)
         self._oStatement = lazy(UnoService)
-        self._sql_by_name = {}
+        self._sql_by_name: Dict[str, str] = {}
 
     @property
     def connection(self) -> UnoObject:

@@ -39,12 +39,12 @@ from py4lo_typing import (UnoCell, UnoSheet, UnoSpreadsheetDocument,
                           StrPath, UnoService, UnoRange)
 
 try:
-    # noinspection PyUnresolvedReferences
+    # noinspection PyUnresolvedReferences,PyPackageRequirements
     from com.sun.star.lang import Locale
 
 
     class NumberFormat:
-        # noinspection PyUnresolvedReferences
+        # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.util.NumberFormat import (DATE, TIME, DATETIME,
                                                     LOGICAL)
 except ImportError:
