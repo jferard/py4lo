@@ -23,11 +23,12 @@ A set of command to pilot a LibreOffice Base document.
 import logging
 import time
 from pathlib import Path
-from typing import Iterable, Union, Dict, Mapping
+from typing import Iterable, Union, Dict, Mapping, cast
 
-from py4lo_helper import (uno_path_to_url, create_uno_service, to_items,
-                          remove_all)
-from py4lo_typing import UnoObject, UnoService, lazy, UnoNameAccess
+from py4lo_helper import (
+    uno_path_to_url, create_uno_service, to_items, remove_all)
+from py4lo_typing import (
+    lazy, UnoDBAccess, UnoDBConnection, UnoDBStatement, UnoDBTable, UnoDBDrop, UnoDBContext)
 
 try:
     class DataType:
@@ -67,7 +68,7 @@ class BaseTableBuilder:
     """
     _logger = logging.getLogger(__name__)
 
-    def __init__(self, oConnection: UnoObject, name: str):
+    def __init__(self, oConnection: UnoDBConnection, name: str):
         """
         @param oConnection: the connection (a com.sun.star.sdbc.XConnection object)
         @param name: the name of the table to build
@@ -76,6 +77,7 @@ class BaseTableBuilder:
         self._oTables = oConnection.Tables
         self._oTableDescriptor = self._oTables.createDataDescriptor()
         self._oTableDescriptor.Name = name
+        # noinspection PyUnresolvedReferences
         self._oCols = self._oTableDescriptor.Columns
 
     def build(self):
@@ -101,7 +103,7 @@ class BaseTableBuilder:
         self._oCols.appendByDescriptor(oCol)
 
 
-def drop_all(oDrop: UnoObject):
+def drop_all(oDrop: UnoDBDrop):
     """
     Drop all elements (count or name) of a container. The container might be
     the table views, indexes... or the database tables for instance.
@@ -122,17 +124,17 @@ class BaseDB:
     """
     _logger = logging.getLogger(__name__)
 
-    def __init__(self, oDB: UnoObject):
+    def __init__(self, oDB: UnoDBAccess):
         """
         @param oDB: a database context (see: com.sun.star.sdb.DatabaseContext)
         """
         self._oDB = oDB
-        self._oConnection = lazy(UnoService)
-        self._oStatement = lazy(UnoService)
+        self._oConnection = lazy(UnoDBConnection)
+        self._oStatement = lazy(UnoDBStatement)
         self._sql_by_name: Dict[str, str] = {}
 
     @property
-    def connection(self) -> UnoObject:
+    def connection(self) -> UnoDBConnection:
         """
         Returns the current connection or opens a new one.
 
@@ -146,7 +148,7 @@ class BaseDB:
         return self._oConnection
 
     @property
-    def statement(self) -> UnoObject:
+    def statement(self) -> UnoDBStatement:
         """
         Returns the current statement or opens a new one.
 
@@ -176,7 +178,7 @@ class BaseDB:
 
         return BaseTableBuilder(oConnection, name)
 
-    def get_tables(self) -> UnoNameAccess:
+    def get_tables(self) -> UnoDBDrop[UnoDBTable]:
         """
         @return: the table container (a XNameAccess)
         """
@@ -302,7 +304,7 @@ class BaseDB:
                 return True
         return False
 
-    def _drop_table(self, oTables: UnoNameAccess, name: str):
+    def _drop_table(self, oTables: UnoDBDrop[UnoDBTable], name: str):
         oTable = oTables.getByName(name)
         drop_all(oTable.Keys)
         drop_all(oTable.Indexes)
@@ -338,6 +340,7 @@ class BaseDB:
         sql_by_name = {}
         for name in self._oDB.QueryDefinitions.ElementNames:
             oQuery = self._oDB.QueryDefinitions.getByName(name)
+            # noinspection PyUnresolvedReferences
             sql_by_name[name] = oQuery.Command
         return sql_by_name
 
@@ -380,7 +383,7 @@ def open_or_create_db(path: Path) -> "BaseDB":
     @param path: the path
     @return: the `BaseDB` wrapper
     """
-    oDBContext = create_uno_service("com.sun.star.sdb.DatabaseContext")
+    oDBContext = cast(UnoDBContext, create_uno_service("com.sun.star.sdb.DatabaseContext"))
     url = uno_path_to_url(path)
     # noinspection PyBroadException
     try:
