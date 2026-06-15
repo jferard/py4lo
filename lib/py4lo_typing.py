@@ -24,7 +24,10 @@ from typing import (Union, Tuple, List, cast, Optional, Sequence, Any)
 
 
 # Misc
-def lazy(typ) -> Optional[Any]:
+T = typing.TypeVar("T")
+
+# noinspection PyTypeHints
+def lazy[T](typ: typing.Type[T]) -> Optional[T]:
     return cast(Optional[typ], None)
 
 
@@ -38,7 +41,6 @@ StrPath = Union[str, Path]
 
 
 # BASE
-
 class UnoObject:
     def supportsService(self, name: str) -> bool: ...
     def __repr__(self) -> str: ...
@@ -47,6 +49,8 @@ class UnoStruct(UnoObject): ...
 
 class UnoService(UnoObject): ...
 
+class UnoEnum(UnoObject, typing.Generic[T]):
+    value: T
 
 ######
 # structs
@@ -76,8 +80,6 @@ class UnoSizeStruct(UnoStruct):
     Width: int
     Height: int
 
-
-
 # Collections
 S = typing.TypeVar("S", bound=UnoObject)
 
@@ -94,12 +96,12 @@ class UnoIndexAccess(UnoService, typing.Generic[S]):
     def removeByIndex(self, i: int, count: int) -> None: ...
 
 
-class UnoEnum(UnoService, typing.Generic[S]):
+class UnoEnumeration(UnoService, typing.Generic[S]):
     def hasMoreElements(self) -> bool: ...
     def nextElement(self) -> S: ...
 
 class UnoEnumerable(UnoService, typing.Generic[S]):
-    def createEnumeration(self) -> UnoEnum[S]: ...
+    def createEnumeration(self) -> UnoEnumeration[S]: ...
 
 
 ######
@@ -125,10 +127,10 @@ class UnoRange(UnoService):
     def createFilterDescriptor(self, empty: bool) -> Sequence[UnoPropertyValue]: ...
     def sort(self, sort_descriptor: Sequence[UnoPropertyValue]) -> None: ...
     def filter(self, descriptor: Sequence[UnoPropertyValue]) -> None: ...
+    def merge(self, m: bool) -> None: ...
 
 
-class UnoRanges(UnoService):
-    pass
+class UnoRanges(UnoEnumerable[UnoRange]): ...
 
 
 class UnoOfficeDocument(UnoService):
@@ -136,6 +138,8 @@ class UnoOfficeDocument(UnoService):
     StyleFamilies: UnoNameAccess
     URL: str
     CurrentSelection: Union[UnoRange, UnoRanges]
+    BasicLibraries: UnoNameAccess
+
     def getScriptProvider(self) -> UnoObject: ...
     def createInstance(self, name: str) -> UnoObject: ...
     def lockControllers(self) -> None: ...
@@ -190,12 +194,16 @@ class UnoSheets(UnoNameAccess[UnoSheet], UnoIndexAccess[UnoSheet]):
 
 class UnoTextRange(UnoService): ...
 
-class UnoText(UnoEnumerable[UnoTextRange]): ...
+class UnoText(UnoEnumerable[UnoTextRange]):
+    Start: UnoStruct
+    End: UnoStruct
 
 class UnoCell(UnoRange, UnoText):
     String: str
-    Type: UnoObject
-    FormulaResultType: UnoObject
+    Value: float
+    Formula: str
+    Type: UnoEnum[str]
+    FormulaResultType: UnoEnum[str]
     CellAddress: UnoCellAddress
     Text: UnoText
 
@@ -241,11 +249,15 @@ class UnoDispatcher(UnoService):
     def executeDispatch(self, frame: Union[UnoController, UnoFrame], url: str, target: str, flagt: int, args: Sequence[UnoPropertyValue]) -> None: ...
 
 # Dialogs
-class UnoControlModel(UnoService): ...
+class UnoControlModel(UnoService):
+    Name: str
+
 
 class UnoMainControlModel(UnoControlModel):
     def createInstance(self, name: str) -> UnoControlModel: ...
     def insertByName(self, name: str, model: UnoControlModel) -> None: ...
+    def getByName(self, name: str) -> UnoControlModel: ...
+
 
 class UnoControl(UnoService):
     MinimumSize: "UnoSizeStruct"
@@ -253,6 +265,10 @@ class UnoControl(UnoService):
     def setModel(self, model: UnoControlModel) -> None: ...
     def setFocus(self) -> None: ...
     def setVisible(self, b: bool) -> None: ...
+    def addActionListener(self, listener: Any) -> None: ...
+    def addKeyListener(self, listener: Any) -> None: ...
+    def addItemListener(self, listener: Any) -> None: ...
+    def addTextListener(self, listener: Any) -> None: ...
 
 
 class UnoToolkit(UnoService):
@@ -261,10 +277,12 @@ class UnoToolkit(UnoService):
 
 
 class UnoMainControl(UnoControl):
+    Controls: Sequence[UnoControl]
     def setModel(self, model: UnoMainControlModel) -> None: ...
-    def execute(self) -> int: ...
     def createPeer(self, oToolkit: UnoToolkit, parent_win: Optional["UnoMainControl"]): ...
     def getControl(self, name: str) -> UnoControl: ...
+    def execute(self) -> int: ...
+    def endExecute(self) -> None: ...
     def dispose(self) -> None: ...
 
 
