@@ -554,11 +554,11 @@ class Py4LOIOTestCase(unittest.TestCase):
 
         # verify
         self.assertEqual([
-            mock.call.DrawPage.Forms.Parent.NumberFormats.getStandardFormat(
+            mock.call.Spreadsheet.DrawPage.Forms.Parent.NumberFormats.getStandardFormat(
                 2, mock.ANY),
-            mock.call.DrawPage.Forms.Parent.NumberFormats.getStandardFormat(
+            mock.call.Spreadsheet.DrawPage.Forms.Parent.NumberFormats.getStandardFormat(
                 6, mock.ANY),
-            mock.call.DrawPage.Forms.Parent.NumberFormats.getStandardFormat(
+            mock.call.Spreadsheet.DrawPage.Forms.Parent.NumberFormats.getStandardFormat(
                 1024, mock.ANY),
             mock.call.getCellByPosition(0, 0),
             mock.call.getCellByPosition(1, 0),

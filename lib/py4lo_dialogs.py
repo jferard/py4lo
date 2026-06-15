@@ -71,7 +71,7 @@ from py4lo_helper import (
     from_uno_date)
 from py4lo_typing import (
     UnoControlModel, UnoControl, StrPath, lazy, UnoMainControl, UnoMainControlModel, UnoToolkit,
-    UnoFilePicker, UnoFolderPicker)
+    UnoFilePicker, UnoFolderPicker, UnoListControl)
 
 try:
     # noinspection PyUnresolvedReferences,PyPackageRequirements
@@ -392,6 +392,7 @@ class InputBox:
         oDialog.createPeer(oToolkit, parent_win)
 
         oEditControl = oDialog.getControl("edit")
+        # noinspection PyUnresolvedReferences
         oEditControl.setSelection(
             create_uno_struct("com.sun.star.awt.Selection", Min=0,
                               Max=len(msg_default)))
@@ -400,14 +401,14 @@ class InputBox:
         if oDialog.execute() == ExecutableDialogResults.CANCEL:
             return None
 
+        # noinspection PyUnresolvedReferences
         ret = oEditControl.Text
         oDialog.dispose()
         return ret
 
     def _create_label_model(self, oDialogModel: UnoMainControlModel, name: str,
                             msg_text: str) -> UnoControlModel:
-        oLabelModel = cast(UnoControlModel,
-                           oDialogModel.createInstance(ControlModel.FixedText))
+        oLabelModel = oDialogModel.createInstance(ControlModel.FixedText)
         place_widget(oLabelModel, self.hori_margin, self.vert_margin,
                      self.label_width, self.label_height)
         oLabelModel.Label = msg_text
@@ -418,8 +419,8 @@ class InputBox:
     def _create_edit_model(
             self, oDialogModel: UnoMainControlModel, name: str, msg_default: str
     ) -> UnoControlModel:
-        oEditModel = cast(UnoControlModel, oDialogModel.createInstance(
-            "com.sun.star.awt.UnoControlEditModel"))
+        oEditModel = oDialogModel.createInstance(
+            "com.sun.star.awt.UnoControlEditModel")
         edit_width = self.width - self.hori_margin * 2
         place_widget(oEditModel,
                      self.hori_margin,
@@ -431,8 +432,7 @@ class InputBox:
 
     def _create_cancel_model(self, oDialogModel: UnoMainControlModel,
                              name: str) -> UnoControlModel:
-        oCancelModel = cast(UnoControlModel,
-                            oDialogModel.createInstance(ControlModel.Button))
+        oCancelModel = oDialogModel.createInstance(ControlModel.Button)
         x = self.width - (
                 self.hori_margin + self.button_width +
                 self.hori_sep + self.button_width
@@ -450,8 +450,7 @@ class InputBox:
 
     def _create_ok_model(self, oDialogModel: UnoMainControlModel,
                          name: str) -> UnoControlModel:
-        oOkModel = cast(UnoControlModel,
-                        oDialogModel.createInstance(ControlModel.Button))
+        oOkModel = oDialogModel.createInstance(ControlModel.Button)
         place_widget(oOkModel,
                      self.width - (self.hori_margin + self.button_width),
                      (self.vert_margin + self.label_height
@@ -678,7 +677,6 @@ class VoidProgressHandler(ProgressHandler):
     The function may set the `response` attribute of the progress_handler to
     return a value.
     """
-
     def __init__(self):
         self.response = None
 
@@ -989,7 +987,9 @@ class ProgressExecutorBuilder:
         if self._progress_handler is None:
             oBar = oDialog.getControl("bar")
             oText = oDialog.getControl("text")
+            # noinspection PyUnresolvedReferences
             bar_progress_min = oBar.Model.ProgressValueMin
+            # noinspection PyUnresolvedReferences
             bar_progress_max = oBar.Model.ProgressValueMax
             progress_handler = StandardProgressHandler(
                 oBar, bar_progress_min, bar_progress_max,
@@ -1116,6 +1116,7 @@ class StandardConsoleHandler(VoidConsoleHandler):
         """
         self._selection.Min = self._cur_pos
         self._selection.Max = self._cur_pos
+        # noinspection PyUnresolvedReferences
         self._oText.insertText(self._selection, text + "\n")
         self._cur_pos += len(text) + 1
 
@@ -1203,9 +1204,7 @@ class ConsoleDialogBuilder:
         self._oDialogModel.Closeable = True
         self._oDialog = cast(
             UnoMainControl, create_uno_service(Control.Dialog))
-        self._oTextModel = cast(
-            UnoControlModel,
-            self._oDialogModel.createInstance(ControlModel.Edit))
+        self._oTextModel = self._oDialogModel.createInstance(ControlModel.Edit)
         self._oTextModel.ReadOnly = True
         self._oTextModel.MultiLine = True
         self._oTextModel.VScroll = True
@@ -1380,6 +1379,7 @@ def set_uno_control_date(oControl: UnoControl, date: Optional[dt.date]):
     :param date: the date or None
     """
     if date is None:
+        # noinspection PyUnresolvedReferences
         oControl.setEmpty()
     else:
         oControl.Date = to_uno_date(date)
@@ -1390,9 +1390,11 @@ def get_uno_control_date(oControl: UnoControl) -> Optional[dt.date]:
     :param oControl: the UnoControlDateField
     :return: the date or None
     """
+    # noinspection PyUnresolvedReferences
     if oControl.isEmpty():
         return None
     else:
+        # noinspection PyUnresolvedReferences
         return from_uno_date(oControl.Date)
 
 
@@ -1410,6 +1412,7 @@ def get_uno_control_bool(oControl: UnoControl) -> bool:
     :param oControl: the UnoControlRadio/CheckField
     :return: the value
     """
+    # noinspection PyUnresolvedReferences
     return oControl.State == 1
 
 
@@ -1424,6 +1427,7 @@ def set_uno_control_text(
     Set a value into a UnoControlEdit/ComboBox/DateField/...
     :param oControl: the UnoControlEdit/...
     :param value: the text
+    :param
     """
     if value is None:
         text = ""
@@ -1447,6 +1451,7 @@ def get_uno_control_text(
     :param oControl: the UnoControlEdit/...
     :return: the value
     """
+    # noinspection PyUnresolvedReferences
     text = oControl.Text
     if apply is None:
         value = text
@@ -1488,6 +1493,7 @@ def get_uno_control_text_as_list(
     :param delim: the delimiter
     :return: the value
     """
+    # noinspection PyUnresolvedReferences
     texts = oControl.Text.split(delim)
     if apply is None:
         values = texts
@@ -1501,7 +1507,7 @@ def get_uno_control_text_as_list(
     return new_values
 
 
-def replace_all_items(oListControl: UnoControl, items: List[str]):
+def replace_all_items(oListControl: UnoListControl, items: List[str]):
     """
     Replace all items of a UnoControlListBox.
     @param oListControl: the UnoControlListBox
@@ -1521,7 +1527,7 @@ class ListBoxWrapper:
     model item data).
     """
 
-    def __init__(self, oListControl: UnoControl):
+    def __init__(self, oListControl: UnoListControl):
         self._oListControl = oListControl
         self._items: List[str] = []
         self._values: List[Any] = []
@@ -1547,6 +1553,7 @@ class ListBoxWrapper:
         """
         @return: the selected items
         """
+        # noinspection PyUnresolvedReferences
         positions: List[int] = self._oListControl.SelectedItemsPos
         if positions:
             return [self._items[i] for i in positions]
@@ -1588,5 +1595,7 @@ class ListBoxWrapper:
         unselected_positions = [
             i for i in range(count) if self._values[i] not in values]
 
+        # noinspection PyUnresolvedReferences
         self._oListControl.selectItemsPos(unselected_positions, False)
+        # noinspection PyUnresolvedReferences
         self._oListControl.selectItemsPos(selected_positions, True)

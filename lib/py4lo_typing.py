@@ -155,12 +155,23 @@ class UnoNumberFormats:
     def queryKey(self, fmt: str, oLocale: UnoStruct, create: bool) -> int: ...
     def addNew(self, fmt: str, oLocale: UnoStruct) -> int: ...
     def getByKey(self, format_id: int) -> UnoService: ...
+    def getStandardFormat(self, format_id: int, oLocale: UnoStruct) -> int: ...
+
+
+class UnoUndoManager(UnoService):
+    def enterHiddenUndoContext(self) -> None: ...
+    def leaveUndoContext(self) -> None: ...
+    def enterUndoContext(self, title: str) -> None: ...
+    def lock(self) -> None: ...
+    def unlock(self) -> None: ...
 
 
 class UnoSpreadsheetDocument(UnoOfficeDocument):
     Sheets: "UnoSheets"
     NamedRanges: UnoNameAccess
     NumberFormats: UnoNumberFormats
+    UndoManager: UnoUndoManager
+    NullDate: UnoDateStruct
 
 
 
@@ -174,12 +185,17 @@ class UnoCalcCursor(UnoRange):
     def collapseToMergedArea(self) -> None: ...
 
 
+class UnoPilotTables(UnoIndexAccess[UnoService], UnoNameAccess[UnoService]):
+    def createDataPilotDescriptor(self) -> UnoService: ...
+
+
 class UnoSheet(UnoRange):
     AbsoluteName: str
     Name: str
     DrawPage: UnoObject
     PageStyle: str
-    DataPilotTables: UnoIndexAccess[UnoService]
+    DataPilotTables: UnoPilotTables
+    PivotCharts: UnoNameAccess[UnoService]
 
     def createCursorByRange(self, oCell: "UnoCell") -> UnoCalcCursor: ...
     def createCursor(self) -> UnoCalcCursor: ...
@@ -191,13 +207,34 @@ class UnoSheet(UnoRange):
 
 class UnoSheets(UnoNameAccess[UnoSheet], UnoIndexAccess[UnoSheet]):
     def copyByName(self, name: str, new_name: str, new_index: int) -> None: ...
+    def importSheet(self, doc: UnoSpreadsheetDocument, name: str, dest_position: int): ...
 
 
-class UnoTextRange(UnoService): ...
+class UnoTextRange(UnoService):
+    TextField: UnoService
+    String: str
+    CharFontName: str
+    CharHeight: float
+    CharWeight: float
+    CharPosture: int
+    CharColor: int
+    CharBackColor: int
+    CharOverline: int
+    CharStrikeout: int
+    CharUnderline: int
+    CharEscapementHeight: float
+    CharEscapement: float
 
-class UnoText(UnoEnumerable[UnoTextRange]):
-    Start: UnoStruct
-    End: UnoStruct
+    TextPortionType: str
+
+    Start: "UnoTextRange"
+    End: "UnoTextRange"
+
+class UnoTextContent(UnoTextRange, UnoEnumerable[UnoTextRange]): ...
+
+class UnoText(UnoTextRange, UnoEnumerable[UnoTextContent]):
+    def createTextCursorByRange(self, r: UnoTextRange) -> UnoTextRange: ...
+
 
 class UnoCell(UnoRange, UnoText):
     String: str
@@ -270,6 +307,15 @@ class UnoControl(UnoService):
     def addKeyListener(self, listener: Any) -> None: ...
     def addItemListener(self, listener: Any) -> None: ...
     def addTextListener(self, listener: Any) -> None: ...
+
+
+class UnoListControl(UnoControl):
+    ItemCount: int
+    SelectedItemsPos: List[int]
+
+    def removeItems(self, i: int, c: int) -> None: ...
+    def addItems(self, items: List[str], pos: int) -> None: ...
+    def selectItemsPos(self, positions: List[int], sel: bool) -> None: ...
 
 
 class UnoToolkit(UnoService):
@@ -349,3 +395,17 @@ class UnoDBAccess(UnoService):
 
 class UnoDBContext(UnoNameAccess[UnoDBAccess]):
     def createInstance(self) -> UnoDBAccess: ...
+
+
+## CB
+class UnoDataFlavor(UnoStruct):
+    MimeType: Tuple[str, str]
+
+class UnoTransferable(UnoService):
+    def getTransferDataFlavors(self) -> List[UnoDataFlavor]: ...
+    def getTransferData(self, t: UnoStruct) -> Any: ...
+
+
+class UnoClipboard(UnoService):
+    def setContents(self, param, param1): ...
+    def getContents(self) -> UnoTransferable: ...

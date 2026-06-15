@@ -209,26 +209,29 @@ def put_active_first(z: zipfile.ZipFile, ns: NameSpace = OFFICE_NS
     @return: a SortFunc
     """
     active_table_name = _find_active_table_name_in_zip(z, ns)
+    if active_table_name is None:
+        def sort_func(tables: List[ET.Element]) -> List[ET.Element]:
+            return tables
+    else:
+        def sort_func(tables: List[ET.Element]) -> List[ET.Element]:
+            for i, table in enumerate(tables):
+                if table.get(ns.attrib("table:name")) == active_table_name:
+                    return [tables[i]] + tables[:i] + tables[i + 1:]
 
-    def sort_func(tables: List[ET.Element]) -> List[ET.Element]:
-        for i, table in enumerate(tables):
-            if table.get(ns.attrib("table:name")) == active_table_name:
-                return [tables[i]] + tables[:i] + tables[i + 1:]
-
-        return tables
+            return tables
 
     return sort_func
 
 
 def _find_active_table_name_in_zip(z: zipfile.ZipFile,
-                                   ns: NameSpace = OFFICE_NS) -> str:
+                                   ns: NameSpace = OFFICE_NS) -> Optional[str]:
     with z.open('settings.xml') as settings:
         active_table_name = _find_active_table_name(settings, ns)
 
     return active_table_name
 
 
-def _find_active_table_name(settings: IO[bytes], ns=OFFICE_NS) -> str:
+def _find_active_table_name(settings: IO[bytes], ns=OFFICE_NS) -> Optional[str]:
     data = settings.read().decode("utf-8")
     root = ET.fromstring(data)
     active_tables = ns.findall(root, ACTIVE_TABLE_XPATH)
@@ -289,7 +292,7 @@ class OdsRows:
         covered_cell_tag = self._ns.attrib("table:covered-table-cell")
         spanned_attr = self._ns.attrib("table:number-columns-spanned")
         repeated_attr = self._ns.attrib("table:number-columns-repeated")
-        cells = cast(List[str], [])
+        cells: List[str] = []
         span_count = 0
         for e in row:
             if e.tag not in (cell_tag, covered_cell_tag):

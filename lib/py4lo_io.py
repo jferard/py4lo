@@ -25,18 +25,20 @@ import csv
 import encodings
 import locale
 import sys
+from abc import ABC
 from datetime import (date, datetime, time)
 from enum import IntEnum, Enum
 from typing import (Any, Callable, List, Iterator, Optional, Mapping, Tuple,
-                    Iterable, cast)
+                    Iterable, cast, Sequence)
 
+from lib.py4lo_typing import UnoNumberFormats, UnoStruct
 # values of cell_typing
 from py4lo_commons import uno_path_to_url
 from py4lo_helper import (
     get_provider, make_pvs, parent_doc, get_cell_type, Target,
     FrameSearchFlag, date_to_float, float_to_date)
 from py4lo_typing import (UnoCell, UnoSheet, UnoSpreadsheetDocument,
-                          StrPath, UnoService, UnoRange)
+                          StrPath, UnoRange)
 
 try:
     # noinspection PyUnresolvedReferences,PyPackageRequirements
@@ -74,7 +76,7 @@ class CellTyping(Enum):
 ##########
 
 def create_read_cell(cell_typing: CellTyping = CellTyping.Minimal,
-                     oFormats: Optional[UnoService] = None
+                     oFormats: Optional[UnoNumberFormats] = None
                      ) -> Callable[[UnoCell], Any]:
     """
     Create a function to read a cell.
@@ -152,7 +154,26 @@ def create_read_cell(cell_typing: CellTyping = CellTyping.Minimal,
         raise ValueError("cell_typing must be one of TYPE_* values")
 
 
-class reader(Iterator[List[Any]]):
+class SheetReader(ABC, Iterator[Sequence[Any]]):
+    def __init__(self):
+        self.line_num = 0
+
+
+class IterSheetReader(SheetReader):
+    def __init__(self, it: Iterator[Sequence[Any]]):
+        SheetReader.__init__(self)
+        self._it = it
+
+    def __next__(self) -> Sequence[Any]:
+        ret = next(self._it)
+        self.line_num += 1
+        return ret
+
+    def __iter__(self) -> "IterSheetReader":
+        return self
+
+
+class reader(SheetReader):
     """
     A reader that returns rows of a range as lists of values.
 
@@ -169,14 +190,14 @@ class reader(Iterator[List[Any]]):
     def from_typing(
             oRange: UnoRange,
             cell_typing: CellTyping = CellTyping.Minimal,
-            oFormats: Optional[UnoService] = None
-    ) -> "reader":
+            oFormats: Optional[UnoNumberFormats] = None
+    ) -> SheetReader:
         if cell_typing == CellTyping.Minimal:
-            return iter(oRange.DataArray)
+            return IterSheetReader(iter(oRange.DataArray))
 
         oSheet = oRange.Spreadsheet
         if cell_typing == CellTyping.Accurate and oFormats is None:
-            oFormats = oSheet.DrawPage.Forms.Parent.NumberFormats
+            oFormats = parent_doc(oSheet).NumberFormats
 
         read_cell = create_read_cell(cell_typing, oFormats)
         return reader(oRange, read_cell)
@@ -184,7 +205,7 @@ class reader(Iterator[List[Any]]):
     @staticmethod
     def from_read_cell(
             oRange: UnoRange, read_cell: Callable[[UnoCell], Any]
-    ) -> "reader":
+    ) -> SheetReader:
         """
         @param oRange: the range
         @param read_cell: the read_cell function
@@ -197,15 +218,15 @@ class reader(Iterator[List[Any]]):
         @param oRange: the range
         @param read_cell: the read_cell function
         """
+        SheetReader.__init__(self)
         self._read_cell = read_cell
         self._oSheet = oRange.Spreadsheet
-        self.line_num = 0
         self._oRangeAddress = oRange.RangeAddress
 
     def __iter__(self) -> "reader":
         return self
 
-    def __next__(self) -> List[Any]:
+    def __next__(self) -> Sequence[Any]:
         i = self._oRangeAddress.StartRow + self.line_num
         if i > self._oRangeAddress.EndRow:
             raise StopIteration
@@ -242,7 +263,7 @@ class dict_reader:
             restkey: Optional[str] = None,
             restval: Optional[Any] = None,
             cell_typing: CellTyping = CellTyping.Minimal,
-            oFormats: Optional[UnoService] = None
+            oFormats: Optional[UnoNumberFormats] = None
     ) -> "dict_reader":
         """
         @param oSheet: the sheet
@@ -259,7 +280,7 @@ class dict_reader:
     @staticmethod
     def from_read_cell(
             oRange: UnoRange,
-            read_cell: Optional[Callable[[UnoCell], Any]],
+            read_cell: Callable[[UnoCell], Any],
             fieldnames: Optional[Tuple[str, ...]] = None,
             restkey: Optional[str] = None,
             restval: Optional[Any] = None,
@@ -276,7 +297,7 @@ class dict_reader:
         return dict_reader(r, fieldnames, restkey, restval)
 
     def __init__(
-            self, r: reader,
+            self, r: SheetReader,
             fieldnames: Optional[Tuple[str, ...]] = None,
             restkey: Optional[str] = None,
             restval: Optional[Any] = None
@@ -327,8 +348,8 @@ class dict_reader:
 ##########
 # Writer #
 ##########
-def find_number_format_style(oFormats: UnoService, format_id: NumberFormat,
-                             oLocale: Locale = Locale()) -> int:
+def find_number_format_style(oFormats: UnoNumberFormats, format_id: int,
+                             oLocale: UnoStruct = Locale()) -> int:
     """
     Find the number format style number. Use the return value for
     oCell.NumberFormat.
@@ -348,7 +369,7 @@ def find_number_format_style(oFormats: UnoService, format_id: NumberFormat,
 
 
 def create_write_cell(cell_typing: CellTyping = CellTyping.Minimal,
-                      oFormats: Optional[UnoService] = None
+                      oFormats: Optional[UnoNumberFormats] = None
                       ) -> Callable[[UnoCell, Any], None]:
     """
     Create a cell writer.
@@ -391,7 +412,7 @@ def create_write_cell(cell_typing: CellTyping = CellTyping.Minimal,
         else:
             oCell.Value = value
 
-    def create_write_cell_all(oFormats: UnoService
+    def create_write_cell_all(oFormats: UnoNumberFormats
                               ) -> Callable[[UnoCell, Any], None]:
         """
         @param oFormats: the formats (see. com.sun.star.util.NumberFormats)
@@ -455,7 +476,7 @@ class writer:
     def from_typing(
             oSheet: UnoSheet,
             cell_typing: CellTyping = CellTyping.Minimal,
-            oFormats: Optional[UnoService] = None,
+            oFormats: Optional[UnoNumberFormats] = None,
             initial_pos: Tuple[int, int] = (0, 0)) -> "writer":
         """
         @param oSheet: the destination sheet
@@ -464,7 +485,7 @@ class writer:
         @param initial_pos: the initial position on the sheet, as a tuple
         """
         if cell_typing == CellTyping.Accurate and oFormats is None:
-            oFormats = oSheet.DrawPage.Forms.Parent.NumberFormats
+            oFormats = parent_doc(oSheet).NumberFormats
         write_cell = create_write_cell(cell_typing, oFormats)
         return writer(oSheet, write_cell, initial_pos)
 
@@ -526,7 +547,7 @@ class dict_writer:
             oSheet: UnoSheet,
             fieldnames: List[str],
             cell_typing: CellTyping = CellTyping.Minimal,
-            oFormats: Optional[UnoService] = None,
+            oFormats: Optional[UnoNumberFormats] = None,
             restval: str = '', extrasaction: str = 'raise',
             initial_pos: Tuple[int, int] = (0, 0)) -> "dict_writer":
         """
@@ -540,7 +561,7 @@ class dict_writer:
         @param initial_pos: the initial position on the sheet, as a tuple
         """
         if cell_typing == CellTyping.Accurate and oFormats is None:
-            oFormats = oSheet.DrawPage.Forms.Parent.NumberFormats
+            oFormats = parent_doc(oSheet).NumberFormats
         write_cell = create_write_cell(cell_typing, oFormats)
         return dict_writer(oSheet, write_cell, fieldnames, restval,
                            extrasaction, initial_pos)
@@ -1140,6 +1161,7 @@ def _create_import_filter_options(
     """
     quoting = "true" if quoted_field_as_text else "false"
     detect = "true" if detect_special_numbers else "false"
+    language_code = "fr_FR" if language_code is None else language_code
     tokens = _base_filter_tokens(
         delimiter, quotechar, encoding, language_code, first_line,
         format_by_idx
@@ -1285,6 +1307,7 @@ def _create_export_filter_options(
     """
     store_as_text = "true" if store_numeric_cells_as_text else "false"
     save_as_shown = "true" if save_cell_contents_as_shown else "false"
+    language_code = "fr_FR" if language_code is None else language_code
     tokens = _base_filter_tokens(
         delimiter, quotechar, encoding, language_code, first_line,
         format_by_idx

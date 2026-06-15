@@ -85,22 +85,22 @@ from ctypes.util import find_library
 from pathlib import Path
 from typing import (
     Union, List, Any, Iterator, Mapping, Callable, Optional,
-    Sequence, ContextManager)
+    Sequence)
 
 library_name = find_library('sqlite3')
 if library_name is None:
-    path = Path.cwd() / "sqlite3.dll"  # windows
-    if path.exists():
-        str_path = str(path)
+    lib_path = Path.cwd() / "sqlite3.dll"  # windows
+    if lib_path.exists():
+        lib_path_str = str(lib_path)
     else:
-        path = next(Path.cwd().glob("libsqlite3.so*"), None)  # linux / mac
-        if path is None:
-            str_path = os.environ[
+        lib_path = next(Path.cwd().glob("libsqlite3.so*"), None)  # linux / mac
+        if lib_path is None:
+            lib_path_str = os.environ[
                 "SQLITE3_LIB"
             ]  # will raise an error if not present
         else:
-            str_path = str(path)
-    sqlite3_lib = CDLL(str_path)
+            lib_path_str = str(lib_path)
+    sqlite3_lib = CDLL(lib_path_str)
 else:
     sqlite3_lib = cdll.LoadLibrary(library_name)
 
@@ -140,6 +140,7 @@ class TransactionMode(enum.Enum):
 # https://www.sqlite.org/c3ref/funclist.html
 ##############################################
 # https://www.sqlite.org/c3ref/open.html
+# noinspection PyDeprecation
 sqlite3_lib.sqlite3_open_v2.argtypes = [c_char_p, POINTER(sqlite3_p), c_int,
                                         c_char_p]
 sqlite3_lib.sqlite3_open_v2.restype = c_int
@@ -174,16 +175,18 @@ try:
     sqlite3_lib.sqlite3_is_interrupted.restype = c_int
     sqlite3_is_interrupted = sqlite3_lib.sqlite3_is_interrupted
 except AttributeError:
-    def sqlite3_is_interrupted(db):
+    def sqlite3_is_interrupted(_db):
         return -1
 
 # https://www.sqlite.org/c3ref/exec.html
+# noinspection PyDeprecation
 sqlite3_lib.sqlite3_exec.argtypes = [sqlite3_p, c_char_p, c_void_p, c_void_p,
                                      POINTER(c_char_p)]
 sqlite3_lib.sqlite3_exec.restype = c_int
 sqlite3_exec = sqlite3_lib.sqlite3_exec
 
 # https://www.sqlite.org/c3ref/prepare.html
+# noinspection PyDeprecation
 sqlite3_lib.sqlite3_prepare_v2.argtypes = [sqlite3_p, c_char_p, c_int,
                                            POINTER(sqlite3_stmt_p),
                                            POINTER(c_char_p)]
@@ -530,6 +533,10 @@ class SQLType(enum.Enum):
     TYPE_ZEROBLOB = 12
     TYPE_ZEROBLOB64 = 13
 
+
+ColumnDecode = Callable[[sqlite3_stmt_p, int], Any]
+
+
 class Sqlite3Statement:
     """
     A SQLite3 statement. See `Sqlite3Database.prepare`.
@@ -720,7 +727,7 @@ class Sqlite3Statement:
 
     def execute_query(
             self, with_names: bool = False,
-            column_decodes: List[int] = None
+            column_decodes: Optional[List[Union[int, ColumnDecode]]] = None
     ) -> Iterator[Union[List[Any], Mapping[str, Any]]]:
         """
         Execute the query and return the values as rows.
@@ -746,7 +753,7 @@ class Sqlite3Statement:
 
     def _execute_query_with_names(
             self, col_count: int,
-            column_decodes: List[int] = None
+            column_decodes: Optional[List[Union[int, ColumnDecode]]] = None
     ) -> Iterator[Mapping[str, Any]]:
         names = [
             sqlite3_column_name(self._stmt, i).decode("utf-8")
@@ -757,7 +764,7 @@ class Sqlite3Statement:
 
     def _execute_query_without_names(
             self, col_count: int,
-            column_decodes: List[int] = None
+            column_decodes: Optional[List[Union[int, ColumnDecode]]] = None
     ) -> Iterator[List[Any]]:
         ret = sqlite3_step(self._stmt)
         if column_decodes is None:
@@ -769,15 +776,13 @@ class Sqlite3Statement:
                 yield row
                 ret = sqlite3_step(self._stmt)
         else:
-            column_decodes = [
-                self._extended_type_to_decode(sql_type_or_decode_func)
-                if isinstance(sql_type_or_decode_func, int)
-                else sql_type_or_decode_func
+            new_column_decodes = [
+                self._to_column_decode(sql_type_or_decode_func)
                 for sql_type_or_decode_func in column_decodes
             ]
             while ret == SQLITE_ROW:
                 row = [
-                    self._force_decode(column_decodes, i)
+                    self._force_decode(new_column_decodes, i)
                     for i in range(col_count)
                 ]
                 yield row
@@ -785,6 +790,12 @@ class Sqlite3Statement:
 
         if ret != SQLITE_DONE:
             raise self._err(ret)
+
+    def _to_column_decode(self, sql_type_or_decode_func: Union[int, ColumnDecode]) -> ColumnDecode:
+        if isinstance(sql_type_or_decode_func, int):
+            return self._extended_type_to_decode(sql_type_or_decode_func)
+        else:
+            return sql_type_or_decode_func
 
     def _value(self, i: int) -> Any:
         sql_type = sqlite3_column_type(self._stmt, i)
@@ -794,10 +805,8 @@ class Sqlite3Statement:
         decode_func = self._sql_type_to_decode(sql_type)
         return decode_func(self._stmt, i)
 
-    def _force_decode(self,
-                      column_decodes: List[
-                          Callable[[sqlite3_stmt_p, int], Any]],
-                      i: int) -> Any:
+    def _force_decode(
+            self, column_decodes: List[ColumnDecode], i: int) -> Any:
         sql_type = sqlite3_column_type(self._stmt, i)
         if sql_type == SQLITE_NULL:
             return None
@@ -805,8 +814,7 @@ class Sqlite3Statement:
         return column_decodes[i](self._stmt, i)
 
     def _sql_type_to_decode(
-            self, sql_type: int
-    ) -> Callable[[sqlite3_stmt_p, int], Any]:
+            self, sql_type: int) -> ColumnDecode:
         if sql_type == SQLITE_INTEGER:
             ret = sqlite3_column_int
         elif sql_type == SQLITE_FLOAT:
@@ -820,8 +828,7 @@ class Sqlite3Statement:
         return ret
 
     def _extended_type_to_decode(
-            self, sql_type: int
-    ) -> Callable[[sqlite3_stmt_p, int], Any]:
+            self, sql_type: int) -> ColumnDecode:
         if sql_type < PY4LO_FIRST_TYPE:
             ret = self._sql_type_to_decode(sql_type)
         elif sql_type == PY4LO_UNIX_TS:
@@ -865,7 +872,7 @@ class Sqlite3Database:
         return SQLiteError(ret, sqlite3_errmsg(self._db).decode("utf-8"))
 
     @contextmanager
-    def prepare(self, sql: str) -> ContextManager[Sqlite3Statement]:
+    def prepare(self, sql: str) -> Iterator[Sqlite3Statement]:
         """
         Context manager to prepare a SQL statement:
         ```
@@ -893,7 +900,7 @@ class Sqlite3Database:
 
     @contextmanager
     def transaction(self, mode: TransactionMode = TransactionMode.DEFERRED
-                    ) -> ContextManager[None]:
+                    ) -> Iterator[None]:
         """
         Context manager for a transaction:
         ```
@@ -936,7 +943,7 @@ class Sqlite3Database:
 @contextmanager
 def sqlite_open(
         filepath: Union[str, Path], mode: str = "r", timeout: int = -1
-) -> ContextManager[Sqlite3Database]:
+) -> Iterator[Sqlite3Database]:
     """
     Open a SQLite database in a context manager:
     ```

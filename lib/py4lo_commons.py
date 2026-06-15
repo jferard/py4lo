@@ -34,7 +34,7 @@ from decimal import Decimal
 # mypy: disable-error-code="import-untyped"
 from pathlib import Path
 from typing import (
-    Union, Any, cast, List, Optional, TextIO, Iterable, Mapping, Callable,
+    Union, Any, Optional, TextIO, Iterable, Mapping, Callable,
     TypeVar)
 
 from py4lo_typing import (
@@ -110,7 +110,7 @@ class Bus:
     """
 
     def __init__(self):
-        self._subscribers = cast(List[Any], [])
+        self._subscribers = []
 
     def subscribe(self, s: Any):
         """
@@ -279,6 +279,7 @@ class Commons:
 
         if isinstance(filenames, (str, Path)):
             filenames = [filenames]
+        filenames = [str(f) for f in filenames]
 
         config = _get_config(args)
         apply(config)
@@ -524,61 +525,61 @@ def create_format_float_or(
             else:
                 format_spec = ".{}f".format(decimals)
 
-                def apply(value: int) -> str:
+                def apply(value: float) -> str:
                     return format(value, format_spec)
         else: # a decimal sep
             if decimals < 0:
-                def apply(value: int) -> str:
+                def apply(value: float) -> str:
                     return str(value).replace(".", decimal_sep)
             else:
                 format_spec = ".{}f".format(decimals)
 
-                def apply(value: int) -> str:
+                def apply(value: float) -> str:
                     return format(value, format_spec).replace(".", decimal_sep)
     elif thousands_sep in (",", "_"):
         if decimal_sep == ".":
             if decimals < 0:
                 format_spec = "{}f".format(thousands_sep)
 
-                def apply(value: int) -> str:
+                def apply(value: float) -> str:
                     return format(value, format_spec).rstrip("0")
             else:
                 format_spec = "{}.{}f".format(thousands_sep, decimals)
 
-                def apply(value: int) -> str:
+                def apply(value: float) -> str:
                     return format(value, format_spec)
         else:
             if decimals < 0:
                 format_spec = "{}f".format(thousands_sep)
 
-                def apply(value: int) -> str:
+                def apply(value: float) -> str:
                     return format(value, format_spec).rstrip("0").replace(".", decimal_sep)
             else:
                 format_spec = "{}.{}f".format(thousands_sep, decimals)
 
-                def apply(value: int) -> str:
+                def apply(value: float) -> str:
                     return format(value, format_spec).replace(".", decimal_sep)
     else:
         if decimal_sep == ".":
             if decimals < 0:
-                def apply(value: int) -> str:
+                def apply(value: float) -> str:
                     return format(value, "_f").rstrip("0").replace("_", thousands_sep)
             else:
                 format_spec = "_.{}f".format(decimals)
 
-                def apply(value: int) -> str:
+                def apply(value: float) -> str:
                     return format(value, format_spec).replace("_", thousands_sep)
         else:
             if decimals < 0:
-                def apply(value: int) -> str:
+                def apply(value: float) -> str:
                     return format(value, "_f").rstrip("0").replace("_", thousands_sep).replace(".", decimal_sep)
             else:
                 format_spec = "_.{}f".format(decimals)
 
-                def apply(value: int) -> str:
+                def apply(value: float) -> str:
                     return format(value, format_spec).replace("_", thousands_sep).replace(".", decimal_sep)
 
-    def func(value: Optional[int]) -> Union[str, T]:
+    def func(value: Optional[float]) -> Union[str, T]:
         if value is None:
             return default
         return apply(value)

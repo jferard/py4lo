@@ -30,7 +30,7 @@ from enum import Enum
 from locale import getlocale
 from pathlib import Path
 from typing import (Any, Optional, List, cast, Callable, Mapping, Tuple,
-                    Iterator, Union, Iterable, ContextManager, Collection)
+                    Iterator, Union, Iterable, Collection)
 
 from py4lo_commons import uno_path_to_url
 from py4lo_typing import (UnoSpreadsheetDocument, UnoController, UnoContext,
@@ -40,7 +40,8 @@ from py4lo_typing import (UnoSpreadsheetDocument, UnoController, UnoContext,
                           UnoColumn, UnoStruct, UnoEnumeration, UnoRow, DATA_VALUE,
                           UnoPropertyValues, UnoTextRange, lazy, UnoControl,
                           UnoDispatcher, UnoDesktop, UnoNameAccess, UnoIndexAccess, UnoEnumerable, UnoDateStruct,
-                          UnoRanges, UnoSizeStruct, UnoOfficeDocument, UnoSheets, UnoText)
+                          UnoRanges, UnoSizeStruct, UnoOfficeDocument, UnoSheets, UnoText, UnoClipboard, UnoDataFlavor,
+                          UnoTextContent)
 
 try:
     # noinspection PyUnresolvedReferences,PyPackageRequirements
@@ -320,9 +321,10 @@ class _ObjectProvider:
         @return: a com.sun.star.script.provider.XScriptProvider
         """
         if self._script_provider is None:
+            factory = self.get_script_provider_factory()
+            # noinspection PyUnresolvedReferences
             self._script_provider = cast(
-                UnoService,
-                self.get_script_provider_factory().createScriptProvider("")
+                UnoService, factory.createScriptProvider("")
             )
         return self._script_provider
 
@@ -408,6 +410,7 @@ def create_uno_service_ctxt(sname: str,
     @param args: optional args
     @return: the service
     """
+    assert provider is not None
     return create_uno_service(sname, args, provider.ctxt)
 
 
@@ -542,6 +545,7 @@ def parent_doc(oRange: UnoRange) -> UnoSpreadsheetDocument:
     @return: the document to which this range belongs
     """
     oSheet = oRange.Spreadsheet
+    # noinspection PyUnresolvedReferences
     return oSheet.DrawPage.Forms.Parent
 
 
@@ -563,6 +567,7 @@ def get_named_cells(oDoc: UnoSpreadsheetDocument, name: str) -> UnoRange:
     @param name: the name of the range
     @return: the range itself (see: com.sun.star.table.XCellRange)
     """
+    # noinspection PyUnresolvedReferences
     return oDoc.NamedRanges.getByName(name).ReferredCells
 
 
@@ -1264,6 +1269,7 @@ def clear_conditional_format(oColoredColumns: UnoRange):
 
     @param oColoredColumns: the range having a conditional format
     """
+    # noinspection PyUnresolvedReferences
     oConditionalFormat = oColoredColumns.ConditionalFormat
     oConditionalFormat.clear()
 
@@ -1605,6 +1611,8 @@ def open_document(filename: Union[str, Path], target: str = Target.BLANK,
     https://help.libreoffice.org/latest/en-US/text/shared/guide/csv_params.html
     @return: a reference on the doc
     """
+    assert provider is not None
+
     url = uno_path_to_url(filename)
     if kwargs:
         params = make_pvs(kwargs)
@@ -1778,6 +1786,8 @@ class DocBuilder:
         self._final_sheet_count = lazy(int)
 
     def build(self) -> UnoSpreadsheetDocument:
+        assert provider is not None
+
         oDoc = cast(
             UnoSpreadsheetDocument,
             provider.desktop.loadComponentFromURL(
@@ -2088,11 +2098,11 @@ class _Inspector:
     An inspector: MRI or Xray provider.
     """
 
-    def __init__(self, provider: _ObjectProvider):
+    def __init__(self, p: _ObjectProvider):
         """
         @param provider: the object provider
         """
-        self._provider = provider
+        self._provider = p
         self._xray_script = lazy(UnoService)
         self._ignore_xray = False
         self._oMRI = lazy(UnoService)
@@ -2132,9 +2142,11 @@ class _Inspector:
             self.use_xray(fail_on_error)
             if self._ignore_xray:
                 return
+            assert self._xray_script is not None
 
-        _oi = cast(Tuple[int, ...], tuple())
-        _o = cast(Tuple[Any, ...], tuple())
+        _oi: Tuple[int, ...] = tuple()
+        _o = tuple()
+        # noinspection PyUnresolvedReferences
         self._xray_script.invoke((obj,), _oi, _o)
 
     def mri(self, obj: Any, fail_on_error: bool = False):
@@ -2160,6 +2172,7 @@ class _Inspector:
                 else:
                     return
 
+        # noinspection PyUnresolvedReferences
         self._oMRI.inspect(obj)
 
 
@@ -2182,8 +2195,8 @@ def copy_to_clipboard(value: Any, flavor: Tuple[str, str] = TEXT_FLAVOR):
     @param value: the value
     @param flavor: the flavor as tuple (mimetype name, human readable name)
     """
-    oClipboard = create_uno_service(
-        "com.sun.star.datatransfer.clipboard.SystemClipboard")
+    oClipboard = cast(UnoClipboard, create_uno_service(
+        "com.sun.star.datatransfer.clipboard.SystemClipboard"))
     oClipboard.setContents(Transferable(value, flavor), None)
 
 
@@ -2196,8 +2209,8 @@ def get_from_clipboard(flavor: Tuple[str, str] = TEXT_FLAVOR) -> Optional[Any]:
     @param flavor: the flavor as tuple (mimetype name, human readable name)
     @return: the content of the clipboard or None
     """
-    oClipboard = create_uno_service(
-        "com.sun.star.datatransfer.clipboard.SystemClipboard")
+    oClipboard = cast(UnoClipboard, create_uno_service(
+        "com.sun.star.datatransfer.clipboard.SystemClipboard"))
     oContents = oClipboard.getContents()
     oTypes = oContents.getTransferDataFlavors()
 
@@ -2224,6 +2237,7 @@ class Transferable(unohelper.Base, XTransferable):
 
     def getTransferData(self, aFlavor: UnoObject) -> Any:
         """see. com.sun.star.datatransfer.XTransferable.getTransferData"""
+        # noinspection PyUnresolvedReferences
         if aFlavor.MimeType == self._flavor[0]:
             return self._value
         else:
@@ -2236,19 +2250,19 @@ class Transferable(unohelper.Base, XTransferable):
                                    HumanPresentableName=self._flavor[1])
         return [flavor]
 
-    def isDataFlavorSupported(self, aFlavor: UnoStruct) -> bool:
+    def isDataFlavorSupported(self, aFlavor: UnoDataFlavor) -> bool:
         """see. com.sun.star.datatransfer.XTransferable.isDataFlavorSupported"""
         return aFlavor.MimeType == self._flavor[0]
 
 
-def convert_to_html(oTextRange: UnoTextRange) -> str:
+def convert_to_html(oText: UnoText) -> str:
     """
     Convert a sequence of chars in a text range to HTML
 
     @param oTextRange: the text range
     @return: the HTML string
     """
-    return HTMLConverter().convert(oTextRange)
+    return HTMLConverter().convert(oText)
 
 
 class HTMLConverter:
@@ -2268,13 +2282,13 @@ class HTMLConverter:
         @return: the HTML string
         """
         html = self._html_line_break.join(
-            self._par_to_html(par_text_range) for par_text_range in
+            self._par_to_html(par_text_content) for par_text_content in
             to_iter(oText))
         return html
 
-    def _par_to_html(self, par_text_range: UnoTextRange) -> str:
+    def _par_to_html(self, text_content: UnoTextContent) -> str:
         return "".join(
-            [self._to_html(chunk) for chunk in to_iter(par_text_range)])
+            [self._to_html(chunk) for chunk in to_iter(text_content)])
 
     def _to_html(self, text_range: UnoTextRange) -> str:
         tag = self._get_tag(text_range)
@@ -2308,6 +2322,7 @@ class HTMLConverter:
                 and text_range.TextField.supportsService(
                     "com.sun.star.text.TextField.URL")
         ):
+            # noinspection PyUnresolvedReferences
             text = "<a href='{}'>{}</a>".format(
                 text_range.TextField.URL, text_range.TextField.Representation)
         else:
@@ -2728,7 +2743,7 @@ class DataArrayCopier:
 
 @contextmanager
 def undo_context(oDoc: UnoSpreadsheetDocument, title: Optional[str] = None
-                 ) -> ContextManager[None]:
+                 ) -> Iterator[None]:
     """
     Do something inside an undo context
     @param oDoc: the document
@@ -2750,7 +2765,7 @@ def undo_context(oDoc: UnoSpreadsheetDocument, title: Optional[str] = None
 
 
 @contextmanager
-def no_undo_context(oDoc: UnoSpreadsheetDocument) -> ContextManager[None]:
+def no_undo_context(oDoc: UnoSpreadsheetDocument) -> Iterator[None]:
     """
     Do something out of the undo context
     @param oDoc: the document
@@ -2941,7 +2956,7 @@ def make_layout_info(
 
 def make_auto_show_info(
         item_count: int, show_items_mode: int,
-        field_name: str = None, is_enabled: bool = True):
+        field_name: Optional[str] = None, is_enabled: bool = True):
     """
     Create a com.sun.star.sheet.DataPilotFieldAutoShowInfo structure
 
@@ -3163,8 +3178,10 @@ l        """
             "com.sun.star.awt.Rectangle", X=x, Y=y, Width=width, Height=height)
 
         oPivotCharts = oSheet.PivotCharts
+        # noinspection PyUnresolvedReferences
         oPivotCharts.addNewByName(name, rect, self._name)
         oPivotChart = oPivotCharts.getByName(name)
+        # noinspection PyUnresolvedReferences
         oPivotChartDoc = oPivotChart.EmbeddedObject
         if diagram is not None:
             oPivotChartDoc.Diagram = oPivotChartDoc.createInstance(diagram)
@@ -3268,6 +3285,7 @@ class FieldHelper:
             else:
                 group_info.Step = 0
 
+            # noinspection PyUnresolvedReferences,PyPackageRequirements
             oNextField = oCurField.createDateGroup(group_info)
             if oNextField is not None:
                 oCurField = oNextField
@@ -3283,10 +3301,12 @@ class FieldHelper:
         self._oField.Orientation = orientation
 
         first_group = groups.groups[0]
+        # noinspection PyUnresolvedReferences,PyPackageRequirements
         oGroupedField = self._oField.createNameGroup(first_group.values)
         oGroupedField.Name = groups.name
 
         for group in groups.groups[1:]:
             # noinspection PyStatementEffect
             oGroupedField.GroupInfo  # side-effect: avoids LO crash
+            # noinspection PyUnresolvedReferences,PyPackageRequirements
             self._oField.createNameGroup(group.values)
