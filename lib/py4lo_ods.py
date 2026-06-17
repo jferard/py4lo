@@ -28,7 +28,7 @@ import xml.etree.ElementTree as ET
 import zipfile
 from pathlib import Path
 
-from typing import (List, cast, Dict, Callable, IO, Iterator,
+from typing import (List, Dict, Callable, IO, Iterator,
                     Optional, Union)
 
 ACTIVE_TABLE_XPATH = (

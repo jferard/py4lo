@@ -41,7 +41,7 @@ from py4lo_typing import (UnoSpreadsheetDocument, UnoController, UnoContext,
                           UnoPropertyValues, UnoTextRange, lazy, UnoControl,
                           UnoDispatcher, UnoDesktop, UnoNameAccess, UnoIndexAccess, UnoEnumerable, UnoDateStruct,
                           UnoRanges, UnoSizeStruct, UnoOfficeDocument, UnoSheets, UnoText, UnoClipboard, UnoDataFlavor,
-                          UnoTextContent)
+                          UnoTextContent, S)
 
 try:
     # noinspection PyUnresolvedReferences,PyPackageRequirements
@@ -420,7 +420,7 @@ uno_service = create_uno_service
 uno_service_ctxt = create_uno_service_ctxt
 
 
-def to_iter[S](o: Union[UnoIndexAccess[S], UnoEnumerable[S]]) -> Iterator[S]:
+def to_iter(o: Union[UnoIndexAccess[S], UnoEnumerable[S]]) -> Iterator[S]:
     """
     Return an iterator from a com.sun.star.container.XIndexAccess or a
     com.sun.star.container.XEnumerationAccess.
