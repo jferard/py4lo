@@ -31,7 +31,7 @@ from enum import IntEnum, Enum
 from typing import (Any, Callable, List, Iterator, Optional, Mapping, Tuple,
                     Iterable, cast, Sequence)
 
-from lib.py4lo_typing import UnoNumberFormats, UnoStruct
+from py4lo_typing import UnoNumberFormats, UnoStruct
 # values of cell_typing
 from py4lo_commons import uno_path_to_url
 from py4lo_helper import (
@@ -129,6 +129,7 @@ def create_read_cell(cell_typing: CellTyping = CellTyping.Minimal,
         elif cell_type == 'TEXT':
             return oCell.String
         elif cell_type == 'VALUE':
+            assert oFormats is not None
             key = oCell.NumberFormat
             cell_data_type = oFormats.getByKey(key).Type
             value = oCell.Value

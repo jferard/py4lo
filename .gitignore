@@ -39,3 +39,4 @@ py4lo.egg-info/*
 
 # extensions
 *.ods#
+*.yml
