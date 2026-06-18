@@ -27,7 +27,7 @@ from typing import (Union, Tuple, List, cast, Optional, Sequence, Any)
 T = typing.TypeVar("T")
 
 # noinspection PyTypeHints
-def lazy[T](typ: typing.Type[T]) -> Optional[T]:
+def lazy(typ: typing.Type[T]) -> Optional[T]:
     return cast(Optional[typ], None)
 
 
