@@ -135,7 +135,7 @@ try:
         # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.sheet.DataPilotFieldLayoutMode import (
             TABULAR_LAYOUT, OUTLINE_SUBTOTALS_TOP, OUTLINE_SUBTOTALS_BOTTOM,
-            COMPACT_LAYOUT
+            # COMPACT_LAYOUT since LibreOffice 7.6
         )
 
 
