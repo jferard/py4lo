@@ -144,6 +144,7 @@ try:
             FILEOPEN_LINK_PREVIEW_IMAGE_ANCHOR,
         )
 except ImportError:
+    logging.exception("Import err")
     from _mock_constants import (  # type: ignore[assignment]
         ExecutableDialogResults,  # pyright: ignore[reportGeneralTypeIssues]
         MessageBoxButtons,  # pyright: ignore[reportGeneralTypeIssues]

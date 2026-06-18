@@ -47,6 +47,7 @@ try:
         )
 
 except ImportError:
+    logging.exception("Import err")
     from _mock_constants import ( # type:ignore[assignment]
         DataType,
         ColumnValue  # noqa: F401

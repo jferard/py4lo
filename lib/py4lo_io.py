@@ -24,6 +24,7 @@ A module to handle I/O:
 import csv
 import encodings
 import locale
+import logging
 import sys
 from abc import ABC
 from datetime import (date, datetime, time)
@@ -50,6 +51,7 @@ try:
         from com.sun.star.util.NumberFormat import (DATE, TIME, DATETIME,
                                                     LOGICAL)
 except ImportError:
+    logging.exception("Import err")
     from _mock_constants import (
         NumberFormat,
     )

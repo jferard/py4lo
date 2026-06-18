@@ -145,6 +145,7 @@ try:
             FROM_TOP, FROM_BOTTOM)
 
 except ImportError:
+    logging.exception("Import err")
     from _mock_constants import (  # type:ignore[assignment]
         BorderLineStyle,  # pyright: ignore[reportGeneralTypeIssues]
         ConditionOperator,  # pyright: ignore[reportGeneralTypeIssues]

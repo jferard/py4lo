@@ -44,6 +44,7 @@ try:
     # noinspection PyUnresolvedReferences,PyPackageRequirements
     import uno
 except ImportError:
+    logging.exception("Import err")
     from _mock_objects import uno
 
 _xsc = None
