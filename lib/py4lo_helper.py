@@ -447,7 +447,7 @@ def to_iter(o: Union[UnoIndexAccess[S], UnoEnumerable[S]]) -> Iterator[S]:
             raise TypeError(repr(o))
 
 
-def to_enumerate[S](o: Union[UnoIndexAccess[S], UnoEnumerable[S]]) -> Iterator[Tuple[int, S]]:
+def to_enumerate(o: Union[UnoIndexAccess[S], UnoEnumerable[S]]) -> Iterator[Tuple[int, S]]:
     """
     Return an iterator from a com.sun.star.container.XIndexAccess or a
     com.sun.star.container.XEnumerationAccess object.
@@ -476,7 +476,7 @@ def to_enumerate[S](o: Union[UnoIndexAccess[S], UnoEnumerable[S]]) -> Iterator[T
             raise TypeError(repr(o))
 
 
-def to_dict[S](oXNameAccess: UnoNameAccess[S]) -> Mapping[str, S]:
+def to_dict(oXNameAccess: UnoNameAccess[S]) -> Mapping[str, S]:
     """
     Return a dictionary from a com.sun.star.container.XNameAccess object.
 
@@ -497,7 +497,7 @@ def to_dict[S](oXNameAccess: UnoNameAccess[S]) -> Mapping[str, S]:
         raise TypeError(repr(oXNameAccess) + str(e))
 
 
-def to_items[S](oXNameAccess: UnoNameAccess[S]) -> Iterator[Tuple[str, S]]:
+def to_items(oXNameAccess: UnoNameAccess[S]) -> Iterator[Tuple[str, S]]:
     """
     Return a dictionary from a com.sun.star.container.XNameAccess object.
 
