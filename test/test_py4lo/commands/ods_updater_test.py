@@ -18,13 +18,12 @@
 import unittest
 from logging import Logger
 from pathlib import Path
-from typing import List
 from unittest import mock
 
 from commands.ods_updater import OdsUpdaterHelper
-from core.asset import SourceAsset, DestinationAsset
-from core.source_dest import Sources, Destinations
-from core.script import TempScript, SourceScript, DestinationScript
+from core.asset import DestinationAsset, SourceAsset
+from core.script import DestinationScript, SourceScript, TempScript
+from core.source_dest import Destinations, Sources
 
 
 class TestOdsUpdaterHelper(unittest.TestCase):
@@ -33,8 +32,8 @@ class TestOdsUpdaterHelper(unittest.TestCase):
         logger: Logger = mock.Mock()
         sources: Sources = mock.Mock()
         destinations: Destinations = mock.Mock()
-        source_assets: List[SourceAsset] = mock.Mock()
-        destination_asset = DestinationAsset(Path("asset"), bytes())
+        source_assets: list[SourceAsset] = mock.Mock()
+        destination_asset = DestinationAsset(Path("asset"), b"")
 
         # play
         sources.get_assets.return_value = source_assets
@@ -56,7 +55,7 @@ class TestOdsUpdaterHelper(unittest.TestCase):
         logger: Logger = mock.Mock()
         sources: Sources = mock.Mock()
         destinations: Destinations = mock.Mock()
-        source_scripts: List[SourceScript] = mock.Mock()
+        source_scripts: list[SourceScript] = mock.Mock()
         destination_script: DestinationScript = mock.Mock()
         temp_script: TempScript = mock.Mock()
 

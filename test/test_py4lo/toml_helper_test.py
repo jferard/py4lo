@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #  Py4LO - Python Toolkit For LibreOffice Calc
 #     Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 #
@@ -22,8 +21,12 @@ import sys
 import unittest
 
 from toml_helper import TomlLoader, load_toml
+
 from test.test_helper import (
-    file_path_mock, file_path_error_mock, verify_open_path)
+    file_path_error_mock,
+    file_path_mock,
+    verify_open_path,
+)
 
 
 class TestTomlHelper(unittest.TestCase):

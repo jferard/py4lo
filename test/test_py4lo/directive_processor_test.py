@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #  Py4LO - Python Toolkit For LibreOffice Calc
 #     Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 #
@@ -129,7 +128,7 @@ class TestDirectiveProcessor(unittest.TestCase):
     #         '    import unohelper',
     #         '    import sys',
     #         '    doc = XSCRIPTCONTEXT.getDocument()',
-    #         "    spath = unohelper.fileUrlToSystemPath(doc.URL+'/Scripts/python')", # noqa: E501
+    #         "    spath = unohelper.fileUrlToSystemPath(doc.URL+'/Scripts/python')",
     #         '    if spath not in sys.path:',
     #         '        sys.path.insert(0, spath)'
     #     ], lines)

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Py4LO - Python Toolkit For LibreOffice Calc
 #     Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 #

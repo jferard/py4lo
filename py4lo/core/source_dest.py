@@ -18,40 +18,39 @@
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Set, Optional
 
-from core.asset import SourceAsset, DestinationAsset
-from core.script import SourceScript, TempScript, DestinationScript
+from core.asset import DestinationAsset, SourceAsset
+from core.script import DestinationScript, SourceScript, TempScript
 
 
 @dataclass
 class Sources:
-    source_ods_file: Optional[Path]
+    source_ods_file: Path | None
     inc_dir: Path
     lib_dir: Path
     src_dir: Path
-    src_ignore: List[str]
+    src_ignore: list[str]
     opt_dir: Path
     assets_dir: Path
-    assets_ignore: List[str]
+    assets_ignore: list[str]
     test_dir: Path
 
-    def get_src_paths(self) -> Set[Path]:
+    def get_src_paths(self) -> set[Path]:
         return _get_paths(self.src_dir, self.src_ignore, "*.py")
 
-    def get_module_names(self) -> Set[str]:
+    def get_module_names(self) -> set[str]:
         return _get_module_names(self.src_dir, self.src_ignore, "*.py")
 
-    def get_all_module_names(self) -> Set[str]:
+    def get_all_module_names(self) -> set[str]:
         return {*_get_module_names(self.src_dir, self.src_ignore, "*.py"),
                 *_get_module_names(self.lib_dir, self.src_ignore),
                 *_get_module_names(self.opt_dir, self.src_ignore)}
 
-    def get_assets(self) -> List[SourceAsset]:
+    def get_assets(self) -> list[SourceAsset]:
         return [SourceAsset(p, self.assets_dir) for p in
                 _get_paths(self.assets_dir, self.assets_ignore)]
 
-    def get_src_scripts(self) -> List[SourceScript]:
+    def get_src_scripts(self) -> list[SourceScript]:
         script_paths = self.get_src_paths()
         return [SourceScript(sp, self.src_dir, True) for sp in script_paths]
 
@@ -63,24 +62,24 @@ class Destinations:
     dest_dir: Path
     assets_dest_dir: Path
 
-    def to_destination_scripts(self, temp_scripts: List[TempScript]
-                               ) -> List[DestinationScript]:
+    def to_destination_scripts(self, temp_scripts: list[TempScript]
+                               ) -> list[DestinationScript]:
         return [ts.to_destination(self.dest_dir) for ts in
                 temp_scripts]
 
-    def to_destination_assets(self, source_assets) -> List[DestinationAsset]:
+    def to_destination_assets(self, source_assets) -> list[DestinationAsset]:
         return [sa.to_dest(self.assets_dest_dir) for sa in source_assets]
 
 
-def _get_paths(source_dir: Path, ignore: List[str], glob="*") -> Set[Path]:
+def _get_paths(source_dir: Path, ignore: list[str], glob="*") -> set[Path]:
     paths = set(source_dir.rglob(glob))
     for pattern in ignore:
         paths -= set(source_dir.rglob(pattern))
-    return set(p for p in paths if p.is_file())
+    return {p for p in paths if p.is_file()}
 
 
-def _get_module_names(source_dir: Path, ignore: List[str], glob="*"
-                      ) -> Set[str]:
+def _get_module_names(source_dir: Path, ignore: list[str], glob="*"
+                      ) -> set[str]:
     paths = _get_paths(source_dir, ignore, glob)
     module_names = set()
     for p in paths:

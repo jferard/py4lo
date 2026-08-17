@@ -23,32 +23,75 @@ The module py4lo_helper deals with LO objects.
 It provides a lot of simple functions to handle those objects.
 """
 import datetime as dt
+
 # mypy: disable-error-code="import-untyped,import-not-found"
 import logging
 from contextlib import contextmanager
 from enum import Enum
 from locale import getlocale
 from pathlib import Path
-from typing import (Any, Optional, List, cast, Callable, Mapping, Tuple,
-                    Iterator, Union, Iterable, Collection)
+from typing import (
+    Any,
+    Callable,
+    Collection,
+    Iterable,
+    Iterator,
+    List,
+    Mapping,
+    Optional,
+    Tuple,
+    Union,
+    cast,
+)
 
 from py4lo_commons import uno_path_to_url
-from py4lo_typing import (UnoSpreadsheetDocument, UnoController, UnoContext,
-                          UnoService, UnoSheet, UnoRangeAddress, UnoRange,
-                          UnoCell, UnoObject, DATA_ARRAY, UnoCellAddress,
-                          UnoPropertyValue, DATA_ROW, UnoXScriptContext,
-                          UnoColumn, UnoStruct, UnoEnumeration, UnoRow, DATA_VALUE,
-                          UnoPropertyValues, UnoTextRange, lazy, UnoControl,
-                          UnoDispatcher, UnoDesktop, UnoNameAccess, UnoIndexAccess, UnoEnumerable, UnoDateStruct,
-                          UnoRanges, UnoSizeStruct, UnoOfficeDocument, UnoSheets, UnoText, UnoClipboard, UnoDataFlavor,
-                          UnoTextContent, S)
+from py4lo_typing import (
+    DATA_ARRAY,
+    DATA_ROW,
+    DATA_VALUE,
+    S,
+    StrPath,
+    UnoCell,
+    UnoCellAddress,
+    UnoClipboard,
+    UnoColumn,
+    UnoContext,
+    UnoControl,
+    UnoController,
+    UnoDataFlavor,
+    UnoDateStruct,
+    UnoDesktop,
+    UnoDispatcher,
+    UnoEnumerable,
+    UnoEnumeration,
+    UnoIndexAccess,
+    UnoNameAccess,
+    UnoObject,
+    UnoOfficeDocument,
+    UnoPropertyValue,
+    UnoPropertyValues,
+    UnoRange,
+    UnoRangeAddress,
+    UnoRanges,
+    UnoRow,
+    UnoService,
+    UnoSheet,
+    UnoSheets,
+    UnoSizeStruct,
+    UnoSpreadsheetDocument,
+    UnoStruct,
+    UnoText,
+    UnoTextContent,
+    UnoTextRange,
+    UnoXScriptContext,
+    lazy,
+)
 
 try:
     # noinspection PyUnresolvedReferences,PyPackageRequirements
-    import unohelper
-
     # noinspection PyUnresolvedReferences,PyPackageRequirements
     import uno
+    import unohelper
 
     # noinspection PyUnresolvedReferences,PyPackageRequirements
     from com.sun.star.datatransfer import XTransferable
@@ -57,110 +100,163 @@ try:
     class FrameSearchFlag:
         # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.frame.FrameSearchFlag import (
-            AUTO, PARENT, SELF, CHILDREN, CREATE, SIBLINGS, TASKS, ALL, GLOBAL)
+            ALL,
+            AUTO,
+            CHILDREN,
+            CREATE,
+            GLOBAL,
+            PARENT,
+            SELF,
+            SIBLINGS,
+            TASKS,
+        )
 
 
     class BorderLineStyle:
         # noinspection PyUnresolvedReferences,PyPackageRequirements
-        from com.sun.star.table.BorderLineStyle import (SOLID, )
+        from com.sun.star.table.BorderLineStyle import (
+            SOLID,
+        )
 
 
     class ConditionOperator:
         # noinspection PyUnresolvedReferences,PyPackageRequirements
-        from com.sun.star.sheet.ConditionOperator import (FORMULA, )
+        from com.sun.star.sheet.ConditionOperator import (
+            FORMULA,
+        )
 
 
     class FontWeight:
         # noinspection PyUnresolvedReferences,PyPackageRequirements
-        from com.sun.star.awt.FontWeight import (BOLD, )
+        from com.sun.star.awt.FontWeight import (
+            BOLD,
+        )
 
 
     class ValidationType:
         # noinspection PyUnresolvedReferences,PyPackageRequirements
-        from com.sun.star.sheet.ValidationType import (LIST, )
+        from com.sun.star.sheet.ValidationType import (
+            LIST,
+        )
 
 
     class TableValidationVisibility:
         # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.sheet.TableValidationVisibility import (
-            SORTEDASCENDING, UNSORTED)
+            SORTEDASCENDING,
+            UNSORTED,
+        )
 
 
     # noinspection PyUnresolvedReferences,PyPackageRequirements
     from com.sun.star.script.provider import ScriptFrameworkErrorException
+    from com.sun.star.uno import Exception as UnoException
+
     # noinspection PyUnresolvedReferences,PyPackageRequirements
-    from com.sun.star.uno import (RuntimeException as UnoRuntimeException,
-                                  Exception as UnoException)
+    from com.sun.star.uno import RuntimeException as UnoRuntimeException
 
 
     class PropertyState:
         # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.beans.PropertyState import (
-            AMBIGUOUS_VALUE, DIRECT_VALUE)
+            AMBIGUOUS_VALUE,
+            DIRECT_VALUE,
+        )
 
 
     class FontSlant:
         # noinspection PyUnresolvedReferences,PyPackageRequirements
-        from com.sun.star.awt.FontSlant import (NONE, OBLIQUE, ITALIC)
+        from com.sun.star.awt.FontSlant import ITALIC, NONE, OBLIQUE
 
 
     class DataPilotFieldOrientation:
         # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.sheet.DataPilotFieldOrientation import (
-            HIDDEN, ROW, COLUMN, DATA, PAGE)
+            COLUMN,
+            DATA,
+            HIDDEN,
+            PAGE,
+            ROW,
+        )
 
 
     class DataPilotFieldGroupBy:
         # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.sheet.DataPilotFieldGroupBy import (
-            SECONDS, MINUTES, HOURS, DAYS, MONTHS, QUARTERS, YEARS)
+            DAYS,
+            HOURS,
+            MINUTES,
+            MONTHS,
+            QUARTERS,
+            SECONDS,
+            YEARS,
+        )
 
 
     class DataPilotFieldSortMode:
         # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.sheet.DataPilotFieldSortMode import (
-            NONE, MANUAL, NAME, DATA
+            DATA,
+            MANUAL,
+            NAME,
+            NONE,
         )
 
 
     class GeneralFunction2:
         # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.sheet.GeneralFunction2 import (
-            NONE, AUTO, SUM, COUNT, AVERAGE, MAX, MIN, PRODUCT, COUNTNUMS,
-            STDEV, STDEVP, VAR, VARP, MEDIAN
+            AUTO,
+            AVERAGE,
+            COUNT,
+            COUNTNUMS,
+            MAX,
+            MEDIAN,
+            MIN,
+            NONE,
+            PRODUCT,
+            STDEV,
+            STDEVP,
+            SUM,
+            VAR,
+            VARP,
         )
 
 
     class DataPilotFieldLayoutMode:
         # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.sheet.DataPilotFieldLayoutMode import (
-            TABULAR_LAYOUT, OUTLINE_SUBTOTALS_TOP, OUTLINE_SUBTOTALS_BOTTOM,
+            OUTLINE_SUBTOTALS_BOTTOM,
             # COMPACT_LAYOUT since LibreOffice 7.6
+            OUTLINE_SUBTOTALS_TOP,
+            TABULAR_LAYOUT,
         )
 
 
     class DataPilotFieldShowItemsMode:
         # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.sheet.DataPilotFieldShowItemsMode import (
-            FROM_TOP, FROM_BOTTOM)
+            FROM_BOTTOM,
+            FROM_TOP,
+        )
 
 except ImportError:
-    logging.exception("Import err")
+    logging.getLogger(__name__).exception("Import err")
     from _mock_constants import (  # type:ignore[assignment]
         BorderLineStyle,  # pyright: ignore[reportGeneralTypeIssues]
         ConditionOperator,  # pyright: ignore[reportGeneralTypeIssues]
+        DataPilotFieldGroupBy,  # pyright: ignore[reportGeneralTypeIssues]
+        DataPilotFieldOrientation,  # pyright: ignore[reportGeneralTypeIssues]
+        DataPilotFieldSortMode,  # pyright: ignore[reportGeneralTypeIssues]
         FontSlant,  # pyright: ignore[reportGeneralTypeIssues]
         FontWeight,  # pyright: ignore[reportGeneralTypeIssues]
         FrameSearchFlag,  # pyright: ignore[reportGeneralTypeIssues]
         PropertyState,  # pyright: ignore[reportGeneralTypeIssues]
         TableValidationVisibility,  # pyright: ignore[reportGeneralTypeIssues]
         ValidationType,  # pyright: ignore[reportGeneralTypeIssues]
-        DataPilotFieldOrientation,  # pyright: ignore[reportGeneralTypeIssues]
-        DataPilotFieldGroupBy,  # pyright: ignore[reportGeneralTypeIssues]
-        DataPilotFieldSortMode,  # pyright: ignore[reportGeneralTypeIssues]
     )
     from _mock_objects import (  # type: ignore[assignment]
-        ScriptFrameworkErrorException, \
+        ScriptFrameworkErrorException,
         # pyright: ignore[reportGeneralTypeIssues]
         UnoException,  # pyright: ignore[reportGeneralTypeIssues]
         UnoRuntimeException,  # pyright: ignore[reportGeneralTypeIssues]
@@ -172,10 +268,10 @@ except ImportError:
 ###############################################################################
 # BASE
 ###############################################################################
-provider = cast(Optional["_ObjectProvider"], None)
-_inspector = cast(Optional["_Inspector"], None)
-xray = cast(Optional[Callable], None)
-mri = cast(Optional[Callable], None)
+provider = lazy("_ObjectProvider")
+_inspector = lazy("_Inspector")
+xray = lazy(Callable)
+mri = lazy(Callable)
 
 
 def init(xsc: UnoXScriptContext):
@@ -371,8 +467,7 @@ class _ObjectProvider:
         """
         oDialogProvider = self.service_manager.createInstanceWithArguments(
             "com.sun.star.awt.DialogProvider", (self.doc,))
-        dialog_url = "vnd.sun.star.script:{}?location={}".format(
-            dialog_name, dialog_location)
+        dialog_url = f"vnd.sun.star.script:{dialog_name}?location={dialog_location}"
         oDialog = oDialogProvider.createDialog(dialog_url)
         return oDialog
 
@@ -676,7 +771,7 @@ def make_pvs(d: Optional[Mapping[str, Any]] = None
     @return: the tuple of PropertyValue objects
     """
     if d is None:
-        return tuple()
+        return ()
     else:
         return tuple(make_pv(n, v) for n, v in d.items())
 
@@ -1062,8 +1157,7 @@ def left_void_column_count(data_array: DATA_ARRAY) -> int:
         c = 0
         while c < c0 and is_empty_da_value(row[c]):
             c += 1
-        if c < c0:
-            c0 = c
+        c0 = min(c0, c)
     return c0
 
 
@@ -1085,8 +1179,7 @@ def right_void_column_count(data_array: DATA_ARRAY) -> int:
         c = 0
         while c < c1 and is_empty_da_value(row[width - c - 1]):
             c += 1
-        if c < c1:
-            c1 = c
+        c1 = min(c1, c)
     return c1
 
 
@@ -1234,7 +1327,7 @@ def quote_element(value: Any) -> str:
     #     pass  # if locale
     # elif isinstance(value, (date, datetime)):
     #     pass # if locale
-    return '"{}"'.format(value)
+    return f'"{value}"'
 
 
 def sort_range(oRange: UnoRange, sort_fields: Tuple[UnoStruct, ...],
@@ -1383,7 +1476,7 @@ def create_filter(oRange: UnoRange):
     oController = oDoc.CurrentController
     oController.select(oRange)
     get_provider().dispatcher.executeDispatch(
-        oController, ".uno:DataFilterAutoFilter", "", 0, tuple())
+        oController, ".uno:DataFilterAutoFilter", "", 0, ())
     # unselect
     oRanges = cast(UnoRanges, oDoc.createInstance("com.sun.star.sheet.SheetCellRanges"))
     oController.select(oRanges)
@@ -1580,7 +1673,7 @@ class Target(str, Enum):
     BEAMER = "_beamer"  # means special sub frame
 
 
-def open_document(filename: Union[str, Path], target: str = Target.BLANK,
+def open_document(filename: StrPath, target: str = Target.BLANK,
                   frame_flags=FrameSearchFlag.AUTO,
                   **kwargs) -> UnoOfficeDocument:
     """
@@ -1683,10 +1776,10 @@ class SheetsHelper:
             return clean_base_name
 
         for i in range(1, 1000):
-            name = "{}-{}".format(clean_base_name, i)
+            name = f"{clean_base_name}-{i}"
             if not self._oSheets.hasByName(name):
                 return name
-        raise NameError("Impossible d'ajouter la feuille {}".format(clean_base_name))
+        raise NameError(f"Impossible d'ajouter la feuille {clean_base_name}")
 
     def get_or_append_sheet(self, name: str) -> UnoSheet:
         """
@@ -1711,7 +1804,7 @@ class SheetsHelper:
         @return: the new sheet
         @raise NameError: if no derived name is not available
         """
-        free_name = self._get_free_name("{}-{}".format(oSheet.Name, suffix))
+        free_name = self._get_free_name(f"{oSheet.Name}-{suffix}")
         new_index = oSheet.RangeAddress.Sheet + 1
         self._oSheets.copyByName(oSheet.Name, free_name, new_index)
         return self._oSheets.getByIndex(new_index)
@@ -1734,7 +1827,7 @@ def doc_builder(
     @return: a DocBuilder instance
     """
     if pvs is None:
-        pvs = tuple()
+        pvs = ()
     return DocBuilder(url, taget_frame_name, search_flags, pvs)
 
 
@@ -1825,8 +1918,7 @@ class DocBuilder:
                 s += 1
 
             if s != initial_count:
-                raise AssertionError("s={} vs oSheets.Count={}".format(
-                    s, initial_count))
+                raise AssertionError(f"s={s} vs oSheets.Count={initial_count}")
 
             if self._expand_if_necessary:
                 # add
@@ -1835,8 +1927,7 @@ class DocBuilder:
                     s += 1
         except StopIteration:  # it
             if s > initial_count:
-                raise AssertionError("s={} vs oSheets.Count={}".format(
-                    s, oSheets.Count))
+                raise AssertionError(f"s={s} vs oSheets.Count={oSheets.Count}")
             if self._trunc_if_necessary:
                 self._trunc_to_count(oDoc, s)
 
@@ -2145,8 +2236,8 @@ class _Inspector:
                 return
             assert self._xray_script is not None
 
-        _oi: Tuple[int, ...] = tuple()
-        _o = tuple()
+        _oi: Tuple[int, ...] = ()
+        _o = ()
         # noinspection PyUnresolvedReferences
         self._xray_script.invoke((obj,), _oi, _o)
 
@@ -2297,21 +2388,21 @@ class HTMLConverter:
         statements = []
         if text_range.CharFontName != "Liberation Sans":
             statements.append(
-                "font-family: \"{}\"".format(text_range.CharFontName))
+                f"font-family: \"{text_range.CharFontName}\"")
         if text_range.CharHeight != 10:
-            statements.append("font-size: {}pt".format(text_range.CharHeight))
+            statements.append(f"font-size: {text_range.CharHeight}pt")
         if text_range.CharWeight != 100:
             statements.append(
-                "font-weight: {}".format(int(text_range.CharWeight * 4)))
+                f"font-weight: {int(text_range.CharWeight * 4)}")
         italic = (text_range.CharPosture == FontSlant.OBLIQUE
                   or text_range.CharPosture == FontSlant.ITALIC)
         if italic:
             statements.append("font-style: italic")
         if text_range.CharColor != -1:
-            statements.append("color: #{:02x}".format(text_range.CharColor))
+            statements.append(f"color: #{text_range.CharColor:02x}")
         if text_range.CharBackColor != -1:
             statements.append(
-                "background-color: #{:02x}".format(text_range.CharBackColor))
+                f"background-color: #{text_range.CharBackColor:02x}")
         if text_range.CharOverline != 0:
             statements.append("text-decoration: overline")
         if text_range.CharStrikeout != 0:
@@ -2324,8 +2415,7 @@ class HTMLConverter:
                     "com.sun.star.text.TextField.URL")
         ):
             # noinspection PyUnresolvedReferences
-            text = "<a href='{}'>{}</a>".format(
-                text_range.TextField.URL, text_range.TextField.Representation)
+            text = f"<a href='{text_range.TextField.URL}'>{text_range.TextField.Representation}</a>"
         else:
             text = text_range.String
         if statements:
@@ -2335,9 +2425,7 @@ class HTMLConverter:
         elif tag == "span":
             return text
         else:
-            return "<{tag}>{text}</{tag}>".format(
-                tag=tag, text=text
-            )
+            return f"<{tag}>{text}</{tag}>"
 
     def _get_tag(self, text_range: UnoTextRange) -> str:
         if text_range.CharEscapementHeight < 100:
@@ -2454,14 +2542,14 @@ class DatesHelper:
         @return: the helper
         """
         if oDoc is None:
-            origin = dt.datetime(1899, 12, 30)
+            origin = dt.datetime(1899, 12, 30, tzinfo=dt.timezone.utc)
         else:
             oNullDate = oDoc.NullDate
             if oNullDate.Day == 0:
-                origin = dt.datetime(1899, 12, 30)
+                origin = dt.datetime(1899, 12, 30, tzinfo=dt.timezone.utc)
             else:
                 origin = dt.datetime(oNullDate.Year, oNullDate.Month,
-                                     oNullDate.Day)
+                                     oNullDate.Day, tzinfo=dt.timezone.utc)
         return DatesHelper(origin)
 
     def __init__(self, origin: dt.datetime):
@@ -2480,9 +2568,9 @@ class DatesHelper:
         if isinstance(a_date, dt.datetime):
             pass
         elif isinstance(a_date, dt.date):
-            a_date = dt.datetime(a_date.year, a_date.month, a_date.day)
+            a_date = dt.datetime(a_date.year, a_date.month, a_date.day, tzinfo=dt.timezone.utc)
         else:
-            raise ValueError(a_date)
+            raise TypeError(a_date)
         return (a_date - self._origin).days
 
     def date_to_float(self,
@@ -2496,14 +2584,14 @@ class DatesHelper:
         if isinstance(a_date, dt.datetime):
             time_delta = a_date - self._origin
         elif isinstance(a_date, dt.date):
-            a_datetime = dt.datetime(a_date.year, a_date.month, a_date.day)
+            a_datetime = dt.datetime(a_date.year, a_date.month, a_date.day, tzinfo=dt.timezone.utc)
             time_delta = a_datetime - self._origin
         elif isinstance(a_date, dt.time):
             time_delta = dt.timedelta(
                 hours=a_date.hour, minutes=a_date.minute, seconds=a_date.second,
                 microseconds=a_date.microsecond)
         else:
-            raise ValueError(a_date)
+            raise TypeError(a_date)
         return time_delta.total_seconds() / 86400
 
     def int_to_date(self, days: int) -> dt.datetime:
@@ -2685,16 +2773,15 @@ class DataArrayCopier:
         for i, row in enumerate(data_array):
             if len(row) != col_count:
                 square_errs.append(
-                    "* line {}: found {} cols".format(i, len(row)))
+                    f"* line {i}: found {len(row)} cols")
             if not all(
                     v is None or isinstance(v, (str, float, bool, int)) for v in
                     row):
-                illegal_value_errs.append("* line {}: {}".format(i, repr(row)))
+                illegal_value_errs.append(f"* line {i}: {row!r}")
         errs = []
         if square_errs:
             errs.append(
-                "DataArray is not a square (expected {} cols):".format(
-                    col_count))
+                f"DataArray is not a square (expected {col_count} cols):")
             errs.extend(square_errs)
         if illegal_value_errs:
             errs.append(
@@ -2833,7 +2920,7 @@ def odf_path_to_lock(path: Path) -> Path:
     :param path: the ODF file path
     :return: the path of the file lock
     """
-    return path.parent / ".lock.{}#".format(path.name)
+    return path.parent / f".lock.{path.name}#"
 
 
 class DateGroup:
@@ -2859,7 +2946,7 @@ class DateGroup:
         self.day_step = day_step
 
     def __repr__(self) -> str:
-        return "{}({})".format(self.__class__.__name__, self.__dict__)
+        return f"{self.__class__.__name__}({self.__dict__})"
 
 
 class DateGroups:
@@ -2874,7 +2961,7 @@ class DateGroups:
         self.groups = groups
 
     def __repr__(self) -> str:
-        return "{}({})".format(self.__class__.__name__, self.__dict__)
+        return f"{self.__class__.__name__}({self.__dict__})"
 
 
 class NameGroup:
@@ -2892,7 +2979,7 @@ class NameGroup:
         self.values = values
 
     def __repr__(self) -> str:
-        return "{}({})".format(self.__class__.__name__, self.__dict__)
+        return f"{self.__class__.__name__}({self.__dict__})"
 
 
 class NameGroups:
@@ -2909,7 +2996,7 @@ class NameGroups:
         self.groups = groups
 
     def __repr__(self) -> str:
-        return "{}({})".format(self.__class__.__name__, self.__dict__)
+        return f"{self.__class__.__name__}({self.__dict__})"
 
 
 def make_data_sort_info(
@@ -3064,7 +3151,7 @@ class DataPilotBuilder:
     def get_chart_doc(self) -> Optional[UnoService]:
         """
         Return the underlying com.sun.star.chart.ChartDocument if a chart
-        was added (see `add_chart`). This ethod may be called after add_chart
+        was added (see `add_chart`). This method may be called after add_chart
         to acces the UNO API.
 
         :return: the chart document
@@ -3072,7 +3159,7 @@ class DataPilotBuilder:
         return self._oChartDoc
 
     def add_row(
-            self, field_name: str, groups: Optional[Union[NameGroups, DateGroups]] = None,
+            self, field_name: str, groups: Union[NameGroups, DateGroups, None]  = None,
             sort: Optional[UnoStruct] = None,
             subtotals: Optional[Tuple[int, ...]] = None,
             layout: Optional[UnoStruct] = None,
@@ -3100,7 +3187,7 @@ class DataPilotBuilder:
             show_empty)
 
     def add_column(
-            self, field_name: str, groups: Optional[Union[NameGroups, DateGroups]] = None,
+            self, field_name: str, groups: Union[NameGroups, DateGroups, None] = None,
             sort: Optional[UnoStruct] = None,
             subtotals: Optional[Tuple[int, ...]] = None,
             layout: Optional[UnoStruct] = None,
@@ -3129,7 +3216,7 @@ class DataPilotBuilder:
 
     def _add_row_or_column(
             self, field_name: str, orientation: int,
-            groups: Optional[Union[NameGroups, DateGroups]],
+            groups: Union[NameGroups, DateGroups, None],
             sort: Optional[UnoStruct],
             subtotals: Optional[Tuple[int, ...]],
             layout: Optional[UnoStruct], auto_show: Optional[UnoStruct],
@@ -3208,7 +3295,7 @@ class FieldHelper:
 
     def make_row_or_column(
             self, orientation: int,
-            groups: Optional[Union[NameGroups, DateGroups]],
+            groups: Union[NameGroups, DateGroups, None],
             sort: Optional[UnoStruct],
             subtotals: Optional[Tuple[int, ...]],
             layout: Optional[UnoStruct], auto_show: Optional[UnoStruct],
@@ -3255,7 +3342,7 @@ class FieldHelper:
         elif isinstance(groups, DateGroups):
             self._group_by_date(orientation, groups)
         else:
-            raise ValueError()
+            raise TypeError(groups)
 
     def _group_by_date(self, orientation: int,
                        groups: DateGroups):
@@ -3308,6 +3395,6 @@ class FieldHelper:
 
         for group in groups.groups[1:]:
             # noinspection PyStatementEffect
-            oGroupedField.GroupInfo  # side-effect: avoids LO crash
+            oGroupedField.GroupInfo  # noqa: B018, side-effect: avoids LO crash
             # noinspection PyUnresolvedReferences,PyPackageRequirements
             self._oField.createNameGroup(group.values)

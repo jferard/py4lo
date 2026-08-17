@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #  Py4LO - Python Toolkit For LibreOffice Calc
 #     Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 #
@@ -16,19 +15,20 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from typing import List, Tuple, Any
+from typing import Any
+
+from core.properties import PropertiesProvider
 
 from commands import Command
 from commands.command_executor import CommandExecutor
 from commands.debug_command import DebugCommand
 from commands.ods_updater import OdsUpdaterHelper
 from commands.test_command import TestCommand
-from core.properties import PropertiesProvider
 
 
 class InitCommand(Command):
     @staticmethod
-    def create_executor(args: List[str], provider: PropertiesProvider) -> CommandExecutor:
+    def create_executor(args: list[str], provider: PropertiesProvider) -> CommandExecutor:
         test_executor = TestCommand.create_executor(args, provider)
         logger = provider.get_logger()
         sources = provider.get_sources()
@@ -42,9 +42,8 @@ class InitCommand(Command):
                                     python_version, "dialog.ods")
         return CommandExecutor(logger, init_command, test_executor)
 
-    def execute(self, *args: List[str]) -> Tuple[Any, ...]:
-        return tuple()
+    def execute(self, *args: list[str]) -> tuple[Any, ...]:
+        return ()
 
-    @staticmethod
     def get_help(self) -> str:
         return "Create a new document from script"

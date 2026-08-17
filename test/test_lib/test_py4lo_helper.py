@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Py4LO - Python Toolkit For LibreOffice Calc
       Copyright (C) 2016 J. Férard <https://github.com/jferard>
 
@@ -18,6 +17,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import datetime as dt
 import random
+
 # mypy: disable-error-code="import-not-found"
 import unittest
 from pathlib import Path
@@ -25,30 +25,90 @@ from unittest import mock
 
 import py4lo_helper
 from py4lo_helper import (
+    BorderLineStyle,
+    ConditionOperator,
+    FontSlant,
+    FrameSearchFlag,
+    ListValidationBuilder,
+    NewDocumentUrl,
+    PropertyState,
+    ScriptFrameworkErrorException,
     SheetsHelper,
-    date_to_int, date_to_float, int_to_date, float_to_date,
-    BorderLineStyle, ValidationType, ConditionOperator,
-    FrameSearchFlag, ScriptFrameworkErrorException, UnoRuntimeException,
-    to_iter, to_enumerate, to_dict, parent_doc, get_cell_type, get_named_cell,
-    get_named_cells, get_main_cell, init, _ObjectProvider, _Inspector,
-    PropertyState, create_uno_struct, make_pv, make_full_pv, make_pvs,
-    update_pvs, make_locale, make_border, make_sort_field, to_uno_date,
-    from_uno_date, get_last_used_row, get_used_range_address, get_used_range,
-    narrow_range_to_address, get_range_size, copy_range, paste_range,
-    narrow_range_to_used_page_range, top_void_row_count, bottom_void_row_count,
-    left_void_column_count, right_void_column_count, to_data_array,
-    ListValidationBuilder, set_validation_list_by_cell, sort_range,
-    quote_element, clear_conditional_format, conditional_format_on_formulas,
-    get_formula_conditional_entry_values, find_or_create_number_format_style,
-    create_filter, row_as_header, column_optimal_width, set_print_area,
-    get_page_style, set_paper, add_link, _wrap_text, open_in_calc, Target,
-    new_doc, NewDocumentUrl, doc_builder, create_uno_service_ctxt,
-    create_uno_service, read_options, rtrim_row, read_options_from_sheet_name,
-    copy_row_at_index, FontSlant, copy_data_array, undo_context,
-    no_undo_context, narrow_range_to_data, crop_range, col_pos_to_letters,
-    col_letters_to_pos, odf_path_to_lock)
+    Target,
+    UnoRuntimeException,
+    ValidationType,
+    _Inspector,
+    _ObjectProvider,
+    _wrap_text,
+    add_link,
+    bottom_void_row_count,
+    clear_conditional_format,
+    col_letters_to_pos,
+    col_pos_to_letters,
+    column_optimal_width,
+    conditional_format_on_formulas,
+    copy_data_array,
+    copy_range,
+    copy_row_at_index,
+    create_filter,
+    create_uno_service,
+    create_uno_service_ctxt,
+    create_uno_struct,
+    crop_range,
+    date_to_float,
+    date_to_int,
+    doc_builder,
+    find_or_create_number_format_style,
+    float_to_date,
+    from_uno_date,
+    get_cell_type,
+    get_formula_conditional_entry_values,
+    get_last_used_row,
+    get_main_cell,
+    get_named_cell,
+    get_named_cells,
+    get_page_style,
+    get_range_size,
+    get_used_range,
+    get_used_range_address,
+    init,
+    int_to_date,
+    left_void_column_count,
+    make_border,
+    make_full_pv,
+    make_locale,
+    make_pv,
+    make_pvs,
+    make_sort_field,
+    narrow_range_to_address,
+    narrow_range_to_data,
+    narrow_range_to_used_page_range,
+    new_doc,
+    no_undo_context,
+    odf_path_to_lock,
+    open_in_calc,
+    parent_doc,
+    paste_range,
+    quote_element,
+    read_options,
+    read_options_from_sheet_name,
+    right_void_column_count,
+    row_as_header,
+    rtrim_row,
+    set_paper,
+    set_print_area,
+    set_validation_list_by_cell,
+    sort_range,
+    to_data_array,
+    to_dict,
+    to_enumerate,
+    to_iter,
+    to_uno_date,
+    top_void_row_count,
+    undo_context,
+    update_pvs,
+)
 from py4lo_typing import UnoTextRange
-
 
 # noinspection PyUnresolvedReferences
 # from com.sun.star.script.provider import ScriptFrameworkErrorException
@@ -1163,7 +1223,7 @@ class HelperFormattingTestCase(unittest.TestCase):
         oSD = mock.Mock()
         oRange = mock.Mock()
         oRange.createSortDescriptor.side_effect = [oSD]
-        sort_fields = tuple([mock.Mock(), mock.Mock()])
+        sort_fields = ([mock.Mock(), mock.Mock()])
 
         # play
         sort_range(oRange, sort_fields, True)
@@ -1183,7 +1243,7 @@ class HelperFormattingTestCase(unittest.TestCase):
         oSD = mock.Mock()
         oRange = mock.Mock()
         oRange.createSortDescriptor.side_effect = [oSD]
-        sort_fields = tuple([mock.Mock(), mock.Mock()])
+        sort_fields = ([mock.Mock(), mock.Mock()])
 
         # play
         sort_range(oRange, sort_fields, False)
@@ -1310,7 +1370,7 @@ class HelperFormattingTestCase(unittest.TestCase):
         self.assertEqual([
             mock.call.createInstance('com.sun.star.frame.DispatchHelper'),
             mock.call.createInstance().executeDispatch(
-                oController, '.uno:DataFilterAutoFilter', '', 0, tuple())
+                oController, '.uno:DataFilterAutoFilter', '', 0, ())
         ], self.sm.mock_calls)
 
     def test_row_as_header(self):
@@ -1572,7 +1632,7 @@ class HelperOpenTestCase(unittest.TestCase):
         self.assertEqual([
             mock.call.desktop.loadComponentFromURL(
                 'file:///fname',
-                Target.SELF, 0, tuple())],
+                Target.SELF, 0, ())],
             py4lo_helper.provider.mock_calls)
 
     def test_new_doc(self):
@@ -1587,7 +1647,7 @@ class HelperOpenTestCase(unittest.TestCase):
         self.assertEqual(oDoc, oActualDoc)
         self.assertEqual([
             mock.call.loadComponentFromURL(
-                'private:factory/scalc', Target.BLANK, 0, tuple())
+                'private:factory/scalc', Target.BLANK, 0, ())
         ], py4lo_helper.provider.desktop.mock_calls)
         self.assertEqual([
             mock.call.lockControllers, mock.call.unlockControllers
@@ -1605,7 +1665,7 @@ class HelperOpenTestCase(unittest.TestCase):
         # verify
         self.assertEqual([
             mock.call.loadComponentFromURL(
-                'private:factory/scalc', Target.BLANK, 0, tuple())
+                'private:factory/scalc', Target.BLANK, 0, ())
         ], py4lo_helper.provider.desktop.mock_calls)
         self.assertEqual([
             mock.call.lockControllers, mock.call.unlockControllers
@@ -2009,8 +2069,8 @@ class HelperMiscTestCase(unittest.TestCase):
         self.assertEqual({}, act_options)
 
     def test_rtrim_row(self):
-        self.assertEqual("", rtrim_row(tuple()))
-        self.assertEqual(None, rtrim_row(tuple(), None))
+        self.assertEqual("", rtrim_row(()))
+        self.assertEqual(None, rtrim_row((), None))
         self.assertEqual("", rtrim_row(("", "", "", "")))
         self.assertEqual(None, rtrim_row(("", "", "", ""), None))
         self.assertEqual("foo", rtrim_row(("foo", "", "", "")))
@@ -2114,7 +2174,7 @@ class MiscTestCase(unittest.TestCase):
             mock.call.getScript(
                 'vnd.sun.star.script:XrayTool._Main.Xray?'
                 'language=Basic&location=application'),
-            mock.call.getScript().invoke((obj,), tuple(), tuple())
+            mock.call.getScript().invoke((obj,), (), ())
         ], self.oSP.mock_calls)
         self.assertFalse(self.inspector._ignore_xray)
 
@@ -2303,35 +2363,35 @@ if __name__ == '__main__':
 
 class TestDate(unittest.TestCase):
     def test_date_to_int(self):
-        self.assertEqual(0, date_to_int(dt.datetime(1899, 12, 30)))
-        self.assertEqual(44639, date_to_int(dt.datetime(2022, 3, 19)))
+        self.assertEqual(0, date_to_int(dt.datetime(1899, 12, 30, tzinfo=dt.timezone.utc)))
+        self.assertEqual(44639, date_to_int(dt.datetime(2022, 3, 19, tzinfo=dt.timezone.utc)))
         self.assertEqual(44639, date_to_int(dt.date(2022, 3, 19)))
-        self.assertEqual(44639, date_to_int(dt.datetime(2022, 3, 19)))
-        with self.assertRaises(ValueError):
+        self.assertEqual(44639, date_to_int(dt.datetime(2022, 3, 19, tzinfo=dt.timezone.utc)))
+        with self.assertRaises(TypeError):
             date_to_int(1)
 
     def test_date_to_float(self):
-        self.assertEqual(0.0, date_to_float(dt.datetime(1899, 12, 30)))
+        self.assertEqual(0.0, date_to_float(dt.datetime(1899, 12, 30, tzinfo=dt.timezone.utc)))
         self.assertEqual(0.0, date_to_float(dt.date(1899, 12, 30)))
         self.assertAlmostEqual(44639.723032407404, date_to_float(dt.datetime(
-            2022, 3, 19, 17, 21, 10)), delta=0.0001)
+            2022, 3, 19, 17, 21, 10, tzinfo=dt.timezone.utc)), delta=0.0001)
         self.assertAlmostEqual(0.723032407404, date_to_float(dt.time(
-            17, 21, 10)), delta=0.0001)
-        with self.assertRaises(ValueError):
+            17, 21, 10, tzinfo=dt.timezone.utc)), delta=0.0001)
+        with self.assertRaises(TypeError):
             date_to_float(1)
 
     def test_int_to_date(self):
-        self.assertEqual(dt.datetime(1899, 12, 30), int_to_date(0))
-        self.assertEqual(dt.datetime(2022, 3, 19), int_to_date(44639))
-        self.assertEqual(dt.datetime(2022, 3, 19), int_to_date(44639))
+        self.assertEqual(dt.datetime(1899, 12, 30, tzinfo=dt.timezone.utc), int_to_date(0))
+        self.assertEqual(dt.datetime(2022, 3, 19, tzinfo=dt.timezone.utc), int_to_date(44639))
+        self.assertEqual(dt.datetime(2022, 3, 19, tzinfo=dt.timezone.utc), int_to_date(44639))
 
     def test_float_to_date(self):
-        self.assertEqual(dt.datetime(1899, 12, 30), float_to_date(0.0))
-        self.assertEqual(dt.datetime(1899, 12, 30), float_to_date(0.0))
+        self.assertEqual(dt.datetime(1899, 12, 30, tzinfo=dt.timezone.utc), float_to_date(0.0))
+        self.assertEqual(dt.datetime(1899, 12, 30, tzinfo=dt.timezone.utc), float_to_date(0.0))
         self.assertEqual(dt.datetime(
-            2022, 3, 19, 17, 21, 10), float_to_date(44639.723032407404))
+            2022, 3, 19, 17, 21, 10, tzinfo=dt.timezone.utc), float_to_date(44639.723032407404))
         self.assertEqual(dt.datetime(
-            1899, 12, 30, 17, 21, 10), float_to_date(0.723032407404))
+            1899, 12, 30, 17, 21, 10, tzinfo=dt.timezone.utc), float_to_date(0.723032407404))
 
 
 class CopyDataArrayTestCase(unittest.TestCase):
@@ -2516,7 +2576,7 @@ class CopyDataArrayTestCase(unittest.TestCase):
 
         # act
         with self.assertRaises(ValueError) as e:
-            copy_data_array(oCell, [[tuple()]], debug=True)
+            copy_data_array(oCell, [[()]], debug=True)
 
         # assert
         self.assertEqual([], oDoc.mock_calls)

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #  Py4LO - Python Toolkit For LibreOffice Calc
 #     Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 #
@@ -17,7 +16,8 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import logging
-from typing import List, Callable, Any, cast
+from collections.abc import Callable
+from typing import Any
 
 
 class BranchProcessor:
@@ -26,20 +26,22 @@ class BranchProcessor:
     and acts as a preprocessor. Skipped block wont be included in the LO
     document
     """
-    def __init__(self, tester: Callable[[List[str]], bool]):
+    _logger = logging.getLogger(__name__)
+
+    def __init__(self, tester: Callable[[list[str]], bool]):
         """The tester will evaluate the arguments of 'if' or 'elif'"""
         self._assertion_is_true = tester
-        self._dont_skips = cast(List[bool], [])
+        self._dont_skips: list[bool] = []
 
     def end(self):
         """
         To call before the end, to verify if there are no unclosed if block
         """
         if self._dont_skips:
-            logging.error("Branch condition not closed!")
+            self._logger.error("Branch condition not closed!")
             raise ValueError("Branch condition not closed!")
 
-    def handle_directive(self, directive: str, args: List[Any]) -> bool:
+    def handle_directive(self, directive: str, args: list[Any]) -> bool:
         """Return True if the next block should be read, False otherwise"""
 
         if directive == 'if':

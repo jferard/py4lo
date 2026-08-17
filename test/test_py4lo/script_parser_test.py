@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #  Py4LO - Python Toolkit For LibreOffice Calc
 #     Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 #
@@ -22,6 +21,7 @@ from unittest import mock
 
 import script_set_processor
 from core.script import ParsedScriptContent
+
 from test.test_helper import file_path_mock, verify_open_path
 
 
@@ -55,7 +55,7 @@ some line""",
         path = file_path_mock(io.StringIO("some line"))
 
         sp = script_set_processor._ContentParser(self._logger, self._dp, path)
-        line = '# parsed by py4lo (https://github.com/jferard/py4lo)\n### py4lo ignore: some line'  # noqa: E501
+        line = '# parsed by py4lo (https://github.com/jferard/py4lo)\n### py4lo ignore: some line'
         self.assertEqual(ParsedScriptContent(
             line, []), sp.parse(True))
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #  Py4LO - Python Toolkit For LibreOffice Calc
 #     Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 #
@@ -18,12 +17,15 @@
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 import os
+from collections.abc import Mapping
+from collections.abc import Set as AbstractSet
 from pathlib import Path
-from typing import Any, Set, Mapping, AbstractSet, Optional
+from typing import Any
 
 from callbacks import AddReadmeWith
-from core.source_dest import Sources, Destinations
 from toml_helper import load_toml
+
+from core.source_dest import Destinations, Sources
 
 
 class PropertiesProvider:
@@ -44,7 +46,7 @@ class PropertiesProvider:
     def keys(self) -> AbstractSet[str]:
         return self._tdata.keys()
 
-    def get(self, k: str, default: Optional[Any] = None) -> Any:
+    def get(self, k: str, default: Any | None = None) -> Any:
         return self._tdata.get(k, default)
 
     def get_sources(self) -> Sources:
@@ -53,13 +55,13 @@ class PropertiesProvider:
     def get_destinations(self) -> Destinations:
         return self._destinations
 
-    def get_src_paths(self) -> Set[Path]:
+    def get_src_paths(self) -> set[Path]:
         return self._sources.get_src_paths()
 
-    def get_assets_paths(self) -> Set[Path]:
+    def get_assets_paths(self) -> set[Path]:
         return self._sources.get_assets_paths()
 
-    def get_readme_callback(self) -> Optional[AddReadmeWith]:
+    def get_readme_callback(self) -> AddReadmeWith | None:
         add_readme = self.get("add_readme", False)
         if add_readme:
             readme_contact = self.get("readme_contact")
@@ -109,7 +111,7 @@ class PropertiesProviderFactory:
             Path(dest["assets_dest_dir"]))
         return destinations
 
-    def _get_dest_file(self, source_ods_file: Optional[Path]) -> Path:
+    def _get_dest_file(self, source_ods_file: Path | None) -> Path:
         dest: Mapping[str, str] = self._tdata["dest"]
         if "dest_ods_file" in dest:
             dest_ods_file = Path(dest["dest_ods_file"])

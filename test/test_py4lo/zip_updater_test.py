@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #  Py4LO - Python Toolkit For LibreOffice Calc
 #     Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 #
@@ -20,6 +19,7 @@ import unittest
 from logging import Logger
 from pathlib import Path
 from unittest import mock
+
 from callbacks import BeforeCallback
 from zip_updater import ZipUpdaterBuilder
 

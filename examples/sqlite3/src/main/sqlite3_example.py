@@ -23,8 +23,8 @@
 import logging
 from pathlib import Path
 
-from py4lo_helper import provider
 from py4lo_commons import Commons, uno_url_to_path
+from py4lo_helper import provider
 from py4lo_sqlite3 import sqlite_open
 
 try:

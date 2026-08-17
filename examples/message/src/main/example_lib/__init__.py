@@ -20,7 +20,6 @@
 import os
 
 import unohelper
-
 from alib import TEXT
 from py4lo_dialogs import message_box
 

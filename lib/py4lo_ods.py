@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #  Py4LO - Python Toolkit For LibreOffice Calc
 #     Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 #
@@ -27,9 +26,9 @@ import itertools
 import xml.etree.ElementTree as ET
 import zipfile
 from pathlib import Path
+from typing import IO, Callable, Iterator, List, Mapping, Optional, Union
 
-from typing import (List, Dict, Callable, IO, Iterator,
-                    Optional, Union)
+from lib.py4lo_typing import StrPath
 
 ACTIVE_TABLE_XPATH = (
     "./office:settings"
@@ -59,7 +58,7 @@ class NameSpace:
         ET.fromstring(xml_str)
         body = ns.find(root, "./office:document-content/office:body")
     """
-    def __init__(self, ns_dict: Optional[Dict[str, str]] = None):
+    def __init__(self, ns_dict: Optional[Mapping[str, str]] = None):
         """
 
         @param ns_dict:
@@ -89,7 +88,7 @@ class NameSpace:
             i = attr.index(":")
             ns = attr[:i]
             tag = attr[i + 1:]
-            attr = "{{{}}}{}".format(self._ns_dict.get(ns, ns), tag)
+            attr = f"{{{self._ns_dict.get(ns, ns)}}}{tag}"
         except ValueError:
             pass
 
@@ -107,7 +106,7 @@ class OdsTables:
     An iterator over tables in an ods file
     """
     @staticmethod
-    def create(fullpath: Union[str, Path], ns: NameSpace = OFFICE_NS) -> "OdsTables":
+    def create(fullpath: StrPath, ns: NameSpace = OFFICE_NS) -> "OdsTables":
         """
         Create a new OdsTables object.
 
@@ -132,15 +131,14 @@ class OdsTables:
         tables = self._ns.findall(
             self._root, "./office:body/office:spreadsheet/table:table")
         tables = self._sort_func(tables)
-        for table in tables:
-            yield table
+        yield from tables
 
 
 class OdsTablesBuilder:
     """
     A builder for OdsTables object.
     """
-    def __init__(self, fullpath: Union[str, Path]):
+    def __init__(self, fullpath: StrPath):
         """
         @param fullpath: the path of the file
         """
@@ -216,7 +214,7 @@ def put_active_first(z: zipfile.ZipFile, ns: NameSpace = OFFICE_NS
         def sort_func(tables: List[ET.Element]) -> List[ET.Element]:
             for i, table in enumerate(tables):
                 if table.get(ns.attrib("table:name")) == active_table_name:
-                    return [tables[i]] + tables[:i] + tables[i + 1:]
+                    return [table] + tables[:i] + tables[i + 1:]
 
             return tables
 
@@ -332,7 +330,7 @@ class OdsRows:
                 for i, row in enumerate(self):
                     if i == index:
                         return row
-                raise IndexError("{} out of table".format(index))
+                raise IndexError(f"{index} out of table")
             else:
                 all_rows = list(self)
                 return all_rows[index]

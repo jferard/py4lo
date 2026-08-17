@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #  Py4LO - Python Toolkit For LibreOffice Calc
 #     Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 #
@@ -19,19 +18,25 @@
 
 import logging
 from pathlib import Path
-from typing import List, Tuple, Dict, Any
+from typing import Any
 
 import zip_updater
-from callbacks import (IgnoreItem, RewriteManifest, AddScripts, AddAssets,
-                       AddDebugContent)
+from callbacks import (
+    AddAssets,
+    AddDebugContent,
+    AddScripts,
+    IgnoreItem,
+    RewriteManifest,
+)
+from core.asset import DestinationAsset
+from core.properties import PropertiesProvider
+from core.script import DestinationScript
+from core.source_dest import Destinations, Sources
+
 from commands.command import Command
 from commands.command_executor import CommandExecutor
 from commands.ods_updater import OdsUpdaterHelper
 from commands.test_command import TestCommand
-from core.asset import DestinationAsset
-from core.properties import PropertiesProvider
-from core.source_dest import Sources, Destinations
-from core.script import DestinationScript
 
 
 class DebugCommand(Command):
@@ -41,7 +46,7 @@ class DebugCommand(Command):
     """
 
     @staticmethod
-    def create_executor(args: List[str], provider: PropertiesProvider) -> CommandExecutor:
+    def create_executor(args: list[str], provider: PropertiesProvider) -> CommandExecutor:
         test_executor = TestCommand.create_executor(args, provider)
         logger = provider.get_logger()
         sources = provider.get_sources()
@@ -64,7 +69,7 @@ class DebugCommand(Command):
         self._debug_path = destinations.dest_ods_file.parent.joinpath(
             doc_name)
 
-    def execute(self, *_args: List[str]) -> Tuple[Any, ...]:
+    def execute(self, *_args: list[str]) -> tuple[Any, ...]:
         self._logger.info("Debug or init. Generating '%s' for Python '%s'",
                           self._debug_path, self._python_version)
 
@@ -84,9 +89,9 @@ class DebugCommand(Command):
                         self._debug_path)
         return self._debug_path,
 
-    def _get_zip_updater(self, assets: List[DestinationAsset],
-                         exported_func_names_by_script: Dict[str, List[str]],
-                         scripts: List[DestinationScript]):
+    def _get_zip_updater(self, assets: list[DestinationAsset],
+                         exported_func_names_by_script: dict[str, list[str]],
+                         scripts: list[DestinationScript]):
         zupdater_builder = zip_updater.ZipUpdaterBuilder(self._logger)
         zupdater_builder.item(IgnoreItem(Path("Scripts"))).item(
             RewriteManifest(scripts, assets)).after(

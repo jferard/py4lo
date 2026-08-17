@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #  Py4LO - Python Toolkit For LibreOffice Calc
 #     Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 #
@@ -23,8 +22,8 @@ from unittest import mock
 
 from commands.debug_command import DebugCommand
 from commands.ods_updater import OdsUpdaterHelper
-from core.source_dest import Sources, Destinations
 from core.script import TempScript
+from core.source_dest import Destinations, Sources
 
 
 class TestDebugCommand(unittest.TestCase):

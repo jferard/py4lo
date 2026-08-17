@@ -27,38 +27,61 @@ import locale
 import logging
 import sys
 from abc import ABC
-from datetime import (date, datetime, time)
-from enum import IntEnum, Enum
-from typing import (Any, Callable, List, Iterator, Optional, Mapping, Tuple,
-                    Iterable, cast, Sequence)
+from datetime import date, datetime, time
+from enum import Enum, IntEnum
+from typing import (
+    Any,
+    Callable,
+    Iterable,
+    Iterator,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Tuple,
+    cast,
+)
 
-from py4lo_typing import UnoNumberFormats, UnoStruct
+from lib.py4lo_helper import create_uno_struct
+
 # values of cell_typing
 from py4lo_commons import uno_path_to_url
 from py4lo_helper import (
-    get_provider, make_pvs, parent_doc, get_cell_type, Target,
-    FrameSearchFlag, date_to_float, float_to_date)
-from py4lo_typing import (UnoCell, UnoSheet, UnoSpreadsheetDocument,
-                          StrPath, UnoRange)
+    FrameSearchFlag,
+    Target,
+    date_to_float,
+    float_to_date,
+    get_cell_type,
+    get_provider,
+    make_pvs,
+    parent_doc,
+)
+from py4lo_typing import (
+    StrPath,
+    UnoCell,
+    UnoNumberFormats,
+    UnoRange,
+    UnoSheet,
+    UnoSpreadsheetDocument,
+    UnoStruct,
+)
 
 try:
-    # noinspection PyUnresolvedReferences,PyPackageRequirements
-    from com.sun.star.lang import Locale
-
-
     class NumberFormat:
         # noinspection PyUnresolvedReferences,PyPackageRequirements
-        from com.sun.star.util.NumberFormat import (DATE, TIME, DATETIME,
-                                                    LOGICAL)
+        from com.sun.star.util.NumberFormat import (
+            DATE,
+            DATETIME,
+            LOGICAL,
+            TIME,
+        )
 except ImportError:
-    logging.exception("Import err")
+    logging.getLogger(__name__).exception("Import err")
     from _mock_constants import (
         NumberFormat,
     )
-    from _mock_objects import (  # type: ignore[assignment]
-        Locale,
-    )
 
+LOCALE = locale.getlocale()
 
 class CellTyping(Enum):
     """
@@ -301,7 +324,7 @@ class dict_reader:
 
     def __init__(
             self, r: SheetReader,
-            fieldnames: Optional[Tuple[str, ...]] = None,
+            fieldnames: Optional[Tuple[str, ...]]    = None,
             restkey: Optional[str] = None,
             restval: Optional[Any] = None
     ):
@@ -352,7 +375,7 @@ class dict_reader:
 # Writer #
 ##########
 def find_number_format_style(oFormats: UnoNumberFormats, format_id: int,
-                             oLocale: UnoStruct = Locale()) -> int:
+                             oLocale: UnoStruct = None) -> int:
     """
     Find the number format style number. Use the return value for
     oCell.NumberFormat.
@@ -368,6 +391,8 @@ def find_number_format_style(oFormats: UnoNumberFormats, format_id: int,
     @param oLocale: the locale (see. com.sun.star.lang.Locale)
     @return: the id of the format
     """
+    if oLocale is None:
+        oLocale = create_uno_struct("com.sun.star.lang.Locale")
     return oFormats.getStandardFormat(format_id, oLocale)
 
 
@@ -677,7 +702,7 @@ class Filter(str, Enum):
     EXCEL_2_3_4_TEMPLATE = "MS Excel 4.0 Vorlage/Template"
     LOTUS = "Lotus"  # Lotus 1-2-3
     CSV = "Text - txt - csv (StarCalc)"  # Comma separated values
-    RTF = "Rich Text Format (StarCalc)"  #
+    RTF = "Rich Text Format (StarCalc)"
     DBASE = "dBase"  # dBase
     SYLK = "SYLK"  # Symbolic Link
     DIF = "DIF"  # Data Interchange Format
@@ -1144,7 +1169,7 @@ def create_import_filter_options(*args, **kwargs) -> str:
 def _create_import_filter_options(
         delimiter: str = ",", quotechar: str = '"',
         quoted_field_as_text: bool = False,
-        encoding: str = "utf-8", language_code=locale.getlocale()[0],
+        encoding: str = "utf-8", language_code: Optional[str]=locale.getlocale()[0],
         first_line: int = 1,
         format_by_idx: Optional[Mapping[int, Format]] = None,
         detect_special_numbers: bool = False) -> str:
@@ -1244,7 +1269,7 @@ def _build_field_formats(format_by_idx: Optional[Mapping[int, int]]) -> str:
     if format_by_idx is None:
         field_formats = ""
     else:
-        field_formats = "/".join(["{}/{}".format(idx, fmt)
+        field_formats = "/".join([f"{idx}/{fmt}"
                                   for idx, fmt in format_by_idx.items()])
     return field_formats
 
@@ -1290,7 +1315,7 @@ def create_export_filter_options(*args, **kwargs) -> str:
 def _create_export_filter_options(
         delimiter: str = ",", quotechar: str = '"',
         store_numeric_cells_as_text: bool = False,
-        encoding: str = "utf-8", language_code=locale.getlocale()[0],
+        encoding: str = "utf-8", language_code: Optional[str]= LOCALE[0],
         first_line: int = 1,
         format_by_idx: Optional[Mapping[int, Format]] = None,
         save_cell_contents_as_shown: bool = True) -> str:

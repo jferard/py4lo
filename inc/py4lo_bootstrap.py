@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Py4LO - Python Toolkit For LibreOffice Calc
       Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 
@@ -21,9 +20,9 @@
 def use_local(object_ref):
     # noinspection PyUnresolvedReferences
     doc = XSCRIPTCONTEXT.getDocument() # noqa: F821
-    dsp = doc.getScriptProvider()  # type: ignore # noqa: F821
+    dsp = doc.getScriptProvider()  # type: ignore
     (fname_wo_py, oname) = object_ref.split("::")
-    uri = ("vnd.sun.star.script:{}.py$__export_{}?"
-           "language=Python&location=document").format(fname_wo_py, oname)
+    uri = (f"vnd.sun.star.script:{fname_wo_py}.py$__export_{oname}?"
+           "language=Python&location=document")
     import_script = dsp.getScript(uri)
     return import_script.invoke((), (), ())[0]

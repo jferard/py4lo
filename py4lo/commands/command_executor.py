@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #  Py4LO - Python Toolkit For LibreOffice Calc
 #     Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 #
@@ -17,7 +16,7 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from logging import Logger
-from typing import List, Tuple, Optional, Any
+from typing import Any, Optional
 
 from commands.command import Command
 
@@ -29,7 +28,7 @@ class CommandExecutor:
         self._command = command
         self._previous_executor = previous_executor
 
-    def execute(self, *args: List[str]) -> Tuple[Any, ...]:
+    def execute(self, *args: list[str]) -> tuple[Any, ...]:
         if self._previous_executor is None:
             cur_args = []
         else:

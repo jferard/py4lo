@@ -22,14 +22,27 @@
 # py4lo: embed lib py4lo_io
 # py4lo: embed lib py4lo_dialogs
 import csv
-from codecs import (BOM_UTF32_BE, BOM_UTF32_LE, BOM_UTF16_BE, BOM_UTF16_LE,
-                    BOM_UTF8, getincrementaldecoder)
+from codecs import (
+    BOM_UTF8,
+    BOM_UTF16_BE,
+    BOM_UTF16_LE,
+    BOM_UTF32_BE,
+    BOM_UTF32_LE,
+    getincrementaldecoder,
+)
 
-from py4lo_dialogs import FileFilter, file_dialog
-from py4lo_helper import (make_pvs, provider, Target, FrameSearchFlag,
-                          make_sort_field, sort_range, SheetFormatter)
 from py4lo_commons import uno_url_to_path
-from py4lo_io import create_import_filter_options, Filter
+from py4lo_dialogs import FileFilter, file_dialog
+from py4lo_helper import (
+    FrameSearchFlag,
+    SheetFormatter,
+    Target,
+    make_pvs,
+    make_sort_field,
+    provider,
+    sort_range,
+)
+from py4lo_io import Filter, create_import_filter_options
 
 
 def open_csv(*_args):

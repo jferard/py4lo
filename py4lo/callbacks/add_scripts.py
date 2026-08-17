@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #  Py4LO - Python Toolkit For LibreOffice Calc
 #     Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 #
@@ -18,11 +17,11 @@
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from logging import Logger
 from pathlib import Path
-from typing import List
 from zipfile import ZipFile
 
-from callbacks.callback import AfterCallback
 from core.script import DestinationScript
+
+from callbacks.callback import AfterCallback
 
 # TODO: here
 ARC_SCRIPTS_PATH = Path("Scripts/python")
@@ -33,7 +32,7 @@ class AddScripts(AfterCallback):
     After callback. Add some scripts in destination file
     """
 
-    def __init__(self, logger: Logger, scripts: List[DestinationScript]):
+    def __init__(self, logger: Logger, scripts: list[DestinationScript]):
         self._logger = logger
         self._scripts = scripts
 

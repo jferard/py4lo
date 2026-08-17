@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Py4LO - Python Toolkit For LibreOffice Calc
       Copyright (C) 2016 J. Férard <https://github.com/jferard>
 
@@ -30,13 +29,27 @@ from unittest import mock
 
 import py4lo_commons
 from py4lo_commons import (
+    Commons,
+    LoggerException,
+    create_bus,
+    create_format_date_or,
+    create_format_datetime_or,
+    create_format_decimal_or,
+    create_format_float_or,
+    create_format_int_or,
+    create_format_time_or,
+    create_parse_date_or,
+    create_parse_datetime_or,
+    create_parse_decimal_or,
+    create_parse_float_or,
+    create_parse_int_or,
+    create_parse_time_or,
+    init,
+    read_config,
+    sanitize,
     secure_strip,
-    uno_url_to_path, uno_path_to_url, create_bus, Commons, init, sanitize,
-    read_config, create_parse_int_or, create_format_int_or,
-    create_parse_float_or, create_parse_decimal_or, create_parse_date_or,
-    create_parse_datetime_or, create_parse_time_or, create_format_float_or,
-    create_format_decimal_or, create_format_date_or, create_format_datetime_or,
-    create_format_time_or
+    uno_path_to_url,
+    uno_url_to_path,
 )
 
 
@@ -176,21 +189,23 @@ class TestCommons(unittest.TestCase):
         self.assertEqual(10, secure_strip(10))
 
     def test_logger(self):
-        t = tempfile.NamedTemporaryFile(delete=False, mode='w')
-        self.c.init_logger(t.name, fmt='%(levelname)s - %(message)s')
-        self.c.logger().debug("é")
-        t.flush()
-        t.close()
-        res = subprocess.getoutput("cat {}".format(t.name))
-        self.assertEqual("DEBUG - é", res)
-        os.unlink(t.name)
+        with tempfile.NamedTemporaryFile(delete=False, mode='w') as t:
+            self.c.init_logger(t.name, fmt='%(levelname)s - %(message)s')
+            self.c.logger().debug("é")
+            t.flush()
+            t.close()
+            res = subprocess.getoutput(f"cat {t.name}")
+            self.assertEqual("DEBUG - é", res)
+
+            os.unlink(t.name)
 
     def test_logger_init_twice(self):
-        t = tempfile.NamedTemporaryFile(delete=False, mode='w')
-        self.c.init_logger(t, fmt='%(levelname)s - %(message)s')
-        with self.assertRaises(Exception):
+        with tempfile.NamedTemporaryFile(delete=False, mode='w') as t:
             self.c.init_logger(t, fmt='%(levelname)s - %(message)s')
-        os.unlink(t.name)
+            with self.assertRaises(LoggerException):
+                self.c.init_logger(t, fmt='%(levelname)s - %(message)s')
+
+            os.unlink(t.name)
 
     def test_logger_none(self):
         t = tempfile.mkdtemp()
@@ -205,7 +220,7 @@ class TestCommons(unittest.TestCase):
     def test_logger_err(self):
         t = tempfile.mkdtemp()
         c = Commons((Path(t) / "file.ods").as_uri())
-        with self.assertRaises(Exception):
+        with self.assertRaises(LoggerException):
             _ = c.logger()
 
         os.rmdir(t)
@@ -336,7 +351,7 @@ class ParseTestCase(unittest.TestCase):
         self.assertEqual(Decimal("12345.678"), parse_decimal("12 345,678"))
         self.assertEqual(Decimal("-12345.678"), parse_decimal("-12 345,678"))
         self.assertEqual(Decimal("12345.678"), parse_decimal("+12 345,678"))
-        self.assertEqual(Decimal("12345678"), parse_decimal("12 345.678"))
+        self.assertEqual(Decimal(12345678), parse_decimal("12 345.678"))
         self.assertIsNone(parse_decimal("foo"))
 
     def test_parse_date(self):
@@ -346,8 +361,8 @@ class ParseTestCase(unittest.TestCase):
 
     def test_parse_datetime(self):
         parse_datetime = create_parse_datetime_or("%d/%m/%Y %H:%M:%S", "NULL")
-        self.assertEqual(dt.datetime(2025, 10, 25, 17, 40, 53),
-                         parse_datetime("25/10/2025 17:40:53"))
+        expected = dt.datetime(2025, 10, 25, 17, 40, 53) # noqa: DTZ001
+        self.assertEqual(expected, parse_datetime("25/10/2025 17:40:53"))
         self.assertEqual("NULL", parse_datetime("1/25/2025 17:40:53"))
 
     def test_parse_time(self):
@@ -427,7 +442,7 @@ class FormatTestCase(unittest.TestCase):
         self.assertEqual('NULL', format_decimal(None))
 
         format_decimal = create_format_decimal_or("_", ",", -1, "NULL")
-        self.assertEqual('12_345,0', format_decimal(Decimal("12345")))
+        self.assertEqual('12_345,0', format_decimal(Decimal(12345)))
         self.assertEqual('12_345,0', format_decimal(Decimal("12345.0")))
         self.assertEqual('12_345,678', format_decimal(Decimal("12345.678")))
         self.assertEqual('NULL', format_decimal(None))
@@ -439,7 +454,7 @@ class FormatTestCase(unittest.TestCase):
 
     def test_format_datetime(self):
         format_datetime = create_format_datetime_or("%d/%m/%Y %H:%M:%S", "NULL")
-        self.assertEqual('29/10/2025 19:50:04', format_datetime(dt.datetime(2025, 10, 29, 19, 50, 4)))
+        self.assertEqual('29/10/2025 19:50:04', format_datetime(dt.datetime(2025, 10, 29, 19, 50, 4, tzinfo=dt.timezone.utc)))
         self.assertEqual("NULL", format_datetime(None))
 
     def test_format_time(self):

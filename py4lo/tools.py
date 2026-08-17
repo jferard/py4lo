@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #  Py4LO - Python Toolkit For LibreOffice Calc
 #     Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 #
@@ -16,9 +15,10 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import subprocess   # nosec: B404
+import subprocess  # nosec: B404
+from collections.abc import Callable
 from pathlib import Path
-from typing import List, Dict, Any, Callable, Optional
+from typing import Any
 
 
 def open_with_libreoffice(ods_path: Path, lo_exe: str):
@@ -29,8 +29,8 @@ def open_with_libreoffice(ods_path: Path, lo_exe: str):
     subprocess.call([sec_lo_exe, str(ods_path)])  # nosec: B603
 
 
-def nested_merge(d1: Dict[str, Any], d2: Dict[str, Any],
-                 apply: Callable[[Any], Any]) -> Dict[str, Any]:
+def nested_merge(d1: dict[str, Any], d2: dict[str, Any],
+                 apply: Callable[[Any], Any]) -> dict[str, Any]:
     """
     Merge two dicts.
     >>> nested_merge({'a': 1}, {'b': 2}, lambda x: x*2)
@@ -42,16 +42,16 @@ def nested_merge(d1: Dict[str, Any], d2: Dict[str, Any],
     @return: a merged dict
     """
     for k, v in d2.items():
-        if isinstance(v, Dict):
+        if isinstance(v, dict):
             d1[k] = nested_merge(d1.get(k, {}), v, apply)
-        elif isinstance(v, List):
+        elif isinstance(v, list):
             d1[k] = [apply(w) for w in d1.get(k, []) + v]
         else:
             d1[k] = apply(v)
 
     return d1
 
-def secure_exe(exe: str, name: str) -> Optional[str]:
+def secure_exe(exe: str, name: str) -> str | None:
     import shutil
     ret = shutil.which(exe)
     if ret is not None and name in ret:

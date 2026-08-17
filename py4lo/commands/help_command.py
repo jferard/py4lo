@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #  Py4LO - Python Toolkit For LibreOffice Calc
 #     Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 #
@@ -16,11 +15,12 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from typing import Tuple, Any, List
+from typing import Any
+
+from core.properties import PropertiesProvider
 
 from commands.command import Command
 from commands.command_executor import CommandExecutor
-from core.properties import PropertiesProvider
 from commands.real_command_factory_by_name import real_command_factory_by_name
 
 DEFAULT_MSG = """usage: py4lo.py [-h] [-t|--help|command [args]
@@ -40,7 +40,7 @@ command     a command = debug|help|init|test|update
 
 class HelpCommand(Command):
     @staticmethod
-    def create_executor(args: List[str], provider: PropertiesProvider) -> CommandExecutor:
+    def create_executor(args: list[str], provider: PropertiesProvider) -> CommandExecutor:
         if len(args) == 1:
             command_name = args[0]
         else:
@@ -53,7 +53,7 @@ class HelpCommand(Command):
         self._command_factory_by_name = command_factory_by_name
         self._command_name = command_name
 
-    def execute(self) -> Tuple[Any, ...]:
+    def execute(self) -> tuple[Any, ...]:
         if self._command_name:
             try:
                 msg = self._command_factory_by_name[
@@ -63,7 +63,7 @@ class HelpCommand(Command):
         else:
             msg = self.get_help()
         print(msg)
-        return tuple()
+        return ()
 
     def get_help(self):
         return "help [command]: Specific help message about command"

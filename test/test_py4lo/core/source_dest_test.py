@@ -21,10 +21,12 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from core.asset import SourceAsset, DestinationAsset
-from core.script import SourceScript, DestinationScript, TempScript
-from core.source_dest import Sources, Destinations
+from core.asset import DestinationAsset, SourceAsset
+from core.script import DestinationScript, SourceScript, TempScript
+from core.source_dest import Destinations, Sources
+
 from test.test_helper import file_path_mock
+
 
 class TestSourcesDests(unittest.TestCase):
     def setUp(self):

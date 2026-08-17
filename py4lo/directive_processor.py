@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #  Py4LO - Python Toolkit For LibreOffice Calc
 #     Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 #
@@ -18,7 +17,7 @@
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import re
 import shlex
-from typing import List, Optional, Any, Set, cast
+from typing import Any, cast
 
 from branch_processor import BranchProcessor
 from comparator import Comparator
@@ -40,7 +39,7 @@ class DirectiveProcessor:
             source_script: SourceScript):
         comparator = Comparator({'python_version': python_version})
 
-        def local_is_true(args: List[str]):
+        def local_is_true(args: list[str]):
             return comparator.check(args[0], args[1], args[2])
 
         branch_processor = BranchProcessor(local_is_true)
@@ -58,7 +57,7 @@ class DirectiveProcessor:
         self._script_set_processor = script_set_processor
         self._branch_processor = branch_processor
         self._directive_provider = directive_provider
-        self._includes = cast(Set[str], set())
+        self._includes = cast(set[str], set())
 
     def append_script(self, source_script: SourceScript):
         """Append a script to the script processor"""
@@ -68,7 +67,7 @@ class DirectiveProcessor:
         """Add an opt script"""
         self._script_set_processor.add_script(temp_script)
 
-    def process_line(self, line: str) -> List[str]:
+    def process_line(self, line: str) -> list[str]:
         """Process a line that starts with #"""
         return DirectiveLineProcessor(self, self._branch_processor,
                                       self._directive_provider,
@@ -94,7 +93,7 @@ class DirectiveLineProcessor:
         self._line = line
         self._target_lines = []
 
-    def process_line(self) -> List[str]:
+    def process_line(self) -> list[str]:
         """Return a list of lines"""
         if self._target_lines:
             return self._target_lines
@@ -110,7 +109,7 @@ class DirectiveLineProcessor:
 
         return self._target_lines
 
-    def _get_directive(self) -> Optional[List[str]]:
+    def _get_directive(self) -> list[str] | None:
         m = PY4LO_REGEX.match(self._line)
         if m:
             directive = m.group(1)
@@ -118,7 +117,7 @@ class DirectiveLineProcessor:
         else:
             return None
 
-    def _process_directive(self, line: str, args: List[str]):
+    def _process_directive(self, line: str, args: list[str]):
         is_branch_directive = self._branch_processor.handle_directive(args[0],
                                                                       args[1:])
         if is_branch_directive:
@@ -131,7 +130,7 @@ class DirectiveLineProcessor:
                 directive, args = self._directive_provider.get(args)
                 directive.execute(self._directive_processor, self, args)
             except KeyError:
-                print("Wrong directive ({})".format(line.strip()))
+                print(f"Wrong directive ({line.strip()})")
 
     def _comment_or_write(self):
         if self._branch_processor.skip():

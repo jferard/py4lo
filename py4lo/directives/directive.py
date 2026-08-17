@@ -16,19 +16,17 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from abc import ABC, abstractmethod
-from typing import List, Any
+from typing import Any
 
 
 class Directive(ABC):
     @abstractmethod
     def execute(self, processor: Any,  # "DirectiveProcessor",
                 line_processor: Any,  # "DirectiveLineProcessor",
-                args: List[str]):
+                args: list[str]):
         """Execute the directive. May append a script to process"""
-        pass
 
     @staticmethod
     @abstractmethod
-    def sig_elements() -> List[str]:
+    def sig_elements() -> list[str]:
         """List of tokens that identify the directive"""
-        pass

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #  Py4LO - Python Toolkit For LibreOffice Calc
 #     Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 #
@@ -21,7 +20,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from tools import open_with_libreoffice, nested_merge
+from tools import nested_merge, open_with_libreoffice
 
 
 class TestTools(unittest.TestCase):

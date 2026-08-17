@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Py4LO - Python Toolkit For LibreOffice Calc
       Copyright (C) 2016-2017 J. Férard <https://github.com/jferard>
 
@@ -19,23 +18,25 @@
 import os
 import subprocess  # nosec: B404
 import sys
+from collections.abc import Callable, Iterator
 from logging import Logger
 from pathlib import Path
-from typing import Dict, Callable, Iterator, cast, Optional, Any, Tuple, List
+from typing import Any, cast
+
+from core.properties import PropertiesProvider
+from core.source_dest import Sources
+from tools import secure_exe
 
 from commands.command import Command
 from commands.command_executor import CommandExecutor
 from commands.null_command import NullCommand
-from core.properties import PropertiesProvider
-from core.source_dest import Sources
-from tools import secure_exe
 
 
 class TestCommand(Command):
     __test__ = False
 
     @staticmethod
-    def create_executor(_args: List[str], provider: PropertiesProvider
+    def create_executor(_args: list[str], provider: PropertiesProvider
                         ) -> CommandExecutor:
         sec_python_exe = secure_exe(provider.get("python_exe"), "python")
         logger = provider.get_logger()
@@ -51,9 +52,9 @@ class TestCommand(Command):
         self._logger = logger
         self._python_exe = python_exe
         self._sources = sources
-        self._env = cast(Optional[Dict[str, str]], None)
+        self._env = cast(dict[str, str] | None, None)
 
-    def execute(self, *args: Any) -> Tuple[Any, ...]:
+    def execute(self, *args: Any) -> tuple[Any, ...]:
         if args:
             print("Ignoring args", args)
         final_status = self._execute_all_tests(
@@ -70,29 +71,28 @@ class TestCommand(Command):
             completed_process = execute_tests(path)
             status = completed_process.returncode
             if completed_process.stdout:
-                self._logger.info("output: {0}".format(
-                    completed_process.stdout.decode('iso-8859-1')))
+                err = completed_process.stdout.decode('iso-8859-1')
+                self._logger.info(f"output: {err}")
             if status != 0:
                 if completed_process.stderr:
-                    self._logger.error("error: {0}".format(
-                        completed_process.stderr.decode('iso-8859-1')))
+                    err = completed_process.stderr.decode('iso-8859-1')
+                    self._logger.error(f"error: {err}")
                 final_status = 1
 
         return final_status
 
     def _execute_unittests(self, path: Path) -> subprocess.CompletedProcess:
-        cmd = "\"{}\" {}".format(self._python_exe, path)
-        self._logger.info("execute unittests: {0}".format(cmd))
-        return subprocess.run([self._python_exe, str(path)],
-                              stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                              env=self._get_env())
+        cmd = f"\"{self._python_exe}\" {path}"
+        self._logger.info(f"execute unittests: {cmd}")
+        return subprocess.run(
+            [self._python_exe, str(path)], capture_output=True, env=self._get_env(), check=False)
 
     def _execute_doctests(self, path: Path) -> subprocess.CompletedProcess:
-        cmd = "\"{}\" -m doctest {}".format(self._python_exe, path)
+        cmd = f"\"{self._python_exe}\" -m doctest {path}"
         self._logger.info("execute doctests: %s", cmd)
-        return subprocess.run([self._python_exe, "-m", "doctest", str(path)],
-                              stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                              env=self._get_env())
+        return subprocess.run(
+            [self._python_exe, "-m", "doctest", str(path)],
+            capture_output=True, env=self._get_env(), check=False)
 
     def _test_paths(self) -> Iterator[Path]:
         for path in self._sources.test_dir.rglob("*.py"):
@@ -104,7 +104,7 @@ class TestCommand(Command):
             if path != self._sources.src_dir / "main.py":
                 yield path
 
-    def _get_env(self) -> Dict[str, str]:
+    def _get_env(self) -> dict[str, str]:
         if self._env is None:
             env = dict(os.environ)
             src_lib = [str(self._sources.src_dir), str(self._sources.test_dir),

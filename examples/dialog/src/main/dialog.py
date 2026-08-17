@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 # py4lo: entry
 # py4lo: embed lib py4lo_typing
 # py4lo: embed lib py4lo_commons
 # py4lo: embed lib py4lo_helper
 # py4lo: embed lib py4lo_dialogs
 
-from py4lo_dialogs import place_widget, ControlModel, Control, EventListener
+from py4lo_dialogs import Control, ControlModel, EventListener, place_widget
 from py4lo_helper import create_uno_service
 
 try:

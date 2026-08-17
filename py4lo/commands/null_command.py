@@ -15,15 +15,17 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from typing import Any, Tuple, List
+from typing import Any
+
+from core.properties import PropertiesProvider
 
 from commands.command import Command
 from commands.command_executor import CommandExecutor
-from core.properties import PropertiesProvider
+
 
 class NullCommand(Command):
     @staticmethod
-    def create_executor(args: List[str], provider: PropertiesProvider) -> CommandExecutor:
+    def create_executor(args: list[str], provider: PropertiesProvider) -> CommandExecutor:
         if args:
             print("Ignoring args", args)
 
@@ -35,11 +37,11 @@ class NullCommand(Command):
     def __init__(self, msg: str):
         self._msg = msg
 
-    def execute(self, *args: Any) -> Tuple[Any, ...]:
+    def execute(self, *args: Any) -> tuple[Any, ...]:
         if args:
             print("Ignoring args", args)
         print(self._msg)
-        return tuple()
+        return ()
 
     def get_help(self) -> str:
         return "<internal command>"

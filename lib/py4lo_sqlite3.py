@@ -79,13 +79,30 @@ import json
 import os
 from contextlib import contextmanager
 from ctypes import (
-    cdll, c_void_p, byref, c_int, c_char_p, POINTER, c_double, string_at, CDLL
+    CDLL,
+    POINTER,
+    byref,
+    c_char_p,
+    c_double,
+    c_int,
+    c_void_p,
+    cdll,
+    string_at,
 )
 from ctypes.util import find_library
 from pathlib import Path
 from typing import (
-    Union, List, Any, Iterator, Mapping, Callable, Optional,
-    Sequence)
+    Any,
+    Callable,
+    Iterator,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Union,
+)
+
+from lib.py4lo_typing import StrPath
 
 library_name = find_library('sqlite3')
 if library_name is None:
@@ -124,7 +141,7 @@ class SQLiteError(Exception):
         self.msg = msg
 
     def __repr__(self) -> str:
-        return "SQLiteError({}, {})".format(self.result_code, repr(self.msg))
+        return f"SQLiteError({self.result_code}, {self.msg!r})"
 
 
 class TransactionMode(enum.Enum):
@@ -824,7 +841,7 @@ class Sqlite3Statement:
         elif sql_type == SQLITE_BLOB:
             ret = decode_blob_to_bytes
         else:
-            raise ValueError("Unknown type {}".format(sql_type))
+            raise ValueError(f"Unknown type {sql_type}")
         return ret
 
     def _extended_type_to_decode(
@@ -840,7 +857,7 @@ class Sqlite3Statement:
         elif sql_type == PY4LO_JSON:
             ret = decode_text_to_json
         else:
-            raise ValueError("Unknown type {}".format(sql_type))
+            raise ValueError(f"Unknown type {sql_type}")
         return ret
 
 class Sqlite3Database:
@@ -891,8 +908,6 @@ class Sqlite3Database:
 
         try:
             yield Sqlite3Statement(self._db, stmt_p)
-        except Exception:
-            raise
         finally:
             ret = sqlite3_finalize(stmt_p)
             if ret != SQLITE_OK:
@@ -926,7 +941,7 @@ class Sqlite3Database:
         @param mode: transaction mode
         @yield: a context
         """
-        self.execute_update("BEGIN {} TRANSACTION".format(mode.value))
+        self.execute_update(f"BEGIN {mode.value} TRANSACTION")
         try:
             yield
         except SQLiteError:
@@ -942,7 +957,7 @@ class Sqlite3Database:
 
 @contextmanager
 def sqlite_open(
-        filepath: Union[str, Path], mode: str = "r", timeout: int = -1
+        filepath: StrPath, mode: str = "r", timeout: int = -1
 ) -> Iterator[Sqlite3Database]:
     """
     Open a SQLite database in a context manager:

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #  Py4LO - Python Toolkit For LibreOffice Calc
 #     Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 #
@@ -17,7 +16,7 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import subprocess   # nosec: B404
+import subprocess  # nosec: B404
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -28,6 +27,7 @@ from commands.test_command import TestCommand
 class TestCommandTest(unittest.TestCase):
     @mock.patch('subprocess.run', spec=subprocess.run)
     def test(self, subprocess_run_mock):
+        self.maxDiff = None
         completed_process1 = mock.MagicMock(returncode=0)
         completed_process1.stdout.decode.return_value = "ok"
         completed_process2 = mock.MagicMock(returncode=1)
@@ -63,11 +63,11 @@ class TestCommandTest(unittest.TestCase):
         ], logger.mock_calls)
         self.assertEqual([
             mock.call(["test_py_exe", "-m", "doctest", "/src_dir/src_a.py"],
-                      env=unittest.mock.ANY, stderr=-1, stdout=-1),
+                      capture_output=True, env=mock.ANY, check=False),
             mock.call(["test_py_exe", "/test_dir/c_test.py"],
-                      env=mock.ANY, stderr=-1, stdout=-1),
+                      capture_output=True, env=mock.ANY, check=False),
             mock.call(["test_py_exe", "/test_dir/b/d_test.py"],
-                      env=mock.ANY, stderr=-1, stdout=-1),
+                      capture_output=True, env=mock.ANY, check=False),
         ], subprocess_run_mock.mock_calls)
         self.assertEqual((1,), status)
 

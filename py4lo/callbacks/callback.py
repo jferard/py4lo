@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #  Py4LO - Python Toolkit For LibreOffice Calc
 #     Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 #
@@ -31,7 +30,6 @@ class BeforeCallback(ABC):
         :param zout: write to this file
         :return: False to prevent the execution of nextcallbacks
         """
-        pass
 
 
 class AfterCallback(ABC):
@@ -46,7 +44,6 @@ class AfterCallback(ABC):
         :param zout: write to this file
         :return: False to prevent the execution of nextcallbacks
         """
-        pass
 
 
 class ItemCallback(ABC):
@@ -62,4 +59,3 @@ class ItemCallback(ABC):
         :return: True if the item was processed and copied. Else, return false.
         It's the responsibility of the updater to copy the file.
         """
-        pass

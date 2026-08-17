@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #  Py4LO - Python Toolkit For LibreOffice Calc
 #     Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 #
@@ -16,18 +15,18 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from typing import List
 from zipfile import ZipFile
 
-from callbacks import AfterCallback
 from core.asset import DestinationAsset
+
+from callbacks import AfterCallback
 
 
 class AddAssets(AfterCallback):
     """
     Add assets in destination file
     """
-    def __init__(self, assets: List[DestinationAsset]):
+    def __init__(self, assets: list[DestinationAsset]):
         """
         :param assets: the assets to add
         """

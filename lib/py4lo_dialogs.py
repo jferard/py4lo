@@ -59,19 +59,42 @@ import datetime as dt
 import functools
 import logging
 import sys
+
 # mypy: disable-error-code="import-untyped,import-not-found"
 from collections import namedtuple
 from enum import Enum
 from threading import Thread
 from typing import (
-    Any, Callable, Optional, List, Union, NamedTuple, cast, TypeVar, Sequence)
+    Any,
+    Callable,
+    List,
+    NamedTuple,
+    Optional,
+    Sequence,
+    TypeVar,
+    Union,
+    cast,
+)
 
 from py4lo_helper import (
-    get_provider, create_uno_service, create_uno_struct, to_uno_date,
-    from_uno_date)
+    create_uno_service,
+    create_uno_struct,
+    from_uno_date,
+    get_provider,
+    to_uno_date,
+)
 from py4lo_typing import (
-    UnoControlModel, UnoControl, StrPath, lazy, UnoMainControl, UnoMainControlModel, UnoToolkit,
-    UnoFilePicker, UnoFolderPicker, UnoListControl)
+    StrPath,
+    UnoControl,
+    UnoControlModel,
+    UnoFilePicker,
+    UnoFolderPicker,
+    UnoListControl,
+    UnoMainControl,
+    UnoMainControlModel,
+    UnoToolkit,
+    lazy,
+)
 
 try:
     # noinspection PyUnresolvedReferences,PyPackageRequirements
@@ -84,41 +107,59 @@ try:
     class MessageBoxType:
         # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.awt.MessageBoxType import (
-            MESSAGEBOX, INFOBOX, WARNINGBOX, ERRORBOX, QUERYBOX, )
+            ERRORBOX,
+            INFOBOX,
+            MESSAGEBOX,
+            QUERYBOX,
+            WARNINGBOX,
+        )
 
 
     class MessageBoxButtons:
         # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.awt.MessageBoxButtons import (
-            BUTTONS_OK, BUTTONS_OK_CANCEL, BUTTONS_YES_NO,
-            BUTTONS_YES_NO_CANCEL, BUTTONS_RETRY_CANCEL,
-            BUTTONS_ABORT_IGNORE_RETRY, DEFAULT_BUTTON_OK,
-            DEFAULT_BUTTON_CANCEL, DEFAULT_BUTTON_RETRY, DEFAULT_BUTTON_YES,
-            DEFAULT_BUTTON_NO, DEFAULT_BUTTON_IGNORE,
+            BUTTONS_ABORT_IGNORE_RETRY,
+            BUTTONS_OK,
+            BUTTONS_OK_CANCEL,
+            BUTTONS_RETRY_CANCEL,
+            BUTTONS_YES_NO,
+            BUTTONS_YES_NO_CANCEL,
+            DEFAULT_BUTTON_CANCEL,
+            DEFAULT_BUTTON_IGNORE,
+            DEFAULT_BUTTON_NO,
+            DEFAULT_BUTTON_OK,
+            DEFAULT_BUTTON_RETRY,
+            DEFAULT_BUTTON_YES,
         )
 
 
     class MessageBoxResults:
         # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.awt.MessageBoxResults import (
-            CANCEL, OK, YES, NO, RETRY, IGNORE
+            CANCEL,
+            IGNORE,
+            NO,
+            OK,
+            RETRY,
+            YES,
         )
 
 
     class FontWeight:
         # noinspection PyUnresolvedReferences,PyPackageRequirements
-        from com.sun.star.awt.FontWeight import (BOLD, )
+        from com.sun.star.awt.FontWeight import (
+            BOLD,
+        )
 
 
     class ExecutableDialogResults:
         # noinspection PyUnresolvedReferences,PyPackageRequirements
-        from com.sun.star.ui.dialogs.ExecutableDialogResults import (
-            OK, CANCEL)
+        from com.sun.star.ui.dialogs.ExecutableDialogResults import CANCEL, OK
 
 
     class PushButtonType:
         # noinspection PyUnresolvedReferences,PyPackageRequirements
-        from com.sun.star.awt.PushButtonType import (OK, CANCEL)
+        from com.sun.star.awt.PushButtonType import CANCEL, OK
 
 
     # noinspection PyUnresolvedReferences,PyPackageRequirements
@@ -128,35 +169,35 @@ try:
     class TemplateDescription:
         # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.ui.dialogs.TemplateDescription import (
+            FILEOPEN_LINK_PLAY,
+            FILEOPEN_LINK_PREVIEW,
+            FILEOPEN_LINK_PREVIEW_IMAGE_ANCHOR,
+            FILEOPEN_LINK_PREVIEW_IMAGE_TEMPLATE,
+            FILEOPEN_PLAY,
+            FILEOPEN_PREVIEW,
+            FILEOPEN_READONLY_VERSION,
             FILEOPEN_SIMPLE,
-            FILESAVE_SIMPLE,
+            FILESAVE_AUTOEXTENSION,
             FILESAVE_AUTOEXTENSION_PASSWORD,
             FILESAVE_AUTOEXTENSION_PASSWORD_FILTEROPTIONS,
             FILESAVE_AUTOEXTENSION_SELECTION,
             FILESAVE_AUTOEXTENSION_TEMPLATE,
-            FILEOPEN_LINK_PREVIEW_IMAGE_TEMPLATE,
-            FILEOPEN_PLAY,
-            FILEOPEN_READONLY_VERSION,
-            FILEOPEN_LINK_PREVIEW,
-            FILESAVE_AUTOEXTENSION,
-            FILEOPEN_PREVIEW,
-            FILEOPEN_LINK_PLAY,
-            FILEOPEN_LINK_PREVIEW_IMAGE_ANCHOR,
+            FILESAVE_SIMPLE,
         )
 except ImportError:
-    logging.exception("Import err")
+    logging.getLogger(__name__).exception("Import err")
     from _mock_constants import (  # type: ignore[assignment]
         ExecutableDialogResults,  # pyright: ignore[reportGeneralTypeIssues]
         MessageBoxButtons,  # pyright: ignore[reportGeneralTypeIssues]
+        MessageBoxResults,  # pyright: ignore[reportGeneralTypeIssues]  # noqa: F401
         MessageBoxType,  # pyright: ignore[reportGeneralTypeIssues]
         PushButtonType,  # pyright: ignore[reportGeneralTypeIssues]
-        MessageBoxResults,  # pyright: ignore[reportGeneralTypeIssues]  # noqa: F401
         TemplateDescription,  # pyright: ignore[reportGeneralTypeIssues]
     )
     from _mock_objects import (  # type: ignore[assignment]
+        XEventListener,  # pyright: ignore[reportGeneralTypeIssues]
         uno,  # pyright: ignore[reportGeneralTypeIssues]
         unohelper,  # pyright: ignore[reportGeneralTypeIssues]
-        XEventListener,  # pyright: ignore[reportGeneralTypeIssues]
     )
 
 
@@ -541,7 +582,9 @@ def input_box(msg_title: str, msg_text: str, msg_default="", parent_win=None,
         msg_title, msg_text, msg_default, parent_win, x, y)
 
 
-FileFilter = NamedTuple("FileFilter", [("title", str), ("filter", str)])
+class FileFilter(NamedTuple):
+    title: str
+    filter: str
 
 
 if sys.platform == "win32":
@@ -556,7 +599,7 @@ def file_dialog(
         title: str, filters: Optional[List[FileFilter]] = None,
         display_dir: StrPath = "", single: bool = True,
         template_description: Optional[int] = None
-) -> Union[Optional[str], Sequence[str]]:
+) -> Union[str, Sequence[str], None]:
     """
     Open a file dialog.
 
@@ -623,10 +666,14 @@ def folder_dialog(title: str,
 
 
 MARGIN = 5
-Rectangle = NamedTuple("Rectangle",
-                       [("x", int), ("y", int), ("w", int), ("h", int)])
-Progress = NamedTuple("Progress",
-                      [("min", int), ("max", int)])
+class Rectangle(NamedTuple):
+    x: int
+    y: int
+    w: int
+    h: int
+class Progress(NamedTuple):
+    min: int
+    max: int
 
 
 def _set_rectangle(oWidgetModel: UnoControlModel, rectangle: Rectangle):
@@ -647,7 +694,6 @@ class ProgressActionStopped(Exception):
     """
     Exception thrown by a handler or a function to stop the progress action.
     """
-    pass
 
 
 class ProgressHandler:
@@ -686,27 +732,23 @@ class VoidProgressHandler(ProgressHandler):
         Update the progress value
         @param n: number of steps since the last progress
         """
-        pass
 
     def set(self, i: int):
         """
         Set the progress value
         @param i: total number of steps since the beginning
         """
-        pass
 
     def reset(self):
         """
         Reset the progress value
         """
-        pass
 
     def message(self, text: str):
         """
         Set a progress message
         @param text: the text
         """
-        pass
 
 
 class StandardProgressHandler(VoidProgressHandler):
@@ -747,8 +789,7 @@ class StandardProgressHandler(VoidProgressHandler):
 
     def progress(self, n: int = 1):
         self.oBar.Value = self.oBar.Value + n
-        if self.oBar.Value > self._bar_progress_max:
-            self.oBar.Value = self._bar_progress_max
+        self.oBar.Value = min(self.oBar.Value, self._bar_progress_max)
 
     def set(self, i: int):
         if i > self._bar_progress_max:
@@ -1053,7 +1094,6 @@ class ConsoleHandler:
     """
     Base class for console handlers
     """
-    pass
 
 
 class VoidConsoleHandler(ConsoleHandler):
@@ -1082,7 +1122,6 @@ class VoidConsoleHandler(ConsoleHandler):
         A message
         @param text: the text of the message
         """
-        pass
 
 
 class StandardConsoleHandler(VoidConsoleHandler):

@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional
 
 
 @dataclass(eq=True, frozen=True)
@@ -17,7 +16,7 @@ class SourceScript:
 @dataclass(eq=True, frozen=True)
 class ParsedScriptContent:
     text: str
-    exported_func_names: List[str]
+    exported_func_names: list[str]
 
 
 @dataclass(eq=True, frozen=True)
@@ -28,8 +27,8 @@ class DestinationScript:
     script_path: Path
     script_content: bytes
     dest_dir: Path
-    exported_func_names: List[str]
-    exception: Optional[Exception]
+    exported_func_names: list[str]
+    exception: Exception | None
 
     @property
     def relative_path(self):
@@ -49,8 +48,8 @@ class TempScript:
     script_path: Path
     script_content: bytes
     temp_dir: Path
-    exported_func_names: List[str]
-    exception: Optional[Exception]
+    exported_func_names: list[str]
+    exception: Exception | None
 
     @property
     def relative_path(self):

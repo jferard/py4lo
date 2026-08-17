@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #  Py4LO - Python Toolkit For LibreOffice Calc
 #     Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 #
@@ -23,7 +22,8 @@
 # py4lo: embed lib py4lo_io
 # py4lo: embed lib py4lo_dialogs
 
-from py4lo_helper import provider as pr, convert_to_html
+from py4lo_helper import convert_to_html
+from py4lo_helper import provider as pr
 
 
 def html_example(*_args):

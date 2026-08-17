@@ -21,14 +21,25 @@ import unittest
 from typing import Any
 from unittest import mock
 
-from py4lo_helper import Target
-from py4lo_io import (create_import_filter_options,
-                      create_export_filter_options, Format, create_read_cell,
-                      CellTyping, reader, dict_reader, find_number_format_style,
-                      create_write_cell, writer, dict_writer, import_from_csv,
-                      export_to_csv, Filter)
-from py4lo_typing import UnoCell
 from _mock_constants import NumberFormat
+from py4lo_helper import Target
+from py4lo_io import (
+    CellTyping,
+    Filter,
+    Format,
+    create_export_filter_options,
+    create_import_filter_options,
+    create_read_cell,
+    create_write_cell,
+    dict_reader,
+    dict_writer,
+    export_to_csv,
+    find_number_format_style,
+    import_from_csv,
+    reader,
+    writer,
+)
+from py4lo_typing import UnoCell
 
 
 class Py4LOIOTestCase(unittest.TestCase):
@@ -129,7 +140,7 @@ class Py4LOIOTestCase(unittest.TestCase):
         rc = create_read_cell(CellTyping.Accurate, oFormats)
 
         # verify
-        self.assertEqual(dt.datetime(2020, 6, 18, 0, 0), rc(oCell))
+        self.assertEqual(dt.datetime(2020, 6, 18, 0, 0, tzinfo=dt.timezone.utc), rc(oCell))
 
     @mock.patch("py4lo_io.get_cell_type")
     def test_create_read_cell_accurate_logical(self, gct):
@@ -456,7 +467,7 @@ class Py4LOIOTestCase(unittest.TestCase):
 
         # play
         wc = create_write_cell(CellTyping.Accurate, oFormats)
-        wc(oCell, dt.datetime(2020, 1, 1, 4, 5, 6))
+        wc(oCell, dt.datetime(2020, 1, 1, 4, 5, 6, tzinfo=dt.timezone.utc))
 
         # verify
         self.assertEqual(43831.17020833334, oCell.Value)
@@ -500,7 +511,6 @@ class Py4LOIOTestCase(unittest.TestCase):
             (1, 2, 3),
         ])
 
-        #
         self.assertEqual([
             mock.call.getCellByPosition(0, 0),
             mock.call.getCellByPosition(1, 0),
@@ -526,7 +536,6 @@ class Py4LOIOTestCase(unittest.TestCase):
             (1, 2, 3),
         ])
 
-        #
         self.assertEqual([
             mock.call.getCellByPosition(0, 0),
             mock.call.getCellByPosition(1, 0),
@@ -590,7 +599,6 @@ class Py4LOIOTestCase(unittest.TestCase):
             {"a": 4, "b": 5, "oTextRange": 6},
         ])
 
-        #
         self.assertEqual([
             mock.call.getCellByPosition(0, 0),
             mock.call.getCellByPosition(1, 0),
@@ -622,7 +630,6 @@ class Py4LOIOTestCase(unittest.TestCase):
         with self.assertRaises(ValueError):
             w.writerow({"a": 1, "b": 2, "d": 3})
 
-        #
         self.assertEqual([
             mock.call.getCellByPosition(0, 0),
             mock.call.getCellByPosition(1, 0),
@@ -647,7 +654,6 @@ class Py4LOIOTestCase(unittest.TestCase):
         w.writeheader()
         w.writerow({"a": 1, "b": 2})
 
-        #
         self.assertEqual([
             mock.call.getCellByPosition(0, 0),
             mock.call.getCellByPosition(1, 0),

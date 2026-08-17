@@ -21,13 +21,22 @@
 # py4lo: embed lib py4lo_commons
 # py4lo: embed lib py4lo_dialogs
 from py4lo_helper import (
-    DatesHelper, provider, DateGroup, DateGroups,
+    DataPilotBuilder,
+    DataPilotFieldGroupBy,
+    DataPilotFieldLayoutMode,
+    DataPilotFieldOrientation,
+    DataPilotFieldShowItemsMode,
+    DataPilotFieldSortMode,
+    DateGroup,
+    DateGroups,
+    DatesHelper,
+    Diagram,
+    GeneralFunction2,
+    make_auto_show_info,
+    make_layout_info,
     make_regular_sort_info,
-    make_layout_info, make_auto_show_info, Diagram,
-    DataPilotBuilder, DataPilotFieldGroupBy,
-    DataPilotFieldSortMode, GeneralFunction2,
-    DataPilotFieldLayoutMode, DataPilotFieldShowItemsMode,
-    DataPilotFieldOrientation)
+    provider,
+)
 
 
 def data_pilot(*_args):

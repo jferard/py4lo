@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #  Py4LO - Python Toolkit For LibreOffice Calc
 #     Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 #
@@ -17,7 +16,6 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from pathlib import Path
-from typing import Dict, List
 from zipfile import ZipFile
 
 from callbacks import AfterCallback
@@ -150,7 +148,7 @@ class AddDebugContent(AfterCallback):
     The debug content is one button per function.
     """
 
-    def __init__(self, funcs_by_script: Dict[Path, List[str]]):
+    def __init__(self, funcs_by_script: dict[Path, list[str]]):
         """
         :param funcs_by_script: a mapping script_name -> [func name]
         """

@@ -21,7 +21,6 @@ from typing import Any
 from unittest import mock
 from urllib.parse import urlparse
 
-
 ##############################
 # # DO NOT EMBED THIS FILE # #
 ##############################

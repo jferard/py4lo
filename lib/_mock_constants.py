@@ -219,7 +219,7 @@ class CellContentType:
     FORMULA = 3
 
 
-class TypeClass(object):
+class TypeClass:
     VOID = 0
     CHAR = 1
     BOOLEAN = 2

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Py4LO - Python Toolkit For LibreOffice Calc
       Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 
@@ -22,12 +21,13 @@
 # noinspection PyBroadException
 try:
     # noinspection PyUnresolvedReferences
-    XSCRIPTCONTEXT  # type: ignore[name-defined] # noqa: F821
-except: # nosec: B110 # noqa: E722
+    XSCRIPTCONTEXT  # type: ignore[name-defined] # noqa: F821, B018
+except: # nosec: B110 # noqa: E722, S110
     pass
 else:
-    import uno
     import sys
+
+    import uno
     # add path/to/doc.os/Scripts/python to sys.path, to import Python
     # modules (*.py, *.py[co]) and packages from a ZIP-format archive.
     doc = XSCRIPTCONTEXT.getDocument() # type: ignore[name-defined] # noqa: F821

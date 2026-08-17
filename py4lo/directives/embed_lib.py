@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #  Py4LO - Python Toolkit For LibreOffice Calc
 #     Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 #
@@ -16,10 +15,12 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence, Any
+from typing import Any
 
 from core.script import SourceScript
+
 from directives.directive import Directive
 
 

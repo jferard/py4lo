@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #  Py4LO - Python Toolkit For LibreOffice Calc
 #     Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 #
@@ -17,7 +16,7 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from pathlib import Path
-from typing import List, Any, cast
+from typing import Any, cast
 
 from directives.directive import Directive
 
@@ -29,7 +28,7 @@ class Include(Directive):
     """
 
     @staticmethod
-    def sig_elements() -> List[str]:
+    def sig_elements() -> list[str]:
         return ["include"]
 
     def __init__(self, inc_dir: Path):
@@ -37,14 +36,14 @@ class Include(Directive):
 
     def execute(self, _processor: Any,  # "DirectiveProcessor",
                 line_processor: Any,  # "DirectiveLineProcessor",
-                args: List[str]):
+                args: list[str]):
         path = self._inc_dir.joinpath(args[0])
         if len(args) >= 2:
             strip = args[1] == "True"
         else:
             strip = False
 
-        s = ["# begin py4lo include: {}".format(path)]
+        s = [f"# begin py4lo include: {path}"]
         if strip:
             s.extend(IncludeStripper(path).process())
         else:
@@ -70,13 +69,13 @@ class IncludeStripper:
 
     def __init__(self, path: Path):
         self._path = path
-        self._inc_lines = cast(List[str], [])
+        self._inc_lines = cast(list[str], [])
         self._state = IncludeStripper.NORMAL
 
-    def process(self) -> List[str]:
+    def process(self) -> list[str]:
         """Return a list of lines"""
         if self._state != IncludeStripper.NORMAL:
-            raise Exception("Create a new IncludeProcessor")
+            raise ValueError("Create a new IncludeProcessor")
 
         with self._path.open('r', encoding="utf-8") as b:
             for line in b:

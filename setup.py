@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #  Py4LO - Python Toolkit For LibreOffice Calc
 #     Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 #
@@ -18,8 +17,9 @@
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # mypy: disable-error-code="import-untyped"
-from setuptools import setup
 from os import path
+
+from setuptools import setup
 
 here = path.abspath(path.dirname(__file__))
 
@@ -42,8 +42,8 @@ setup(
         'Intended Audience :: Developers',
         'Topic :: Software Development :: Build Tools',
         'Topic :: Utilities',
-        'License :: OSI Approved :: '
-        'GNU General Public License v3 or later (GPLv3+)',
+        ('License :: OSI Approved :: '
+        'GNU General Public License v3 or later (GPLv3+)'),
         'Programming Language :: Python :: 3',
     ],
 

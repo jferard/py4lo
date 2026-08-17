@@ -17,13 +17,12 @@
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import argparse
 import sys
-from typing import List
 
 from commands import commands
 from core.properties import PropertiesProviderFactory
 
 
-def get_args(argv: List[str] = sys.argv[1:]) -> argparse.Namespace:
+def get_args(argv: list[str] = sys.argv[1:]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Python for LibreOffice",
         formatter_class=argparse.RawTextHelpFormatter)
@@ -36,7 +35,7 @@ def get_args(argv: List[str] = sys.argv[1:]) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def main(factory: PropertiesProviderFactory, argv: List[str] = sys.argv[1:]):
+def main(factory: PropertiesProviderFactory, argv: list[str] = sys.argv[1:]):
     args = get_args(argv)
     provider = factory.create(args.toml)
     logger = provider.get_logger()

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #  Py4LO - Python Toolkit For LibreOffice Calc
 #     Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 #
@@ -16,11 +15,12 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import unittest
 import io
+import unittest
 import zipfile
 
 from callbacks import AddReadmeWith
+
 from test import test_helper
 
 
@@ -38,7 +38,7 @@ class TestAddReadmeWith(unittest.TestCase):
 <library:libraries xmlns:library="http://openoffice.org/2000/library" xmlns:xlink="http://www.w3.org/1999/xlink">
     <library:library library:name="Standard" library:link="false"/>
 </library:libraries>
-"""  # noqa: E501
+"""
         self.assertEqual(expected,
                          zout.read("Basic/script-lc.xml").decode("utf-8"))
         expected = """<?xml version="1.0" encoding="UTF-8"?>
@@ -46,7 +46,7 @@ class TestAddReadmeWith(unittest.TestCase):
 <library:library xmlns:library="http://openoffice.org/2000/library" library:name="Standard" library:readonly="false" library:passwordprotected="false">
     <library:element library:name="py4lo"/>
 </library:library>
-"""  # noqa: E501
+"""
         self.assertEqual(expected,
                          zout.read("Basic/Standard/script-lb.xml").decode(
                              "utf-8"))
@@ -62,7 +62,7 @@ Sub Readme
     &amp; &quot;Copyright (C) 2016-2018 Julien Férard &lt;https://github.com/jferard&gt;&quot; &amp; chr(13) _
     &amp; &quot;See https://github.com/jferard/py4lo/README.md&quot; &amp; chr(13) _
     &amp; &quot;Contact : contact&quot;, IDOK, &quot;py4lo&quot;\nEnd Sub\n</script:module>
-"""  # noqa: E501
+"""
         self.assertEqual(expected,
                          zout.read("Basic/Standard/py4lo.xml").decode("utf-8"))
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #  Py4LO - Python Toolkit For LibreOffice Calc
 #     Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 #
@@ -16,7 +15,9 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import datetime as dt
 import os
+
 # py4lo: entry
 # py4lo: embed script alib.py
 # py4lo: embed lib py4lo_typing
@@ -25,16 +26,34 @@ import os
 # py4lo: embed lib py4lo_io
 # py4lo: embed lib py4lo_dialogs
 import time
-from datetime import datetime
 
 import example_lib
-from py4lo_dialogs import (ProgressExecutorBuilder, ConsoleExecutorBuilder,
-                           message_box, input_box, ConsoleExecutor,
-                           ProgressExecutor, ProgressHandler)
-from py4lo_helper import provider as pr, xray, mri, parent_doc, to_iter, \
-    to_dict, get_provider, copy_data_array
-from py4lo_io import (dict_reader, dict_writer, export_to_csv,
-                      import_from_csv, CellTyping)
+from py4lo_dialogs import (
+    ConsoleExecutor,
+    ConsoleExecutorBuilder,
+    ProgressExecutor,
+    ProgressExecutorBuilder,
+    ProgressHandler,
+    input_box,
+    message_box,
+)
+from py4lo_helper import (
+    copy_data_array,
+    get_provider,
+    mri,
+    parent_doc,
+    to_dict,
+    to_iter,
+    xray,
+)
+from py4lo_helper import provider as pr
+from py4lo_io import (
+    CellTyping,
+    dict_reader,
+    dict_writer,
+    export_to_csv,
+    import_from_csv,
+)
 from py4lo_typing import lazy
 
 o = example_lib.Example(pr)
@@ -52,16 +71,16 @@ def message_example(*_args):
     lines = [
         "A message from main script example.py. ",
         "Current dir is: {}".format(os.path.abspath("../../../../py4lo")),
-        "Current doc name is: {}".format(oDoc.Title),
-        "Current sheet name is: {}".format(oSheet.Name),
-        "Sheet names are: {}".format([s.Name for s in to_iter(oDoc.Sheets)]),
-        "Draw Pages are: {}".format([str(d) for d in to_iter(oDoc.DrawPages)]),
-        "Sheets are: {}".format(to_dict(oDoc.Sheets))
+        f"Current doc name is: {oDoc.Title}",
+        f"Current sheet name is: {oSheet.Name}",
+        f"Sheet names are: {[s.Name for s in to_iter(oDoc.Sheets)]}",
+        f"Draw Pages are: {[str(d) for d in to_iter(oDoc.DrawPages)]}",
+        f"Sheets are: {to_dict(oDoc.Sheets)}"
     ]
 
     message_box("py4lo", "\n".join(lines))
     name = input_box("py4lo", "enter your name")
-    message_box("py4lo", "Hello {}".format(name))
+    message_box("py4lo", f"Hello {name}")
 
 
 def xray_example(*_args):
@@ -82,9 +101,9 @@ def writer_example(*_args):
                     cell_typing=CellTyping.Accurate)
     w.writeheader()
     for row in [{"a": "value", "b": 1, "oTextRange": True,
-                 "d": datetime(2020, 11, 21, 12, 36, 50)},
+                 "d": dt.datetime(2020, 11, 21, 12, 36, 50, tzinfo=dt.timezone.utc)},
                 {"a": "other value", "b": 2, "oTextRange": False,
-                 "d": datetime(2020, 11, 21, 12, 36, 50)}]:
+                 "d": dt.datetime(2020, 11, 21, 12, 36, 50, tzinfo=dt.timezone.utc)}]:
         w.writerow(row)
 
 
@@ -93,7 +112,7 @@ def reader_example(*_args):
                     restval="x", restkey="t",
                     cell_typing=CellTyping.Accurate)
     for row in r:
-        message_box("py4lo", "{}: {}".format(r.line_num, row))
+        message_box("py4lo", f"{r.line_num}: {row}")
 
 
 def export_example(*_args):
@@ -131,7 +150,7 @@ def after_progress(*_args):
         message_box("Error", "The return value was: None")
     else:
         message_box("Title",
-                "The return value was: {}".format(progress_executor.response))
+                f"The return value was: {progress_executor.response}")
 
 
 console_executor = lazy(ConsoleExecutor)
@@ -147,7 +166,7 @@ def console_example(*_args):
         console_handler.message("a message")
         for i in range(1, 15):
             time.sleep(0.1)
-            console_handler.message("next message: {}".format(i))
+            console_handler.message(f"next message: {i}")
 
     console_executor.execute(test)
 

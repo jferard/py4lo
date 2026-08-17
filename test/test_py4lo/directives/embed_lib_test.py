@@ -52,7 +52,7 @@ except NameError:
     pass
 finally:
     del py4lo_helper  # does not wipe cache, but remove the access.
-# end py4lo: init py4lo_helper""" # noqa: E501
+# end py4lo: init py4lo_helper"""
         self.assertEqual([expected], s)
 
 if __name__ == '__main__':

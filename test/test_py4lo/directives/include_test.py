@@ -18,7 +18,7 @@
 import io
 import unittest
 from pathlib import Path
-from typing import cast, List
+from typing import cast
 from unittest import mock
 
 from directives import Include
@@ -49,7 +49,7 @@ class TestInclude(unittest.TestCase):
         path = mock.Mock()
         inc_path = file_path_mock(
             io.StringIO(
-                '"""docstring"""\n\'\'\'\nother docstring\'\'\'\n  #comment\nsome line'  # noqa: E501
+                '"""docstring"""\n\'\'\'\nother docstring\'\'\'\n  #comment\nsome line'
             )
         )
 
@@ -65,16 +65,15 @@ class TestInclude(unittest.TestCase):
 
         verify_open_path(self, inc_path, 'r', encoding="utf-8")
 
-    def test_py4l_import_py(self):
+    def test_py4lo_import_py(self):
         self.maxDiff = None
         path = Path(__file__).parents[3] / "inc"
 
-        line_processor = cast(List[str], [])
+        line_processor = cast(list[str], [])
         Include(path).execute(mock.Mock(), line_processor, ["py4lo_import.py", True])
         begin, text = line_processor[0].split("\n", maxsplit=1)
         self.assertTrue(begin.startswith('# begin py4lo include: '))
-        self.assertEqual('''# -*- coding: utf-8 -*-
-"""Py4LO - Python Toolkit For LibreOffice Calc
+        self.assertEqual('''"""Py4LO - Python Toolkit For LibreOffice Calc
       Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 
    This file is part of Py4LO.
@@ -97,12 +96,13 @@ class TestInclude(unittest.TestCase):
 # noinspection PyBroadException
 try:
     # noinspection PyUnresolvedReferences
-    XSCRIPTCONTEXT  # type: ignore[name-defined] # noqa: F821
-except: # nosec: B110 # noqa: E722
+    XSCRIPTCONTEXT  # type: ignore[name-defined] # noqa: F821, B018
+except: # nosec: B110 # noqa: E722, S110
     pass
 else:
-    import uno
     import sys
+
+    import uno
     # add path/to/doc.os/Scripts/python to sys.path, to import Python
     # modules (*.py, *.py[co]) and packages from a ZIP-format archive.
     doc = XSCRIPTCONTEXT.getDocument() # type: ignore[name-defined] # noqa: F821

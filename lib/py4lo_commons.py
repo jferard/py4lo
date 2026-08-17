@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Py4LO - Python Toolkit For LibreOffice Calc
 #       Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 #
@@ -31,23 +30,33 @@ import datetime as dt
 import logging
 import sys
 from decimal import Decimal
+
 # mypy: disable-error-code="import-untyped"
 from pathlib import Path
 from typing import (
-    Union, Any, Optional, TextIO, Iterable, Mapping, Callable,
-    TypeVar)
+    Any,
+    Callable,
+    Iterable,
+    Mapping,
+    Optional,
+    TextIO,
+    TypeVar,
+    Union,
+)
 
-from py4lo_typing import (
-    UnoXScriptContext, StrPath, lazy)
+from py4lo_typing import StrPath, UnoXScriptContext, lazy
 
 try:
     # noinspection PyUnresolvedReferences,PyPackageRequirements
     import uno
 except ImportError:
-    logging.exception("Import err")
+    logging.getLogger(__name__).exception("Import err")
     from _mock_objects import uno
 
 _xsc = None
+
+class LoggerException(Exception):
+    pass
 
 
 def uno_url_to_path(url: str) -> Optional[Path]:
@@ -195,7 +204,7 @@ class Commons:
         return path.parent
 
     def init_logger(
-            self, file: Optional[Union[StrPath, TextIO]] = None, mode="a",
+            self, file: Union[StrPath, TextIO, None] = None, mode="a",
             level=logging.DEBUG,
             fmt='%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
         """
@@ -204,11 +213,11 @@ class Commons:
         @param file: the log file
         @param mode: the log mode
         @param level: the log level
-        @param fmt: the log entry fromat
+        @param fmt: the log entry format
         @raises: Exception if the logger is already initialized
         """
         if self._logger is not None:
-            raise Exception("use init_logger ONCE")
+            raise LoggerException("use init_logger ONCE")
 
         self._logger = self.get_logger(file, mode, level, fmt)
 
@@ -217,11 +226,11 @@ class Commons:
         @return: the logger.
         """
         if self._logger is None:
-            raise Exception("use init_logger")
+            raise LoggerException("use init_logger")
         return self._logger
 
     def get_logger(
-            self, file: Optional[Union[StrPath, TextIO]] = None,
+            self, file: Union[StrPath, TextIO, None] = None,
             mode: str = "a", level: int = logging.DEBUG,
             fmt: str = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     ) -> logging.Logger:
@@ -261,8 +270,7 @@ class Commons:
         else:
             return cur_dir_path / filename
 
-    def read_internal_config(self, filenames: Union[
-        StrPath, Iterable[StrPath]], args=None,
+    def read_internal_config(self, filenames: Union[StrPath, Iterable[StrPath]], args=None,
                              apply=lambda config: None, encoding='utf-8'):
         """
         Read an internal config, in the assets directory of the document.
@@ -275,8 +283,8 @@ class Commons:
         :param encoding: the encoding of the file
 
         Example: `config = commons.read_config("test.ini")`"""
-        import zipfile
         import codecs
+        import zipfile
 
         if isinstance(filenames, (str, Path)):
             filenames = [filenames]
@@ -311,14 +319,13 @@ class Commons:
         import zipfile
         path = uno_url_to_path(self._url)
         str_path = str(path)  # py < 3.6.2
-        with zipfile.ZipFile(str_path, 'r') as z:
-            with z.open(filename) as f:
-                return f.read()
+        with zipfile.ZipFile(str_path, 'r') as z, z.open(filename) as f:
+            return f.read()
 
 
 def init_logger(
         logger: logging.Logger,
-        file: Optional[Union[StrPath, TextIO]] = None,
+        file: Union[StrPath, TextIO, None] = None,
         mode: str = "a", level: int = logging.DEBUG,
         fmt: str = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'):
     """
@@ -432,7 +439,7 @@ def create_parse_int_or(thousands_seps: str, default: T) -> Callable[
 
 def create_parse_float_or(
         thousands_seps: str, decimal_seps: str, default: T
-) -> Callable[[str], Union[float, T]]:
+) -> Callable[[str], Union[float, int, T]]:
     return _create_parse_number_or(float, thousands_seps, decimal_seps, default)
 
 
@@ -465,7 +472,7 @@ def create_parse_date_or(
         format_str: str, default: T) -> Callable[[str], Union[dt.date, T]]:
     def func(date_string: str) -> Union[dt.date, T]:
         try:
-            d = dt.datetime.strptime(date_string, format_str)
+            d = dt.datetime.strptime(date_string, format_str) # noqa: DTZ007
         except ValueError:
             return default
         else:
@@ -477,7 +484,7 @@ def create_parse_date_or(
 def create_parse_datetime_or(format_str: str, default: T) -> Union[dt.date, T]:
     def func(date_string: str) -> Union[dt.date, T]:
         try:
-            return dt.datetime.strptime(date_string, format_str)
+            return dt.datetime.strptime(date_string, format_str) # noqa: DTZ007
         except ValueError:
             return default
 
@@ -487,7 +494,7 @@ def create_parse_datetime_or(format_str: str, default: T) -> Union[dt.date, T]:
 def create_parse_time_or(format_str: str, default: T) -> Union[dt.date, T]:
     def func(date_string: str) -> Union[dt.date, T]:
         try:
-            d = dt.datetime.strptime(date_string, format_str)
+            d = dt.datetime.strptime(date_string, format_str) # noqa: DTZ007
         except ValueError:
             return default
         else:
@@ -497,7 +504,7 @@ def create_parse_time_or(format_str: str, default: T) -> Union[dt.date, T]:
 
 
 def create_format_int_or(thousands_sep: str, default: T) -> Callable[
-    [Optional[int]], Union[str, T]]:
+    [Union[int, None]], Union[str, T]]:
     if thousands_sep in (",", "_"):
         format_spec = thousands_sep + "d"
 
@@ -518,13 +525,13 @@ def create_format_int_or(thousands_sep: str, default: T) -> Callable[
 def create_format_float_or(
         thousands_sep: str, decimal_sep: str,
         decimals: int, default: T
-) -> Callable[[Optional[float]], Union[str, T]]:
+) -> Callable[[Union[float, int, None]], Union[str, T]]:
     if thousands_sep == "":
         if decimal_sep == ".":
             if decimals < 0:
                 apply = str
             else:
-                format_spec = ".{}f".format(decimals)
+                format_spec = f".{decimals}f"
 
                 def apply(value: float) -> str:
                     return format(value, format_spec)
@@ -533,30 +540,30 @@ def create_format_float_or(
                 def apply(value: float) -> str:
                     return str(value).replace(".", decimal_sep)
             else:
-                format_spec = ".{}f".format(decimals)
+                format_spec = f".{decimals}f"
 
                 def apply(value: float) -> str:
                     return format(value, format_spec).replace(".", decimal_sep)
     elif thousands_sep in (",", "_"):
         if decimal_sep == ".":
             if decimals < 0:
-                format_spec = "{}f".format(thousands_sep)
+                format_spec = f"{thousands_sep}f"
 
                 def apply(value: float) -> str:
                     return format(value, format_spec).rstrip("0")
             else:
-                format_spec = "{}.{}f".format(thousands_sep, decimals)
+                format_spec = f"{thousands_sep}.{decimals}f"
 
                 def apply(value: float) -> str:
                     return format(value, format_spec)
         else:
             if decimals < 0:
-                format_spec = "{}f".format(thousands_sep)
+                format_spec = f"{thousands_sep}f"
 
                 def apply(value: float) -> str:
                     return format(value, format_spec).rstrip("0").replace(".", decimal_sep)
             else:
-                format_spec = "{}.{}f".format(thousands_sep, decimals)
+                format_spec = f"{thousands_sep}.{decimals}f"
 
                 def apply(value: float) -> str:
                     return format(value, format_spec).replace(".", decimal_sep)
@@ -566,7 +573,7 @@ def create_format_float_or(
                 def apply(value: float) -> str:
                     return format(value, "_f").rstrip("0").replace("_", thousands_sep)
             else:
-                format_spec = "_.{}f".format(decimals)
+                format_spec = f"_.{decimals}f"
 
                 def apply(value: float) -> str:
                     return format(value, format_spec).replace("_", thousands_sep)
@@ -575,12 +582,12 @@ def create_format_float_or(
                 def apply(value: float) -> str:
                     return format(value, "_f").rstrip("0").replace("_", thousands_sep).replace(".", decimal_sep)
             else:
-                format_spec = "_.{}f".format(decimals)
+                format_spec = f"_.{decimals}f"
 
                 def apply(value: float) -> str:
                     return format(value, format_spec).replace("_", thousands_sep).replace(".", decimal_sep)
 
-    def func(value: Optional[float]) -> Union[str, T]:
+    def func(value: Union[float, None]) -> Union[str, T]:
         if value is None:
             return default
         return apply(value)
@@ -613,8 +620,7 @@ def create_format_decimal_or(
             int_value = int(value // 1)
             dec_value = abs(value % 1)
             dec_value = round(dec_value * 10 ** decimals)
-            return "{}{}{}".format(
-                format_int(int_value), decimal_sep, dec_value)
+            return f"{format_int(int_value)}{decimal_sep}{dec_value}"
     else:
         def func(value: Optional[Decimal]) -> Union[str, T]:
             if value is None:
@@ -623,11 +629,9 @@ def create_format_decimal_or(
             int_value = int(value // 1)
             dec_value = abs(value % 1)
             if dec_value == DECIMAL_ZERO:
-                return "{}{}0".format(
-                    format_int(int_value), decimal_sep)
+                return f"{format_int(int_value)}{decimal_sep}0"
             else:
-                return "{}{}{}".format(
-                    format_int(int_value), decimal_sep, str(dec_value)[2:])
+                return f"{format_int(int_value)}{decimal_sep}{str(dec_value)[2:]}"
 
     return func
 

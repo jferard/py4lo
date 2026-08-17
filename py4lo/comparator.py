@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #  Py4LO - Python Toolkit For LibreOffice Calc
 #     Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 #
@@ -17,7 +16,7 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from abc import ABC, abstractmethod
-from typing import Any, Union, Dict, TypeVar
+from typing import Any, TypeVar
 
 
 class Comparable(ABC):
@@ -26,7 +25,7 @@ class Comparable(ABC):
         pass
 
 
-EXPR = Union[int, float, str]
+EXPR = int | float | str
 T = TypeVar("T", int, float, str)
 
 
@@ -34,7 +33,7 @@ class Comparator:
     """A comparator will be used to evaluate expressions. Used by the branch
     processor"""
 
-    def __init__(self, accepted_locals: Dict[str, T] = None):
+    def __init__(self, accepted_locals: dict[str, T] | None = None):
         """accepted_locals are """
         if accepted_locals is None:
             self._accepted_locals = {}
@@ -76,9 +75,7 @@ class Comparator:
         if not isinstance(expr, str):
             return expr
         try:
-            if expr[-1] == 'f':
-                return float(expr[0:-1])
-            elif expr[-1] == 'i':
+            if expr[-1] == 'f' or expr[-1] == 'i':
                 return float(expr[0:-1])
         except ValueError:
             pass

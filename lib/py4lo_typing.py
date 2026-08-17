@@ -18,17 +18,25 @@
 """
 Basic support for uno types out of the LibreOffice engine.
 """
-import typing
 from pathlib import Path
-from typing import (Union, Tuple, List, cast, Optional, Sequence, Any)
-
+from typing import (
+    Any,
+    Generic,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+)
 
 # Misc
-T = typing.TypeVar("T")
+T = TypeVar("T")
 
 # noinspection PyTypeHints
-def lazy(typ: typing.Type[T]) -> Optional[T]:
-    return cast(Optional[typ], None)
+def lazy(typ: Type[T]) -> Optional[T]:
+    return None
 
 
 #####
@@ -49,7 +57,7 @@ class UnoStruct(UnoObject): ...
 
 class UnoService(UnoObject): ...
 
-class UnoEnum(UnoObject, typing.Generic[T]):
+class UnoEnum(UnoObject, Generic[T]):
     value: T
 
 ######
@@ -81,26 +89,26 @@ class UnoSizeStruct(UnoStruct):
     Height: int
 
 # Collections
-S = typing.TypeVar("S", bound=UnoObject)
+S = TypeVar("S", bound=UnoObject)
 
-class UnoNameAccess(UnoService, typing.Generic[S]):
+class UnoNameAccess(UnoService, Generic[S]):
     ElementNames: Sequence[str]
     def getByName(self, name: str) -> S: ...
     def hasByName(self, name: str) -> bool: ...
     def removeByName(self, name: str) -> None: ...
     def insertNewByName(self, name: str, pos: int, v: Optional[S] = None) -> S: ...
 
-class UnoIndexAccess(UnoService, typing.Generic[S]):
+class UnoIndexAccess(UnoService, Generic[S]):
     Count: int
     def getByIndex(self, i: int) -> S: ...
     def removeByIndex(self, i: int, count: int) -> None: ...
 
 
-class UnoEnumeration(UnoService, typing.Generic[S]):
+class UnoEnumeration(UnoService, Generic[S]):
     def hasMoreElements(self) -> bool: ...
     def nextElement(self) -> S: ...
 
-class UnoEnumerable(UnoService, typing.Generic[S]):
+class UnoEnumerable(UnoService, Generic[S]):
     def createEnumeration(self) -> UnoEnumeration[S]: ...
 
 
@@ -291,16 +299,12 @@ class UnoControlModel(UnoService):
     Name: str
 
 
-class UnoMainControlModel(UnoControlModel):
-    def createInstance(self, name: str) -> UnoControlModel: ...
-    def insertByName(self, name: str, model: UnoControlModel) -> None: ...
-    def getByName(self, name: str) -> UnoControlModel: ...
+M = TypeVar("M", bound=UnoControlModel)
 
-
-class UnoControl(UnoService):
+class UnoControl(UnoService, Generic[M]):
     MinimumSize: "UnoSizeStruct"
-    Model: UnoControlModel
-    def setModel(self, model: UnoControlModel) -> None: ...
+    Model: M
+    def setModel(self, model: M) -> None: ...
     def setFocus(self) -> None: ...
     def setVisible(self, b: bool) -> None: ...
     def addActionListener(self, listener: Any) -> None: ...
@@ -309,28 +313,39 @@ class UnoControl(UnoService):
     def addTextListener(self, listener: Any) -> None: ...
 
 
-class UnoListControl(UnoControl):
+class UnoMainControlModel(UnoControlModel):
+    def createInstance(self, name: str) -> UnoControlModel: ...
+    def insertByName(self, name: str, model: UnoControlModel) -> None: ...
+    def getByName(self, name: str) -> UnoControlModel: ...
+
+
+class UnoMainControl(UnoControl[UnoMainControlModel]):
+    Controls: Sequence[UnoControl]
+    def createPeer(self, oToolkit: "UnoToolkit", parent_win: Optional["UnoMainControl"]): ...
+    def getControl(self, name: str) -> UnoControl: ...
+    def execute(self) -> int: ...
+    def endExecute(self) -> None: ...
+    def dispose(self) -> None: ...
+
+
+class UnoToolkit(UnoService):
+    def createMessageBox(
+        self, parent_win: UnoControl, msg_type: int, msg_buttons: int, msg_title: str, msg_text: str) -> UnoMainControl: ...
+
+
+class UnoListControlModel(UnoControlModel):
+    SelectedItems: List[int]
+    StringItemList: List[str]
+    TypedItemList: List[Any]
+
+
+class UnoListControl(UnoControl[UnoListControlModel]):
     ItemCount: int
     SelectedItemsPos: List[int]
 
     def removeItems(self, i: int, c: int) -> None: ...
     def addItems(self, items: List[str], pos: int) -> None: ...
     def selectItemsPos(self, positions: List[int], sel: bool) -> None: ...
-
-
-class UnoToolkit(UnoService):
-    def createMessageBox(
-        self, parent_win: UnoControl, msg_type: int, msg_buttons: int, msg_title: str, msg_text: str) -> "UnoMainControl": ...
-
-
-class UnoMainControl(UnoControl):
-    Controls: Sequence[UnoControl]
-    def setModel(self, model: UnoMainControlModel) -> None: ...
-    def createPeer(self, oToolkit: UnoToolkit, parent_win: Optional["UnoMainControl"]): ...
-    def getControl(self, name: str) -> UnoControl: ...
-    def execute(self) -> int: ...
-    def endExecute(self) -> None: ...
-    def dispose(self) -> None: ...
 
 
 class UnoFilePicker(UnoMainControl):
@@ -362,7 +377,7 @@ class UnoDBStatement(UnoService):
     def executeBatch(self) -> None: ...
 
 
-class UnoDBDrop(UnoNameAccess[T], UnoIndexAccess[T], typing.Generic[T]):
+class UnoDBDrop(UnoNameAccess[T], UnoIndexAccess[T], Generic[T]):
     def dropByName(self, name: str) -> None: ...
     def dropByIndex(self, i: int) -> None: ...
 
@@ -407,5 +422,5 @@ class UnoTransferable(UnoService):
 
 
 class UnoClipboard(UnoService):
-    def setContents(self, param, param1): ...
+    def setContents(self, trans: UnoTransferable, owner: Any): ...
     def getContents(self) -> UnoTransferable: ...

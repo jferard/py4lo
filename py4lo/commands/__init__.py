@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #  Py4LO - Python Toolkit For LibreOffice Calc
 #     Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 #
@@ -16,21 +15,22 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from typing import Dict, List, cast
+from typing import cast
+
+from core.properties import PropertiesProvider
 
 from commands.command import Command
 from commands.command_executor import CommandExecutor
-from core.properties import PropertiesProvider
-from commands.real_command_factory_by_name import real_command_factory_by_name
 from commands.help_command import HelpCommand
+from commands.real_command_factory_by_name import real_command_factory_by_name
 
 
 class Commands:
-    def __init__(self, command_factory_by_name: Dict[str, Command]):
+    def __init__(self, command_factory_by_name: dict[str, Command]):
         # assert "help" in command_factory_by_name
         self._command_factory_by_name = command_factory_by_name
 
-    def get(self, command_name: str, args: List[str],
+    def get(self, command_name: str, args: list[str],
             provider: PropertiesProvider) -> CommandExecutor:
         try:
             command = self._command_factory_by_name[command_name]
@@ -47,7 +47,7 @@ class Commands:
         lines = [
             "a command = {}".format(" | ".join(self._command_factory_by_name))]
         for name, cf in self._command_factory_by_name.items():
-            lines.append("{}: {}".format(name, cf.get_help(None)))
+            lines.append(f"{name}: {cf.get_help(None)}")
         return "\n".join(lines)
 
 

@@ -16,18 +16,19 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from logging import Logger
-from typing import List, Dict, Union, TypeVar, cast, Tuple
+from typing import TypeVar, Union, cast
 
 from core.source_dest import Sources
+
 from directives.directive import Directive
-from directives.embed_script import EmbedScript
 from directives.embed_lib import EmbedLib
-from directives.include import Include
+from directives.embed_script import EmbedScript
 from directives.entry import Entry
+from directives.include import Include
 
 GET_DIRECTIVE = "@"
 U = TypeVar('U', bound=Directive)
-DirectiveTree = Dict[str, Union["DirectiveTree", Directive]]
+DirectiveTree = dict[str, Union["DirectiveTree", Directive]]
 
 class _DirectiveProviderFactory:
     def __init__(self, logger: Logger,
@@ -51,7 +52,7 @@ class _DirectiveProviderFactory:
         self._logger.debug("Directives tree: %s", self._directives_tree)
         return DirectiveProvider(self._logger, self._directives_tree)
 
-    def _insert_directive_class(self, sig_elements: List[str],
+    def _insert_directive_class(self, sig_elements: list[str],
                                 directive: Directive):
         cur_directives_tree = self._directives_tree
         for fst in sig_elements:
@@ -82,7 +83,7 @@ class DirectiveProvider:
         self._logger = logger
         self._directives_tree = directives_tree
 
-    def get(self, args: List[str]) -> Tuple[Directive, List[str]]:
+    def get(self, args: list[str]) -> tuple[Directive, list[str]]:
         """
         args are the shlex result
         @return the directive + the list of args.
@@ -104,7 +105,7 @@ class DirectiveProvider:
         if GET_DIRECTIVE in cur_directives_tree:
             return (
                 cast(Directive, cur_directives_tree[GET_DIRECTIVE]),
-                list(),
+                [],
             )
 
         raise AssertionError("no args")

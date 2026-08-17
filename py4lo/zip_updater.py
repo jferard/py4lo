@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #  Py4LO - Python Toolkit For LibreOffice Calc
 #     Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 #
@@ -19,8 +18,8 @@
 import logging
 from logging import Logger
 from pathlib import Path
-from typing import List, cast
-from zipfile import ZipFile, ZipInfo, ZIP_DEFLATED
+from typing import cast
+from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 from callbacks.callback import AfterCallback, BeforeCallback, ItemCallback
 
@@ -32,9 +31,9 @@ class ZipUpdaterBuilder:
 
     def __init__(self, logger: Logger):
         self._logger = logger
-        self._before_callbacks = cast(List[BeforeCallback], [])
-        self._item_callbacks = cast(List[ItemCallback], [])
-        self._after_callbacks = cast(List[AfterCallback], [])
+        self._before_callbacks = cast(list[BeforeCallback], [])
+        self._item_callbacks = cast(list[ItemCallback], [])
+        self._after_callbacks = cast(list[AfterCallback], [])
 
     def before(self, callback: BeforeCallback):
         self._before_callbacks.append(callback)
@@ -60,8 +59,8 @@ class ZipUpdater:
     A zip file updater. Applies callbacks before, after and to each item.
     """
 
-    def __init__(self, logger: Logger, before_callbacks: List[BeforeCallback],
-                 item_callbacks: List[ItemCallback], after_callbacks: List[
+    def __init__(self, logger: Logger, before_callbacks: list[BeforeCallback],
+                 item_callbacks: list[ItemCallback], after_callbacks: list[
                 AfterCallback]):
         self._logger = logger
         self._before_callbacks = before_callbacks

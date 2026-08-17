@@ -23,34 +23,72 @@ A set of command to pilot a LibreOffice Base document.
 import logging
 import time
 from pathlib import Path
-from typing import Iterable, Union, Dict, Mapping, cast
+from typing import Iterable, Mapping, Union, cast
 
 from py4lo_helper import (
-    uno_path_to_url, create_uno_service, to_items, remove_all)
+    create_uno_service,
+    remove_all,
+    to_items,
+    uno_path_to_url,
+)
 from py4lo_typing import (
-    lazy, UnoDBAccess, UnoDBConnection, UnoDBStatement, UnoDBTable, UnoDBDrop, UnoDBContext)
+    UnoDBAccess,
+    UnoDBConnection,
+    UnoDBContext,
+    UnoDBDrop,
+    UnoDBStatement,
+    UnoDBTable,
+    lazy,
+)
 
 try:
     class DataType:
         # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.sdbc.DataType import (
-            BIT, TINYINT, SMALLINT, INTEGER, BIGINT, FLOAT, REAL, DOUBLE,
-            NUMERIC, DECIMAL, CHAR, VARCHAR, LONGVARCHAR, DATE, TIME,
-            TIMESTAMP, BINARY, VARBINARY, LONGVARBINARY, SQLNULL, OTHER,
-            OBJECT, DISTINCT, STRUCT, ARRAY, BLOB, CLOB, REF, BOOLEAN
+            ARRAY,
+            BIGINT,
+            BINARY,
+            BIT,
+            BLOB,
+            BOOLEAN,
+            CHAR,
+            CLOB,
+            DATE,
+            DECIMAL,
+            DISTINCT,
+            DOUBLE,
+            FLOAT,
+            INTEGER,
+            LONGVARBINARY,
+            LONGVARCHAR,
+            NUMERIC,
+            OBJECT,
+            OTHER,
+            REAL,
+            REF,
+            SMALLINT,
+            SQLNULL,
+            STRUCT,
+            TIME,
+            TIMESTAMP,
+            TINYINT,
+            VARBINARY,
+            VARCHAR,
         )
 
     class ColumnValue:
         # noinspection PyUnresolvedReferences,PyPackageRequirements
         from com.sun.star.sdbc.ColumnValue import (
-            NO_NULLS, NULLABLE, NULLABLE_UNKNOWN
+            NO_NULLS,
+            NULLABLE,
+            NULLABLE_UNKNOWN,
         )
 
 except ImportError:
-    logging.exception("Import err")
-    from _mock_constants import ( # type:ignore[assignment]
+    logging.getLogger(__name__).exception("Import err")
+    from _mock_constants import (  # type:ignore[assignment]
+        ColumnValue,  # noqa: F401
         DataType,
-        ColumnValue  # noqa: F401
     )
 
 
@@ -132,7 +170,7 @@ class BaseDB:
         self._oDB = oDB
         self._oConnection = lazy(UnoDBConnection)
         self._oStatement = lazy(UnoDBStatement)
-        self._sql_by_name: Dict[str, str] = {}
+        self._sql_by_name: dict[str, str] = {}
 
     @property
     def connection(self) -> UnoDBConnection:
@@ -253,8 +291,8 @@ class BaseDB:
             fields = [field_s]
         else:
             fields = list(field_s)
-        sql_lines = ["ALTER TABLE {}".format(table)] + [
-            "    ALTER {} SET NOT NULL,".format(field) for field in fields
+        sql_lines = [f"ALTER TABLE {table}"] + [
+            f"    ALTER {field} SET NOT NULL," for field in fields
         ] + ["    ADD CONSTRAINT PK_{} PRIMARY KEY ({})".format(
             table, ", ".join(fields))]
 
@@ -332,7 +370,7 @@ class BaseDB:
         else:
             return True
 
-    def get_queries(self) -> Dict[str, str]:
+    def get_queries(self) -> Mapping[str, str]:
         """
         Returns all the queries from a data source.
 
@@ -393,6 +431,6 @@ def open_or_create_db(path: Path) -> "BaseDB":
         oDB = oDBContext.createInstance()
         oDB.URL = "sdbc:embedded:firebird"
         oDocument = oDB.DatabaseDocument
-        oDocument.storeAsURL(url, tuple())
+        oDocument.storeAsURL(url, ())
 
     return BaseDB(oDB)

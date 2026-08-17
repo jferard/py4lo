@@ -1,22 +1,42 @@
 import ctypes
+import datetime as dt
 import random
 import string
 import threading
 import unittest
-from time import sleep
 from pathlib import Path
+from time import sleep
 from unittest import mock
-import datetime as dt
 
 from py4lo_sqlite3 import (
-    sqlite_open, SQLiteError, TransactionMode, SQLITE_BUSY, SQLITE_ERROR,
-    SQLITE_CONSTRAINT, Sqlite3Database, SQLITE_OK, SQLITE_TEXT, SQLITE_BLOB,
-    SQLITE_INTEGER, SQLITE_FLOAT, decode_text_utf8_to_str, decode_blob_to_bytes,
-    sqlite3_column_int, sqlite3_column_double, create_decode_text_to_str,
-    datetime_to_julian, PY4LO_UNIX_TS, decode_unix_ts_to_datetime_utc,
-    create_decode_unix_ts_to_datetime, PY4LO_JULIAN,
-    decode_julian_to_datetime_utc, create_decode_julian_to_datetime,
-    PY4LO_ISO8601, decode_iso8601_to_datetime, PY4LO_JSON, decode_text_to_json
+    PY4LO_ISO8601,
+    PY4LO_JSON,
+    PY4LO_JULIAN,
+    PY4LO_UNIX_TS,
+    SQLITE_BLOB,
+    SQLITE_BUSY,
+    SQLITE_CONSTRAINT,
+    SQLITE_ERROR,
+    SQLITE_FLOAT,
+    SQLITE_INTEGER,
+    SQLITE_OK,
+    SQLITE_TEXT,
+    Sqlite3Database,
+    SQLiteError,
+    TransactionMode,
+    create_decode_julian_to_datetime,
+    create_decode_text_to_str,
+    create_decode_unix_ts_to_datetime,
+    datetime_to_julian,
+    decode_blob_to_bytes,
+    decode_iso8601_to_datetime,
+    decode_julian_to_datetime_utc,
+    decode_text_to_json,
+    decode_text_utf8_to_str,
+    decode_unix_ts_to_datetime_utc,
+    sqlite3_column_double,
+    sqlite3_column_int,
+    sqlite_open,
 )
 
 
@@ -24,7 +44,7 @@ def randbytes(n):
     try:  # >= 3.9
         return random.randbytes(random.randrange(0, n))
     except AttributeError:  # <= 3.8
-        return bytes([random.randrange(0, 256) for _ in range(0, n)])
+        return bytes([random.randrange(0, 256) for _ in range(n)])
 
 
 class Sqlite3TestCase(unittest.TestCase):
@@ -38,7 +58,7 @@ class Sqlite3TestCase(unittest.TestCase):
 
     def test_sqlite3(self):
         with sqlite_open(self._path, "crw") as db:
-            t1 = dt.datetime.now()
+            t1 = self._get_now()
             print("-> generate data")
             n = 1000
             data = [
@@ -51,7 +71,7 @@ class Sqlite3TestCase(unittest.TestCase):
                 ) for _ in range(10000)
             ]
 
-            t2 = dt.datetime.now()
+            t2 = self._get_now()
             print(t2 - t1)
             t1 = t2
 
@@ -59,7 +79,7 @@ class Sqlite3TestCase(unittest.TestCase):
             self.assertEqual(0, db.execute_update(
                 "CREATE TABLE t(a INTEGER, b TEXT, c REAL, d BLOB)"))
 
-            t2 = dt.datetime.now()
+            t2 = self._get_now()
             print(t2 - t1)
             t1 = t2
 
@@ -78,7 +98,7 @@ class Sqlite3TestCase(unittest.TestCase):
                         except Exception as e:
                             print(e)
 
-            t2 = dt.datetime.now()
+            t2 = self._get_now()
             print(t2 - t1)
             t1 = t2
 
@@ -87,12 +107,15 @@ class Sqlite3TestCase(unittest.TestCase):
                 for db_row, data_row in zip(stmt.execute_query(), data):
                     self.assertEqual(list(data_row), db_row)
 
-            t2 = dt.datetime.now()
+            t2 = self._get_now()
             print(t2 - t1)
+
+    def _get_now(self) -> dt.datetime:
+        return dt.datetime.now(tz=dt.timezone.utc)
 
     def test_sqlite_with_names(self):
         with sqlite_open(self._path, "crw") as db:
-            t1 = dt.datetime.now()
+            t1 = self._get_now()
             print("-> generate data")
             n = 1000
             data = [
@@ -105,7 +128,7 @@ class Sqlite3TestCase(unittest.TestCase):
                 ) for _ in range(10000)
             ]
 
-            t2 = dt.datetime.now()
+            t2 = self._get_now()
             print(t2 - t1)
             t1 = t2
 
@@ -113,7 +136,7 @@ class Sqlite3TestCase(unittest.TestCase):
             self.assertEqual(0, db.execute_update(
                 "CREATE TABLE t(a INTEGER, b TEXT, c REAL, d BLOB)"))
 
-            t2 = dt.datetime.now()
+            t2 = self._get_now()
             print(t2 - t1)
             t1 = t2
 
@@ -132,7 +155,7 @@ class Sqlite3TestCase(unittest.TestCase):
                         except Exception as e:
                             print(e)
 
-            t2 = dt.datetime.now()
+            t2 = self._get_now()
             print(t2 - t1)
             t1 = t2
 
@@ -142,7 +165,7 @@ class Sqlite3TestCase(unittest.TestCase):
                                             data):
                     self.assertEqual(dict(zip('abcd', data_row)), db_row)
 
-            t2 = dt.datetime.now()
+            t2 = self._get_now()
             print(t2 - t1)
 
     def test_text(self):
@@ -571,15 +594,14 @@ class Sqlite3TestCase(unittest.TestCase):
             db.execute_update("CREATE TABLE t(x INTEGER)")
 
         with self.assertRaises(SQLiteError) as cm:
-            with sqlite_open(self._path, "rw") as db, sqlite_open(self._path,
-                                                                  "rw",
-                                                                  100) as db2:
+            with sqlite_open(self._path, "rw") as db, sqlite_open(
+                    self._path, "rw", 100) as db2:
                 def func():
                     try:
                         with db.transaction(TransactionMode.IMMEDIATE):
                             db.execute_update("INSERT INTO t VALUES (1)")
                             sleep(1)
-                    except Exception:
+                    except Exception: # noqa: S110
                         pass
 
                 t = threading.Thread(target=func)
@@ -671,19 +693,18 @@ class Sqlite3TestCase(unittest.TestCase):
             db.execute_update(
                 "CREATE TABLE identifiers(identifier INTEGER, name TEXT, date DOUBLE)")
 
-            with db.transaction():
-                with db.prepare(
-                        "INSERT INTO identifiers VALUES(?, ?, ?)") as stmt:
-                    stmt.reset()
-                    stmt.clear_bindings()
-                    stmt.bind_int(1, 1)
-                    stmt.bind_text(2, "foo")
-                    stmt.bind_unix_ts(3, dt.datetime(
-                        2024, 12, 14, 13, 20, 59, tzinfo=dt.timezone.utc))
-                    try:
-                        stmt.execute_update()  # returns 1
-                    except Exception as e:
-                        print(e)
+            with db.transaction(), db.prepare(
+                    "INSERT INTO identifiers VALUES(?, ?, ?)") as stmt:
+                stmt.reset()
+                stmt.clear_bindings()
+                stmt.bind_int(1, 1)
+                stmt.bind_text(2, "foo")
+                stmt.bind_unix_ts(3, dt.datetime(
+                    2024, 12, 14, 13, 20, 59, tzinfo=dt.timezone.utc))
+                try:
+                    stmt.execute_update()  # returns 1
+                except Exception as e:
+                    print(e)
 
             decodes = [
                 SQLITE_INTEGER,

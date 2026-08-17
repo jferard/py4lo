@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #  Py4LO - Python Toolkit For LibreOffice Calc
 #     Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 #
@@ -20,12 +19,11 @@ import io
 import unittest
 from logging import Logger
 from pathlib import Path
+from unittest import mock
 
+import script_set_processor
 from core.script import SourceScript
 from directives import DirectiveProvider
-
-from unittest import mock
-import script_set_processor
 
 from test.test_helper import file_path_mock, verify_open_path
 
@@ -49,12 +47,9 @@ class TestScriptSetProcessor(unittest.TestCase):
         dp: DirectiveProvider = mock.Mock()
         target_path.relative_to.side_effect = [Path("rel target")]
 
-        try:
-            sp = script_set_processor.ScriptSetProcessor(logger, target_dir,
-                                                         "3.7", dp, [script])
-            sp.process()
-        except Exception:
-            raise
+        sp = script_set_processor.ScriptSetProcessor(
+            logger, target_dir, "3.7", dp, [script])
+        sp.process()
 
         self.assertEqual([
             mock.call.debug('Scripts to process: %s', [script]),

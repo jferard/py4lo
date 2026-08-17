@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #  Py4LO - Python Toolkit For LibreOffice Calc
 #     Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 #
@@ -18,12 +17,13 @@
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import xml.dom.minidom
 from pathlib import Path
-from typing import List, cast
+from typing import cast
 from zipfile import ZipFile, ZipInfo
 
-from callbacks.callback import ItemCallback
 from core.asset import DestinationAsset
 from core.script import DestinationScript
+
+from callbacks.callback import ItemCallback
 
 BASIC_ENTRIES = [
     ('<manifest:file-entry manifest:full-path="Basic/" '
@@ -49,8 +49,8 @@ MANIFEST_CLOSE_TAG = '</manifest:manifest>'
 
 
 class RewriteManifest(ItemCallback):
-    def __init__(self, scripts: List[DestinationScript],
-                 assets: List[DestinationAsset]):
+    def __init__(self, scripts: list[DestinationScript],
+                 assets: list[DestinationAsset]):
         self._scripts = scripts
         self._assets = assets
 
@@ -77,13 +77,13 @@ class RewriteManifest(ItemCallback):
 
     @staticmethod
     def _strip_close(pretty_manifest: str):
-        lines = cast(List[str], [])
+        lines = cast(list[str], [])
         for line in pretty_manifest.splitlines():
             if line.strip() == MANIFEST_CLOSE_TAG:  # end of manifest
                 return lines
             lines.append(line)
 
-        raise Exception("no manifest closing tag in " + pretty_manifest)
+        raise RuntimeError(f"no manifest closing tag in {pretty_manifest}")
 
     def _script_lines(self):
         lines = ["    " + be for be in BASIC_ENTRIES]
@@ -104,7 +104,7 @@ class RewriteManifest(ItemCallback):
         lines.append(MANIFEST_CLOSE_TAG)
         return lines
 
-    def _get_dirs(self) -> List[Path]:
+    def _get_dirs(self) -> list[Path]:
         """
         @return: the destination directories for scripts and assets
         """

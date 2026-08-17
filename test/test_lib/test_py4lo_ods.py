@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Py4LO - Python Toolkit For LibreOffice Calc
       Copyright (C) 2016 J. Férard <https://github.com/jferard>
 
@@ -17,11 +16,13 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 import unittest
+import xml.etree.ElementTree as ET
 
 from py4lo_ods import (
-    OFFICE_NS_DICT, OdsRows, _find_active_table_name,
+    OFFICE_NS_DICT,
+    OdsRows,
+    _find_active_table_name,
 )
-import xml.etree.ElementTree as ET
 
 SETTINGS_XML = """<?xml version="1.0" encoding="UTF-8"?>
 <office:document-settings
@@ -53,7 +54,7 @@ SETTINGS_XML = """<?xml version="1.0" encoding="UTF-8"?>
     </office:settings>
 </office:document-settings>
 
-"""  # noqa: E501
+"""
 
 CONTENT_XML = """<?xml version="1.0" encoding="UTF-8"?>
 <office:document-content
@@ -133,7 +134,7 @@ CONTENT_XML = """<?xml version="1.0" encoding="UTF-8"?>
                 </table:table-row>
             </table:table><table:named-expressions/></office:spreadsheet>
     </office:body>
-</office:document-content>"""  # noqa: E501
+</office:document-content>"""
 
 CONTENT_XML2 = """<?xml version="1.0" encoding="UTF-8"?>
 <office:document-content
@@ -189,7 +190,7 @@ CONTENT_XML2 = """<?xml version="1.0" encoding="UTF-8"?>
                 </table:table-row>
             </table:table><table:named-expressions/></office:spreadsheet>
     </office:body>
-</office:document-content>"""  # noqa: E501
+</office:document-content>"""
 
 CONTENT_XML3 = """<?xml version="1.0" encoding="UTF-8"?>
 <office:document-content
@@ -248,7 +249,7 @@ CONTENT_XML3 = """<?xml version="1.0" encoding="UTF-8"?>
                 </table:table-row>
             </table:table><table:named-expressions/></office:spreadsheet>
     </office:body>
-</office:document-content>"""  # noqa: E501
+</office:document-content>"""
 
 
 class TestOds1(unittest.TestCase):

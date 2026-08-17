@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #  Py4LO - Python Toolkit For LibreOffice Calc
 #     Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 #
@@ -18,19 +17,22 @@
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 from pathlib import Path
-from typing import cast, Tuple, Any, List
+from typing import Any, cast
+
+from core.properties import PropertiesProvider
+from tools import open_with_libreoffice, secure_exe
 
 from commands.command import Command
-from commands.null_command import NullCommand
-from core.properties import PropertiesProvider
 from commands.command_executor import CommandExecutor
+from commands.null_command import NullCommand
 from commands.update_command import UpdateCommand
-from tools import open_with_libreoffice, secure_exe
 
 
 class RunCommand(Command):
+    _logger = logging.getLogger(__name__)
+
     @staticmethod
-    def create_executor(args: List[str], provider: PropertiesProvider) -> CommandExecutor:
+    def create_executor(args: list[str], provider: PropertiesProvider) -> CommandExecutor:
         sec_lo_exe = secure_exe(provider.get("lo_exe"), "soffice")
         if sec_lo_exe is None:
             update_executor = None
@@ -44,14 +46,14 @@ class RunCommand(Command):
     def __init__(self, lo_exe: str):
         self._lo_exe = lo_exe
 
-    def execute(self, status: int, dest_name: Path) -> Tuple[Any, ...]:
+    def execute(self, status: int, dest_name: Path) -> tuple[Any, ...]:
         if status == 0:
             print("All tests ok")
-            logging.warning("%s %s", self._lo_exe, dest_name)
+            self._logger.warning("%s %s", self._lo_exe, dest_name)
             open_with_libreoffice(dest_name, self._lo_exe)
         else:
             print("Error: some tests failed")
-        return tuple()
+        return ()
 
     def get_help(self) -> str:
         return "Update + open the created file"

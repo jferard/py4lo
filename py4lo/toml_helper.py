@@ -1,12 +1,13 @@
 import logging
 import re
-import subprocess   # nosec: B404
+import subprocess  # nosec: B404
 import sys
 import traceback
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Dict, Any, Mapping, cast
-import toml
+from typing import Any, cast
 
+import toml
 from tools import nested_merge, secure_exe
 
 
@@ -25,9 +26,9 @@ class TomlLoader:
         self._kwargs = kwargs
         self._default_py4lo_toml = default_py4lo_toml
         self._project_py4lo_toml = project_py4lo_toml
-        self._data = cast(Dict[str, Any], {})
+        self._data = cast(dict[str, Any], {})
 
-    def load(self) -> Dict[str, Any]:
+    def load(self) -> dict[str, Any]:
         TomlLoader._logger.debug(
             "Load TOML : %s (default=%s)", self._project_py4lo_toml,
             self._default_py4lo_toml)
@@ -46,7 +47,7 @@ class TomlLoader:
                 data = toml.loads(content)
         except Exception as e:
             if not skip_on_error:
-                print("Error when loading toml file {}: {}".format(path, e),
+                print(f"Error when loading toml file {path}: {e}",
                       file=sys.stderr)
                 traceback.print_exc(file=sys.stdout)
         else:
@@ -65,7 +66,7 @@ class TomlLoader:
             if python_exe is None:
                 return
             status, out = subprocess.getstatusoutput(
-                '"{}" -V'.format(python_exe)
+                f'"{python_exe}" -V'
             )
             if status == 0:
                 m = re.match(r"^.* (3\.\d+)(\.\d+)?$", out)
@@ -77,8 +78,7 @@ class TomlLoader:
         # get from sys. It's the local python.
         if "python_version" not in self._data:
             self._data["python_exe"] = sys.executable
-            self._data["python_version"] = "{}.{}".format(
-                sys.version_info.major, sys.version_info.minor)
+            self._data["python_version"] = f"{sys.version_info.major}.{sys.version_info.minor}"
 
     def _check_level(self):
         if "log_level" not in self._data or self._data["log_level"] not in [

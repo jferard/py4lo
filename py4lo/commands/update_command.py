@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #  Py4LO - Python Toolkit For LibreOffice Calc
 #     Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 #
@@ -18,23 +17,30 @@
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from logging import Logger
 from pathlib import Path
-from typing import Optional, List, Tuple, Any
+from typing import Any
 
-from callbacks import (AddReadmeWith, IgnoreItem, ARC_SCRIPTS_PATH,
-                       RewriteManifest, AddScripts, AddAssets)
-from commands.command import Command
-from commands.command_executor import CommandExecutor
-from commands.ods_updater import OdsUpdaterHelper
-from commands.test_command import TestCommand
+from callbacks import (
+    ARC_SCRIPTS_PATH,
+    AddAssets,
+    AddReadmeWith,
+    AddScripts,
+    IgnoreItem,
+    RewriteManifest,
+)
 from core.asset import DestinationAsset
 from core.properties import PropertiesProvider
 from core.script import DestinationScript
 from zip_updater import ZipUpdater, ZipUpdaterBuilder
 
+from commands.command import Command
+from commands.command_executor import CommandExecutor
+from commands.ods_updater import OdsUpdaterHelper
+from commands.test_command import TestCommand
+
 
 class UpdateCommand(Command):
     @staticmethod
-    def create_executor(args: List[str], provider: PropertiesProvider) -> CommandExecutor:
+    def create_executor(args: list[str], provider: PropertiesProvider) -> CommandExecutor:
         if "notest" in args:
             test_executor = None
         else:
@@ -60,7 +66,7 @@ class UpdateCommand(Command):
     def __init__(self, logger: Logger, helper: OdsUpdaterHelper,
                  source_ods_file: Path,
                  dest_ods_file: Path, python_version: str,
-                 add_readme_callback: Optional[AddReadmeWith]):
+                 add_readme_callback: AddReadmeWith | None):
         self._logger = logger
         self._helper = helper
         self._source_ods_file = source_ods_file
@@ -68,7 +74,7 @@ class UpdateCommand(Command):
         self._python_version = python_version
         self._add_readme_callback = add_readme_callback
 
-    def execute(self, status: int = 0) -> Tuple[Any, ...]:
+    def execute(self, status: int = 0) -> tuple[Any, ...]:
         self._logger.info(
             "Update. Generating '%s' (source: %s) for Python '%s'",
             self._dest_ods_file,
@@ -81,8 +87,8 @@ class UpdateCommand(Command):
                            self._dest_ods_file)
         return status, self._dest_ods_file
 
-    def _create_updater(self, scripts: List[DestinationScript],
-                        assets: List[DestinationAsset]) -> ZipUpdater:
+    def _create_updater(self, scripts: list[DestinationScript],
+                        assets: list[DestinationAsset]) -> ZipUpdater:
         zip_updater_builder = ZipUpdaterBuilder(self._logger)
         (
             zip_updater_builder.item(IgnoreItem(ARC_SCRIPTS_PATH))

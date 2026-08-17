@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #  Py4LO - Python Toolkit For LibreOffice Calc
 #     Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 #
@@ -25,6 +24,7 @@ from unittest import mock
 from core.script import SourceScript
 from directive_processor import DirectiveProcessor
 from script_set_processor import ScriptProcessor
+
 from test.test_helper import file_path_mock, verify_open_path
 
 

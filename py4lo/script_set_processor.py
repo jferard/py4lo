@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #  Py4LO - Python Toolkit For LibreOffice Calc
 #     Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 #
@@ -19,10 +18,11 @@
 import logging
 import py_compile
 import re
+from collections.abc import Sequence
 from pathlib import Path
-from typing import List, Optional, Sequence, cast, Set
+from typing import cast
 
-from core.script import TempScript, ParsedScriptContent, SourceScript
+from core.script import ParsedScriptContent, SourceScript, TempScript
 from directive_processor import DirectiveProcessor
 from directives import DirectiveProvider
 
@@ -42,11 +42,11 @@ class ScriptSetProcessor:
         self._directive_provider = directive_provider
         self._source_scripts = source_scripts
         self._logger.debug("Scripts to process: %s", source_scripts)
-        self._scripts = cast(List[TempScript], [])
+        self._scripts = cast(list[TempScript], [])
         self._cur_source_scripts = list(source_scripts)  # our stack.
-        self._visited = cast(Set[SourceScript], set())  # avoid cycles
+        self._visited = cast(set[SourceScript], set())  # avoid cycles
 
-    def process(self) -> List[TempScript]:
+    def process(self) -> list[TempScript]:
         """Explore the scripts. Since a script may import another script, we
         have a tree structure. We traverse the tree with classical DFS"""
         while self._has_more_scripts():
@@ -84,7 +84,7 @@ class ScriptSetProcessor:
 
         for e in es:
             self._logger.error(str(e))
-        raise Exception("Compilation errors: see above")
+        raise RuntimeError("Compilation errors: see above")
 
     def append_script(self, source_script: SourceScript):
         """Append a new script. The directive UseLib will call this method"""
@@ -137,7 +137,7 @@ class ScriptProcessor:
                            script.script_path, script.exported_func_names)
         return script
 
-    def _get_exception(self) -> Optional[Exception]:
+    def _get_exception(self) -> Exception | None:
         try:
             py_compile.compile(str(self._source_script.script_path),
                                doraise=True)
@@ -159,7 +159,7 @@ class _ContentParser:
         self._directive_processor = directive_processor
         self._script_path = script_path
         self._script = None
-        self._exported_func_names = cast(List[str], [])
+        self._exported_func_names = cast(list[str], [])
         self._lines = ["# parsed by py4lo (https://github.com/jferard/py4lo)"]
 
     def parse(self, export_funcs: bool) -> ParsedScriptContent:
@@ -182,9 +182,9 @@ class _ContentParser:
         try:
             for line in f:
                 self._process_line(line.rstrip())
-        except Exception as e:
+        except Exception:
             self._logger.critical("%s, line=%s", self._script_path, line)
-            raise e
+            raise
 
     def _process_line(self, line: str):
         if line and line[0] == '#':

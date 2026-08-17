@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #  Py4LO - Python Toolkit For LibreOffice Calc
 #     Copyright (C) 2016-2026 J. Férard <https://github.com/jferard>
 #
@@ -24,6 +23,7 @@ from pathlib import Path
 from callbacks import RewriteManifest
 from core.asset import DestinationAsset
 from core.script import DestinationScript
+
 from test.test_helper import compare_xml_strings
 
 
@@ -35,7 +35,7 @@ class TestRewriteManifest(unittest.TestCase):
         ztemp.writestr("x", "y")
         data = """<?xml version="1.0" encoding="UTF-8"?>
         <manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.2">
-        </manifest:manifest>"""  # noqa: E501
+        </manifest:manifest>"""
         ztemp.writestr("META-INF/manifest.xml", data)
         ztemp.close()
 
@@ -57,7 +57,7 @@ class TestRewriteManifest(unittest.TestCase):
     <manifest:file-entry manifest:full-path="Basic/Standard/py4lo.xml" manifest:media-type="text/xml"/>
     <manifest:file-entry manifest:full-path="Basic/Standard/script-lb.xml" manifest:media-type="text/xml"/>
     <manifest:file-entry manifest:full-path="Basic/script-lc.xml" manifest:media-type="text/xml"/>
-</manifest:manifest>"""  # noqa: E501
+</manifest:manifest>"""
         self.assertTrue(compare_xml_strings(
             expected,
             zout.read("META-INF/manifest.xml").decode("utf-8")
@@ -70,10 +70,10 @@ class TestRewriteManifest(unittest.TestCase):
 
         RewriteManifest(
             [DestinationScript(
-                Path("s/script"), bytes(), Path("s"), [], None)
+                Path("s/script"), b'', Path("s"), [], None)
             ],
             [DestinationAsset(
-                Path("a/asset"), bytes())
+                Path("a/asset"), b'')
             ]).call(zin, zout, zin.getinfo(
             "META-INF/manifest.xml"))
         expected = """<?xml version="1.0" ?><manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.2">
@@ -86,7 +86,7 @@ class TestRewriteManifest(unittest.TestCase):
     <manifest:file-entry manifest:full-path="s/" manifest:media-type="application/binary"/>
     <manifest:file-entry manifest:full-path="s/script" manifest:media-type=""/>
     <manifest:file-entry manifest:full-path="a/asset" manifest:media-type="application/octet-stream"/>
-</manifest:manifest>"""  # noqa: E501
+</manifest:manifest>"""
         self.assertTrue(compare_xml_strings(expected, zout.read(
             "META-INF/manifest.xml").decode("utf-8")))
 

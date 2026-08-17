@@ -22,15 +22,31 @@ import unittest
 from unittest import mock
 
 import py4lo_dialogs
-from py4lo_dialogs import (MessageBoxType, ExecutableDialogResults)
 from py4lo_dialogs import (
-    get_toolkit, message_box, input_box,
-    place_widget, get_text_size, file_dialog, Size, FileFilter,
-    folder_dialog, ProgressExecutorBuilder, StandardProgressHandler,
-    ConsoleExecutorBuilder, StandardConsoleHandler, trace_event,
-    set_uno_control_date, get_uno_control_date, set_uno_control_bool,
-    get_uno_control_bool, set_uno_control_text, get_uno_control_text,
-    set_uno_control_text_from_list, get_uno_control_text_as_list
+    ConsoleExecutorBuilder,
+    ExecutableDialogResults,
+    FileFilter,
+    MessageBoxType,
+    ProgressExecutorBuilder,
+    Size,
+    StandardConsoleHandler,
+    StandardProgressHandler,
+    file_dialog,
+    folder_dialog,
+    get_text_size,
+    get_toolkit,
+    get_uno_control_bool,
+    get_uno_control_date,
+    get_uno_control_text,
+    get_uno_control_text_as_list,
+    input_box,
+    message_box,
+    place_widget,
+    set_uno_control_bool,
+    set_uno_control_date,
+    set_uno_control_text,
+    set_uno_control_text_from_list,
+    trace_event,
 )
 
 
@@ -484,7 +500,7 @@ class TraceEventTestCase(unittest.TestCase):
         self.assertEqual('DEBUG:foo:Enter TraceEventTestCase.traced_two',
                          log.output[0])
         self.assertEqual('ERROR:foo:Exception', exc_lines[0])
-        self.assertEqual('Exception: bar', exc_lines[-1])
+        self.assertEqual('ValueError: bar', exc_lines[-1])
         self.assertEqual('DEBUG:foo:Exit TraceEventTestCase.traced_two',
                          log.output[2])
 
@@ -496,7 +512,7 @@ class TraceEventTestCase(unittest.TestCase):
 
         self.assertEqual(1, len(log.output))
         self.assertEqual('ERROR:foo:Exception', exc_lines[0])
-        self.assertEqual('Exception: bar', exc_lines[-1])
+        self.assertEqual('ValueError: bar', exc_lines[-1])
 
     @trace_event("foo")
     def traced_one(self):
@@ -504,11 +520,11 @@ class TraceEventTestCase(unittest.TestCase):
 
     @trace_event("foo")
     def traced_two(self):
-        raise Exception("bar")
+        raise ValueError("bar")
 
     @trace_event("foo", enter_exit=False)
     def traced_three(self):
-        raise Exception("bar")
+        raise ValueError("bar")
 
 
 class GetSetUnoDialogTestCase(unittest.TestCase):

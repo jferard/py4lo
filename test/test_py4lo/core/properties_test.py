@@ -18,11 +18,11 @@
 import io
 import logging
 import unittest
+from pathlib import Path
 from unittest import mock
 from zipfile import ZipFile
-from pathlib import Path
 
-from core.properties import PropertiesProviderFactory, PropertiesProvider
+from core.properties import PropertiesProvider, PropertiesProviderFactory
 from core.source_dest import _get_paths
 
 
