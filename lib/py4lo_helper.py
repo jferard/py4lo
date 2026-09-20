@@ -844,7 +844,7 @@ def make_sort_field(field_position: int, asc: bool = True) -> UnoStruct:
     return sf
 
 
-def to_uno_date(date: dt.date) -> UnoStruct:
+def to_uno_date(date: dt.date) -> UnoDateStruct:
     """
     Create a com.sun.star.util.Date struct from a given date
     :param date: the Python date

@@ -21,9 +21,9 @@ Basic support for uno types out of the LibreOffice engine.
 from pathlib import Path
 from typing import (
     Any,
-    Generic,
     List,
     Optional,
+    Protocol,
     Sequence,
     Tuple,
     Type,
@@ -49,79 +49,78 @@ StrPath = Union[str, Path]
 
 
 # BASE
-class UnoObject:
+class UnoObject(Protocol):
     def supportsService(self, name: str) -> bool: ...
     def __repr__(self) -> str: ...
 
-class UnoStruct(UnoObject): ...
+class UnoStruct(UnoObject, Protocol): ...
 
-class UnoService(UnoObject): ...
+class UnoService(UnoObject, Protocol): ...
 
-class UnoEnum(UnoObject, Generic[T]):
+class UnoEnum(UnoObject, Protocol[T]):
     value: T
 
 ######
 # structs
 ######
-class UnoRangeAddress(UnoStruct):
+class UnoRangeAddress(UnoStruct, Protocol):
     StartColumn: int
     EndColumn: int
     StartRow: int
     EndRow: int
     Sheet: int
 
-class UnoCellAddress(UnoStruct):
+class UnoCellAddress(UnoStruct, Protocol):
     Column: int
     Row: int
 
-class UnoPropertyValue(UnoStruct):
+class UnoPropertyValue(UnoStruct, Protocol):
     Name: str
 
 UnoPropertyValues = Union[List[UnoPropertyValue], Tuple[UnoPropertyValue, ...]]
 
-class UnoDateStruct(UnoStruct):
+class UnoDateStruct(UnoStruct, Protocol):
     Year: int
     Month: int
     Day: int
 
-class UnoSizeStruct(UnoStruct):
+class UnoSizeStruct(UnoStruct, Protocol):
     Width: int
     Height: int
 
 # Collections
 S = TypeVar("S", bound=UnoObject)
 
-class UnoNameAccess(UnoService, Generic[S]):
+class UnoNameAccess(UnoService, Protocol[S]):
     ElementNames: Sequence[str]
     def getByName(self, name: str) -> S: ...
     def hasByName(self, name: str) -> bool: ...
     def removeByName(self, name: str) -> None: ...
     def insertNewByName(self, name: str, pos: int, v: Optional[S] = None) -> S: ...
 
-class UnoIndexAccess(UnoService, Generic[S]):
+class UnoIndexAccess(UnoService, Protocol[S]):
     Count: int
     def getByIndex(self, i: int) -> S: ...
     def removeByIndex(self, i: int, count: int) -> None: ...
 
-
-class UnoEnumeration(UnoService, Generic[S]):
+class UnoEnumeration(UnoService, Protocol[S]):
     def hasMoreElements(self) -> bool: ...
     def nextElement(self) -> S: ...
 
-class UnoEnumerable(UnoService, Generic[S]):
+class UnoEnumerable(UnoService, Protocol[S]):
     def createEnumeration(self) -> UnoEnumeration[S]: ...
 
 
 ######
 # services
 ######
-class UnoXScriptContext(UnoService):
+class UnoXScriptContext(UnoService, Protocol):
     def getDocument(self) -> "UnoOfficeDocument": ...
     def getComponentContext(self) -> "UnoContext": ...
     def getDesktop(self) -> "UnoDesktop": ...
 
 
-class UnoRange(UnoService):
+class UnoRange(UnoService, Protocol):
     Spreadsheet: "UnoSheet"
     RangeAddress: "UnoRangeAddress"
     DataArray: DATA_ARRAY
@@ -138,10 +137,10 @@ class UnoRange(UnoService):
     def merge(self, m: bool) -> None: ...
 
 
-class UnoRanges(UnoEnumerable[UnoRange]): ...
+class UnoRanges(UnoEnumerable[UnoRange], Protocol): ...
 
 
-class UnoOfficeDocument(UnoService):
+class UnoOfficeDocument(UnoService, Protocol):
     CurrentController: "UnoController"
     StyleFamilies: UnoNameAccess
     URL: str
@@ -159,14 +158,14 @@ class UnoOfficeDocument(UnoService):
 
 
 # Calc
-class UnoNumberFormats:
+class UnoNumberFormats(UnoService, Protocol):
     def queryKey(self, fmt: str, oLocale: UnoStruct, create: bool) -> int: ...
     def addNew(self, fmt: str, oLocale: UnoStruct) -> int: ...
     def getByKey(self, format_id: int) -> UnoService: ...
     def getStandardFormat(self, format_id: int, oLocale: UnoStruct) -> int: ...
 
 
-class UnoUndoManager(UnoService):
+class UnoUndoManager(UnoService, Protocol):
     def enterHiddenUndoContext(self) -> None: ...
     def leaveUndoContext(self) -> None: ...
     def enterUndoContext(self, title: str) -> None: ...
@@ -174,7 +173,7 @@ class UnoUndoManager(UnoService):
     def unlock(self) -> None: ...
 
 
-class UnoSpreadsheetDocument(UnoOfficeDocument):
+class UnoSpreadsheetDocument(UnoOfficeDocument, Protocol):
     Sheets: "UnoSheets"
     NamedRanges: UnoNameAccess
     NumberFormats: UnoNumberFormats
@@ -187,17 +186,17 @@ class UnoSpreadsheetDocument(UnoOfficeDocument):
 UnoSpreadsheet = UnoSpreadsheetDocument
 
 
-class UnoCalcCursor(UnoRange):
+class UnoCalcCursor(UnoRange, Protocol):
     def gotoStartOfUsedArea(self, exp: bool) -> None: ...
     def gotoEndOfUsedArea(self, exp: bool) -> None: ...
     def collapseToMergedArea(self) -> None: ...
 
 
-class UnoPilotTables(UnoIndexAccess[UnoService], UnoNameAccess[UnoService]):
+class UnoPilotTables(UnoIndexAccess[UnoService], UnoNameAccess[UnoService], Protocol):
     def createDataPilotDescriptor(self) -> UnoService: ...
 
 
-class UnoSheet(UnoRange):
+class UnoSheet(UnoRange, Protocol):
     AbsoluteName: str
     Name: str
     DrawPage: UnoObject
@@ -213,12 +212,12 @@ class UnoSheet(UnoRange):
     def copyRange(self, cell_address: UnoCellAddress, range_address: UnoRangeAddress) -> None: ...
 
 
-class UnoSheets(UnoNameAccess[UnoSheet], UnoIndexAccess[UnoSheet]):
+class UnoSheets(UnoNameAccess[UnoSheet], UnoIndexAccess[UnoSheet], Protocol):
     def copyByName(self, name: str, new_name: str, new_index: int) -> None: ...
     def importSheet(self, doc: UnoSpreadsheetDocument, name: str, dest_position: int): ...
 
 
-class UnoTextRange(UnoService):
+class UnoTextRange(UnoService, Protocol):
     TextField: UnoService
     String: str
     CharFontName: str
@@ -238,13 +237,13 @@ class UnoTextRange(UnoService):
     Start: "UnoTextRange"
     End: "UnoTextRange"
 
-class UnoTextContent(UnoTextRange, UnoEnumerable[UnoTextRange]): ...
+class UnoTextContent(UnoTextRange, UnoEnumerable[UnoTextRange], Protocol): ...
 
-class UnoText(UnoTextRange, UnoEnumerable[UnoTextContent]):
+class UnoText(UnoTextRange, UnoEnumerable[UnoTextContent], Protocol):
     def createTextCursorByRange(self, r: UnoTextRange) -> UnoTextRange: ...
 
 
-class UnoCell(UnoRange, UnoText):
+class UnoCell(UnoRange, UnoText, Protocol):
     String: str
     Value: float
     Formula: str
@@ -256,24 +255,24 @@ class UnoCell(UnoRange, UnoText):
     def insertTextContent(self, r: UnoTextRange, content: UnoService, absorb: bool) -> None: ...
 
 
-class UnoRow(UnoRange): ...
+class UnoRow(UnoRange, Protocol): ...
 
-class UnoColumn(UnoRange): ...
+class UnoColumn(UnoRange, Protocol): ...
 
 
 # Writer
-class UnoTextDocument(UnoOfficeDocument): ...
+class UnoTextDocument(UnoOfficeDocument, Protocol): ...
 
 # Other
-class UnoDrawingDocument(UnoOfficeDocument): ...
-class UnoPresentationDocument(UnoOfficeDocument): ...
+class UnoDrawingDocument(UnoOfficeDocument, Protocol): ...
+class UnoPresentationDocument(UnoOfficeDocument, Protocol): ...
 
 
-class UnoFrame(UnoService):
+class UnoFrame(UnoService, Protocol):
     ContainerWindow: UnoObject
 
 
-class UnoController(UnoService):
+class UnoController(UnoService, Protocol):
     Frame: UnoFrame
     ActiveSheet: UnoSheet
 
@@ -282,26 +281,26 @@ class UnoController(UnoService):
     def insertTransferable(self, t: UnoService): ...
 
 
-class UnoContext(UnoService):
+class UnoContext(UnoService, Protocol):
     def getServiceManager(self) -> UnoObject: ...
     def getByName(self, _name: str) -> UnoObject: ...
 
-class UnoDesktop(UnoService):
+class UnoDesktop(UnoService, Protocol):
     def getCurrentComponent(self) -> UnoObject: ...
     def loadComponentFromURL(self, url: str, target: str, frame_flags: int, args: Sequence[UnoPropertyValue]) -> UnoOfficeDocument: ...
 
 
-class UnoDispatcher(UnoService):
+class UnoDispatcher(UnoService, Protocol):
     def executeDispatch(self, frame: Union[UnoController, UnoFrame], url: str, target: str, flagt: int, args: Sequence[UnoPropertyValue]) -> None: ...
 
 # Dialogs
-class UnoControlModel(UnoService):
+class UnoControlModel(UnoService, Protocol):
     Name: str
 
 
 M = TypeVar("M", bound=UnoControlModel)
 
-class UnoControl(UnoService, Generic[M]):
+class UnoControl(UnoService, Protocol[M]):
     MinimumSize: "UnoSizeStruct"
     Model: M
     def setModel(self, model: M) -> None: ...
@@ -313,13 +312,13 @@ class UnoControl(UnoService, Generic[M]):
     def addTextListener(self, listener: Any) -> None: ...
 
 
-class UnoMainControlModel(UnoControlModel):
+class UnoMainControlModel(UnoControlModel, Protocol):
     def createInstance(self, name: str) -> UnoControlModel: ...
     def insertByName(self, name: str, model: UnoControlModel) -> None: ...
     def getByName(self, name: str) -> UnoControlModel: ...
 
 
-class UnoMainControl(UnoControl[UnoMainControlModel]):
+class UnoMainControl(UnoControl[UnoMainControlModel], Protocol):
     Controls: Sequence[UnoControl]
     def createPeer(self, oToolkit: "UnoToolkit", parent_win: Optional["UnoMainControl"]): ...
     def getControl(self, name: str) -> UnoControl: ...
@@ -328,18 +327,18 @@ class UnoMainControl(UnoControl[UnoMainControlModel]):
     def dispose(self) -> None: ...
 
 
-class UnoToolkit(UnoService):
+class UnoToolkit(UnoService, Protocol):
     def createMessageBox(
         self, parent_win: UnoControl, msg_type: int, msg_buttons: int, msg_title: str, msg_text: str) -> UnoMainControl: ...
 
 
-class UnoListControlModel(UnoControlModel):
+class UnoListControlModel(UnoControlModel, Protocol):
     SelectedItems: List[int]
     StringItemList: List[str]
     TypedItemList: List[Any]
 
 
-class UnoListControl(UnoControl[UnoListControlModel]):
+class UnoListControl(UnoControl[UnoListControlModel], Protocol):
     ItemCount: int
     SelectedItemsPos: List[int]
 
@@ -348,13 +347,13 @@ class UnoListControl(UnoControl[UnoListControlModel]):
     def selectItemsPos(self, positions: List[int], sel: bool) -> None: ...
 
 
-class UnoFilePicker(UnoMainControl):
+class UnoFilePicker(UnoMainControl, Protocol):
     SelectedFiles: Sequence[str]
     def initialize(self, desc: Sequence[int]): ...
     def appendFilter(self, title: str, filter: str): ...
 
 
-class UnoFolderPicker(UnoMainControl):
+class UnoFolderPicker(UnoMainControl, Protocol):
     Title: str
     DisplayDirectory: str
     Directory: str
@@ -365,33 +364,33 @@ class UnoFolderPicker(UnoMainControl):
 # BASE
 #
 
-class UnoDatabaseDocument(UnoOfficeDocument): 
+class UnoDatabaseDocument(UnoOfficeDocument, Protocol):
     ...
 
 
-
-class UnoDBStatement(UnoService):
+class UnoDBStatement(UnoService, Protocol):
     def executeUpdate(self, sql: str) -> None: ...
     def execute(self, sql: str) -> None: ...
     def addBatch(self, sql: str) -> None: ...
     def executeBatch(self) -> None: ...
 
 
-class UnoDBDrop(UnoNameAccess[T], UnoIndexAccess[T], Generic[T]):
+class UnoDBDrop(UnoNameAccess[T], UnoIndexAccess[T], Protocol[T]):
     def dropByName(self, name: str) -> None: ...
     def dropByIndex(self, i: int) -> None: ...
 
 
-class UnoDBTable(UnoService):
+class UnoDBTable(UnoService, Protocol):
     Keys: UnoDBDrop[UnoService]
     Indexes: UnoDBDrop[UnoService]
 
-class UnoDBTables(UnoDBDrop[UnoDBTable]):
+
+class UnoDBTables(UnoDBDrop[UnoDBTable], Protocol):
     def createDataDescriptor(self) -> UnoService: ...
     def appendByDescriptor(self, desc: UnoService) -> None: ...
 
 
-class UnoDBConnection(UnoService):
+class UnoDBConnection(UnoService, Protocol):
     Tables: UnoDBTables
     Views: UnoDBDrop[UnoService]
 
@@ -401,26 +400,26 @@ class UnoDBConnection(UnoService):
     def close(self) -> None: ...
 
 
-class UnoDBAccess(UnoService):
+class UnoDBAccess(UnoService, Protocol):
     DatabaseDocument: UnoDatabaseDocument
     QueryDefinitions: Union[UnoIndexAccess, UnoNameAccess]
 
     def connectWithCompletion(self, oHandler: UnoService) -> UnoDBConnection: ...
 
 
-class UnoDBContext(UnoNameAccess[UnoDBAccess]):
+class UnoDBContext(UnoNameAccess[UnoDBAccess], Protocol):
     def createInstance(self) -> UnoDBAccess: ...
 
 
 ## CB
-class UnoDataFlavor(UnoStruct):
+class UnoDataFlavor(UnoStruct, Protocol):
     MimeType: Tuple[str, str]
 
-class UnoTransferable(UnoService):
+class UnoTransferable(UnoService, Protocol):
     def getTransferDataFlavors(self) -> List[UnoDataFlavor]: ...
     def getTransferData(self, t: UnoStruct) -> Any: ...
 
 
-class UnoClipboard(UnoService):
+class UnoClipboard(UnoService, Protocol):
     def setContents(self, trans: UnoTransferable, owner: Any): ...
     def getContents(self) -> UnoTransferable: ...
