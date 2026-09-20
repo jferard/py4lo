@@ -39,6 +39,7 @@ from py4lo_dialogs import (
     get_uno_control_date,
     get_uno_control_text,
     get_uno_control_text_as_list,
+    get_uno_control_time,
     input_box,
     message_box,
     place_widget,
@@ -46,6 +47,7 @@ from py4lo_dialogs import (
     set_uno_control_date,
     set_uno_control_text,
     set_uno_control_text_from_list,
+    set_uno_control_time,
     trace_event,
 )
 
@@ -538,7 +540,7 @@ class GetSetUnoDialogTestCase(unittest.TestCase):
         # assert
         self.assertEqual([mock.call.setEmpty()], oControl.mock_calls)
 
-    def test_set_uno_control_date_date(self):
+    def test_set_uno_control_date(self):
         # arrange
         oControl = mock.Mock()
 
@@ -572,6 +574,52 @@ class GetSetUnoDialogTestCase(unittest.TestCase):
 
         # assert
         self.assertEqual(d, dt.date(2003, 6, 3))
+
+    def test_set_uno_control_time_empty(self):
+        # arrange
+        oControl = mock.Mock()
+
+        # act
+        set_uno_control_time(oControl, None)
+
+        # assert
+        self.assertEqual([mock.call.setEmpty()], oControl.mock_calls)
+
+    def test_set_uno_control_time(self):
+        # arrange
+        oControl = mock.Mock()
+
+        # act
+        set_uno_control_time(oControl, dt.time(9, 31, 21, 886348))
+
+        # assert
+        self.assertEqual(9, oControl.Time.Hours)
+        self.assertEqual(31, oControl.Time.Minutes)
+        self.assertEqual(21, oControl.Time.Seconds)
+        self.assertEqual(886348000, oControl.Time.NanoSeconds)
+
+    def test_get_uno_control_time_empty(self):
+        # arrange
+        oControl = mock.Mock()
+        oControl.isEmpty.side_effect = [True]
+
+        # act
+        t = get_uno_control_time(oControl)
+
+        # assert
+        self.assertIsNone(t)
+
+    def test_get_uno_control_time(self):
+        # arrange
+        struct = mock.Mock(Hours=9, Minutes=31, Seconds=21, NanoSeconds=886348000)
+        oControl = mock.Mock(Time=struct)
+        oControl.isEmpty.side_effect = [False]
+
+        # act
+        t = get_uno_control_time(oControl)
+
+        # assert
+        self.assertEqual(t, dt.time(9, 31, 21, 886348))
 
     def test_set_uno_control_bool(self):
         # arrange

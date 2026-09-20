@@ -866,6 +866,31 @@ def from_uno_date(uno_date: UnoDateStruct) -> dt.date:
     return dt.date(year=uno_date.Year, month=uno_date.Month, day=uno_date.Day)
 
 
+def to_uno_time(time: dt.time) -> UnoStruct:
+    """
+    Create a com.sun.star.util.Time struct from a given time
+    :param time: the Python time
+    :return: the LibreOffice Time
+    """
+    t = uno.createUnoStruct("com.sun.star.util.Time")
+    t.Hours = time.hour
+    t.Minutes = time.minute
+    t.Seconds = time.second
+    t.NanoSeconds = time.microsecond * 1000
+    return t
+
+
+def from_uno_time(uno_time: UnoStruct) -> dt.time:
+    """
+    Create a time from a com.sun.star.util.Time struct.
+    :param uno_time: the UNO time
+    :return: the Python time
+    """
+    return dt.time(
+        hour=uno_time.Hours, minute=uno_time.Minutes,
+        second=uno_time.Seconds, microsecond=uno_time.NanoSeconds // 1000)
+
+
 ##############################################################################
 # RANGES
 ##############################################################################

@@ -80,8 +80,10 @@ from py4lo_helper import (
     create_uno_service,
     create_uno_struct,
     from_uno_date,
+    from_uno_time,
     get_provider,
     to_uno_date,
+    to_uno_time,
 )
 from py4lo_typing import (
     StrPath,
@@ -1412,6 +1414,7 @@ class EventListener(unohelper.Base, XEventListener):
         pass
 
 
+# Write/read to a UNO control
 def set_uno_control_date(oControl: UnoControl, date: Optional[dt.date]):
     """
     Set a date into a UnoControlDateField
@@ -1436,6 +1439,30 @@ def get_uno_control_date(oControl: UnoControl) -> Optional[dt.date]:
     else:
         # noinspection PyUnresolvedReferences
         return from_uno_date(oControl.Date)
+
+
+def set_uno_control_time(oControl: UnoControl, time: Optional[dt.time]):
+    """
+    :param oControl: the UnoControlTimeField
+    :pram time: the time or None
+    """
+    if time is None:
+        oControl.setEmpty()
+    else:
+        oControl.Time = to_uno_time(time)
+
+
+def get_uno_control_time(oControl: UnoControl) -> Optional[dt.time]:
+    """
+    :param oControl: the UnoControlTimeField
+    :return: the time or None
+    """
+    # noinspection PyUnresolvedReferences
+    if oControl.isEmpty():
+        return None
+    else:
+        # noinspection PyUnresolvedReferences
+        return from_uno_time(oControl.Time)
 
 
 def set_uno_control_bool(oControl: UnoControl, value: bool):

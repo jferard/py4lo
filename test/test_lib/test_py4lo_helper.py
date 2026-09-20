@@ -61,6 +61,7 @@ from py4lo_helper import (
     find_or_create_number_format_style,
     float_to_date,
     from_uno_date,
+    from_uno_time,
     get_cell_type,
     get_formula_conditional_entry_values,
     get_last_used_row,
@@ -104,6 +105,7 @@ from py4lo_helper import (
     to_enumerate,
     to_iter,
     to_uno_date,
+    to_uno_time,
     top_void_row_count,
     undo_context,
     update_pvs,
@@ -545,6 +547,32 @@ class HelperStructTestCase(unittest.TestCase):
 
         # assert
         self.assertEqual(dt.date(2014, 9, 17), d)
+
+    @mock.patch("py4lo_helper.uno")
+    def test_to_uno_time(self, uno):
+        # arrange
+        struct = mock.Mock()
+        uno.createUnoStruct.side_effect = [struct]
+
+        # act
+        struct = to_uno_time(dt.time(9, 31, 21, 886348))
+
+        # assert
+        self.assertEqual(9, struct.Hours)
+        self.assertEqual(31, struct.Minutes)
+        self.assertEqual(21, struct.Seconds)
+        self.assertEqual(886348000, struct.NanoSeconds)
+
+    def test_from_uno_time(self):
+        # arrange
+        struct = mock.Mock(Hours=9, Minutes=31, Seconds=21, NanoSeconds=886348000)
+
+        # act
+        t = from_uno_time(struct)
+
+        # assert
+        self.assertEqual(t, dt.time(9, 31, 21, 886348))
+
 
 
 #########################################################################
