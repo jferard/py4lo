@@ -69,7 +69,7 @@ Will work.
 
 Calling a function in Python
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-If the fnuction has no parameter, don't forget the parenthesis:
+If the function has no parameter, don't forget the parenthesis:
 
 .. code-block:: python
 
@@ -90,7 +90,7 @@ The typical form in standard Python is:
 
     r = get_resources()
     try:
-        do_wathever_you_want(r)
+        do_whatever_you_want(r)
     except Exception as e:
         ...
     finally:
@@ -104,7 +104,7 @@ that ensures that the resources are freed).
 
     with get_resources() as r:
         try:
-            do_wathever_you_want(r)
+            do_whatever_you_want(r)
         except Exception as e:
             ...
 
@@ -114,7 +114,7 @@ that ensures that the resources are freed).
 
 EAFP (Easier to ask for forgiveness than permission)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Pytohn has a lot of exceptions that are part of the control flow. These are
+Python has a lot of exceptions that are part of the control flow. These are
 not errors. Let's have a look at an example:
 
 .. code-block:: python
@@ -263,7 +263,7 @@ macro to the button.
 
 Py4LO
 ^^^^^
-Py4LO provides a way to create button from functons. If you run the
+Py4LO provides a way to create button from functions. If you run the
 ``py4lo init`` command, Py4Lo will read the sources files to find functions,
 and create a button for each function. Take the ``new-project.ods`` document
 and start with this document.
@@ -331,7 +331,7 @@ Now that, coming from Basic, you discovered the ``try`` / ``except`` statement,
 you imagine that you'll be able to control everything by fixing errors as soon
 as they are raised. That may be optimistic.
 
-We've alreay seen exceptions that are part of the control flow (see EAFP).
+We've already seen exceptions that are part of the control flow (see EAFP).
 Those exceptions are handled as soon as they are raised. But what about other
 exceptions (actual errors: network not available, not enough disk space, data
 of unexpected type...)?
@@ -590,7 +590,7 @@ long time.
 There is a solution: Python threads. If we start a thread in the Python script,
 but do not wait until the thread finished (ie do not use `Thread.join() <https://docs.python.org/3/library/threading.html#threading.Thread.join>`_),
 then LibreOffice will take the control back, but the Python thread will
-continue tu be executed::
+continue to be executed::
 
                      user hits                    main script      end of                                        end of
                      a LO button                creates a thread   main script                                thread script
@@ -639,7 +639,7 @@ See an example with the ``XActionListener`` interface:
 
     class MyActionListener(unohelper.Base, XActionListener):
         def actionPerformed(self, e):
-            ... do someting
+            ... do something
 
 And somewhere else:
 
@@ -664,7 +664,7 @@ in `MyActionListener`. Example:
             self._observer = observer
 
         def actionPerformed(self, e):
-            ... do someting
+            ... do something
             observer.notify("hey, I'm the event listener")
 
 
@@ -673,7 +673,7 @@ Exceptions and tracing
 If an unexpected exception is raised inside the event listener method
 (`actionPerformed` here), then the event thread ends abruptly and no one will
 know about the exception: neither the event thread nor the main thread.
-Since, ignoring an exception is not usually a good pratice (
+Since, ignoring an exception is not usually a good practice (
 although that may be the right choice in some cases), you will end adding
 boilerplate code to each event listener method:
 
@@ -682,7 +682,7 @@ boilerplate code to each event listener method:
     class ActionListener(unohelper.Base, XActionListener):
         def actionPerformed(self, e):
             try:
-                ... do someting
+                ... do something
             except:
                 logging.getLogger(__name__).exception("Exception")
 
@@ -694,7 +694,7 @@ a useful decorator to make both:
     class ActionListener(unohelper.Base, XActionListener):
         @trace_event(__name__)
         def actionPerformed(self, e):
-            ... do someting
+            ... do something
 
 If you don't want to trace the enter/exit events, then use:
 
@@ -703,7 +703,7 @@ If you don't want to trace the enter/exit events, then use:
     class TextListener(unohelper.Base, XTextListener):
         @trace_event(__name__, enter_exit=False)
         def textChanged(self, e):
-            ... do someting
+            ... do something
 
 Application tier
 ----------------
